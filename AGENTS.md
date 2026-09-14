@@ -1,241 +1,75 @@
 # AGENTS.md
 
-## Propósito
+## Fuente de verdad
 
-Este repositorio contiene Quiz10.
+El estado actual del repositorio es la fuente de verdad.
 
-Los agentes que trabajen en él deben actuar como ejecutores de las especificaciones y decisiones mantenidas en el propio repositorio.
+Antes de modificar algo existente, inspecciona el archivo y las dependencias relevantes.
 
-El estado real del repositorio es la fuente de verdad.
+Haz únicamente lo solicitado. No amplíes el alcance ni introduzcas arquitectura, dependencias, servicios, herramientas o abstracciones no requeridas.
 
-No asumas que una descripción previa coincide con el contenido actual de los archivos. Inspecciona siempre el estado real antes de modificar elementos existentes.
-
----
-
-## Principio de trabajo
-
-El flujo normal de cualquier tarea es:
-
-1. inspeccionar;
-2. comprender;
-3. modificar únicamente el alcance solicitado;
-4. verificar;
-5. informar del estado resultante.
-
-No amplíes autónomamente el alcance de una tarea.
-
-No introduzcas arquitectura, dependencias, herramientas, versiones, servicios o abstracciones que no estén requeridos por la especificación vigente.
-
-Cuando falte una decisión necesaria para continuar correctamente, señala el bloqueo en lugar de inventar la decisión.
-
----
+Si falta una decisión necesaria, detente e informa del bloqueo. No la inventes.
 
 ## Arquitectura
 
-Quiz10 utiliza una separación conceptual A–B–C.
+Quiz10 se organiza así:
 
-### A — `core/`
+- `core/` — A: infraestructura, contratos y servicios técnicos.
+- `systems/` — B: lógica y reglas del producto.
+- `ui/` — C: representación e interacción.
+- `apps/` — composición ejecutable.
 
-Contiene infraestructura, contratos y servicios técnicos.
+Reglas de frontera:
 
-A hace posible el producto, pero no contiene reglas específicas de Quiz10.
-
-### B — `systems/`
-
-Contiene la lógica del producto.
-
-Las reglas de Quiz10 pertenecen a B.
-
-B no depende de componentes visuales concretos ni de detalles técnicos de proveedores externos.
-
-### C — `ui/`
-
-Contiene la materialización visible e interactiva del producto.
-
-C representa estados y comunica intervenciones.
-
-C no gobierna las reglas del juego ni modifica directamente el estado del dominio.
-
-### Composición — `apps/`
-
-Los ejecutables ensamblan A, B y C.
-
-No contienen una segunda implementación de las reglas del producto.
-
----
-
-## Fronteras arquitectónicas
-
-Respeta estas reglas:
-
-- `core/` no conoce reglas concretas de Quiz10.
-- `systems/` no depende de Jetpack Compose ni de otra UI concreta.
-- `systems/` no accede directamente a SDKs o implementaciones concretas de IA, persistencia, autenticación, red o facturación.
-- `ui/` no contiene reglas de partida.
-- `ui/` no modifica directamente el estado del dominio.
+- `core/` no contiene reglas específicas de Quiz10.
+- `systems/` no depende de UI concreta ni de implementaciones externas concretas.
+- `ui/` no gobierna el dominio ni es fuente de verdad del estado.
 - `apps/` ensambla y delega.
-- Los temas introducidos por el usuario son datos de ejecución, no nuevos sistemas arquitectónicos.
-- Las integraciones técnicas deben quedar desacopladas de las reglas de Quiz10.
-- La representación visual no debe convertirse en fuente de verdad del estado del juego.
 
-No crees dependencias que contradigan estas fronteras.
+Consulta `docs/ARCHITECTURE.md` solo cuando la tarea implique una decisión arquitectónica.
 
----
+## Tecnología
 
-## Documentación normativa
+Usa las versiones, dependencias y herramientas ya fijadas por el repositorio.
 
-Antes de realizar cambios arquitectónicos o tecnológicos, consulta estos documentos cuando existan:
+No selecciones nuevas versiones o tecnologías arbitrariamente.
 
-- `docs/ARCHITECTURE.md`
-- `docs/TECH_STACK.md`
-- `docs/WORKFLOW.md`
-- `docs/adr/`
+Si una tarea necesita una decisión tecnológica todavía no fijada, informa del bloqueo.
 
-Si una instrucción contradice la documentación normativa o el estado real del repositorio, señala la discrepancia antes de modificar.
+## Entorno
 
----
+La estación base ya está configurada.
 
-## Modificación de archivos existentes
+No reinstales ni reconfigures WSL, Docker Desktop, Git, VS Code ni otras herramientas base salvo que exista un fallo concreto.
 
-Antes de modificar un archivo existente:
-
-1. inspecciona su contenido actual;
-2. inspecciona las dependencias relevantes;
-3. identifica las reglas arquitectónicas y tecnológicas aplicables;
-4. realiza la modificación mínima necesaria;
-5. verifica el resultado.
-
-No utilices números de línea obtenidos de estados anteriores del archivo.
-
-No reemplaces un archivo completo cuando una modificación localizada sea suficiente, salvo que la tarea lo requiera expresamente.
-
----
-
-## Creación de archivos
-
-Antes de crear un archivo:
-
-1. confirma que su responsabilidad no pertenece ya a otro archivo o módulo;
-2. confirma su ubicación correcta dentro de la arquitectura;
-3. aplica las convenciones existentes del repositorio;
-4. evita crear abstracciones anticipadas sin necesidad demostrada.
-
----
-
-## Dependencias y versiones
-
-No selecciones arbitrariamente versiones de:
-
-- JDK;
-- Kotlin;
-- Gradle;
-- Android Gradle Plugin;
-- Android SDK;
-- Jetpack Compose;
-- Ktor;
-- PostgreSQL;
-- librerías;
-- herramientas de análisis;
-- imágenes de contenedor;
-- servicios externos.
-
-Utiliza las versiones fijadas por el repositorio.
-
-Si una versión necesaria todavía no está especificada, señala el bloqueo antes de introducirla.
-
----
-
-## Entorno de desarrollo
-
-La estación base ya está instalada, configurada y verificada.
-
-El entorno habitual es:
-
-Windows 11 → VS Code → WSL 2 → Ubuntu 24.04 → repositorio.
-
-Cuando el proyecto utiliza aislamiento:
-
-Windows 11 → VS Code → WSL 2 → Ubuntu 24.04 → Docker Desktop → Dev Container.
-
-Los repositorios se encuentran en:
-
-`~/repos/<repo>`
-
-No reinstales ni reconfigures la estación base salvo que exista un fallo concreto que lo justifique.
-
-No apliques confianza global a `~/repos`.
-
-El ámbito normal de trabajo comienza en el repositorio abierto y continúa en su entorno de proyecto y su código.
-
----
+Cuando el proyecto disponga de Dev Container, ejecuta dentro de él las tareas propias del proyecto.
 
 ## Seguridad
 
 No almacenes secretos, tokens, credenciales o claves privadas en archivos versionados.
 
-No introduzcas claves de proveedores de IA dentro de aplicaciones cliente.
-
-No muestres secretos en logs, pruebas o documentación.
-
----
+Las claves de proveedores externos no deben introducirse en aplicaciones cliente.
 
 ## Git
 
-No ejecutes:
+No hagas `commit`, `push`, `merge`, `rebase`, cambios de rama ni operaciones destructivas salvo instrucción explícita.
 
-- `commit`;
-- `push`;
-- `merge`;
-- `rebase`;
-- creación o eliminación de ramas;
-- operaciones destructivas de Git;
-
-salvo instrucción explícita.
-
-No descartes cambios existentes del usuario.
-
-No sobrescribas trabajo no relacionado con la tarea actual.
-
----
+No descartes ni sobrescribas cambios ajenos a la tarea actual.
 
 ## Verificación
 
-Después de crear o modificar archivos:
+Después de modificar:
 
 1. ejecuta las comprobaciones aplicables;
 2. corrige los fallos introducidos por el cambio;
-3. distingue los fallos preexistentes de los provocados por la tarea;
-4. informa de las comprobaciones realizadas y sus resultados.
+3. informa del resultado real.
 
-Un archivo solo puede considerarse terminado cuando esté:
+No declares terminado algo que no haya sido implementado, integrado y verificado.
 
-- implementado;
-- integrado;
-- verificado.
+## Resultado
 
-No declares como verificado aquello que no haya sido comprobado.
+Al finalizar informa brevemente de:
 
----
-
-## Cambios fuera de alcance
-
-Si para completar una tarea parece necesario modificar archivos fuera del alcance solicitado:
-
-1. inspecciona la dependencia;
-2. explica por qué sería necesario;
-3. no amplíes silenciosamente el alcance.
-
----
-
-## Resultado de una tarea
-
-Al terminar una tarea informa de forma concreta:
-
-- archivos creados;
-- archivos modificados;
+- archivos creados, modificados o eliminados;
 - verificaciones ejecutadas;
-- resultado de las verificaciones;
-- bloqueos existentes;
-- discrepancias detectadas.
-
-No presentes como completado aquello que continúe pendiente de integración o verificación.
+- bloqueos o discrepancias reales.
