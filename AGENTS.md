@@ -14,16 +14,16 @@ Si falta una decisión necesaria, detente e informa del bloqueo. No la inventes.
 
 Quiz10 se organiza así:
 
-- `core/` — A: infraestructura, contratos y servicios técnicos.
-- `systems/` — B: lógica y reglas del producto.
-- `ui/` — C: representación e interacción.
+- `A/core/` — A: infraestructura, contratos y servicios técnicos.
+- `B/systems/` — B: lógica y reglas del producto.
+- `C/ui/` — C: representación e interacción.
 - `apps/` — composición ejecutable.
 
 Reglas de frontera:
 
-- `core/` no contiene reglas específicas de Quiz10.
-- `systems/` no depende de UI concreta ni de implementaciones externas concretas.
-- `ui/` no gobierna el dominio ni es fuente de verdad del estado.
+- `A/core/` no contiene reglas específicas de Quiz10.
+- `B/systems/` no depende de UI concreta ni de implementaciones externas concretas.
+- `C/ui/` no gobierna el dominio ni es fuente de verdad del estado.
 - `apps/` ensambla y delega.
 
 Consulta `docs/ARCHITECTURE.md` solo cuando la tarea implique una decisión arquitectónica.

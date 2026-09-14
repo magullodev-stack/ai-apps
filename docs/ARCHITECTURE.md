@@ -4,9 +4,9 @@
 
 Quiz10 se divide conceptualmente en:
 
-- `core/` — A: infraestructura, contratos y capacidades técnicas.
-- `systems/` — B: lógica y reglas del producto.
-- `ui/` — C: representación e interacción.
+- `A/core/` — A: infraestructura, contratos y capacidades técnicas.
+- `B/systems/` — B: lógica y reglas del producto.
+- `C/ui/` — C: representación e interacción.
 - `apps/` — composición ejecutable.
 
 Dirección conceptual:
@@ -15,7 +15,7 @@ Dirección conceptual:
 
 `apps/` conecta las implementaciones concretas.
 
-## A — `core/`
+## A — `A/core/`
 
 Proporciona capacidades técnicas reutilizables.
 
@@ -32,15 +32,15 @@ Puede incluir:
 
 A no conoce reglas específicas de Quiz10.
 
-## B — `systems/`
+## B — `B/systems/`
 
 Contiene la lógica del producto.
 
-`systems/quiz10/` gobierna la partida, los turnos, la Ruta de Cobertura, preguntas, respuestas, resolución, progreso y resultado.
+`B/systems/quiz10/` gobierna la partida, los turnos, la Ruta de Cobertura, preguntas, respuestas, resolución, progreso y resultado.
 
 B no depende de una UI concreta ni de implementaciones concretas de servicios externos.
 
-## C — `ui/`
+## C — `C/ui/`
 
 Representa el estado y recibe las intervenciones del usuario.
 
@@ -69,9 +69,9 @@ Cuando una respuesta cerrada A/B/C/D ya tiene una opción correcta conocida, su 
 
 ## Reglas de dependencia
 
-- `core/` no depende de Quiz10.
-- `systems/` no depende de Compose ni de SDKs concretos externos.
-- `ui/` no contiene reglas de dominio.
+- `A/core/` no depende de Quiz10.
+- `B/systems/` no depende de Compose ni de SDKs concretos externos.
+- `C/ui/` no contiene reglas de dominio.
 - `apps/` ensambla y delega.
 - Los temas son datos de ejecución, no nuevos sistemas.
 
