@@ -7,3 +7,4 @@ pluginManagement {
 rootProject.name = "quiz10"
 
 include(":core:contracts")
+include(":core:config")
