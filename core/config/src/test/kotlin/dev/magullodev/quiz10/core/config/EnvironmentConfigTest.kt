@@ -15,18 +15,30 @@ class EnvironmentConfigTest {
     @Test
     fun loadsValidConfiguration() {
         val result = EnvironmentConfig.load(
-            reader("QUIZ10_ENV" to "production", "QUIZ10_AI_BASE_URL" to "https://example.com/api"),
+            reader(
+                "QUIZ10_ENV" to "production",
+                "QUIZ10_AI_BASE_URL" to "https://example.com/api",
+                "QUIZ10_AI_PLANNER_MODEL" to "planner-v1",
+                "QUIZ10_AI_TURN_MODEL" to "turn-v1",
+            ),
         )
 
         val config = assertIs<Outcome.Success<EnvironmentConfig>>(result).value
         assertEquals(AppEnvironment.PRODUCTION, config.environment)
         assertEquals(URI("https://example.com/api"), config.aiBaseUrl)
+        assertEquals("planner-v1", config.aiPlannerModel)
+        assertEquals("turn-v1", config.aiTurnModel)
     }
 
     @Test
     fun acceptsUppercaseHttpScheme() {
         val result = EnvironmentConfig.load(
-            reader("QUIZ10_ENV" to "test", "QUIZ10_AI_BASE_URL" to "HTTP://example.com"),
+            reader(
+                "QUIZ10_ENV" to "test",
+                "QUIZ10_AI_BASE_URL" to "HTTP://example.com",
+                "QUIZ10_AI_PLANNER_MODEL" to "planner",
+                "QUIZ10_AI_TURN_MODEL" to "turn",
+            ),
         )
 
         assertEquals(URI("HTTP://example.com"), assertIs<Outcome.Success<EnvironmentConfig>>(result).value.aiBaseUrl)
@@ -42,7 +54,12 @@ class EnvironmentConfigTest {
 
         for ((name, expected) in environments) {
             val result = EnvironmentConfig.load(
-                reader("QUIZ10_ENV" to name, "QUIZ10_AI_BASE_URL" to "http://localhost:8080"),
+                reader(
+                    "QUIZ10_ENV" to name,
+                    "QUIZ10_AI_BASE_URL" to "http://localhost:8080",
+                    "QUIZ10_AI_PLANNER_MODEL" to "planner",
+                    "QUIZ10_AI_TURN_MODEL" to "turn",
+                ),
             )
             assertEquals(expected, assertIs<Outcome.Success<EnvironmentConfig>>(result).value.environment)
         }
@@ -94,6 +111,44 @@ class EnvironmentConfigTest {
             )
             assertEquals(
                 ConfigError.InvalidValue("QUIZ10_AI_BASE_URL", url),
+                assertIs<Outcome.Failure<ConfigError>>(result).error,
+            )
+        }
+    }
+
+    @Test
+    fun rejectsMissingOrEmptyPlannerModel() {
+        for (model in listOf(null, "", " ")) {
+            val planner = model?.let { arrayOf("QUIZ10_AI_PLANNER_MODEL" to it) } ?: emptyArray()
+            val result = EnvironmentConfig.load(
+                reader(
+                    "QUIZ10_ENV" to "test",
+                    "QUIZ10_AI_BASE_URL" to "https://example.com",
+                    *planner,
+                    "QUIZ10_AI_TURN_MODEL" to "turn",
+                ),
+            )
+            assertEquals(
+                ConfigError.MissingOrEmpty("QUIZ10_AI_PLANNER_MODEL"),
+                assertIs<Outcome.Failure<ConfigError>>(result).error,
+            )
+        }
+    }
+
+    @Test
+    fun rejectsMissingOrEmptyTurnModel() {
+        for (model in listOf(null, "", " ")) {
+            val turn = model?.let { arrayOf("QUIZ10_AI_TURN_MODEL" to it) } ?: emptyArray()
+            val result = EnvironmentConfig.load(
+                reader(
+                    "QUIZ10_ENV" to "test",
+                    "QUIZ10_AI_BASE_URL" to "https://example.com",
+                    "QUIZ10_AI_PLANNER_MODEL" to "planner",
+                    *turn,
+                ),
+            )
+            assertEquals(
+                ConfigError.MissingOrEmpty("QUIZ10_AI_TURN_MODEL"),
                 assertIs<Outcome.Failure<ConfigError>>(result).error,
             )
         }
