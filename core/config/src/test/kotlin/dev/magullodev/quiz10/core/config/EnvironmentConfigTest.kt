@@ -4,6 +4,7 @@ import dev.magullodev.quiz10.core.contracts.Outcome
 import java.net.URI
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 
 class EnvironmentConfigTest {
@@ -20,6 +21,7 @@ class EnvironmentConfigTest {
                 "QUIZ10_AI_BASE_URL" to "https://example.com/api",
                 "QUIZ10_AI_PLANNER_MODEL" to "planner-v1",
                 "QUIZ10_AI_TURN_MODEL" to "turn-v1",
+                "QUIZ10_AI_API_KEY" to "example-test-key",
             ),
         )
 
@@ -28,6 +30,8 @@ class EnvironmentConfigTest {
         assertEquals(URI("https://example.com/api"), config.aiBaseUrl)
         assertEquals("planner-v1", config.aiPlannerModel)
         assertEquals("turn-v1", config.aiTurnModel)
+        assertEquals("example-test-key", config.aiApiKey)
+        assertFalse(config.toString().contains("example-test-key"))
     }
 
     @Test
@@ -38,6 +42,7 @@ class EnvironmentConfigTest {
                 "QUIZ10_AI_BASE_URL" to "HTTP://example.com",
                 "QUIZ10_AI_PLANNER_MODEL" to "planner",
                 "QUIZ10_AI_TURN_MODEL" to "turn",
+                "QUIZ10_AI_API_KEY" to "example-test-key",
             ),
         )
 
@@ -59,6 +64,7 @@ class EnvironmentConfigTest {
                     "QUIZ10_AI_BASE_URL" to "http://localhost:8080",
                     "QUIZ10_AI_PLANNER_MODEL" to "planner",
                     "QUIZ10_AI_TURN_MODEL" to "turn",
+                    "QUIZ10_AI_API_KEY" to "example-test-key",
                 ),
             )
             assertEquals(expected, assertIs<Outcome.Success<EnvironmentConfig>>(result).value.environment)
@@ -149,6 +155,26 @@ class EnvironmentConfigTest {
             )
             assertEquals(
                 ConfigError.MissingOrEmpty("QUIZ10_AI_TURN_MODEL"),
+                assertIs<Outcome.Failure<ConfigError>>(result).error,
+            )
+        }
+    }
+
+    @Test
+    fun rejectsMissingEmptyAndWhitespaceOnlyApiKey() {
+        for (key in listOf(null, "", " ")) {
+            val apiKey = key?.let { arrayOf("QUIZ10_AI_API_KEY" to it) } ?: emptyArray()
+            val result = EnvironmentConfig.load(
+                reader(
+                    "QUIZ10_ENV" to "test",
+                    "QUIZ10_AI_BASE_URL" to "https://example.com",
+                    "QUIZ10_AI_PLANNER_MODEL" to "planner",
+                    "QUIZ10_AI_TURN_MODEL" to "turn",
+                    *apiKey,
+                ),
+            )
+            assertEquals(
+                ConfigError.MissingOrEmpty("QUIZ10_AI_API_KEY"),
                 assertIs<Outcome.Failure<ConfigError>>(result).error,
             )
         }

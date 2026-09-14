@@ -9,7 +9,16 @@ data class EnvironmentConfig(
     val aiBaseUrl: URI,
     val aiPlannerModel: String,
     val aiTurnModel: String,
+    val aiApiKey: String,
 ) {
+    override fun toString(): String =
+        "EnvironmentConfig(" +
+            "environment=$environment, " +
+            "aiBaseUrl=$aiBaseUrl, " +
+            "aiPlannerModel=$aiPlannerModel, " +
+            "aiTurnModel=$aiTurnModel, " +
+            "aiApiKey=[REDACTED])"
+
     companion object {
         fun load(reader: EnvironmentReader = SystemEnvironmentReader): Outcome<EnvironmentConfig, ConfigError> {
             val environmentValue = reader.get("QUIZ10_ENV")
@@ -53,7 +62,12 @@ data class EnvironmentConfig(
                 return Outcome.Failure(ConfigError.MissingOrEmpty("QUIZ10_AI_TURN_MODEL"))
             }
 
-            return Outcome.Success(EnvironmentConfig(environment, url, plannerModel, turnModel))
+            val apiKey = reader.get("QUIZ10_AI_API_KEY")
+            if (apiKey.isNullOrBlank()) {
+                return Outcome.Failure(ConfigError.MissingOrEmpty("QUIZ10_AI_API_KEY"))
+            }
+
+            return Outcome.Success(EnvironmentConfig(environment, url, plannerModel, turnModel, apiKey))
         }
     }
 }
