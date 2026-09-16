@@ -1,15 +1,11 @@
 package dev.magullodev.quiz10.systems.quiz10.session
 
 import dev.magullodev.aiapps.core.contracts.Outcome
-import dev.magullodev.quiz10.systems.quiz10.coverage.CoveragePlanningError
-import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRoute
-import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
-import dev.magullodev.quiz10.systems.quiz10.question.QuestionGenerationError
+import dev.magullodev.quiz10.systems.quiz10.preparation.PreparedQuiz
 import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
 
 class Quiz10Flow(
-    private val planTopic: (String) -> Outcome<CoverageRoute, CoveragePlanningError>,
-    private val generateQuestion: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuestionGenerationError>,
+    private val preparedQuiz: PreparedQuiz,
 ) {
     private var session: QuizSession? = null
     private var currentState: Quiz10FlowState? = null
@@ -17,38 +13,23 @@ class Quiz10Flow(
     val state: Quiz10FlowState?
         get() = currentState
 
-    fun start(topic: String): Outcome<Quiz10FlowState, Quiz10FlowError> {
-        val route = when (val outcome = planTopic(topic)) {
-            is Outcome.Success -> outcome.value
-            is Outcome.Failure -> return Outcome.Failure(Quiz10FlowError.PlanningFailed(outcome.error))
-        }
-
-        val newSession = QuizSession.start(route)
+    fun start(): Quiz10FlowState.Question {
+        val newSession = QuizSession.start(preparedQuiz.route)
         session = newSession
 
-        val item = newSession.currentItem ?: error("Quiz10 route unexpectedly has no current item")
-        val questionNumber = newSession.currentQuestionNumber ?: error("Quiz10 route unexpectedly has no current question")
-        val correctOptionIndex = correctOptionIndexFor(questionNumber)
-
-        return when (val outcome = generateQuestion(item, correctOptionIndex)) {
-            is Outcome.Success -> {
-                val questionState = Quiz10FlowState.Question(
-                    topic = topic,
-                    questionNumber = questionNumber,
-                    totalQuestions = newSession.totalQuestions,
-                    area = item.area,
-                    question = outcome.value,
-                    answeredQuestions = newSession.answeredQuestions,
-                    correctAnswers = newSession.correctAnswers,
-                )
-                currentState = questionState
-                Outcome.Success(questionState)
-            }
-            is Outcome.Failure -> {
-                currentState = null
-                Outcome.Failure(Quiz10FlowError.QuestionGenerationFailed(outcome.error))
-            }
-        }
+        val questionNumber = newSession.currentQuestionNumber ?: error("Prepared quiz unexpectedly has no current question")
+        val question = preparedQuiz.questions[questionNumber - 1]
+        val current = Quiz10FlowState.Question(
+            topic = preparedQuiz.topic,
+            questionNumber = questionNumber,
+            totalQuestions = preparedQuiz.questions.size,
+            area = preparedQuiz.route.items[questionNumber - 1].area,
+            question = question,
+            answeredQuestions = newSession.answeredQuestions,
+            correctAnswers = newSession.correctAnswers,
+        )
+        currentState = current
+        return current
     }
 
     fun answer(selectedOptionIndex: Int): Quiz10FlowState.Answered {
@@ -77,7 +58,7 @@ class Quiz10Flow(
         return answeredState
     }
 
-    fun advance(): Outcome<Quiz10FlowState, Quiz10FlowError> {
+    fun advance(): Outcome<Quiz10FlowState, Nothing> {
         val answeredState = currentState as? Quiz10FlowState.Answered
             ?: throw IllegalStateException("Quiz advance can only be used from Answered state")
 
@@ -94,38 +75,18 @@ class Quiz10Flow(
 
         val nextQuestionNumber = sessionSnapshot.currentQuestionNumber
             ?: throw IllegalStateException("Quiz session has no pending question")
-        val nextItem = sessionSnapshot.currentItem
-            ?: throw IllegalStateException("Quiz session has no pending item")
-        val correctOptionIndex = correctOptionIndexFor(nextQuestionNumber)
-
-        return when (val outcome = generateQuestion(nextItem, correctOptionIndex)) {
-            is Outcome.Success -> {
-                val nextState = Quiz10FlowState.Question(
-                    topic = answeredState.topic,
-                    questionNumber = nextQuestionNumber,
-                    totalQuestions = answeredState.totalQuestions,
-                    area = nextItem.area,
-                    question = outcome.value,
-                    answeredQuestions = sessionSnapshot.answeredQuestions,
-                    correctAnswers = sessionSnapshot.correctAnswers,
-                )
-                currentState = nextState
-                Outcome.Success(nextState)
-            }
-            is Outcome.Failure -> {
-                currentState = answeredState
-                Outcome.Failure(Quiz10FlowError.QuestionGenerationFailed(outcome.error))
-            }
-        }
-    }
-
-    private fun correctOptionIndexFor(questionNumber: Int): Int {
-        require(questionNumber in 1..10) { "Question number must be between 1 and 10" }
-        return correctOptionSequence[questionNumber - 1]
-    }
-
-    private companion object {
-        private val correctOptionSequence = listOf(0, 1, 2, 3, 0, 1, 2, 3, 0, 1)
+        val nextQuestion = preparedQuiz.questions[nextQuestionNumber - 1]
+        val nextState = Quiz10FlowState.Question(
+            topic = answeredState.topic,
+            questionNumber = nextQuestionNumber,
+            totalQuestions = answeredState.totalQuestions,
+            area = preparedQuiz.route.items[nextQuestionNumber - 1].area,
+            question = nextQuestion,
+            answeredQuestions = sessionSnapshot.answeredQuestions,
+            correctAnswers = sessionSnapshot.correctAnswers,
+        )
+        currentState = nextState
+        return Outcome.Success(nextState)
     }
 }
 
@@ -158,9 +119,4 @@ sealed interface Quiz10FlowState {
         val totalQuestions: Int,
         val correctAnswers: Int,
     ) : Quiz10FlowState
-}
-
-sealed interface Quiz10FlowError {
-    data class PlanningFailed(val cause: CoveragePlanningError) : Quiz10FlowError
-    data class QuestionGenerationFailed(val cause: QuestionGenerationError) : Quiz10FlowError
 }

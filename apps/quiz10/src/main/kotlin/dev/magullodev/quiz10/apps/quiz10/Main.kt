@@ -5,9 +5,10 @@ import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoveragePlanner
+import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
+import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
 import dev.magullodev.quiz10.systems.quiz10.question.QuestionGenerator
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10Flow
-import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowError
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowState
 import kotlin.system.exitProcess
 
@@ -42,16 +43,18 @@ fun main(args: Array<String>) {
     val client = OpenAiResponsesClient(config, transport)
     val planner = CoveragePlanner(model, client::generate)
     val generator = QuestionGenerator(questionModel, client::generate)
-    val flow = Quiz10Flow(planner::plan, generator::generate)
+    val preparer = QuizPreparer(planner::plan, generator::generate)
 
-    var state = when (val result = flow.start(topic)) {
+    val preparedQuiz = when (val result = preparer.prepare(topic)) {
         is Outcome.Success -> result.value
         is Outcome.Failure -> when (val error = result.error) {
-            is Quiz10FlowError.PlanningFailed -> fail("PLANNING_ERROR: ${error.cause}")
-            is Quiz10FlowError.QuestionGenerationFailed -> fail("QUESTION_GENERATION_ERROR: ${error.cause}")
+            is QuizPreparationError.PlanningFailed -> fail("PLANNING_ERROR: ${error.cause}")
+            is QuizPreparationError.GenerationFailed -> fail("QUESTION_GENERATION_ERROR: ${error.cause}")
         }
     }
 
+    val flow = Quiz10Flow(preparedQuiz)
+    var state: Quiz10FlowState = flow.start()
     renderState(state, output)
 
     while (state !is Quiz10FlowState.Finished) {
@@ -64,12 +67,10 @@ fun main(args: Array<String>) {
         output.appendLine("Aciertos: ${answered.correctAnswers}")
         output.appendLine()
 
-        state = when (val result = flow.advance()) {
-            is Outcome.Success -> result.value
-            is Outcome.Failure -> when (val error = result.error) {
-                is Quiz10FlowError.PlanningFailed -> fail("PLANNING_ERROR: ${error.cause}")
-                is Quiz10FlowError.QuestionGenerationFailed -> fail("QUESTION_GENERATION_ERROR: ${error.cause}")
-            }
+        val next = flow.advance()
+        state = when (next) {
+            is Outcome.Success -> next.value
+            is Outcome.Failure -> error("Unexpected failure while advancing prepared quiz flow: ${next.error}")
         }
         renderState(state, output)
     }
