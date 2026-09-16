@@ -1,5 +1,5 @@
 {
-  "name": "Quiz10",
+  "name": "ai-apps",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
