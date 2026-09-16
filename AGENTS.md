@@ -12,21 +12,21 @@ Si falta una decisión necesaria, detente e informa del bloqueo. No la inventes.
 
 ## Arquitectura
 
-Quiz10 se organiza así:
+`ai-apps` se organiza así:
 
-- `A/core/` — A: infraestructura, contratos y servicios técnicos.
-- `B/systems/` — B: lógica y reglas del producto.
-- `C/ui/` — C: representación e interacción.
+- `core/` — capacidades técnicas e infraestructura compartida.
+- `systems/` — lógica y reglas de los sistemas.
+- `ui/` — presentación e interacción.
 - `apps/` — composición ejecutable.
 
 Reglas de frontera:
 
-- `A/core/` no contiene reglas específicas de Quiz10.
-- `B/systems/` no depende de UI concreta ni de implementaciones externas concretas.
-- `C/ui/` no gobierna el dominio ni es fuente de verdad del estado.
+- `core/` permanece neutral respecto a sistemas y aplicaciones.
+- `systems/` contiene las reglas de producto y puede utilizar `core/`.
+- `ui/` no gobierna el dominio ni es fuente de verdad del estado.
 - `apps/` ensambla y delega.
-
-Consulta `docs/ARCHITECTURE.md` solo cuando la tarea implique una decisión arquitectónica.
+- Los sistemas pueden coexistir sin conocerse entre sí.
+- Las abstracciones compartidas aparecen por reutilización real, no por anticipación.
 
 ## Tecnología
 
