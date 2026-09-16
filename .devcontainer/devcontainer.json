@@ -5,6 +5,10 @@
     "context": ".."
   },
   "remoteUser": "vscode",
+  "runArgs": [
+    "--env-file",
+    "${localEnv:HOME}/.config/ai-apps/secrets.env"
+  ],
   "containerEnv": {
     "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64"
   }
