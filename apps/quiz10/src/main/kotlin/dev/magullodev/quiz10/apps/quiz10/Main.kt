@@ -6,10 +6,24 @@ import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoveragePlanner
 import dev.magullodev.quiz10.systems.quiz10.question.QuestionGenerator
+import dev.magullodev.quiz10.systems.quiz10.session.QuizSession
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    val topic = args.joinToString(" ")
+    val output = System.out.bufferedWriter(Charsets.UTF_8)
+    val input = System.`in`.bufferedReader(Charsets.UTF_8)
+    val topic = when {
+        args.isNotEmpty() -> args.joinToString(" ")
+        else -> {
+            output.append("Tema: ")
+            output.flush()
+            input.readLine() ?: fail("INPUT_EOF: no se ha recibido un tema")
+        }
+    }.trim()
+    if (topic.isBlank()) {
+        fail("INPUT_ERROR: el tema no puede estar vacío")
+    }
+
     val model = System.getenv("QUIZ10_COVERAGE_MODEL")
     if (model.isNullOrBlank()) {
         fail("CONFIGURATION_ERROR: QUIZ10_COVERAGE_MODEL debe contener un modelo no vacío")
@@ -30,35 +44,53 @@ fun main(args: Array<String>) {
         is Outcome.Failure -> fail("PLANNING_ERROR: ${result.error}")
     }
 
-    val item = route.items.first()
+    var session = QuizSession.start(route)
     val generator = QuestionGenerator(questionModel, client::generate)
-    val question = when (val result = generator.generate(item, correctOptionIndex = 0)) {
-        is Outcome.Success -> result.value
-        is Outcome.Failure -> fail("QUESTION_GENERATION_ERROR: ${result.error}")
-    }
+    val correctIndexPattern = listOf(0, 1, 2, 3, 0, 1, 2, 3, 0, 1)
 
-    val output = System.out.bufferedWriter(Charsets.UTF_8)
-    output.appendLine("Pregunta 1")
-    output.appendLine("Área: ${item.area}")
-    output.appendLine()
-    output.appendLine(question.text)
-    output.appendLine()
-    question.options.forEachIndexed { index, option ->
-        output.appendLine("${'A' + index}) $option")
-    }
+    while (!session.isFinished) {
+        val currentItem = session.currentItem ?: break
+        val currentQuestionNumber = session.currentQuestionNumber ?: break
+        val correctOptionIndex = correctIndexPattern[currentQuestionNumber - 1]
+        val question = when (val result = generator.generate(currentItem, correctOptionIndex)) {
+            is Outcome.Success -> result.value
+            is Outcome.Failure -> fail("QUESTION_GENERATION_ERROR: ${result.error}")
+        }
 
-    val input = System.`in`.bufferedReader(Charsets.UTF_8)
-    while (true) {
-        output.append("Respuesta (A-D): ")
+        output.appendLine("Pregunta $currentQuestionNumber/10")
+        output.appendLine("Área: ${currentItem.area}")
+        output.appendLine()
+        output.appendLine(question.text)
+        output.appendLine()
+        question.options.forEachIndexed { index, option ->
+            output.appendLine("${'A' + index}) $option")
+        }
+
+        while (true) {
+            output.append("Respuesta (A-D): ")
+            output.flush()
+            val answer = input.readLine() ?: fail("INPUT_EOF: no se ha recibido una respuesta")
+            val option = answer.trim().singleOrNull()?.uppercaseChar()
+            if (option == null || option !in 'A'..'D') {
+                output.appendLine("Respuesta inválida. Usa A, B, C o D.")
+                continue
+            }
+
+            val selectedIndex = option - 'A'
+            val isCorrect = question.isCorrect(selectedIndex)
+            val correction = if (isCorrect) "✅ CORRECTO" else "❌ INCORRECTO"
+            output.appendLine("$correction — ${question.options[question.correctOptionIndex]}")
+            session = session.recordAnswer(isCorrect)
+            output.appendLine("Progreso: ${session.answeredQuestions}/10")
+            output.appendLine("Aciertos: ${session.correctAnswers}")
+            output.appendLine()
+            break
+        }
         output.flush()
-        val answer = input.readLine() ?: fail("INPUT_EOF: no se ha recibido una respuesta")
-        val option = answer.trim().singleOrNull()?.uppercaseChar()
-        if (option == null || option !in 'A'..'D') continue
-
-        val correction = if (question.isCorrect(option - 'A')) "✅ CORRECTO" else "❌ INCORRECTO"
-        output.appendLine("$correction — ${question.options[question.correctOptionIndex]}")
-        break
     }
+
+    output.appendLine("Partida terminada")
+    output.appendLine("Puntuación final ${session.correctAnswers}/10")
     output.flush()
 }
 
