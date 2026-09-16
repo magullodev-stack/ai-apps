@@ -17,6 +17,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
@@ -64,6 +65,18 @@ class CoveragePlannerTest {
         val result = CoveragePlanner("test-model", generation(text)::generate).plan("Ancient Rome")
 
         assertEquals(CoveragePlanningError.InvalidGeneratedRoute, assertIs<Outcome.Failure<CoveragePlanningError>>(result).error)
+    }
+
+    @Test
+    fun constructorRejectsBlankModelWithoutInvokingGeneration() {
+        val generation = generation()
+
+        for (model in listOf("", " ", "\t\n")) {
+            assertFailsWith<IllegalArgumentException> {
+                CoveragePlanner(model, generation::generate)
+            }
+        }
+        assertTrue(generation.requests.isEmpty())
     }
 
     @Test

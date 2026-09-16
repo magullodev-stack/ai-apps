@@ -13,6 +13,10 @@ class CoveragePlanner(
     private val model: String,
     private val generate: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ) {
+    init {
+        require(model.isNotBlank()) { "Coverage model must not be blank" }
+    }
+
     fun plan(topic: String): Outcome<CoverageRoute, CoveragePlanningError> {
         val trimmedTopic = topic.trim()
         if (trimmedTopic.isEmpty()) return Outcome.Failure(CoveragePlanningError.BlankTopic)
