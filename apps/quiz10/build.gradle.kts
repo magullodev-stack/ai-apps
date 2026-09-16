@@ -12,10 +12,15 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:ai"))
     implementation(project(":systems:quiz10"))
+    testImplementation(kotlin("test"))
 }
 
 kotlin {
     jvmToolchain(21)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.jar {

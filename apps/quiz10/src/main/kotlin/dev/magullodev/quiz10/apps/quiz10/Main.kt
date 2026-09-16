@@ -1,16 +1,18 @@
 package dev.magullodev.quiz10.apps.quiz10
 
 import dev.magullodev.aiapps.core.ai.OpenAiResponsesClient
+import dev.magullodev.aiapps.core.ai.AiError
+import dev.magullodev.aiapps.core.ai.StructuredGeneration
+import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
-import dev.magullodev.quiz10.systems.quiz10.coverage.CoveragePlanner
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationMenu
+import dev.magullodev.quiz10.systems.quiz10.preparation.QuizContentPlanner
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
 import dev.magullodev.quiz10.systems.quiz10.progress.PlayerProgress
-import dev.magullodev.quiz10.systems.quiz10.question.QuestionGenerator
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10Flow
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowState
 import kotlin.system.exitProcess
@@ -35,23 +37,17 @@ fun main(args: Array<String>) {
         readTopic(input, output)
     }
 
-    val model = System.getenv("QUIZ10_COVERAGE_MODEL")
-    if (model.isNullOrBlank()) {
-        fail("CONFIGURATION_ERROR: QUIZ10_COVERAGE_MODEL debe contener un modelo no vacío")
-    }
-    val questionModel = System.getenv("QUIZ10_QUESTION_MODEL")
-    if (questionModel.isNullOrBlank()) {
-        fail("CONFIGURATION_ERROR: QUIZ10_QUESTION_MODEL debe contener un modelo no vacío")
-    }
     val config = when (val result = EnvironmentConfig.load()) {
         is Outcome.Success -> result.value
         is Outcome.Failure -> fail("CONFIGURATION_ERROR: ${result.error}")
     }
     val transport = UrlConnectionHttpTransport(5_000, 30_000)
     val client = OpenAiResponsesClient(config, transport)
-    val planner = CoveragePlanner(model, client::generate)
-    val generator = QuestionGenerator(questionModel, client::generate)
-    val preparer = QuizPreparer(planner::plan, generator::generate)
+    val preparer = try {
+        createQuizPreparer(System::getenv, client::generate)
+    } catch (error: IllegalArgumentException) {
+        fail(error.message ?: "CONFIGURATION_ERROR")
+    }
     var updatedProgress = playerProgress
     var latestFinished: Quiz10FlowState.Finished? = null
 
@@ -89,6 +85,18 @@ fun main(args: Array<String>) {
     output.flush()
 }
 
+internal fun createQuizPreparer(
+    environment: (String) -> String?,
+    generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
+): QuizPreparer {
+    val model = environment("QUIZ10_COVERAGE_MODEL")
+    require(!model.isNullOrBlank()) {
+        "CONFIGURATION_ERROR: QUIZ10_COVERAGE_MODEL debe contener un modelo no vacío"
+    }
+    val planner = QuizContentPlanner(model, generateStructured)
+    return QuizPreparer(planner::plan)
+}
+
 private fun playQuiz(
     topic: String,
     preparer: QuizPreparer,
@@ -99,7 +107,6 @@ private fun playQuiz(
         is Outcome.Success -> result.value
         is Outcome.Failure -> when (val error = result.error) {
             is QuizPreparationError.PlanningFailed -> fail("PLANNING_ERROR: ${error.cause}")
-            is QuizPreparationError.GenerationFailed -> fail("QUESTION_GENERATION_ERROR: ${error.cause}")
         }
     }
 
