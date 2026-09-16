@@ -11,6 +11,7 @@ class QuizAnswerRecordTest {
     private fun question() = QuizQuestion(
         text = "Question",
         options = listOf("A", "B", "C", "D"),
+        feedbackByOption = listOf("FA", "FB", "FC", "FD"),
         correctOptionIndex = 2,
     )
 

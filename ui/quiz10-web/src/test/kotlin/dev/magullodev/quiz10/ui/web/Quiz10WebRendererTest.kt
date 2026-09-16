@@ -31,7 +31,7 @@ class Quiz10WebRendererTest {
             questionNumber = 1,
             totalQuestions = 10,
             area = "History",
-            question = QuizQuestion("Q", listOf("A", "B", "C", "D"), 0),
+            question = QuizQuestion("Q", listOf("A", "B", "C", "D"), listOf("FA", "FB", "FC", "FD"), 0),
             answeredQuestions = 0,
             correctAnswers = 0,
         )
@@ -51,7 +51,7 @@ class Quiz10WebRendererTest {
             questionNumber = 2,
             totalQuestions = 10,
             area = "History",
-            question = QuizQuestion("Capital?", listOf("A", "B", "C", "D"), 1),
+            question = QuizQuestion("Capital?", listOf("A", "B", "C", "D"), listOf("FA", "FB", "FC", "FD"), 1),
             answeredQuestions = 1,
             correctAnswers = 1,
         )
@@ -61,7 +61,7 @@ class Quiz10WebRendererTest {
             playerName = "Ada",
             topic = "Tema",
             state = state,
-            correction = Quiz10WebRenderer.Correction(isCorrect = false, correctAnswer = "B"),
+            correction = Quiz10WebRenderer.Correction(isCorrect = false, correctAnswer = "B", selectedFeedback = "Porque A contradice el dato."),
         )
 
         assertContains(html, "Pregunta 2/10")
@@ -70,6 +70,7 @@ class Quiz10WebRendererTest {
         assertContains(html, "Aciertos: 1")
         assertContains(html, "❌ INCORRECTO")
         assertContains(html, "Respuesta correcta: B")
+        assertContains(html, "Porque A contradice el dato.")
     }
 
     @Test
@@ -111,12 +112,22 @@ class Quiz10WebRendererTest {
             questionNumber = 1,
             totalQuestions = 10,
             area = "A & B",
-            question = QuizQuestion("<Q?>", listOf("<A>", "\"B\"", "C & D", "'E'"), 0),
+            question = QuizQuestion("<Q?>", listOf("<A>", "\"B\"", "C & D", "'E'"), listOf("<FA>", "\"FB\"", "FC & FD", "'FE'"), 0),
             answeredQuestions = 0,
             correctAnswers = 0,
         )
 
-        val html = renderer.renderQuestion("session-1", dangerousName, dangerousTopic, state)
+        val html = renderer.renderQuestion(
+            "session-1",
+            dangerousName,
+            dangerousTopic,
+            state,
+            correction = Quiz10WebRenderer.Correction(
+                isCorrect = false,
+                correctAnswer = "<Correct>",
+                selectedFeedback = "<b>Feedback & detalle</b>",
+            ),
+        )
 
         assertContains(html, "&lt;Ada &amp; Bob&gt;")
         assertContains(html, "Tema &quot;X&quot; &lt;script&gt;")
@@ -125,6 +136,7 @@ class Quiz10WebRendererTest {
         assertContains(html, "&quot;B&quot;")
         assertContains(html, "C &amp; D")
         assertContains(html, "&#39;E&#39;")
+        assertContains(html, "&lt;b&gt;Feedback &amp; detalle&lt;/b&gt;")
     }
 
     private fun finishedState(correctAnswers: Int, failedIndices: List<Int>): Quiz10FlowState.Finished {
@@ -146,7 +158,14 @@ class Quiz10WebRendererTest {
         val prepared = PreparedQuiz(
             topic = "Historia",
             route = route,
-            questions = List(10) { index -> QuizQuestion("Question $index", listOf("A", "B", "C", "D"), PreparedQuiz.correctOptionSequence[index]) },
+            questions = List(10) { index ->
+                QuizQuestion(
+                    "Question $index",
+                    listOf("A", "B", "C", "D"),
+                    listOf("FA", "FB", "FC", "FD"),
+                    PreparedQuiz.correctOptionSequence[index],
+                )
+            },
         )
         val records = prepared.questions.mapIndexed { idx, q ->
             val selected = if ((idx + 1) in failedIndices) (q.correctOptionIndex + 1) % 4 else q.correctOptionIndex

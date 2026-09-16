@@ -113,6 +113,7 @@ private fun playQuiz(
         val answered = flow.answer(selectedIndex)
         val correction = if (answered.isCorrect) "✅ CORRECTO" else "❌ INCORRECTO"
         output.appendLine("$correction — ${questionState.question.options[questionState.question.correctOptionIndex]}")
+        output.appendLine(questionState.question.feedbackFor(selectedIndex))
         output.appendLine("Progreso: ${answered.answeredQuestions}/10")
         output.appendLine("Aciertos: ${answered.correctAnswers}")
         output.appendLine()

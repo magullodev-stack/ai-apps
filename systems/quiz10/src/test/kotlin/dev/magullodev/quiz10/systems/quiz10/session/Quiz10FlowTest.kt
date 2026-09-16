@@ -36,6 +36,7 @@ class Quiz10FlowTest {
             QuizQuestion(
                 text = "Question $index",
                 options = listOf("Option 0", "Option 1", "Option 2", "Option 3"),
+                feedbackByOption = listOf("F0", "F1", "F2", "F3"),
                 correctOptionIndex = PreparedQuiz.correctOptionSequence[index],
             )
         },

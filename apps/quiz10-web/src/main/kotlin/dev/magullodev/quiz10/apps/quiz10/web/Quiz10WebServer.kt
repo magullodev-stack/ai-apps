@@ -148,6 +148,7 @@ class Quiz10WebServer(
                             correction = Quiz10WebRenderer.Correction(
                                 isCorrect = answered.isCorrect,
                                 correctAnswer = answered.question.options[answered.question.correctOptionIndex],
+                                selectedFeedback = answered.question.feedbackFor(selected),
                             ),
                         ),
                     )

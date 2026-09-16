@@ -33,10 +33,24 @@ class QuestionGeneratorTest {
         knowledge = "Founding year",
         answer = "753 BC",
     )
-    private val distractors = listOf("509 BC", "27 BC", "476 AD")
+    private val distractors = listOf(
+        "509 BC" to "Marca el inicio de la República, no la fundación.",
+        "27 BC" to "Corresponde al inicio del Principado.",
+        "476 AD" to "Se relaciona con la caída del Imperio de Occidente.",
+    )
+    private val correctExplanation = "753 BC es la fecha tradicionalmente aceptada para la fundación de Roma."
     private val validFields = buildJsonObject {
         put("question", "When was Rome founded?")
-        put("distractors", JsonArray(distractors.map { JsonPrimitive(it) }))
+        put("correctExplanation", correctExplanation)
+        put(
+            "distractors",
+            JsonArray(distractors.map { (text, explanation) ->
+                buildJsonObject {
+                    put("text", text)
+                    put("explanation", explanation)
+                }
+            }),
+        )
     }
 
     private class ControlledGeneration(
@@ -93,7 +107,13 @@ class QuestionGeneratorTest {
 
             val question = assertIs<Outcome.Success<QuizQuestion>>(result).value
             assertEquals("When was Rome founded?", question.text)
-            assertEquals(distractors.toMutableList().apply { add(index, itemWithWhitespace.answer) }, question.options)
+            val expectedOptions = distractors.map { it.first }.toMutableList().apply { add(index, itemWithWhitespace.answer) }
+            val expectedFeedback = distractors.map { it.second }.toMutableList().apply { add(index, correctExplanation) }
+            assertEquals(expectedOptions, question.options)
+            assertEquals(expectedFeedback[0], question.feedbackFor(0))
+            assertEquals(expectedFeedback[1], question.feedbackFor(1))
+            assertEquals(expectedFeedback[2], question.feedbackFor(2))
+            assertEquals(expectedFeedback[3], question.feedbackFor(3))
             assertEquals(index, question.correctOptionIndex)
         }
     }
@@ -114,29 +134,40 @@ class QuestionGeneratorTest {
         }
         for (instruction in listOf(
             "pregunta breve", "exactamente knowledge sobre referent", "contexto necesario de group y area",
-            "tres", "plausibles pero falsas", "breves y comparables en extensión y precisión",
+            "correctExplanation", "text y explanation", "plausibles pero falsas",
+            "breves y comparables en extensión y precisión", "sin anticipar contenidos de preguntas posteriores",
         )) {
             assertTrue(request.input.contains(instruction), instruction)
         }
     }
 
     @Test
-    fun schemaRequiresQuestionAndExactlyThreeStringDistractorsWithoutAdditionalProperties() {
+    fun schemaRequiresQuestionCorrectExplanationAndDistractorsWithTextAndExplanation() {
         val generation = generation()
         QuestionGenerator("test-model", generation::generate).generate(item, 0)
 
         val schema = Json.parseToJsonElement(generation.requests.single().schemaJson).jsonObject
         assertEquals(JsonPrimitive("object"), schema["type"])
         assertEquals(JsonPrimitive(false), schema["additionalProperties"])
-        assertEquals(setOf("question", "distractors"), schema.getValue("required").jsonArray.map { it.jsonPrimitive.content }.toSet())
+        assertEquals(
+            setOf("question", "correctExplanation", "distractors"),
+            schema.getValue("required").jsonArray.map { it.jsonPrimitive.content }.toSet(),
+        )
         val properties = schema.getValue("properties").jsonObject
-        assertEquals(setOf("question", "distractors"), properties.keys)
+        assertEquals(setOf("question", "correctExplanation", "distractors"), properties.keys)
         assertEquals(JsonPrimitive("string"), properties.getValue("question").jsonObject["type"])
+        assertEquals(JsonPrimitive("string"), properties.getValue("correctExplanation").jsonObject["type"])
         val distractorSchema = properties.getValue("distractors").jsonObject
         assertEquals(JsonPrimitive("array"), distractorSchema["type"])
         assertEquals(JsonPrimitive(3), distractorSchema["minItems"])
         assertEquals(JsonPrimitive(3), distractorSchema["maxItems"])
-        assertEquals(JsonPrimitive("string"), distractorSchema.getValue("items").jsonObject["type"])
+        val distractorItem = distractorSchema.getValue("items").jsonObject
+        assertEquals(JsonPrimitive("object"), distractorItem["type"])
+        assertEquals(JsonPrimitive(false), distractorItem["additionalProperties"])
+        assertEquals(
+            setOf("text", "explanation"),
+            distractorItem.getValue("required").jsonArray.map { it.jsonPrimitive.content }.toSet(),
+        )
     }
 
     @Test
@@ -179,33 +210,61 @@ class QuestionGeneratorTest {
     }
 
     @Test
+    fun blankOrNonStringCorrectExplanationIsInvalid() {
+        for (value in listOf(
+            JsonPrimitive(""), JsonPrimitive(" \t\n"), JsonNull, JsonPrimitive(42),
+            JsonPrimitive(true), JsonArray(emptyList()), JsonObject(emptyMap()),
+        )) {
+            assertInvalid(changedField("correctExplanation", value))
+        }
+    }
+
+    @Test
     fun nonArrayOrIncorrectNumberOfDistractorsIsInvalid() {
         for (value in listOf(JsonNull, JsonPrimitive("distractors"), JsonPrimitive(3), JsonObject(emptyMap()))) {
             assertInvalid(changedField("distractors", value))
         }
         for (count in listOf(0, 1, 2, 4)) {
-            assertInvalid(changedField("distractors", JsonArray(List(count) { JsonPrimitive("Distractor $it") })))
-        }
-    }
-
-    @Test
-    fun blankOrNonStringDistractorsAreInvalidAtEveryPosition() {
-        for (index in distractors.indices) {
-            for (value in listOf(
-                JsonPrimitive(""), JsonPrimitive(" \t\n"), JsonNull, JsonPrimitive(42),
-                JsonPrimitive(true), JsonArray(emptyList()), JsonObject(emptyMap()),
-            )) {
-                val invalid = distractors.map<String, JsonElement> { JsonPrimitive(it) }.toMutableList()
-                invalid[index] = value
-                assertInvalid(changedField("distractors", JsonArray(invalid)))
-            }
+            assertInvalid(
+                changedField(
+                    "distractors",
+                    JsonArray(
+                        List(count) {
+                            buildJsonObject {
+                                put("text", "Distractor $it")
+                                put("explanation", "Explanation $it")
+                            }
+                        },
+                    ),
+                ),
+            )
         }
     }
 
     @Test
     fun duplicateDistractorsAreInvalidIgnoringCaseAndOuterWhitespace() {
         for (duplicate in listOf("476 AD", "476 ad", " \t476 aD\n ")) {
-            assertInvalid(changedField("distractors", JsonArray(listOf(duplicate, "27 BC", "476 AD").map { JsonPrimitive(it) })))
+            assertInvalid(
+                changedField(
+                    "distractors",
+                    JsonArray(
+                        listOf(
+                            buildJsonObject {
+                                put("text", duplicate)
+                                put("explanation", "Explanation A")
+                            },
+                            buildJsonObject {
+                                put("text", "27 BC")
+                                put("explanation", "Explanation B")
+                            },
+                            buildJsonObject {
+                                put("text", "476 AD")
+                                put("explanation", "Explanation C")
+                            },
+                        ),
+                    ),
+                ),
+            )
         }
     }
 
@@ -213,9 +272,17 @@ class QuestionGeneratorTest {
     fun distractorMatchingAnswerIsInvalidIgnoringCaseAndOuterWhitespace() {
         for (index in distractors.indices) {
             for (answer in listOf("753 BC", "753 bc", " \t753 bC\n ")) {
-                val invalid = distractors.toMutableList().apply { this[index] = answer }
+                val invalid = distractors.toMutableList().apply { this[index] = answer to "Explanation $index" }
                 assertInvalid(
-                    changedField("distractors", JsonArray(invalid.map { JsonPrimitive(it) })),
+                    changedField(
+                        "distractors",
+                        JsonArray(invalid.map { (text, explanation) ->
+                            buildJsonObject {
+                                put("text", text)
+                                put("explanation", explanation)
+                            }
+                        }),
+                    ),
                     item.copy(answer = " \t753 BC\n "),
                 )
             }
@@ -223,15 +290,60 @@ class QuestionGeneratorTest {
     }
 
     @Test
+    fun rejectsInvalidDistractorStructureOrBlankFeedback() {
+        val noExplanation = JsonArray(
+            listOf(
+                buildJsonObject { put("text", "509 BC") },
+                buildJsonObject { put("text", "27 BC"); put("explanation", "ok") },
+                buildJsonObject { put("text", "476 AD"); put("explanation", "ok") },
+            ),
+        )
+        assertInvalid(changedField("distractors", noExplanation))
+
+        val blankExplanation = JsonArray(
+            listOf(
+                buildJsonObject { put("text", "509 BC"); put("explanation", " ") },
+                buildJsonObject { put("text", "27 BC"); put("explanation", "ok") },
+                buildJsonObject { put("text", "476 AD"); put("explanation", "ok") },
+            ),
+        )
+        assertInvalid(changedField("distractors", blankExplanation))
+    }
+
+    @Test
     fun trimsGeneratedQuestionAndDistractors() {
         val fields = buildJsonObject {
             put("question", " \tWhen was Rome founded?\n ")
-            put("distractors", JsonArray(distractors.map { JsonPrimitive(" \t$it\n ") }))
+            put("correctExplanation", " \t$correctExplanation\n ")
+            put(
+                "distractors",
+                JsonArray(distractors.map { (text, explanation) ->
+                    buildJsonObject {
+                        put("text", " \t$text\n ")
+                        put("explanation", " \t$explanation\n ")
+                    }
+                }),
+            )
         }
         val result = QuestionGenerator("test-model", generation(fields.toString())::generate).generate(item, 0)
 
         val question = assertIs<Outcome.Success<QuizQuestion>>(result).value
         assertEquals("When was Rome founded?", question.text)
-        assertEquals(listOf(item.answer) + distractors, question.options)
+        assertEquals(listOf(item.answer) + distractors.map { it.first }, question.options)
+        assertEquals(correctExplanation, question.feedbackFor(0))
+        assertEquals(distractors[0].second, question.feedbackFor(1))
+    }
+
+    @Test
+    fun parsesQuestionWithDistractorsAndExplanations() {
+        val result = QuestionGenerator("test-model", generation()::generate).generate(item, 2)
+
+        val question = assertIs<Outcome.Success<QuizQuestion>>(result).value
+        assertEquals("When was Rome founded?", question.text)
+        assertEquals(listOf("509 BC", "27 BC", item.answer, "476 AD"), question.options)
+        assertEquals(correctExplanation, question.feedbackFor(2))
+        assertEquals("Marca el inicio de la República, no la fundación.", question.feedbackFor(0))
+        assertEquals("Corresponde al inicio del Principado.", question.feedbackFor(1))
+        assertEquals("Se relaciona con la caída del Imperio de Occidente.", question.feedbackFor(3))
     }
 }

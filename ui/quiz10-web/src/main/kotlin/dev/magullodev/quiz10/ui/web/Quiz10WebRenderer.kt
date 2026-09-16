@@ -10,6 +10,7 @@ class Quiz10WebRenderer {
     data class Correction(
         val isCorrect: Boolean,
         val correctAnswer: String,
+        val selectedFeedback: String,
     )
 
     fun renderHome(errorMessage: String? = null): String = page("Quiz10 Web") {
@@ -38,7 +39,7 @@ class Quiz10WebRenderer {
         appendLine("<p><strong>Tema:</strong> ${escapeHtml(topic)}</p>")
         if (correction != null) {
             val prefix = if (correction.isCorrect) "✅ CORRECTO" else "❌ INCORRECTO"
-            appendLine("<div class=\"correction\"><p>$prefix</p><p>Respuesta correcta: ${escapeHtml(correction.correctAnswer)}</p></div>")
+            appendLine("<div class=\"correction\"><p>$prefix</p><p>Respuesta correcta: ${escapeHtml(correction.correctAnswer)}</p><p>${escapeHtml(correction.selectedFeedback)}</p></div>")
         }
         appendLine("<h2>Pregunta ${state.questionNumber}/10</h2>")
         appendLine("<p><strong>Área:</strong> ${escapeHtml(state.area)}</p>")

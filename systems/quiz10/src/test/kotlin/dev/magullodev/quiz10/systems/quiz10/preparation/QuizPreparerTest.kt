@@ -31,6 +31,7 @@ class QuizPreparerTest {
     private fun generatedQuestionFor(index: Int) = QuizQuestion(
         text = "Question $index",
         options = listOf("Option 0", "Option 1", "Option 2", "Option 3"),
+        feedbackByOption = listOf("Feedback 0", "Feedback 1", "Feedback 2", "Feedback 3"),
         correctOptionIndex = index,
     )
 

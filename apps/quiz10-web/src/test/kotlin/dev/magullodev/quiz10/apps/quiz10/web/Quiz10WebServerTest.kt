@@ -62,6 +62,23 @@ class Quiz10WebServerTest {
     }
 
     @Test
+    fun answerEndpointDoesNotPrepareAgainDuringQuestionLoop() {
+        val prepareCalls = AtomicInteger(0)
+        withServer(prepareSuccess { prepareCalls.incrementAndGet() }) { baseUrl, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            assertEquals(1, prepareCalls.get())
+
+            repeat(9) {
+                val answer = postForm("$baseUrl/games/$id/answer", mapOf("option" to PreparedQuiz.correctOptionSequence[it].toString()))
+                assertEquals(200, answer.statusCode())
+            }
+
+            assertEquals(1, prepareCalls.get())
+        }
+    }
+
+    @Test
     fun replaySameTopicKeepsProgress() {
         withServer(prepareSuccess()) { baseUrl, _ ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
@@ -182,6 +199,7 @@ class Quiz10WebServerTest {
             QuizQuestion(
                 text = "Question $index",
                 options = listOf("Option 0", "Option 1", "Option 2", "Option 3"),
+                feedbackByOption = listOf("F0", "F1", "F2", "F3"),
                 correctOptionIndex = PreparedQuiz.correctOptionSequence[index],
             )
         }

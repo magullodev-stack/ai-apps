@@ -27,9 +27,13 @@ class QuestionGenerator(
             input = """
                 Genera una pregunta breve para Quiz10 que evalúe exactamente knowledge sobre referent.
                 Incluye el contexto necesario de group y area para que la pregunta sea inequívoca.
-                La respuesta correcta es answer. Devuelve la pregunta en question y exactamente tres
-                alternativas plausibles pero falsas en distractors, distintas entre sí y de answer.
-                Las cuatro opciones deben ser breves y comparables en extensión y precisión.
+                La respuesta correcta es answer. Devuelve la pregunta en question, la explicación breve
+                de por qué answer es correcta en correctExplanation y exactamente tres distractores en
+                distractors. Cada distractor debe incluir text y explanation.
+                Deben ser exactamente tres distractores plausibles pero falsas y cada explanation debe señalar el rasgo
+                concreto que permite descartarlo frente a answer.
+                Las cuatro opciones deben ser breves y comparables en extensión y precisión, con
+                explicación breve centrada en el conocimiento evaluado y sin anticipar contenidos de preguntas posteriores.
                 area: ${item.area}
                 group: ${item.group}
                 referent: ${item.referent}
@@ -53,16 +57,27 @@ class QuestionGenerator(
 
     private fun parseQuestion(text: String, answer: String, correctOptionIndex: Int): QuizQuestion {
         val fields = requireNotNull(Json.parseToJsonElement(text) as? JsonObject)
-        require(fields.keys == setOf("question", "distractors"))
+        require(fields.keys == setOf("question", "correctExplanation", "distractors"))
         val question = textValue(fields["question"])
+        val correctExplanation = textValue(fields["correctExplanation"])
         val distractors = requireNotNull(fields["distractors"] as? JsonArray)
         require(distractors.size == 3)
-        val options = distractors.map { textValue(it) }.toMutableList()
+
+        val distractorPairs = distractors.map { distractor ->
+            val distractorObject = requireNotNull(distractor as? JsonObject)
+            require(distractorObject.keys == setOf("text", "explanation"))
+            textValue(distractorObject["text"]) to textValue(distractorObject["explanation"])
+        }
+
+        val options = distractorPairs.map { it.first }.toMutableList()
+        val feedback = distractorPairs.map { it.second }.toMutableList()
         val normalized = options.map { it.lowercase() }
         require(normalized.toSet().size == 3)
         require(answer.trim().lowercase() !in normalized)
+
         options.add(correctOptionIndex, answer)
-        return QuizQuestion(question, options, correctOptionIndex)
+        feedback.add(correctOptionIndex, correctExplanation)
+        return QuizQuestion(question, options, feedback, correctOptionIndex)
     }
 
     private fun textValue(element: JsonElement?): String {
@@ -77,14 +92,23 @@ class QuestionGenerator(
               "type": "object",
               "properties": {
                 "question": {"type": "string"},
+                                "correctExplanation": {"type": "string"},
                 "distractors": {
                   "type": "array",
                   "minItems": 3,
                   "maxItems": 3,
-                  "items": {"type": "string"}
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "text": {"type": "string"},
+                                            "explanation": {"type": "string"}
+                                        },
+                                        "required": ["text", "explanation"],
+                                        "additionalProperties": false
+                                    }
                 }
               },
-              "required": ["question", "distractors"],
+                            "required": ["question", "correctExplanation", "distractors"],
               "additionalProperties": false
             }
         """.trimIndent()
