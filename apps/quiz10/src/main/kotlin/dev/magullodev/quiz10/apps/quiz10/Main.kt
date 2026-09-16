@@ -5,6 +5,7 @@ import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoveragePlanner
+import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
 import dev.magullodev.quiz10.systems.quiz10.progress.PlayerProgress
@@ -89,6 +90,7 @@ fun main(args: Array<String>) {
     if (state is Quiz10FlowState.Finished) {
         updatedProgress = updatedProgress.recordQuiz(state.correctAnswers)
         renderPlayerProgress(updatedProgress, output)
+        renderNavigationMenu(updatedProgress.playerName, topic, output)
     }
 
     output.flush()
@@ -137,6 +139,15 @@ private fun renderPlayerProgress(progress: PlayerProgress, output: java.io.Buffe
     output.appendLine("Fallos acumulados: ${progress.incorrectAnswers}")
     output.appendLine("Porcentaje acumulado: ${progress.accuracyPercent}%")
     output.appendLine("Estrellas: ⭐ ${progress.stars}")
+}
+
+private fun renderNavigationMenu(playerName: String, topic: String, output: java.io.BufferedWriter) {
+    val menu = Quiz10NavigationMenu.forTopic(topic)
+    output.appendLine("=== Panel de navegación ===")
+    menu.options.forEachIndexed { index, entry ->
+        output.appendLine("${index + 1}. ${entry.label}")
+    }
+    output.appendLine("$playerName, escribe un número y seguimos.")
 }
 
 private fun fail(message: String): Nothing {
