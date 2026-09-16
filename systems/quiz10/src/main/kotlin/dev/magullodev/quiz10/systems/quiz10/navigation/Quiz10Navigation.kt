@@ -24,6 +24,11 @@ class Quiz10NavigationMenu private constructor(
             Quiz10NavigationEntry(Quiz10NavigationOption.CREATE_IMAGE_QUIZ, "🖼️ Crear una ImageQuiz con DALL·E"),
         )
 
+    fun select(number: Int): Quiz10NavigationOption {
+        require(number in 1..options.size) { "Navigation selection must be between 1 and ${options.size}" }
+        return options[number - 1].option
+    }
+
     companion object {
         fun forTopic(topic: String): Quiz10NavigationMenu {
             val normalized = topic.trim()

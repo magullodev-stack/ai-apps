@@ -5,6 +5,7 @@ import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoveragePlanner
+import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
@@ -55,7 +56,30 @@ fun main(args: Array<String>) {
     val planner = CoveragePlanner(model, client::generate)
     val generator = QuestionGenerator(questionModel, client::generate)
     val preparer = QuizPreparer(planner::plan, generator::generate)
+    var updatedProgress = playerProgress
 
+    while (true) {
+        val finishedState = playQuiz(topic, preparer, input, output)
+        updatedProgress = updatedProgress.recordQuiz(finishedState.correctAnswers)
+        renderPlayerProgress(updatedProgress, output)
+        val menu = renderNavigationMenu(updatedProgress.playerName, topic, output)
+        val selectedOption = readNavigationSelection(menu, input, output)
+
+        if (selectedOption != Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC) {
+            output.appendLine("Opción todavía no disponible.")
+            break
+        }
+    }
+
+    output.flush()
+}
+
+private fun playQuiz(
+    topic: String,
+    preparer: QuizPreparer,
+    input: java.io.BufferedReader,
+    output: java.io.BufferedWriter,
+): Quiz10FlowState.Finished {
     val preparedQuiz = when (val result = preparer.prepare(topic)) {
         is Outcome.Success -> result.value
         is Outcome.Failure -> when (val error = result.error) {
@@ -67,7 +91,6 @@ fun main(args: Array<String>) {
     val flow = Quiz10Flow(preparedQuiz)
     var state: Quiz10FlowState = flow.start()
     renderState(state, output)
-    var updatedProgress = playerProgress
 
     while (state !is Quiz10FlowState.Finished) {
         val questionState = state as? Quiz10FlowState.Question ?: break
@@ -87,13 +110,8 @@ fun main(args: Array<String>) {
         renderState(state, output)
     }
 
-    if (state is Quiz10FlowState.Finished) {
-        updatedProgress = updatedProgress.recordQuiz(state.correctAnswers)
-        renderPlayerProgress(updatedProgress, output)
-        renderNavigationMenu(updatedProgress.playerName, topic, output)
-    }
-
-    output.flush()
+    return state as? Quiz10FlowState.Finished
+        ?: error("Quiz flow did not finish as expected")
 }
 
 private fun renderState(state: Quiz10FlowState, output: java.io.BufferedWriter) {
@@ -141,13 +159,37 @@ private fun renderPlayerProgress(progress: PlayerProgress, output: java.io.Buffe
     output.appendLine("Estrellas: ⭐ ${progress.stars}")
 }
 
-private fun renderNavigationMenu(playerName: String, topic: String, output: java.io.BufferedWriter) {
+private fun renderNavigationMenu(playerName: String, topic: String, output: java.io.BufferedWriter): Quiz10NavigationMenu {
     val menu = Quiz10NavigationMenu.forTopic(topic)
     output.appendLine("=== Panel de navegación ===")
     menu.options.forEachIndexed { index, entry ->
         output.appendLine("${index + 1}. ${entry.label}")
     }
     output.appendLine("$playerName, escribe un número y seguimos.")
+    return menu
+}
+
+private fun readNavigationSelection(
+    menu: Quiz10NavigationMenu,
+    input: java.io.BufferedReader,
+    output: java.io.BufferedWriter,
+): Quiz10NavigationOption {
+    while (true) {
+        output.append("Selección (1-6): ")
+        output.flush()
+        val line = input.readLine() ?: fail("INPUT_EOF: no se ha recibido una selección")
+        val value = line.trim().toIntOrNull()
+        if (value == null) {
+            output.appendLine("Entrada inválida. Escribe un número entre 1 y 6.")
+            continue
+        }
+
+        try {
+            return menu.select(value)
+        } catch (_: IllegalArgumentException) {
+            output.appendLine("Entrada inválida. Escribe un número entre 1 y 6.")
+        }
+    }
 }
 
 private fun fail(message: String): Nothing {

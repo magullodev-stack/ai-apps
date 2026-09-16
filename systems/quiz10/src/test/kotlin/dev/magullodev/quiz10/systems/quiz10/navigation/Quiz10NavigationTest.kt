@@ -73,4 +73,31 @@ class Quiz10NavigationTest {
         assertEquals("📚 Ver fuentes y enlaces de interés", menu.options[4].label)
         assertEquals("🖼️ Crear una ImageQuiz con DALL·E", menu.options[5].label)
     }
+
+    @Test
+    fun selectMapsOneToSixToCurrentOptions() {
+        val menu = Quiz10NavigationMenu.forTopic("Historia")
+
+        assertEquals(Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC, menu.select(1))
+        assertEquals(Quiz10NavigationOption.RANDOM_QUIZ, menu.select(2))
+        assertEquals(Quiz10NavigationOption.CHOOSE_ANOTHER_TOPIC, menu.select(3))
+        assertEquals(Quiz10NavigationOption.REVIEW_WRONG_ANSWERS, menu.select(4))
+        assertEquals(Quiz10NavigationOption.VIEW_SOURCES, menu.select(5))
+        assertEquals(Quiz10NavigationOption.CREATE_IMAGE_QUIZ, menu.select(6))
+    }
+
+    @Test
+    fun selectRejectsOutOfRangeValues() {
+        val menu = Quiz10NavigationMenu.forTopic("Historia")
+
+        assertFailsWith<IllegalArgumentException> { menu.select(0) }
+        assertFailsWith<IllegalArgumentException> { menu.select(7) }
+    }
+
+    @Test
+    fun optionOneResolvesToAnotherQuizSameTopic() {
+        val menu = Quiz10NavigationMenu.forTopic("Historia")
+
+        assertEquals(Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC, menu.select(1))
+    }
 }
