@@ -18,6 +18,10 @@ kotlin {
     jvmToolchain(21)
 }
 
+tasks.jar {
+    archiveBaseName.set("quiz10-app")
+}
+
 application {
     mainClass.set("dev.magullodev.quiz10.apps.quiz10.MainKt")
 }
