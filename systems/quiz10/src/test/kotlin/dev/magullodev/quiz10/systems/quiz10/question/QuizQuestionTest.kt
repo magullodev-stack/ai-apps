@@ -3,6 +3,8 @@ package dev.magullodev.quiz10.systems.quiz10.question
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class QuizQuestionTest {
     private val options = listOf("753 BC", "509 BC", "27 BC", "476 AD")
@@ -46,6 +48,35 @@ class QuizQuestionTest {
     fun rejectsOutOfRangeCorrectOptionIndex() {
         for (index in listOf(Int.MIN_VALUE, -1, 4, Int.MAX_VALUE)) {
             assertFailsWith<IllegalArgumentException> { QuizQuestion("Question?", options, index) }
+        }
+    }
+
+    @Test
+    fun correctOptionReturnsTrue() {
+        for (index in 0..3) {
+            val question = QuizQuestion("Question?", options, index)
+
+            assertTrue(question.isCorrect(index))
+        }
+    }
+
+    @Test
+    fun otherThreeOptionsReturnFalse() {
+        for (correctIndex in 0..3) {
+            val question = QuizQuestion("Question?", options, correctIndex)
+
+            for (index in (0..3).filter { it != correctIndex }) {
+                assertFalse(question.isCorrect(index))
+            }
+        }
+    }
+
+    @Test
+    fun isCorrectRejectsOutOfRangeOptionIndex() {
+        val question = QuizQuestion("Question?", options, 0)
+
+        for (index in listOf(Int.MIN_VALUE, -1, 4, Int.MAX_VALUE)) {
+            assertFailsWith<IllegalArgumentException> { question.isCorrect(index) }
         }
     }
 

@@ -46,6 +46,19 @@ fun main(args: Array<String>) {
     question.options.forEachIndexed { index, option ->
         output.appendLine("${'A' + index}) $option")
     }
+
+    val input = System.`in`.bufferedReader(Charsets.UTF_8)
+    while (true) {
+        output.append("Respuesta (A-D): ")
+        output.flush()
+        val answer = input.readLine() ?: fail("INPUT_EOF: no se ha recibido una respuesta")
+        val option = answer.trim().singleOrNull()?.uppercaseChar()
+        if (option == null || option !in 'A'..'D') continue
+
+        val correction = if (question.isCorrect(option - 'A')) "✅ CORRECTO" else "❌ INCORRECTO"
+        output.appendLine("$correction — ${question.options[question.correctOptionIndex]}")
+        break
+    }
     output.flush()
 }
 

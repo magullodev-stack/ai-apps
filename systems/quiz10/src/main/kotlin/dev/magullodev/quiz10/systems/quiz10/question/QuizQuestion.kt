@@ -15,4 +15,9 @@ class QuizQuestion(
         require(this.options.all { it.isNotBlank() }) { "Question options must not be blank" }
         require(correctOptionIndex in 0..3) { "Correct option index must be between 0 and 3" }
     }
+
+    fun isCorrect(optionIndex: Int): Boolean {
+        require(optionIndex in 0..3) { "Option index must be between 0 and 3" }
+        return optionIndex == correctOptionIndex
+    }
 }
