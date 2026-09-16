@@ -7,6 +7,7 @@ import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoveragePlanner
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
+import dev.magullodev.quiz10.systems.quiz10.progress.PlayerProgress
 import dev.magullodev.quiz10.systems.quiz10.question.QuestionGenerator
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10Flow
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowState
@@ -15,6 +16,15 @@ import kotlin.system.exitProcess
 fun main(args: Array<String>) {
     val output = System.out.bufferedWriter(Charsets.UTF_8)
     val input = System.`in`.bufferedReader(Charsets.UTF_8)
+    output.append("Nombre: ")
+    output.flush()
+    val playerName = input.readLine() ?: fail("INPUT_EOF: no se ha recibido un nombre")
+    val playerProgress = try {
+        PlayerProgress.start(playerName)
+    } catch (_: IllegalArgumentException) {
+        fail("INPUT_ERROR: el nombre no puede estar vacío")
+    }
+
     val topic = when {
         args.isNotEmpty() -> args.joinToString(" ")
         else -> {
@@ -56,6 +66,7 @@ fun main(args: Array<String>) {
     val flow = Quiz10Flow(preparedQuiz)
     var state: Quiz10FlowState = flow.start()
     renderState(state, output)
+    var updatedProgress = playerProgress
 
     while (state !is Quiz10FlowState.Finished) {
         val questionState = state as? Quiz10FlowState.Question ?: break
@@ -73,6 +84,11 @@ fun main(args: Array<String>) {
             is Outcome.Failure -> error("Unexpected failure while advancing prepared quiz flow: ${next.error}")
         }
         renderState(state, output)
+    }
+
+    if (state is Quiz10FlowState.Finished) {
+        updatedProgress = updatedProgress.recordQuiz(state.correctAnswers)
+        renderPlayerProgress(updatedProgress, output)
     }
 
     output.flush()
@@ -112,6 +128,15 @@ private fun readValidAnswer(input: java.io.BufferedReader, output: java.io.Buffe
         }
         return option - 'A'
     }
+}
+
+private fun renderPlayerProgress(progress: PlayerProgress, output: java.io.BufferedWriter) {
+    output.appendLine("=== Progreso global ===")
+    output.appendLine("Nombre: ${progress.playerName}")
+    output.appendLine("Aciertos acumulados: ${progress.correctAnswers}")
+    output.appendLine("Fallos acumulados: ${progress.incorrectAnswers}")
+    output.appendLine("Porcentaje acumulado: ${progress.accuracyPercent}%")
+    output.appendLine("Estrellas: ⭐ ${progress.stars}")
 }
 
 private fun fail(message: String): Nothing {
