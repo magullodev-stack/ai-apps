@@ -27,16 +27,12 @@ fun main(args: Array<String>) {
         fail("INPUT_ERROR: el nombre no puede estar vacío")
     }
 
-    val topic = when {
-        args.isNotEmpty() -> args.joinToString(" ")
-        else -> {
-            output.append("Tema: ")
-            output.flush()
-            input.readLine() ?: fail("INPUT_EOF: no se ha recibido un tema")
+    var currentTopic = if (args.isNotEmpty()) {
+        args.joinToString(" ").trim().also {
+            if (it.isBlank()) fail("INPUT_ERROR: el tema no puede estar vacío")
         }
-    }.trim()
-    if (topic.isBlank()) {
-        fail("INPUT_ERROR: el tema no puede estar vacío")
+    } else {
+        readTopic(input, output)
     }
 
     val model = System.getenv("QUIZ10_COVERAGE_MODEL")
@@ -59,15 +55,25 @@ fun main(args: Array<String>) {
     var updatedProgress = playerProgress
 
     while (true) {
-        val finishedState = playQuiz(topic, preparer, input, output)
+        val finishedState = playQuiz(currentTopic, preparer, input, output)
         updatedProgress = updatedProgress.recordQuiz(finishedState.correctAnswers)
         renderPlayerProgress(updatedProgress, output)
-        val menu = renderNavigationMenu(updatedProgress.playerName, topic, output)
+        val menu = renderNavigationMenu(updatedProgress.playerName, currentTopic, output)
         val selectedOption = readNavigationSelection(menu, input, output)
 
-        if (selectedOption != Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC) {
-            output.appendLine("Opción todavía no disponible.")
-            break
+        when (selectedOption) {
+            Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC -> continue
+            Quiz10NavigationOption.CHOOSE_ANOTHER_TOPIC -> {
+                currentTopic = readTopic(input, output)
+                continue
+            }
+            Quiz10NavigationOption.RANDOM_QUIZ,
+            Quiz10NavigationOption.REVIEW_WRONG_ANSWERS,
+            Quiz10NavigationOption.VIEW_SOURCES,
+            Quiz10NavigationOption.CREATE_IMAGE_QUIZ -> {
+                output.appendLine("Opción todavía no disponible.")
+                break
+            }
         }
     }
 
@@ -189,6 +195,15 @@ private fun readNavigationSelection(
         } catch (_: IllegalArgumentException) {
             output.appendLine("Entrada inválida. Escribe un número entre 1 y 6.")
         }
+    }
+}
+
+private fun readTopic(input: java.io.BufferedReader, output: java.io.BufferedWriter): String {
+    output.append("Tema: ")
+    output.flush()
+    val topic = input.readLine() ?: fail("INPUT_EOF: no se ha recibido un tema")
+    return topic.trim().also {
+        if (it.isBlank()) fail("INPUT_ERROR: el tema no puede estar vacío")
     }
 }
 
