@@ -3,12 +3,15 @@ package dev.magullodev.quiz10.systems.quiz10.session
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.quiz10.systems.quiz10.preparation.PreparedQuiz
 import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
+import dev.magullodev.quiz10.systems.quiz10.result.QuizAnswerRecord
+import java.util.Collections
 
 class Quiz10Flow(
     private val preparedQuiz: PreparedQuiz,
 ) {
     private var session: QuizSession? = null
     private var currentState: Quiz10FlowState? = null
+    private val answerRecords = mutableListOf<QuizAnswerRecord>()
 
     val state: Quiz10FlowState?
         get() = currentState
@@ -16,6 +19,7 @@ class Quiz10Flow(
     fun start(): Quiz10FlowState.Question {
         val newSession = QuizSession.start(preparedQuiz.route)
         session = newSession
+        answerRecords.clear()
 
         val questionNumber = newSession.currentQuestionNumber ?: error("Prepared quiz unexpectedly has no current question")
         val question = preparedQuiz.questions[questionNumber - 1]
@@ -41,6 +45,12 @@ class Quiz10Flow(
         val isCorrect = questionState.question.isCorrect(selectedOptionIndex)
         val updatedSession = sessionSnapshot.recordAnswer(isCorrect)
         session = updatedSession
+        answerRecords += QuizAnswerRecord(
+            questionNumber = questionState.questionNumber,
+            area = questionState.area,
+            question = questionState.question,
+            selectedOptionIndex = selectedOptionIndex,
+        )
 
         val answeredState = Quiz10FlowState.Answered(
             topic = questionState.topic,
@@ -64,10 +74,13 @@ class Quiz10Flow(
 
         val sessionSnapshot = session ?: throw IllegalStateException("Quiz session not initialized")
         if (answeredState.isLastQuestion || sessionSnapshot.isFinished) {
+            val answersSnapshot = Collections.unmodifiableList(answerRecords.toList())
             val finishedState = Quiz10FlowState.Finished(
                 topic = answeredState.topic,
                 totalQuestions = answeredState.totalQuestions,
                 correctAnswers = answeredState.correctAnswers,
+                answers = answersSnapshot,
+                failedAnswers = Collections.unmodifiableList(answersSnapshot.filter { !it.isCorrect }),
             )
             currentState = finishedState
             return Outcome.Success(finishedState)
@@ -118,5 +131,7 @@ sealed interface Quiz10FlowState {
         val topic: String,
         val totalQuestions: Int,
         val correctAnswers: Int,
+        val answers: List<QuizAnswerRecord>,
+        val failedAnswers: List<QuizAnswerRecord>,
     ) : Quiz10FlowState
 }

@@ -53,26 +53,35 @@ fun main(args: Array<String>) {
     val generator = QuestionGenerator(questionModel, client::generate)
     val preparer = QuizPreparer(planner::plan, generator::generate)
     var updatedProgress = playerProgress
+    var latestFinished: Quiz10FlowState.Finished? = null
 
     while (true) {
         val finishedState = playQuiz(currentTopic, preparer, input, output)
+        latestFinished = finishedState
         updatedProgress = updatedProgress.recordQuiz(finishedState.correctAnswers)
-        renderPlayerProgress(updatedProgress, output)
-        val menu = renderNavigationMenu(updatedProgress.playerName, currentTopic, output)
-        val selectedOption = readNavigationSelection(menu, input, output)
 
-        when (selectedOption) {
-            Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC -> continue
-            Quiz10NavigationOption.CHOOSE_ANOTHER_TOPIC -> {
-                currentTopic = readTopic(input, output)
-                continue
-            }
-            Quiz10NavigationOption.RANDOM_QUIZ,
-            Quiz10NavigationOption.REVIEW_WRONG_ANSWERS,
-            Quiz10NavigationOption.VIEW_SOURCES,
-            Quiz10NavigationOption.CREATE_IMAGE_QUIZ -> {
-                output.appendLine("Opción todavía no disponible.")
-                break
+        while (true) {
+            renderPlayerProgress(updatedProgress, output)
+            val menu = renderNavigationMenu(updatedProgress.playerName, currentTopic, output)
+            val selectedOption = readNavigationSelection(menu, input, output)
+
+            when (selectedOption) {
+                Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC -> break
+                Quiz10NavigationOption.CHOOSE_ANOTHER_TOPIC -> {
+                    currentTopic = readTopic(input, output)
+                    break
+                }
+                Quiz10NavigationOption.REVIEW_WRONG_ANSWERS -> {
+                    renderFailedAnswers(latestFinished, output)
+                    continue
+                }
+                Quiz10NavigationOption.RANDOM_QUIZ,
+                Quiz10NavigationOption.VIEW_SOURCES,
+                Quiz10NavigationOption.CREATE_IMAGE_QUIZ -> {
+                    output.appendLine("Opción todavía no disponible.")
+                    output.flush()
+                    return
+                }
             }
         }
     }
@@ -173,6 +182,21 @@ private fun renderNavigationMenu(playerName: String, topic: String, output: java
     }
     output.appendLine("$playerName, escribe un número y seguimos.")
     return menu
+}
+
+private fun renderFailedAnswers(finishedState: Quiz10FlowState.Finished?, output: java.io.BufferedWriter) {
+    val state = finishedState ?: return
+    if (state.failedAnswers.isEmpty()) {
+        output.appendLine("No tienes respuestas fallidas en este Quiz10.")
+        return
+    }
+
+    state.failedAnswers.forEach { answer ->
+        output.appendLine("Pregunta ${answer.questionNumber}: ${answer.question.text}")
+        output.appendLine("Tu respuesta: ${answer.selectedAnswer}")
+        output.appendLine("Respuesta correcta: ${answer.correctAnswer}")
+        output.appendLine()
+    }
 }
 
 private fun readNavigationSelection(
