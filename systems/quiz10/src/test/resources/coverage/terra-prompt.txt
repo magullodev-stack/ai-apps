@@ -50,15 +50,19 @@ Selecciona el [CONOCIMIENTO] y la [RESPUESTA] de cada fila de modo que su dificu
 
 Cada fila sigue este formato:
 
-**[n]. [DIFICULTAD] · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]**
+**[n]. [DIFICULTAD] · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]**
 
-1. Fácil · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-2. Fácil · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-3. Fácil · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-4. Fácil · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-5. Moderado · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-6. Moderado · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-7. Moderado · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-8. Difícil · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-9. Difícil · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
-10. Muy difícil · [emoji] [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+Contrato conceptual canónico: **dificultad · área · grupo · referente · conocimiento · respuesta**.
+
+La **[DIFICULTAD]** está fijada por la fila y no debe reinterpretarse ni alterarse.
+
+1. Fácil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+2. Fácil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+3. Fácil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+4. Fácil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+5. Moderado · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+6. Moderado · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+7. Moderado · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+8. Difícil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+9. Difícil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
+10. Muy difícil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]

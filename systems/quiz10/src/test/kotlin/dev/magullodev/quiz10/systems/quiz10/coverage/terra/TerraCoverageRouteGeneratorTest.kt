@@ -6,14 +6,14 @@ import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageDifficulty
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRoute
 import kotlinx.serialization.json.*
 import kotlin.test.*
 
 class TerraCoverageRouteGeneratorTest {
-    private val fields = setOf("emoji", "area", "group", "referent", "knowledge", "answer")
+    private val fields = setOf("area", "group", "referent", "knowledge", "answer")
     private val items = List(10) { index ->
         buildJsonObject {
-            put("emoji", "🏛️")
             put("area", "History")
             put("group", "Rome")
             put("referent", "Referent $index")
@@ -74,13 +74,12 @@ class TerraCoverageRouteGeneratorTest {
     }
 
     @Test
-    fun acceptsTenRowsInOrderIncludingRepeatedAreasAndGroups() {
+    fun returnsCanonicalCoverageRouteWithTenPositions() {
         val route = assertIs<Outcome.Success<CoverageRoute>>(generator().generate("Rome")).value
         assertEquals(10, route.items.size)
         assertEquals(List(10) { "Referent $it" }, route.items.map { it.referent })
         assertEquals(setOf("History"), route.items.map { it.area }.toSet())
         assertEquals(setOf("Rome"), route.items.map { it.group }.toSet())
-        assertEquals("🏛️", route.items.first().emoji)
         assertEquals("Knowledge 0", route.items.first().knowledge)
         assertEquals("Answer 0", route.items.first().answer)
         for (count in listOf(0, 1, 9, 11, 12)) {
@@ -121,23 +120,27 @@ class TerraCoverageRouteGeneratorTest {
     }
 
     @Test
-    fun derivesDifficultyFromOneBasedRowWithFourThreeTwoOneDistribution() {
+    fun assignsDifficultyByPositionWithFourThreeTwoOneDistribution() {
         val route = assertIs<Outcome.Success<CoverageRoute>>(generator().generate("Rome")).value
         assertEquals(
             List(4) { CoverageDifficulty.EASY } + List(3) { CoverageDifficulty.MODERATE } +
                 List(2) { CoverageDifficulty.HARD } + CoverageDifficulty.VERY_HARD,
-            (1..10).map(route::difficultyForRow),
+            route.items.map { it.difficulty },
         )
-        for (row in listOf(-1, 0, 11)) {
-            assertFailsWith<IllegalArgumentException> { route.difficultyForRow(row) }
-        }
     }
 
     @Test
-    fun domainValidatesRowsAndProtectsSnapshot() {
+    fun preservesCanonicalRouteInvariants() {
         val valid = assertIs<Outcome.Success<CoverageRoute>>(generator().generate("Rome")).value.items
-        assertFailsWith<IllegalArgumentException> { valid.first().copy(emoji = " ") }
-        assertFailsWith<IllegalArgumentException> { CoverageRoute.of(valid.take(9)) }
+        assertFailsWith<IllegalArgumentException> { CoverageRoute.of(emptyList()) }
+        assertFailsWith<IllegalArgumentException> {
+            CoverageRoute.of(
+                listOf(
+                    valid[0].copy(difficulty = CoverageDifficulty.MODERATE),
+                    valid[1].copy(difficulty = CoverageDifficulty.EASY),
+                ) + valid.drop(2),
+            )
+        }
         assertFailsWith<IllegalArgumentException> { CoverageRoute.of(List(10) { valid.first() }) }
         val mutable = valid.toMutableList()
         val route = CoverageRoute.of(mutable)

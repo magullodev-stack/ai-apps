@@ -5,6 +5,9 @@ import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageDifficulty
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRoute
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -36,16 +39,19 @@ class TerraCoverageRouteGenerator(
         val root = requireNotNull(Json.parseToJsonElement(text) as? JsonObject)
         require(root.keys == setOf("items"))
         val items = requireNotNull(root["items"] as? JsonArray)
-        return CoverageRoute.of(items.map { element ->
+        require(items.size == expectedItems)
+        return CoverageRoute.of(items.mapIndexed { index, element ->
             val fields = requireNotNull(element as? JsonObject)
             require(fields.keys == itemFields)
             fun field(name: String): String {
                 val value = requireNotNull(fields[name] as? JsonPrimitive)
                 require(value.isString)
-                return value.content
+                val content = value.content
+                require(content.isNotBlank())
+                return content
             }
             CoverageRouteItem(
-                emoji = field("emoji"),
+                difficulty = difficultyForPosition(index + 1),
                 area = field("area"),
                 group = field("group"),
                 referent = field("referent"),
@@ -56,7 +62,18 @@ class TerraCoverageRouteGenerator(
     }
 
     private companion object {
-        val itemFields = setOf("emoji", "area", "group", "referent", "knowledge", "answer")
+        const val expectedItems = 10
+        val itemFields = setOf("area", "group", "referent", "knowledge", "answer")
+
+        fun difficultyForPosition(position: Int): CoverageDifficulty =
+            when (position) {
+                in 1..4 -> CoverageDifficulty.EASY
+                in 5..7 -> CoverageDifficulty.MODERATE
+                in 8..9 -> CoverageDifficulty.HARD
+                10 -> CoverageDifficulty.VERY_HARD
+                else -> throw IllegalArgumentException("Coverage position must be between 1 and 10")
+            }
+
         val schema = """
             {
               "type": "object",
@@ -68,14 +85,13 @@ class TerraCoverageRouteGenerator(
                   "items": {
                     "type": "object",
                     "properties": {
-                      "emoji": {"type": "string"},
                       "area": {"type": "string"},
                       "group": {"type": "string"},
                       "referent": {"type": "string"},
                       "knowledge": {"type": "string"},
                       "answer": {"type": "string"}
                     },
-                    "required": ["emoji", "area", "group", "referent", "knowledge", "answer"],
+                                        "required": ["area", "group", "referent", "knowledge", "answer"],
                     "additionalProperties": false
                   }
                 }
