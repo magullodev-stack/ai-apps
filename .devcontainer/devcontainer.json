@@ -9,7 +9,11 @@
     "--env-file",
     "${localEnv:HOME}/.config/ai-apps/secrets.env"
   ],
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh/agent.sock,target=/ssh-agent,type=bind"
+  ],
   "containerEnv": {
-    "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64"
+    "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64",
+    "SSH_AUTH_SOCK": "/ssh-agent"
   }
 }
