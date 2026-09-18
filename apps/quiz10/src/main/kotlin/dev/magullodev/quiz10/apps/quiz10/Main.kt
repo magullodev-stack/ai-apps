@@ -1,7 +1,6 @@
 package dev.magullodev.quiz10.apps.quiz10
 
 import dev.magullodev.aiapps.core.ai.OpenAiResponsesClient
-import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -89,7 +88,7 @@ fun main(args: Array<String>) {
 internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
-    val planner = QuizContentPlanner(AiProfile.TERRA, generateStructured)
+    val planner = QuizContentPlanner(generateStructured)
     return QuizPreparer(planner::plan)
 }
 

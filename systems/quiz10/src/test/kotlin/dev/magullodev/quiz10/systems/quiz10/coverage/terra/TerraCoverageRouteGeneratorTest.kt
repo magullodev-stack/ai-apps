@@ -26,7 +26,7 @@ class TerraCoverageRouteGeneratorTest {
         buildJsonObject { put("items", JsonArray(rows)) }.toString()
 
     private fun generator(text: String = response(), capture: (StructuredGenerationRequest) -> Unit = {}) =
-        TerraCoverageRouteGenerator(AiProfile.TERRA) { request ->
+        TerraCoverageRouteGenerator { request ->
             capture(request)
             Outcome.Success(StructuredGeneration(text, null))
         }
@@ -148,12 +148,12 @@ class TerraCoverageRouteGeneratorTest {
 
     @Test
     fun blankTopicDoesNotInvokeGenerationAndFailuresPreserveCause() {
-        val generator = TerraCoverageRouteGenerator(AiProfile.TERRA) { error("Must not generate") }
+        val generator = TerraCoverageRouteGenerator { error("Must not generate") }
         for (topic in listOf("", " \t\n")) {
             assertEquals(Outcome.Failure(CoverageRouteGenerationError.BlankTopic), generator.generate(topic))
         }
         val cause = AiError.HttpFailure(429)
-        val failing = TerraCoverageRouteGenerator(AiProfile.TERRA) { Outcome.Failure(cause) }
+        val failing = TerraCoverageRouteGenerator { Outcome.Failure(cause) }
         assertEquals(Outcome.Failure(CoverageRouteGenerationError.GenerationFailed(cause)), failing.generate("Rome"))
     }
 }

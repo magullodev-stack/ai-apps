@@ -11,13 +11,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 class TerraCoverageRouteGenerator(
-    private val profile: AiProfile,
     private val generate: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ) {
     fun generate(topic: String): Outcome<CoverageRoute, CoverageRouteGenerationError> {
         if (topic.isBlank()) return Outcome.Failure(CoverageRouteGenerationError.BlankTopic)
         val request = StructuredGenerationRequest(
-            profile = profile,
+            profile = AiProfile.TERRA,
             input = terraCoveragePrompt(topic),
             schemaName = "quiz10_coverage_route",
             schemaJson = schema,

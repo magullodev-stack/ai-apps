@@ -40,9 +40,9 @@ class Quiz10InteractionPresenterTest {
     )
 
     @Test
-    fun requestUsesSelectedProfileStrictMessageSchemaAndPromptContext() {
+    fun requestUsesLunaProfileStrictMessageSchemaAndPromptContext() {
         val generation = ControlledGeneration(Outcome.Success(StructuredGeneration("{\"message\":\"Vamos muy bien.\"}", null)))
-        val presenter = Quiz10InteractionPresenter(AiProfile.LUNA, generation::generate)
+        val presenter = Quiz10InteractionPresenter(generation::generate)
 
         val result = presenter.present(baseContext)
 
@@ -86,7 +86,6 @@ class Quiz10InteractionPresenterTest {
 
         for (cause in causes) {
             val presenter = Quiz10InteractionPresenter(
-                AiProfile.LUNA,
                 ControlledGeneration(Outcome.Failure(cause))::generate,
             )
             val result = presenter.present(baseContext)
@@ -113,7 +112,6 @@ class Quiz10InteractionPresenterTest {
 
         for (output in invalidOutputs) {
             val presenter = Quiz10InteractionPresenter(
-                AiProfile.LUNA,
                 ControlledGeneration(Outcome.Success(StructuredGeneration(output, null)))::generate,
             )
             val result = presenter.present(baseContext)

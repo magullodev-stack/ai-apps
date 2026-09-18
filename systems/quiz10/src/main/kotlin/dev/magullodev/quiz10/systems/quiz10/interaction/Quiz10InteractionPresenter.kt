@@ -10,12 +10,11 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 class Quiz10InteractionPresenter(
-    private val profile: AiProfile,
     private val generate: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ) {
     fun present(context: Quiz10InteractionContext): Outcome<Quiz10InteractionMessage, Quiz10InteractionError> {
         val request = StructuredGenerationRequest(
-            profile = profile,
+            profile = AiProfile.LUNA,
             input = buildPrompt(context),
             schemaName = "quiz10_interaction_message",
             schemaJson = schema,

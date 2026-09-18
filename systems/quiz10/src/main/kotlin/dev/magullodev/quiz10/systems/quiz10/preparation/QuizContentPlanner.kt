@@ -13,7 +13,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 class QuizContentPlanner(
-    private val profile: AiProfile,
     private val generate: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ) {
     fun plan(topic: String): Outcome<QuizContentPlan, QuizContentPlanningError> {
@@ -21,7 +20,7 @@ class QuizContentPlanner(
         if (trimmedTopic.isEmpty()) return Outcome.Failure(QuizContentPlanningError.BlankTopic)
 
         val request = StructuredGenerationRequest(
-            profile = profile,
+            profile = AiProfile.TERRA,
             input = """
                 Genera el contenido factual completo de un Quiz10 sobre el tema indicado.
                 Devuelve exactamente 10 elementos completos en este orden: 4 EASY, 3 MODERATE, 2 HARD y 1 VERY_HARD.

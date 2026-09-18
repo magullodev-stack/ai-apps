@@ -1,7 +1,6 @@
 package dev.magullodev.quiz10.apps.quiz10.web
 
 import dev.magullodev.aiapps.core.ai.OpenAiResponsesClient
-import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -44,14 +43,14 @@ fun main() {
 internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
-    val planner = QuizContentPlanner(AiProfile.TERRA, generateStructured)
+    val planner = QuizContentPlanner(generateStructured)
     return QuizPreparer(planner::plan)
 }
 
 internal fun createInteractionPresenter(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): Quiz10InteractionPresenter {
-    return Quiz10InteractionPresenter(AiProfile.LUNA, generateStructured)
+    return Quiz10InteractionPresenter(generateStructured)
 }
 
 private fun fail(message: String): Nothing {

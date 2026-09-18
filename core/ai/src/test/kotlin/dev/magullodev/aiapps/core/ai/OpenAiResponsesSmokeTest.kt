@@ -13,7 +13,15 @@ import kotlin.test.assertIs
 
 class OpenAiResponsesSmokeTest {
     @Test
-    fun generatesStructuredJson() {
+    fun generatesStructuredJsonWithLuna() = generatesStructuredJson(AiProfile.LUNA)
+
+    @Test
+    fun generatesStructuredJsonWithMini() = generatesStructuredJson(AiProfile.MINI)
+
+    @Test
+    fun generatesStructuredJsonWithTerra() = generatesStructuredJson(AiProfile.TERRA)
+
+    private fun generatesStructuredJson(profile: AiProfile) {
         assumeTrue(System.getenv("AI_APPS_AI_SMOKE") == "1")
 
         val config = assertIs<Outcome.Success<EnvironmentConfig>>(EnvironmentConfig.load()).value
@@ -30,7 +38,7 @@ class OpenAiResponsesSmokeTest {
         """.trimIndent()
         val result = client.generate(
             StructuredGenerationRequest(
-                AiProfile.LUNA,
+                profile,
                 "Return a JSON object with message set to hello.",
                 "structured_smoke",
                 schema,
