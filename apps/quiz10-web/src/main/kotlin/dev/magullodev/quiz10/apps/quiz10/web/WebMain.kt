@@ -7,9 +7,10 @@ import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
+import dev.magullodev.quiz10.systems.quiz10.coverage.terra.TerraCoverageRouteGenerator
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionPresenter
-import dev.magullodev.quiz10.systems.quiz10.preparation.QuizContentPlanner
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
+import dev.magullodev.quiz10.systems.quiz10.preparation.luna.LunaQuizTurnGenerator
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
@@ -43,8 +44,9 @@ fun main() {
 internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
-    val planner = QuizContentPlanner(generateStructured)
-    return QuizPreparer(planner::plan)
+    val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
+    val turnGenerator = LunaQuizTurnGenerator(generateStructured)
+    return QuizPreparer(coverageGenerator::generate, turnGenerator::generate)
 }
 
 internal fun createInteractionPresenter(

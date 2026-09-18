@@ -7,11 +7,12 @@ import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
+import dev.magullodev.quiz10.systems.quiz10.coverage.terra.TerraCoverageRouteGenerator
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationMenu
-import dev.magullodev.quiz10.systems.quiz10.preparation.QuizContentPlanner
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
+import dev.magullodev.quiz10.systems.quiz10.preparation.luna.LunaQuizTurnGenerator
 import dev.magullodev.quiz10.systems.quiz10.progress.PlayerProgress
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10Flow
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowState
@@ -88,8 +89,9 @@ fun main(args: Array<String>) {
 internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
-    val planner = QuizContentPlanner(generateStructured)
-    return QuizPreparer(planner::plan)
+    val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
+    val turnGenerator = LunaQuizTurnGenerator(generateStructured)
+    return QuizPreparer(coverageGenerator::generate, turnGenerator::generate)
 }
 
 private fun playQuiz(
@@ -101,7 +103,11 @@ private fun playQuiz(
     val preparedQuiz = when (val result = preparer.prepare(topic)) {
         is Outcome.Success -> result.value
         is Outcome.Failure -> when (val error = result.error) {
-            is QuizPreparationError.PlanningFailed -> fail("PLANNING_ERROR: ${error.cause}")
+            is QuizPreparationError.CoverageRouteGenerationFailed -> fail("COVERAGE_ERROR: ${error.cause}")
+            is QuizPreparationError.InvalidCoverageRouteSize -> fail("COVERAGE_ERROR: invalid route size ${error.size}")
+            is QuizPreparationError.TurnGenerationFailed -> {
+                fail("TURN_ERROR: question ${error.questionNumber}: ${error.cause}")
+            }
         }
     }
 
