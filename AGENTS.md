@@ -8,7 +8,9 @@ Antes de modificar algo existente, inspecciona el archivo y las dependencias rel
 
 Haz únicamente lo solicitado. No amplíes el alcance ni introduzcas arquitectura, dependencias, servicios, herramientas o abstracciones no requeridas.
 
-Si falta una decisión necesaria, detente e informa del bloqueo. No la inventes.
+Si para completar la tarea falta una decisión de producto, un contrato público o una decisión arquitectónica que afecte al comportamiento observable y no pueda deducirse de la tarea ni del repositorio, detente e informa del bloqueo. No la inventes.
+
+Las decisiones internas de implementación que respeten el alcance, los contratos y la arquitectura existente corresponden a Codex o Copilot.
 
 ## Arquitectura
 
