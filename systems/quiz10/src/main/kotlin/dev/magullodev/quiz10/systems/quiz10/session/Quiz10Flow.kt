@@ -1,13 +1,16 @@
 package dev.magullodev.quiz10.systems.quiz10.session
 
 import dev.magullodev.aiapps.core.contracts.Outcome
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.quiz10.systems.quiz10.preparation.PreparedQuiz
+import dev.magullodev.quiz10.systems.quiz10.preparation.luna.QuizTurnGenerationError
 import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
 import dev.magullodev.quiz10.systems.quiz10.result.QuizAnswerRecord
 import java.util.Collections
 
 class Quiz10Flow(
     private val preparedQuiz: PreparedQuiz,
+    private val generateTurn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
 ) {
     private var session: QuizSession? = null
     private var currentState: Quiz10FlowState? = null
@@ -16,24 +19,36 @@ class Quiz10Flow(
     val state: Quiz10FlowState?
         get() = currentState
 
-    fun start(): Quiz10FlowState.Question {
+    fun start(): Outcome<Quiz10FlowState.Question, Quiz10FlowTransitionError> {
         val newSession = QuizSession.start(preparedQuiz.route)
         session = newSession
         answerRecords.clear()
 
         val questionNumber = newSession.currentQuestionNumber ?: error("Prepared quiz unexpectedly has no current question")
-        val question = preparedQuiz.questions[questionNumber - 1]
+        val item = preparedQuiz.route.items[questionNumber - 1]
+        val correctOptionIndex = PreparedQuiz.correctOptionSequence[questionNumber - 1]
+        val question = when (val result = generateTurn(item, correctOptionIndex)) {
+            is Outcome.Success -> result.value
+            is Outcome.Failure -> {
+                return Outcome.Failure(
+                    Quiz10FlowTransitionError.TurnGenerationFailed(
+                        questionNumber = questionNumber,
+                        cause = result.error,
+                    ),
+                )
+            }
+        }
         val current = Quiz10FlowState.Question(
             topic = preparedQuiz.topic,
             questionNumber = questionNumber,
-            totalQuestions = preparedQuiz.questions.size,
+            totalQuestions = preparedQuiz.route.size,
             area = preparedQuiz.route.items[questionNumber - 1].area,
             question = question,
             answeredQuestions = newSession.answeredQuestions,
             correctAnswers = newSession.correctAnswers,
         )
         currentState = current
-        return current
+        return Outcome.Success(current)
     }
 
     fun answer(selectedOptionIndex: Int): Quiz10FlowState.Answered {
@@ -68,7 +83,7 @@ class Quiz10Flow(
         return answeredState
     }
 
-    fun advance(): Outcome<Quiz10FlowState, Nothing> {
+    fun advance(): Outcome<Quiz10FlowState, Quiz10FlowTransitionError> {
         val answeredState = currentState as? Quiz10FlowState.Answered
             ?: throw IllegalStateException("Quiz advance can only be used from Answered state")
 
@@ -88,7 +103,19 @@ class Quiz10Flow(
 
         val nextQuestionNumber = sessionSnapshot.currentQuestionNumber
             ?: throw IllegalStateException("Quiz session has no pending question")
-        val nextQuestion = preparedQuiz.questions[nextQuestionNumber - 1]
+        val item = preparedQuiz.route.items[nextQuestionNumber - 1]
+        val correctOptionIndex = PreparedQuiz.correctOptionSequence[nextQuestionNumber - 1]
+        val nextQuestion = when (val result = generateTurn(item, correctOptionIndex)) {
+            is Outcome.Success -> result.value
+            is Outcome.Failure -> {
+                return Outcome.Failure(
+                    Quiz10FlowTransitionError.TurnGenerationFailed(
+                        questionNumber = nextQuestionNumber,
+                        cause = result.error,
+                    ),
+                )
+            }
+        }
         val nextState = Quiz10FlowState.Question(
             topic = answeredState.topic,
             questionNumber = nextQuestionNumber,
@@ -101,6 +128,13 @@ class Quiz10Flow(
         currentState = nextState
         return Outcome.Success(nextState)
     }
+}
+
+sealed interface Quiz10FlowTransitionError {
+    data class TurnGenerationFailed(
+        val questionNumber: Int,
+        val cause: QuizTurnGenerationError,
+    ) : Quiz10FlowTransitionError
 }
 
 sealed interface Quiz10FlowState {

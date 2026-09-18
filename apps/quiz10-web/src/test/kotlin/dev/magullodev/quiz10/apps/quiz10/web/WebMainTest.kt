@@ -4,6 +4,8 @@ import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.contracts.Outcome
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageDifficulty
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionEvent
 import kotlin.test.Test
@@ -26,24 +28,10 @@ class WebMainTest {
             ]}
         """.trimIndent()
 
-    private fun turnJson(): String =
-        """
-            {
-              "question":"Q",
-              "correctExplanation":"CE",
-              "distractors":[
-                {"text":"D1","explanation":"E1"},
-                {"text":"D2","explanation":"E2"},
-                {"text":"D3","explanation":"E3"}
-              ]
-            }
-        """.trimIndent()
-
     @Test
-    fun createQuizPreparerUsesTerraForCoverageAndLunaForTurns() {
+    fun createQuizPreparerUsesTerraCoverageOnly() {
         val requestedProfiles = mutableListOf<AiProfile>()
         var coverageCalls = 0
-        var turnCalls = 0
 
         val preparer = createQuizPreparer { request ->
             requestedProfiles += request.profile
@@ -52,10 +40,6 @@ class WebMainTest {
                     coverageCalls += 1
                     Outcome.Success(StructuredGeneration(coverageJson(), null))
                 }
-                "quiz10_luna_turn" -> {
-                    turnCalls += 1
-                    Outcome.Success(StructuredGeneration(turnJson(), null))
-                }
                 else -> Outcome.Failure(AiError.TransportFailure)
             }
         }
@@ -63,8 +47,45 @@ class WebMainTest {
         preparer.prepare("Historia")
 
         assertEquals(1, coverageCalls)
-        assertEquals(10, turnCalls)
-        assertEquals(listOf(AiProfile.TERRA) + List(10) { AiProfile.LUNA }, requestedProfiles)
+        assertEquals(listOf(AiProfile.TERRA), requestedProfiles)
+    }
+
+    @Test
+    fun createTurnGeneratorUsesGlobalLunaProfile() {
+        val requestedProfiles = mutableListOf<AiProfile>()
+        val generator = createTurnGenerator { request ->
+            requestedProfiles += request.profile
+            Outcome.Success(
+                StructuredGeneration(
+                    """
+                        {
+                          "question":"Q",
+                          "correctExplanation":"CE",
+                          "distractors":[
+                            {"text":"D1","explanation":"E1"},
+                            {"text":"D2","explanation":"E2"},
+                            {"text":"D3","explanation":"E3"}
+                          ]
+                        }
+                    """.trimIndent(),
+                    null,
+                ),
+            )
+        }
+
+        generator(
+            CoverageRouteItem(
+                difficulty = CoverageDifficulty.EASY,
+                area = "A",
+                group = "G",
+                referent = "R",
+                knowledge = "K",
+                answer = "ANS",
+            ),
+            0,
+        )
+
+        assertEquals(listOf(AiProfile.LUNA), requestedProfiles)
     }
 
     @Test

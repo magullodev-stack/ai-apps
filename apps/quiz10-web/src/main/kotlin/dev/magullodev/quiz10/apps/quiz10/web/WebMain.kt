@@ -7,10 +7,13 @@ import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.quiz10.systems.quiz10.coverage.terra.TerraCoverageRouteGenerator
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionPresenter
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import dev.magullodev.quiz10.systems.quiz10.preparation.luna.LunaQuizTurnGenerator
+import dev.magullodev.quiz10.systems.quiz10.preparation.luna.QuizTurnGenerationError
+import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
@@ -27,13 +30,18 @@ fun main() {
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
+    val turnGenerator = try {
+        createTurnGenerator(client::generate)
+    } catch (error: IllegalArgumentException) {
+        fail(error.message ?: "CONFIGURATION_ERROR")
+    }
     val interactionPresenter = try {
         createInteractionPresenter(client::generate)
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
 
-    val server = Quiz10WebServer(preparer::prepare, interactionPresenter::present)
+    val server = Quiz10WebServer(preparer::prepare, turnGenerator, interactionPresenter::present)
     val port = server.start()
     println("Quiz10 web running on http://0.0.0.0:$port")
 
@@ -45,8 +53,14 @@ internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
     val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
+    return QuizPreparer(coverageGenerator::generate)
+}
+
+internal fun createTurnGenerator(
+    generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
+): (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> {
     val turnGenerator = LunaQuizTurnGenerator(generateStructured)
-    return QuizPreparer(coverageGenerator::generate, turnGenerator::generate)
+    return turnGenerator::generate
 }
 
 internal fun createInteractionPresenter(

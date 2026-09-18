@@ -3,6 +3,7 @@ package dev.magullodev.quiz10.apps.quiz10.web
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import dev.magullodev.aiapps.core.contracts.Outcome
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionError
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionEvent
@@ -11,6 +12,8 @@ import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.quiz10.systems.quiz10.preparation.PreparedQuiz
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
+import dev.magullodev.quiz10.systems.quiz10.preparation.luna.QuizTurnGenerationError
+import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
 import dev.magullodev.quiz10.systems.quiz10.progress.PlayerProgress
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10Flow
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowState
@@ -24,6 +27,7 @@ import java.util.concurrent.Executors
 
 class Quiz10WebServer(
     private val prepareQuiz: (String) -> Outcome<PreparedQuiz, QuizPreparationError>,
+    private val generateTurn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
     private val presentInteraction: (Quiz10InteractionContext) -> Outcome<Quiz10InteractionMessage, Quiz10InteractionError> = {
         Outcome.Failure(Quiz10InteractionError.InvalidGeneratedMessage)
     },
@@ -114,8 +118,14 @@ class Quiz10WebServer(
             }
         }
 
-        val flow = Quiz10Flow(prepared)
-        val question = flow.start()
+        val flow = Quiz10Flow(prepared, generateTurn)
+        val question = when (val result = flow.start()) {
+            is Outcome.Success -> result.value
+            is Outcome.Failure -> {
+                respond(exchange, 500, renderer.renderPreparationError())
+                return
+            }
+        }
         val sessionId = UUID.randomUUID().toString()
         sessions[sessionId] = WebSession(
             playerProgress = progress,
@@ -167,7 +177,13 @@ class Quiz10WebServer(
             }
 
             val answered = session.activeFlow.answer(selected)
-            val advanced = (session.activeFlow.advance() as Outcome.Success).value
+            val advanced = when (val result = session.activeFlow.advance()) {
+                is Outcome.Success -> result.value
+                is Outcome.Failure -> {
+                    respond(exchange, 500, renderer.renderPreparationError())
+                    return
+                }
+            }
             when (advanced) {
                 is Quiz10FlowState.Question -> {
                     val nextRevision = updateInteractionSnapshot(
@@ -271,9 +287,15 @@ class Quiz10WebServer(
                             return
                         }
                     }
-                    val flow = Quiz10Flow(prepared)
+                    val flow = Quiz10Flow(prepared, generateTurn)
                     session.activeFlow = flow
-                    val question = flow.start()
+                    val question = when (val result = flow.start()) {
+                        is Outcome.Success -> result.value
+                        is Outcome.Failure -> {
+                            respond(exchange, 500, renderer.renderPreparationError())
+                            return
+                        }
+                    }
                     val nextRevision = updateInteractionSnapshot(
                         session = session,
                         context = Quiz10InteractionContext(
@@ -347,9 +369,15 @@ class Quiz10WebServer(
             }
 
             session.currentTopic = topic
-            val flow = Quiz10Flow(prepared)
+            val flow = Quiz10Flow(prepared, generateTurn)
             session.activeFlow = flow
-            val question = flow.start()
+            val question = when (val result = flow.start()) {
+                is Outcome.Success -> result.value
+                is Outcome.Failure -> {
+                    respond(exchange, 500, renderer.renderPreparationError())
+                    return
+                }
+            }
             val nextRevision = updateInteractionSnapshot(
                 session = session,
                 context = Quiz10InteractionContext(

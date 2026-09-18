@@ -7,15 +7,19 @@ import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
+import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.quiz10.systems.quiz10.coverage.terra.TerraCoverageRouteGenerator
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.quiz10.systems.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
 import dev.magullodev.quiz10.systems.quiz10.preparation.luna.LunaQuizTurnGenerator
+import dev.magullodev.quiz10.systems.quiz10.preparation.luna.QuizTurnGenerationError
 import dev.magullodev.quiz10.systems.quiz10.progress.PlayerProgress
+import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10Flow
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowState
+import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowTransitionError
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -49,11 +53,16 @@ fun main(args: Array<String>) {
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
+    val turnGenerator = try {
+        createTurnGenerator(client::generate)
+    } catch (error: IllegalArgumentException) {
+        fail(error.message ?: "CONFIGURATION_ERROR")
+    }
     var updatedProgress = playerProgress
     var latestFinished: Quiz10FlowState.Finished? = null
 
     while (true) {
-        val finishedState = playQuiz(currentTopic, preparer, input, output)
+        val finishedState = playQuiz(currentTopic, preparer, turnGenerator, input, output)
         latestFinished = finishedState
         updatedProgress = updatedProgress.recordQuiz(finishedState.correctAnswers)
 
@@ -90,13 +99,20 @@ internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
     val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
+    return QuizPreparer(coverageGenerator::generate)
+}
+
+internal fun createTurnGenerator(
+    generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
+): (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> {
     val turnGenerator = LunaQuizTurnGenerator(generateStructured)
-    return QuizPreparer(coverageGenerator::generate, turnGenerator::generate)
+    return turnGenerator::generate
 }
 
 private fun playQuiz(
     topic: String,
     preparer: QuizPreparer,
+    generateTurn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
     input: java.io.BufferedReader,
     output: java.io.BufferedWriter,
 ): Quiz10FlowState.Finished {
@@ -105,14 +121,18 @@ private fun playQuiz(
         is Outcome.Failure -> when (val error = result.error) {
             is QuizPreparationError.CoverageRouteGenerationFailed -> fail("COVERAGE_ERROR: ${error.cause}")
             is QuizPreparationError.InvalidCoverageRouteSize -> fail("COVERAGE_ERROR: invalid route size ${error.size}")
-            is QuizPreparationError.TurnGenerationFailed -> {
+        }
+    }
+
+    val flow = Quiz10Flow(preparedQuiz, generateTurn)
+    var state: Quiz10FlowState = when (val started = flow.start()) {
+        is Outcome.Success -> started.value
+        is Outcome.Failure -> when (val error = started.error) {
+            is Quiz10FlowTransitionError.TurnGenerationFailed -> {
                 fail("TURN_ERROR: question ${error.questionNumber}: ${error.cause}")
             }
         }
     }
-
-    val flow = Quiz10Flow(preparedQuiz)
-    var state: Quiz10FlowState = flow.start()
     renderState(state, output)
 
     while (state !is Quiz10FlowState.Finished) {
@@ -129,7 +149,11 @@ private fun playQuiz(
         val next = flow.advance()
         state = when (next) {
             is Outcome.Success -> next.value
-            is Outcome.Failure -> error("Unexpected failure while advancing prepared quiz flow: ${next.error}")
+            is Outcome.Failure -> when (val error = next.error) {
+                is Quiz10FlowTransitionError.TurnGenerationFailed -> {
+                    fail("TURN_ERROR: question ${error.questionNumber}: ${error.cause}")
+                }
+            }
         }
         renderState(state, output)
     }
