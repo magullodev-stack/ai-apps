@@ -1,9 +1,11 @@
 package dev.magullodev.quiz10.apps.quiz10.web
 
+import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRoute
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.quiz10.systems.quiz10.coverage.terra.CoverageRouteGenerationError
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionError
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionMessage
@@ -382,6 +384,61 @@ class Quiz10WebServerTest {
         }
     }
 
+    @Test
+    fun coverageGenerationFailureShowsTypedCoverageMessage() {
+        withServer(prepareFailure(QuizPreparationError.CoverageRouteGenerationFailed(CoverageRouteGenerationError.GenerationFailed(AiError.TransportFailure)))) { baseUrl, _, _, _ ->
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+
+            assertEquals(500, response.statusCode())
+            val body = response.body()
+            assertContains(body, "ruta de cobertura")
+            assertContains(body, "CoverageRouteGenerationFailed")
+            assertFalse(body.contains("Authorization"))
+            assertFalse(body.contains("Bearer"))
+        }
+    }
+
+    @Test
+    fun invalidCoverageRouteSizeIsDistinguishedFromAiFailure() {
+        withServer(prepareFailure(QuizPreparationError.InvalidCoverageRouteSize(8))) { baseUrl, _, _, _ ->
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+
+            assertEquals(500, response.statusCode())
+            val body = response.body()
+            assertContains(body, "ruta de cobertura")
+            assertContains(body, "InvalidCoverageRouteSize")
+            assertFalse(body.contains("AiError.TransportFailure"))
+            assertFalse(body.contains("Authorization"))
+        }
+    }
+
+    @Test
+    fun turnGenerationFailureShowsQuestionNumber() {
+        withServer(
+            prepareSuccess(),
+            turnFailure(QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure), questionNumber = 1),
+        ) { baseUrl, _, _, _ ->
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+
+            assertEquals(500, response.statusCode())
+            val body = response.body()
+            assertContains(body, "pregunta 1")
+            assertContains(body, "TurnGenerationFailed")
+            assertFalse(body.contains("Authorization"))
+        }
+    }
+
+    @Test
+    fun happyPathStillReturnsTheQuestionNormally() {
+        withServer(prepareSuccess(), turnSuccess()) { baseUrl, _, _, _ ->
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+
+            assertEquals(200, response.statusCode())
+            assertContains(response.body(), "Pregunta 1/10")
+            assertFalse(response.body().contains("Authorization"))
+        }
+    }
+
     private fun withServer(
         prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError>,
         turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = turnSuccess(),
@@ -404,9 +461,23 @@ class Quiz10WebServerTest {
         }
     }
 
+    private fun prepareFailure(error: QuizPreparationError, onCall: () -> Unit = {}): (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { _ ->
+        onCall()
+        Outcome.Failure(error)
+    }
+
     private fun prepareSuccess(onCall: () -> Unit = {}): (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { topic ->
         onCall()
         Outcome.Success(prepared(topic))
+    }
+
+    private fun turnFailure(
+        error: QuizTurnGenerationError,
+        questionNumber: Int = 1,
+        onCall: (CoverageRouteItem, Int) -> Unit = { _, _ -> },
+    ): (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { item, correctIndex ->
+        onCall(item, correctIndex)
+        Outcome.Failure(error)
     }
 
     private fun turnSuccess(

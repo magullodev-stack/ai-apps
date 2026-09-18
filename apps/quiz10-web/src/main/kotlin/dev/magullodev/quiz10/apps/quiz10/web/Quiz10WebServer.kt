@@ -2,8 +2,10 @@ package dev.magullodev.quiz10.apps.quiz10.web
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.quiz10.systems.quiz10.coverage.terra.CoverageRouteGenerationError
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionError
 import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionEvent
@@ -14,6 +16,7 @@ import dev.magullodev.quiz10.systems.quiz10.preparation.PreparedQuiz
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
 import dev.magullodev.quiz10.systems.quiz10.preparation.luna.QuizTurnGenerationError
 import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
+import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowTransitionError
 import dev.magullodev.quiz10.systems.quiz10.progress.PlayerProgress
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10Flow
 import dev.magullodev.quiz10.systems.quiz10.session.Quiz10FlowState
@@ -113,7 +116,8 @@ class Quiz10WebServer(
         val prepared = when (val result = prepareQuiz(topic)) {
             is Outcome.Success -> result.value
             is Outcome.Failure -> {
-                respond(exchange, 500, renderer.renderPreparationError())
+                logPreparationFailure(result.error)
+                respond(exchange, 500, renderer.renderPreparationError(preparationErrorMessage(result.error)))
                 return
             }
         }
@@ -122,7 +126,8 @@ class Quiz10WebServer(
         val question = when (val result = flow.start()) {
             is Outcome.Success -> result.value
             is Outcome.Failure -> {
-                respond(exchange, 500, renderer.renderPreparationError())
+                logTurnFailure(result.error)
+                respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
                 return
             }
         }
@@ -180,7 +185,8 @@ class Quiz10WebServer(
             val advanced = when (val result = session.activeFlow.advance()) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
-                    respond(exchange, 500, renderer.renderPreparationError())
+                    logTurnFailure(result.error)
+                    respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
                     return
                 }
             }
@@ -283,7 +289,8 @@ class Quiz10WebServer(
                     val prepared = when (val result = prepareQuiz(session.currentTopic)) {
                         is Outcome.Success -> result.value
                         is Outcome.Failure -> {
-                            respond(exchange, 500, renderer.renderPreparationError())
+                            logPreparationFailure(result.error)
+                            respond(exchange, 500, renderer.renderPreparationError(preparationErrorMessage(result.error)))
                             return
                         }
                     }
@@ -292,7 +299,8 @@ class Quiz10WebServer(
                     val question = when (val result = flow.start()) {
                         is Outcome.Success -> result.value
                         is Outcome.Failure -> {
-                            respond(exchange, 500, renderer.renderPreparationError())
+                            logTurnFailure(result.error)
+                            respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
                             return
                         }
                     }
@@ -363,7 +371,8 @@ class Quiz10WebServer(
             val prepared = when (val result = prepareQuiz(topic)) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
-                    respond(exchange, 500, renderer.renderPreparationError())
+                    logPreparationFailure(result.error)
+                    respond(exchange, 500, renderer.renderPreparationError(preparationErrorMessage(result.error)))
                     return
                 }
             }
@@ -374,7 +383,8 @@ class Quiz10WebServer(
             val question = when (val result = flow.start()) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
-                    respond(exchange, 500, renderer.renderPreparationError())
+                    logTurnFailure(result.error)
+                    respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
                     return
                 }
             }
@@ -463,6 +473,79 @@ class Quiz10WebServer(
             is Outcome.Success -> respondText(exchange, 200, result.value.message)
             is Outcome.Failure -> respondText(exchange, 503, "")
         }
+    }
+
+    private fun logPreparationFailure(error: QuizPreparationError) {
+        val cause = when (error) {
+            is QuizPreparationError.CoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause)
+            is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
+        }
+        System.err.println("quiz10-web stage=coverage error=${describePreparationError(error)} cause=${cause}")
+    }
+
+    private fun logTurnFailure(error: Quiz10FlowTransitionError) {
+        val questionNumber = when (error) {
+            is Quiz10FlowTransitionError.TurnGenerationFailed -> error.questionNumber
+        }
+        val cause = when (error) {
+            is Quiz10FlowTransitionError.TurnGenerationFailed -> when (val turnCause = error.cause) {
+                is QuizTurnGenerationError.GenerationFailed -> describeAiError(turnCause.cause)
+                else -> describeTurnGenerationError(turnCause)
+            }
+        }
+        val questionSuffix = questionNumber?.let { " question=$it" } ?: ""
+        System.err.println("quiz10-web stage=turn${questionSuffix} error=${describeTurnTransitionError(error)} cause=${cause}")
+    }
+
+    private fun preparationErrorMessage(error: QuizPreparationError): String = when (error) {
+        is QuizPreparationError.CoverageRouteGenerationFailed -> {
+            val causeName = when (val cause = error.cause) {
+                is CoverageRouteGenerationError.BlankTopic -> "BlankTopic"
+                is CoverageRouteGenerationError.GenerationFailed -> "CoverageRouteGenerationFailed(${describeAiError(cause.cause)})"
+                is CoverageRouteGenerationError.InvalidGeneratedRoute -> "InvalidGeneratedRoute"
+            }
+            "No se pudo generar la ruta de cobertura: CoverageRouteGenerationFailed($causeName)"
+        }
+        is QuizPreparationError.InvalidCoverageRouteSize -> "No se pudo generar la ruta de cobertura: InvalidCoverageRouteSize(size=${error.size})"
+    }
+
+    private fun turnErrorMessage(error: Quiz10FlowTransitionError): String = when (error) {
+        is Quiz10FlowTransitionError.TurnGenerationFailed -> when (val cause = error.cause) {
+            is QuizTurnGenerationError.InvalidCoverageRouteItem -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeTurnGenerationError(cause)})"
+            is QuizTurnGenerationError.InvalidCorrectOptionIndex -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeTurnGenerationError(cause)})"
+            is QuizTurnGenerationError.GenerationFailed -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeAiError(cause.cause)})"
+            is QuizTurnGenerationError.InvalidGeneratedTurn -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeTurnGenerationError(cause)})"
+        }
+    }
+
+    private fun describePreparationError(error: QuizPreparationError): String = when (error) {
+        is QuizPreparationError.CoverageRouteGenerationFailed -> "QuizPreparationError.CoverageRouteGenerationFailed"
+        is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
+    }
+
+    private fun describeTurnTransitionError(error: Quiz10FlowTransitionError): String = when (error) {
+        is Quiz10FlowTransitionError.TurnGenerationFailed -> "Quiz10FlowTransitionError.TurnGenerationFailed"
+    }
+
+    private fun describeCoverageGenerationError(error: CoverageRouteGenerationError): String = when (error) {
+        is CoverageRouteGenerationError.BlankTopic -> "CoverageRouteGenerationError.BlankTopic"
+        is CoverageRouteGenerationError.GenerationFailed -> "CoverageRouteGenerationError.GenerationFailed"
+        is CoverageRouteGenerationError.InvalidGeneratedRoute -> "CoverageRouteGenerationError.InvalidGeneratedRoute"
+    }
+
+    private fun describeTurnGenerationError(error: QuizTurnGenerationError): String = when (error) {
+        is QuizTurnGenerationError.InvalidCoverageRouteItem -> "QuizTurnGenerationError.InvalidCoverageRouteItem"
+        is QuizTurnGenerationError.InvalidCorrectOptionIndex -> "QuizTurnGenerationError.InvalidCorrectOptionIndex"
+        is QuizTurnGenerationError.GenerationFailed -> "QuizTurnGenerationError.GenerationFailed"
+        is QuizTurnGenerationError.InvalidGeneratedTurn -> "QuizTurnGenerationError.InvalidGeneratedTurn"
+    }
+
+    private fun describeAiError(error: AiError): String = when (error) {
+        AiError.InvalidSchemaJson -> "AiError.InvalidSchemaJson"
+        AiError.TransportFailure -> "AiError.TransportFailure"
+        is AiError.HttpFailure -> "AiError.HttpFailure(${error.status})"
+        AiError.InvalidResponseJson -> "AiError.InvalidResponseJson"
+        AiError.MissingOutputText -> "AiError.MissingOutputText"
     }
 
     private fun parseForm(exchange: HttpExchange): Map<String, String> {
