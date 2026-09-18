@@ -12,6 +12,11 @@ Si falta una decisión necesaria, detente e informa del bloqueo. No la inventes.
 
 ## Arquitectura
 
+Documentación vigente:
+
+- `docs/MANIFIESTO ARQUITECTÓNICO.md`
+- `docs/ÁRBOL DEL REPO.md`
+
 `ai-apps` se organiza así:
 
 - `core/` — capacidades técnicas e infraestructura compartida.
