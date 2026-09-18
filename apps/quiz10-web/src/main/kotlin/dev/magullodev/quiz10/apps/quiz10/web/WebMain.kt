@@ -7,6 +7,7 @@ import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
+import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionPresenter
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizContentPlanner
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparer
 import java.util.concurrent.CountDownLatch
@@ -25,8 +26,13 @@ fun main() {
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
+    val interactionPresenter = try {
+        createInteractionPresenter(System::getenv, client::generate)
+    } catch (error: IllegalArgumentException) {
+        fail(error.message ?: "CONFIGURATION_ERROR")
+    }
 
-    val server = Quiz10WebServer(preparer::prepare)
+    val server = Quiz10WebServer(preparer::prepare, interactionPresenter::present)
     val port = server.start()
     println("Quiz10 web running on http://0.0.0.0:$port")
 
@@ -44,6 +50,17 @@ internal fun createQuizPreparer(
     }
     val planner = QuizContentPlanner(coverageModel, generateStructured)
     return QuizPreparer(planner::plan)
+}
+
+internal fun createInteractionPresenter(
+    environment: (String) -> String?,
+    generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
+): Quiz10InteractionPresenter {
+    val interactionModel = environment("QUIZ10_INTERACTION_MODEL")
+    require(!interactionModel.isNullOrBlank()) {
+        "CONFIGURATION_ERROR: QUIZ10_INTERACTION_MODEL debe contener un modelo no vacío"
+    }
+    return Quiz10InteractionPresenter(interactionModel, generateStructured)
 }
 
 private fun fail(message: String): Nothing {

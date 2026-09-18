@@ -4,6 +4,10 @@ import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRoute
 import dev.magullodev.quiz10.systems.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionContext
+import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionError
+import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionMessage
+import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionEvent
 import dev.magullodev.quiz10.systems.quiz10.preparation.PreparedQuiz
 import dev.magullodev.quiz10.systems.quiz10.preparation.QuizPreparationError
 import dev.magullodev.quiz10.systems.quiz10.question.QuizQuestion
@@ -12,17 +16,35 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.system.measureTimeMillis
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class Quiz10WebServerTest {
     private val client = HttpClient.newHttpClient()
 
+    private class InteractionProbe(
+        private val delayMs: Long = 0,
+        private val fixedResult: Outcome<Quiz10InteractionMessage, Quiz10InteractionError> =
+            Outcome.Success(Quiz10InteractionMessage("Hola")),
+    ) {
+        val contexts = CopyOnWriteArrayList<Quiz10InteractionContext>()
+
+        fun present(context: Quiz10InteractionContext): Outcome<Quiz10InteractionMessage, Quiz10InteractionError> {
+            contexts += context
+            if (delayMs > 0) Thread.sleep(delayMs)
+            return fixedResult
+        }
+    }
+
     @Test
     fun getRootShowsInitialForm() {
-        withServer(prepareSuccess()) { baseUrl, _ ->
+        withServer(prepareSuccess()) { baseUrl, _, _ ->
             val response = get("$baseUrl/")
 
             assertEquals(200, response.statusCode())
@@ -31,40 +53,24 @@ class Quiz10WebServerTest {
     }
 
     @Test
-    fun createGameShowsFirstQuestionOnlyAfterPreparation() {
+    fun createGameShowsFirstQuestionOnlyAfterPreparationAndWithoutPresenterCall() {
         val calls = AtomicInteger(0)
-        withServer(prepareSuccess { calls.incrementAndGet() }) { baseUrl, _ ->
+        val interaction = InteractionProbe()
+        withServer(prepareSuccess { calls.incrementAndGet() }, interaction) { baseUrl, _, probe ->
             val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
 
             assertEquals(1, calls.get())
             assertEquals(200, response.statusCode())
             assertContains(response.body(), "Pregunta 1/10")
+            assertTrue(probe.contexts.isEmpty())
         }
     }
 
     @Test
-    fun fullTenAnswerRunShowsFinalAndUpdatesProgressWithStar() {
-        withServer(prepareSuccess()) { baseUrl, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
-            val id = extractSessionId(start.body())
-
-            var lastBody = start.body()
-            PreparedQuiz.correctOptionSequence.forEach { option ->
-                val answer = postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString()))
-                assertEquals(200, answer.statusCode())
-                lastBody = answer.body()
-            }
-
-            assertContains(lastBody, "Puntuación final 10/10")
-            assertContains(lastBody, "Aciertos acumulados: 10")
-            assertContains(lastBody, "Estrellas: ⭐ 1")
-        }
-    }
-
-    @Test
-    fun answerEndpointDoesNotPrepareAgainDuringQuestionLoop() {
+    fun answerEndpointDoesNotPrepareAgainAndDoesNotInvokePresenter() {
         val prepareCalls = AtomicInteger(0)
-        withServer(prepareSuccess { prepareCalls.incrementAndGet() }) { baseUrl, _ ->
+        val interaction = InteractionProbe()
+        withServer(prepareSuccess { prepareCalls.incrementAndGet() }, interaction) { baseUrl, _, probe ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
             val id = extractSessionId(start.body())
             assertEquals(1, prepareCalls.get())
@@ -75,12 +81,175 @@ class Quiz10WebServerTest {
             }
 
             assertEquals(1, prepareCalls.get())
+            assertTrue(probe.contexts.isEmpty())
+        }
+    }
+
+    @Test
+    fun onlyInteractionEndpointInvokesPresenter() {
+        val interaction = InteractionProbe()
+        withServer(prepareSuccess(), interaction) { baseUrl, _, probe ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            val revision = extractInteractionRevision(start.body())
+
+            val interactionResponse = get("$baseUrl/games/$id/interaction?revision=$revision")
+            assertEquals(200, interactionResponse.statusCode())
+            assertEquals(1, probe.contexts.size)
+
+            postForm("$baseUrl/games/$id/answer", mapOf("option" to "0"))
+            postForm("$baseUrl/games/$id/answer", mapOf("option" to "1"))
+            assertEquals(1, probe.contexts.size)
+        }
+    }
+
+    @Test
+    fun interactionContextsAreWelcomeAfterAnswerAndFinish() {
+        val interaction = InteractionProbe()
+        withServer(prepareSuccess(), interaction) { baseUrl, _, probe ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+
+            val welcomeRevision = extractInteractionRevision(start.body())
+            assertEquals(200, get("$baseUrl/games/$id/interaction?revision=$welcomeRevision").statusCode())
+            val welcome = probe.contexts.last()
+            assertEquals(Quiz10InteractionEvent.WELCOME, welcome.event)
+            assertEquals("Ada", welcome.playerName)
+            assertEquals("Historia", welcome.topic)
+            assertEquals(0, welcome.answeredQuestions)
+            assertEquals(0, welcome.correctAnswers)
+            assertEquals(0, welcome.stars)
+            assertEquals(null, welcome.lastAnswerCorrect)
+            assertFalse(welcome.starEarned)
+
+            val firstAnswer = postForm("$baseUrl/games/$id/answer", mapOf("option" to "0"))
+            val afterRevision = extractInteractionRevision(firstAnswer.body())
+            assertEquals(200, get("$baseUrl/games/$id/interaction?revision=$afterRevision").statusCode())
+            val afterAnswer = probe.contexts.last()
+            assertEquals(Quiz10InteractionEvent.AFTER_ANSWER, afterAnswer.event)
+            assertEquals(1, afterAnswer.answeredQuestions)
+            assertEquals(1, afterAnswer.correctAnswers)
+            assertEquals(true, afterAnswer.lastAnswerCorrect)
+            assertFalse(afterAnswer.starEarned)
+
+            var finalBody = firstAnswer.body()
+            for (index in 1 until 10) {
+                finalBody = postForm(
+                    "$baseUrl/games/$id/answer",
+                    mapOf("option" to PreparedQuiz.correctOptionSequence[index].toString()),
+                ).body()
+            }
+            val finishRevision = extractInteractionRevision(finalBody)
+            assertEquals(200, get("$baseUrl/games/$id/interaction?revision=$finishRevision").statusCode())
+            val finish = probe.contexts.last()
+            assertEquals(Quiz10InteractionEvent.FINISH, finish.event)
+            assertEquals(10, finish.answeredQuestions)
+            assertEquals(10, finish.correctAnswers)
+            assertEquals(1, finish.stars)
+            assertTrue(finish.starEarned)
+        }
+    }
+
+    @Test
+    fun starEarnedIsTrueOnlyOnTenOutOfTen() {
+        val interaction = InteractionProbe()
+        withServer(prepareSuccess(), interaction) { baseUrl, _, probe ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+
+            var finalBody = ""
+            PreparedQuiz.correctOptionSequence.forEachIndexed { index, option ->
+                val selected = if (index == 0) (option + 1) % 4 else option
+                finalBody = postForm("$baseUrl/games/$id/answer", mapOf("option" to selected.toString())).body()
+            }
+
+            val finishRevision = extractInteractionRevision(finalBody)
+            assertEquals(200, get("$baseUrl/games/$id/interaction?revision=$finishRevision").statusCode())
+            val finish = probe.contexts.last()
+            assertEquals(Quiz10InteractionEvent.FINISH, finish.event)
+            assertEquals(9, finish.correctAnswers)
+            assertFalse(finish.starEarned)
+        }
+    }
+
+    @Test
+    fun obsoleteRevisionDoesNotUseNewState() {
+        val interaction = InteractionProbe()
+        withServer(prepareSuccess(), interaction) { baseUrl, _, probe ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            val firstRevision = extractInteractionRevision(start.body())
+
+            postForm("$baseUrl/games/$id/answer", mapOf("option" to "0"))
+
+            val obsolete = get("$baseUrl/games/$id/interaction?revision=$firstRevision")
+            assertEquals(409, obsolete.statusCode())
+            assertTrue(probe.contexts.isEmpty())
+        }
+    }
+
+    @Test
+    fun missingSessionForInteractionReturns404() {
+        withServer(prepareSuccess()) { baseUrl, _, _ ->
+            val response = get("$baseUrl/games/missing/interaction?revision=1")
+
+            assertEquals(404, response.statusCode())
+            assertContains(response.body(), "Sesión no encontrada")
+        }
+    }
+
+    @Test
+    fun failedInteractionDoesNotBlockGameAndDoesNotModifyFlowOrProgress() {
+        val interaction = InteractionProbe(
+            fixedResult = Outcome.Failure(Quiz10InteractionError.InvalidGeneratedMessage),
+        )
+        withServer(prepareSuccess(), interaction) { baseUrl, _, probe ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            val firstRevision = extractInteractionRevision(start.body())
+
+            val failedInteraction = get("$baseUrl/games/$id/interaction?revision=$firstRevision")
+            assertEquals(503, failedInteraction.statusCode())
+            assertEquals(1, probe.contexts.size)
+
+            val answer = postForm("$baseUrl/games/$id/answer", mapOf("option" to "0"))
+            assertEquals(200, answer.statusCode())
+            assertContains(answer.body(), "Pregunta 2/10")
+
+            var finalBody = answer.body()
+            for (index in 1 until 10) {
+                finalBody = postForm(
+                    "$baseUrl/games/$id/answer",
+                    mapOf("option" to PreparedQuiz.correctOptionSequence[index].toString()),
+                ).body()
+            }
+
+            assertContains(finalBody, "Puntuación final 10/10")
+            assertContains(finalBody, "Aciertos acumulados: 10")
+            assertContains(finalBody, "Estrellas: ⭐ 1")
+        }
+    }
+
+    @Test
+    fun slowInteractionDoesNotBlockAnswerProcessing() {
+        val interaction = InteractionProbe(delayMs = 700)
+        withServer(prepareSuccess(), interaction) { baseUrl, _, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+
+            val elapsed = measureTimeMillis {
+                val answer = postForm("$baseUrl/games/$id/answer", mapOf("option" to "0"))
+                assertEquals(200, answer.statusCode())
+                assertContains(answer.body(), "Pregunta 2/10")
+            }
+
+            assertTrue(elapsed < 400, "POST /answer tardó demasiado: ${elapsed}ms")
         }
     }
 
     @Test
     fun replaySameTopicKeepsProgress() {
-        withServer(prepareSuccess()) { baseUrl, _ ->
+        withServer(prepareSuccess()) { baseUrl, _, _ ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
             val id = extractSessionId(start.body())
             PreparedQuiz.correctOptionSequence.forEach { option -> postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())) }
@@ -100,7 +269,7 @@ class Quiz10WebServerTest {
 
     @Test
     fun chooseAnotherTopicKeepsProgress() {
-        withServer(prepareSuccess()) { baseUrl, _ ->
+        withServer(prepareSuccess()) { baseUrl, _, _ ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
             val id = extractSessionId(start.body())
             PreparedQuiz.correctOptionSequence.forEach { option -> postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())) }
@@ -123,7 +292,7 @@ class Quiz10WebServerTest {
 
     @Test
     fun reviewFailedAnswersDoesNotChangeProgress() {
-        withServer(prepareSuccess()) { baseUrl, _ ->
+        withServer(prepareSuccess()) { baseUrl, _, _ ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
             val id = extractSessionId(start.body())
 
@@ -146,7 +315,7 @@ class Quiz10WebServerTest {
 
     @Test
     fun missingSessionReturns404() {
-        withServer(prepareSuccess()) { baseUrl, _ ->
+        withServer(prepareSuccess()) { baseUrl, _, _ ->
             val response = postForm("$baseUrl/games/missing/answer", mapOf("option" to "0"))
 
             assertEquals(404, response.statusCode())
@@ -156,7 +325,7 @@ class Quiz10WebServerTest {
 
     @Test
     fun invalidInputReturns400() {
-        withServer(prepareSuccess()) { baseUrl, _ ->
+        withServer(prepareSuccess()) { baseUrl, _, _ ->
             val response = postForm("$baseUrl/games", mapOf("name" to "", "topic" to ""))
 
             assertEquals(400, response.statusCode())
@@ -166,11 +335,16 @@ class Quiz10WebServerTest {
 
     private fun withServer(
         prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError>,
-        block: (baseUrl: String, prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError>) -> Unit,
+        interactionProbe: InteractionProbe = InteractionProbe(),
+        block: (baseUrl: String, prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError>, interactionProbe: InteractionProbe) -> Unit,
     ) {
-        Quiz10WebServer(prepareQuiz = prepare, port = 0).use { server ->
+        Quiz10WebServer(
+            prepareQuiz = prepare,
+            presentInteraction = interactionProbe::present,
+            port = 0,
+        ).use { server ->
             val port = server.start()
-            block("http://127.0.0.1:$port", prepare)
+            block("http://127.0.0.1:$port", prepare, interactionProbe)
         }
     }
 
@@ -210,6 +384,12 @@ class Quiz10WebServerTest {
         val regex = Regex("/games/([0-9a-fA-F-]+)/answer")
         return regex.find(html)?.groupValues?.get(1)
             ?: error("Session id not found in html")
+    }
+
+    private fun extractInteractionRevision(html: String): Long {
+        val regex = Regex("/interaction\\?revision=(\\d+)")
+        return regex.find(html)?.groupValues?.get(1)?.toLongOrNull()
+            ?: error("Interaction revision not found in html")
     }
 
     private fun get(url: String): HttpResponse<String> {

@@ -29,6 +29,22 @@ class WebMainTest {
     }
 
     @Test
+    fun createInteractionPresenterRequiresOnlyInteractionModel() {
+        val presenter = createInteractionPresenter(
+            environment = { key ->
+                when (key) {
+                    "QUIZ10_INTERACTION_MODEL" -> "gpt-luna"
+                    legacyQuestionModelKey -> error("Question model should not be requested")
+                    else -> null
+                }
+            },
+            generateStructured = ::unusedGeneration,
+        )
+
+        assertNotNull(presenter)
+    }
+
+    @Test
     fun createQuizPreparerFailsWhenCoverageModelIsMissing() {
         val error = assertFailsWith<IllegalArgumentException> {
             createQuizPreparer(
@@ -38,6 +54,18 @@ class WebMainTest {
         }
 
         assertContains(error.message.orEmpty(), "QUIZ10_COVERAGE_MODEL")
+    }
+
+    @Test
+    fun createInteractionPresenterFailsWhenInteractionModelIsMissing() {
+        val error = assertFailsWith<IllegalArgumentException> {
+            createInteractionPresenter(
+                environment = { null },
+                generateStructured = ::unusedGeneration,
+            )
+        }
+
+        assertContains(error.message.orEmpty(), "QUIZ10_INTERACTION_MODEL")
     }
 
     private fun unusedGeneration(
