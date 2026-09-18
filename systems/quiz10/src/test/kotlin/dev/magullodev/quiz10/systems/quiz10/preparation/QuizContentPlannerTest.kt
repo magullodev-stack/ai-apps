@@ -1,5 +1,6 @@
 package dev.magullodev.quiz10.systems.quiz10.preparation
 
+import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -17,7 +18,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
@@ -89,7 +89,7 @@ class QuizContentPlannerTest {
         ControlledGeneration(Outcome.Success(StructuredGeneration(text, null)))
 
     private fun assertInvalid(text: String) {
-        val result = QuizContentPlanner("test-model", generation(text)::generate).plan("Ancient Rome")
+        val result = QuizContentPlanner(AiProfile.TERRA, generation(text)::generate).plan("Ancient Rome")
         assertEquals(
             QuizContentPlanningError.InvalidGeneratedPlan,
             assertIs<Outcome.Failure<QuizContentPlanningError>>(result).error,
@@ -97,21 +97,9 @@ class QuizContentPlannerTest {
     }
 
     @Test
-    fun constructorRejectsBlankModelWithoutInvokingGeneration() {
-        val generation = generation()
-
-        for (model in listOf("", " ", "\t\n")) {
-            assertFailsWith<IllegalArgumentException> {
-                QuizContentPlanner(model, generation::generate)
-            }
-        }
-        assertTrue(generation.requests.isEmpty())
-    }
-
-    @Test
     fun blankTopicDoesNotInvokeGeneration() {
         val generation = generation()
-        val planner = QuizContentPlanner("test-model", generation::generate)
+        val planner = QuizContentPlanner(AiProfile.TERRA, generation::generate)
 
         for (topic in listOf("", " ", "\t\n")) {
             val result = planner.plan(topic)
@@ -123,7 +111,7 @@ class QuizContentPlannerTest {
     @Test
     fun preparesCompletePlanWithSingleStructuredInvocation() {
         val generation = generation()
-        val result = QuizContentPlanner("configured-model", generation::generate).plan("Ancient Rome")
+        val result = QuizContentPlanner(AiProfile.TERRA, generation::generate).plan("Ancient Rome")
 
         val plan = assertIs<Outcome.Success<QuizContentPlan>>(result).value
         assertEquals(1, generation.requests.size)
@@ -133,14 +121,14 @@ class QuizContentPlannerTest {
     }
 
     @Test
-    fun requestUsesConfiguredModelTrimmedTopicAndCompleteSchema() {
+    fun requestUsesSelectedProfileTrimmedTopicAndCompleteSchema() {
         val generation = generation()
-        val planner = QuizContentPlanner("configured-model", generation::generate)
+        val planner = QuizContentPlanner(AiProfile.TERRA, generation::generate)
 
         planner.plan(" \tAncient Rome\n ")
 
         val request = generation.requests.single()
-        assertEquals("configured-model", request.model)
+        assertEquals(AiProfile.TERRA, request.profile)
         assertTrue(request.input.endsWith("Ancient Rome"))
         assertFalse(request.input.contains(" \tAncient Rome\n "))
         assertEquals("quiz10_content_plan", request.schemaName)
@@ -187,7 +175,7 @@ class QuizContentPlannerTest {
 
         for (cause in causes) {
             val generation = ControlledGeneration(Outcome.Failure(cause))
-            val result = QuizContentPlanner("test-model", generation::generate).plan("Ancient Rome")
+            val result = QuizContentPlanner(AiProfile.TERRA, generation::generate).plan("Ancient Rome")
             val error = assertIs<QuizContentPlanningError.GenerationFailed>(
                 assertIs<Outcome.Failure<QuizContentPlanningError>>(result).error,
             )
@@ -306,7 +294,7 @@ class QuizContentPlannerTest {
             })
         }
 
-        val result = QuizContentPlanner("test-model", generation(response(paddedItems))::generate).plan("Ancient Rome")
+        val result = QuizContentPlanner(AiProfile.TERRA, generation(response(paddedItems))::generate).plan("Ancient Rome")
         val plan = assertIs<Outcome.Success<QuizContentPlan>>(result).value
 
         for ((index, item) in plan.items.withIndex()) {

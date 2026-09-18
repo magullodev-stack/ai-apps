@@ -26,8 +26,13 @@ class OpenAiResponsesClient(
             null
         } ?: return Outcome.Failure(AiError.InvalidSchemaJson)
 
+        val model = when (request.profile) {
+            AiProfile.LUNA -> config.aiModels.luna
+            AiProfile.MINI -> config.aiModels.mini
+            AiProfile.TERRA -> config.aiModels.terra
+        }
         val body = buildJsonObject {
-            put("model", request.model)
+            put("model", model)
             put("input", request.input)
             put("text", buildJsonObject {
                 put("format", buildJsonObject {

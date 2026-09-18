@@ -16,8 +16,6 @@ class OpenAiResponsesSmokeTest {
     fun generatesStructuredJson() {
         assumeTrue(System.getenv("AI_APPS_AI_SMOKE") == "1")
 
-        val model = requireNotNull(System.getenv("AI_APPS_AI_MODEL")) { "AI_APPS_AI_MODEL is required" }
-        require(model.isNotBlank()) { "AI_APPS_AI_MODEL must not be blank" }
         val config = assertIs<Outcome.Success<EnvironmentConfig>>(EnvironmentConfig.load()).value
         val client = OpenAiResponsesClient(config, UrlConnectionHttpTransport(5_000, 30_000))
         val schema = """
@@ -32,7 +30,7 @@ class OpenAiResponsesSmokeTest {
         """.trimIndent()
         val result = client.generate(
             StructuredGenerationRequest(
-                model,
+                AiProfile.LUNA,
                 "Return a JSON object with message set to hello.",
                 "structured_smoke",
                 schema,

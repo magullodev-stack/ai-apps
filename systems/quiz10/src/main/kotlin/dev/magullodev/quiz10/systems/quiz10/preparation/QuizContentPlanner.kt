@@ -1,5 +1,6 @@
 package dev.magullodev.quiz10.systems.quiz10.preparation
 
+import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -12,19 +13,15 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 class QuizContentPlanner(
-    private val model: String,
+    private val profile: AiProfile,
     private val generate: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ) {
-    init {
-        require(model.isNotBlank()) { "Coverage model must not be blank" }
-    }
-
     fun plan(topic: String): Outcome<QuizContentPlan, QuizContentPlanningError> {
         val trimmedTopic = topic.trim()
         if (trimmedTopic.isEmpty()) return Outcome.Failure(QuizContentPlanningError.BlankTopic)
 
         val request = StructuredGenerationRequest(
-            model = model,
+            profile = profile,
             input = """
                 Genera el contenido factual completo de un Quiz10 sobre el tema indicado.
                 Devuelve exactamente 10 elementos completos en este orden: 4 EASY, 3 MODERATE, 2 HARD y 1 VERY_HARD.

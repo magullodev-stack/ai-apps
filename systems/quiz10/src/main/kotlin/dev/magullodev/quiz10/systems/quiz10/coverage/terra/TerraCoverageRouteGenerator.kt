@@ -1,5 +1,6 @@
 package dev.magullodev.quiz10.systems.quiz10.coverage.terra
 
+import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -10,17 +11,13 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 class TerraCoverageRouteGenerator(
-    private val model: String,
+    private val profile: AiProfile,
     private val generate: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ) {
-    init {
-        require(model.isNotBlank()) { "Terra model must not be blank" }
-    }
-
     fun generate(topic: String): Outcome<CoverageRoute, CoverageRouteGenerationError> {
         if (topic.isBlank()) return Outcome.Failure(CoverageRouteGenerationError.BlankTopic)
         val request = StructuredGenerationRequest(
-            model = model,
+            profile = profile,
             input = terraCoveragePrompt(topic),
             schemaName = "quiz10_coverage_route",
             schemaJson = schema,

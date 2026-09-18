@@ -26,7 +26,7 @@ class OpenAiResponsesClientTest {
         AiModelsConfig("model-luna", "model-mini", "model-terra"),
     )
     private val schema = """{"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"],"additionalProperties":false}"""
-    private val request = StructuredGenerationRequest("model-a", "Answer briefly", "answer_schema", schema)
+    private val request = StructuredGenerationRequest(AiProfile.LUNA, "Answer briefly", "answer_schema", schema)
     private val outputText = """{"answer":"ok"}"""
     private val envelope = """{"output":[{"type":"reasoning","summary":[]},{"type":"message","content":[{"type":"output_text","text":"{\"answer\":\"ok\"}"}]}],"usage":{"input_tokens":12,"output_tokens":5,"total_tokens":17}}"""
 
@@ -45,7 +45,7 @@ class OpenAiResponsesClientTest {
         ControlledTransport(Outcome.Success(HttpResponse(status, emptyMap(), body)))
 
     @Test
-    fun sendsRequestedModelToAuthenticatedResponsesEndpoint() {
+    fun sendsResolvedModelToAuthenticatedResponsesEndpoint() {
         val transport = transport()
 
         OpenAiResponsesClient(config, transport).generate(request)
@@ -54,25 +54,27 @@ class OpenAiResponsesClientTest {
         val body = Json.parseToJsonElement(requireNotNull(sent.body)).jsonObject
         assertEquals(HttpMethod.POST, sent.method)
         assertEquals(URI("https://api.example.test/v1/responses"), sent.uri)
-        assertEquals(request.model, body["model"]?.jsonPrimitive?.content)
+        assertEquals("model-luna", body["model"]?.jsonPrimitive?.content)
         assertEquals("Answer briefly", body["input"]?.jsonPrimitive?.content)
         assertEquals("Bearer example-test-key", sent.headers["Authorization"])
         assertEquals("application/json", sent.headers["Content-Type"])
     }
 
     @Test
-    fun consecutiveRequestsCanUseDifferentModelsWithTheSameConfiguration() {
+    fun sameClientResolvesAllGlobalProfilesFromConfiguration() {
         val transport = transport()
         val client = OpenAiResponsesClient(config, transport)
+        val expectedModels = mapOf(
+            AiProfile.LUNA to "model-luna",
+            AiProfile.MINI to "model-mini",
+            AiProfile.TERRA to "model-terra",
+        )
 
-        client.generate(request)
-        val firstBody = Json.parseToJsonElement(requireNotNull(transport.request.body)).jsonObject
-        assertEquals(request.model, firstBody["model"]?.jsonPrimitive?.content)
-
-        val secondRequest = request.copy(model = "model-b")
-        client.generate(secondRequest)
-        val secondBody = Json.parseToJsonElement(requireNotNull(transport.request.body)).jsonObject
-        assertEquals(secondRequest.model, secondBody["model"]?.jsonPrimitive?.content)
+        for ((profile, expectedModel) in expectedModels) {
+            assertIs<Outcome.Success<StructuredGeneration>>(client.generate(request.copy(profile = profile)))
+            val body = Json.parseToJsonElement(requireNotNull(transport.request.body)).jsonObject
+            assertEquals(expectedModel, body["model"]?.jsonPrimitive?.content)
+        }
     }
 
     @Test

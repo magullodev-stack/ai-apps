@@ -1,5 +1,6 @@
 package dev.magullodev.quiz10.systems.quiz10.interaction
 
+import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -9,16 +10,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 class Quiz10InteractionPresenter(
-    private val model: String,
+    private val profile: AiProfile,
     private val generate: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ) {
-    init {
-        require(model.isNotBlank()) { "Interaction model must not be blank" }
-    }
-
     fun present(context: Quiz10InteractionContext): Outcome<Quiz10InteractionMessage, Quiz10InteractionError> {
         val request = StructuredGenerationRequest(
-            model = model,
+            profile = profile,
             input = buildPrompt(context),
             schemaName = "quiz10_interaction_message",
             schemaJson = schema,

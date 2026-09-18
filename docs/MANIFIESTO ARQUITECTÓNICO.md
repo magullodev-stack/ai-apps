@@ -159,6 +159,22 @@ Se mantienen estas reglas:
 
 ---
 
+# Perfiles globales de IA
+
+LUNA, MINI y TERRA son perfiles compartidos de `ai-apps`, no modelos propiedad de un sistema.
+
+- `systems/` puede seleccionar el perfil que necesita.
+- `systems/` no conoce identificadores concretos de modelo ni variables de entorno de modelos.
+- `core/ai` es la única capa que resuelve el perfil solicitado contra `EnvironmentConfig.aiModels`.
+
+Roles globales:
+
+- LUNA → tareas ligeras, interfaz textual, reformulación, presentación y conversación simple.
+- MINI → tareas intermedias que requieren cierta interpretación o criterio sin razonamiento fuerte.
+- TERRA → tareas que requieren razonamiento fuerte sobre la entrada del usuario.
+
+---
+
 # Síntesis
 
 **core proporciona capacidades.**

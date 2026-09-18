@@ -1,5 +1,6 @@
 package dev.magullodev.quiz10.systems.quiz10.coverage.terra
 
+import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -25,7 +26,7 @@ class TerraCoverageRouteGeneratorTest {
         buildJsonObject { put("items", JsonArray(rows)) }.toString()
 
     private fun generator(text: String = response(), capture: (StructuredGenerationRequest) -> Unit = {}) =
-        TerraCoverageRouteGenerator("configured-terra") { request ->
+        TerraCoverageRouteGenerator(AiProfile.TERRA) { request ->
             capture(request)
             Outcome.Success(StructuredGeneration(text, null))
         }
@@ -42,7 +43,7 @@ class TerraCoverageRouteGeneratorTest {
             val requests = mutableListOf<StructuredGenerationRequest>()
             generator(capture = { requests.add(it) }).generate(topic)
             val request = requests.single()
-            assertEquals("configured-terra", request.model)
+            assertEquals(AiProfile.TERRA, request.profile)
             assertEquals(template.replaceFirst("Tema: [  ]", "Tema: [$topic]"), request.input)
         }
     }
@@ -146,14 +147,13 @@ class TerraCoverageRouteGeneratorTest {
     }
 
     @Test
-    fun blankTopicAndModelDoNotInvokeGenerationAndFailuresPreserveCause() {
-        val generator = TerraCoverageRouteGenerator("terra") { error("Must not generate") }
+    fun blankTopicDoesNotInvokeGenerationAndFailuresPreserveCause() {
+        val generator = TerraCoverageRouteGenerator(AiProfile.TERRA) { error("Must not generate") }
         for (topic in listOf("", " \t\n")) {
             assertEquals(Outcome.Failure(CoverageRouteGenerationError.BlankTopic), generator.generate(topic))
         }
-        assertFailsWith<IllegalArgumentException> { TerraCoverageRouteGenerator(" ") { error("Must not generate") } }
         val cause = AiError.HttpFailure(429)
-        val failing = TerraCoverageRouteGenerator("terra") { Outcome.Failure(cause) }
+        val failing = TerraCoverageRouteGenerator(AiProfile.TERRA) { Outcome.Failure(cause) }
         assertEquals(Outcome.Failure(CoverageRouteGenerationError.GenerationFailed(cause)), failing.generate("Rome"))
     }
 }

@@ -1,6 +1,7 @@
 package dev.magullodev.quiz10.apps.quiz10.web
 
 import dev.magullodev.aiapps.core.ai.OpenAiResponsesClient
+import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -22,12 +23,12 @@ fun main() {
     val transport = UrlConnectionHttpTransport(5_000, 30_000)
     val client = OpenAiResponsesClient(config, transport)
     val preparer = try {
-        createQuizPreparer(config, client::generate)
+        createQuizPreparer(client::generate)
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
     val interactionPresenter = try {
-        createInteractionPresenter(config, client::generate)
+        createInteractionPresenter(client::generate)
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
@@ -41,18 +42,16 @@ fun main() {
 }
 
 internal fun createQuizPreparer(
-    config: EnvironmentConfig,
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
-    val planner = QuizContentPlanner(config.aiModels.terra, generateStructured)
+    val planner = QuizContentPlanner(AiProfile.TERRA, generateStructured)
     return QuizPreparer(planner::plan)
 }
 
 internal fun createInteractionPresenter(
-    config: EnvironmentConfig,
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): Quiz10InteractionPresenter {
-    return Quiz10InteractionPresenter(config.aiModels.luna, generateStructured)
+    return Quiz10InteractionPresenter(AiProfile.LUNA, generateStructured)
 }
 
 private fun fail(message: String): Nothing {

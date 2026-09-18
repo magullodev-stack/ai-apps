@@ -1,5 +1,6 @@
 package dev.magullodev.quiz10.systems.quiz10.interaction
 
+import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -13,7 +14,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 class Quiz10InteractionPresenterTest {
     private class ControlledGeneration(
@@ -40,29 +40,16 @@ class Quiz10InteractionPresenterTest {
     )
 
     @Test
-    fun constructorRejectsBlankModelWithoutInvokingGeneration() {
-        val generation = ControlledGeneration(Outcome.Success(StructuredGeneration("{\"message\":\"ok\"}", null)))
-
-        for (model in listOf("", " ", "\t\n")) {
-            assertFailsWith<IllegalArgumentException> {
-                Quiz10InteractionPresenter(model, generation::generate)
-            }
-        }
-
-        assertTrue(generation.requests.isEmpty())
-    }
-
-    @Test
-    fun requestUsesConfiguredModelStrictMessageSchemaAndPromptContext() {
+    fun requestUsesSelectedProfileStrictMessageSchemaAndPromptContext() {
         val generation = ControlledGeneration(Outcome.Success(StructuredGeneration("{\"message\":\"Vamos muy bien.\"}", null)))
-        val presenter = Quiz10InteractionPresenter("configured-interaction-model", generation::generate)
+        val presenter = Quiz10InteractionPresenter(AiProfile.LUNA, generation::generate)
 
         val result = presenter.present(baseContext)
 
         val message = assertIs<Outcome.Success<Quiz10InteractionMessage>>(result).value
         assertEquals("Vamos muy bien.", message.message)
         val request = generation.requests.single()
-        assertEquals("configured-interaction-model", request.model)
+        assertEquals(AiProfile.LUNA, request.profile)
         assertEquals("quiz10_interaction_message", request.schemaName)
 
         val schema = Json.parseToJsonElement(request.schemaJson)
@@ -99,7 +86,7 @@ class Quiz10InteractionPresenterTest {
 
         for (cause in causes) {
             val presenter = Quiz10InteractionPresenter(
-                "interaction-model",
+                AiProfile.LUNA,
                 ControlledGeneration(Outcome.Failure(cause))::generate,
             )
             val result = presenter.present(baseContext)
@@ -126,7 +113,7 @@ class Quiz10InteractionPresenterTest {
 
         for (output in invalidOutputs) {
             val presenter = Quiz10InteractionPresenter(
-                "interaction-model",
+                AiProfile.LUNA,
                 ControlledGeneration(Outcome.Success(StructuredGeneration(output, null)))::generate,
             )
             val result = presenter.present(baseContext)
