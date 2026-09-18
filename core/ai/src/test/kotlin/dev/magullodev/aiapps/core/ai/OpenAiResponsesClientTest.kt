@@ -1,5 +1,6 @@
 package dev.magullodev.aiapps.core.ai
 
+import dev.magullodev.aiapps.core.config.AiModelsConfig
 import dev.magullodev.aiapps.core.config.AppEnvironment
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -22,6 +23,7 @@ class OpenAiResponsesClientTest {
         AppEnvironment.TEST,
         URI("https://api.example.test/base/"),
         "example-test-key",
+        AiModelsConfig("model-luna", "model-mini", "model-terra"),
     )
     private val schema = """{"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"],"additionalProperties":false}"""
     private val request = StructuredGenerationRequest("model-a", "Answer briefly", "answer_schema", schema)

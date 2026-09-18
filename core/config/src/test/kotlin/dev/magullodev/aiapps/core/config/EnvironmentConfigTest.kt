@@ -20,6 +20,9 @@ class EnvironmentConfigTest {
                 "AI_APPS_ENV" to "production",
                 "AI_APPS_AI_BASE_URL" to "https://example.com/api",
                 "AI_APPS_AI_API_KEY" to "example-test-key",
+                "AI_APPS_AI_LUNA_MODEL" to "model-luna",
+                "AI_APPS_AI_MINI_MODEL" to "model-mini",
+                "AI_APPS_AI_TERRA_MODEL" to "model-terra",
             ),
         )
 
@@ -27,6 +30,7 @@ class EnvironmentConfigTest {
         assertEquals(AppEnvironment.PRODUCTION, config.environment)
         assertEquals(URI("https://example.com/api"), config.aiBaseUrl)
         assertEquals("example-test-key", config.aiApiKey)
+        assertEquals(AiModelsConfig("model-luna", "model-mini", "model-terra"), config.aiModels)
         assertFalse(config.toString().contains("example-test-key"))
     }
 
@@ -37,6 +41,9 @@ class EnvironmentConfigTest {
                 "AI_APPS_ENV" to "test",
                 "AI_APPS_AI_BASE_URL" to "HTTP://example.com",
                 "AI_APPS_AI_API_KEY" to "example-test-key",
+                "AI_APPS_AI_LUNA_MODEL" to "model-luna",
+                "AI_APPS_AI_MINI_MODEL" to "model-mini",
+                "AI_APPS_AI_TERRA_MODEL" to "model-terra",
             ),
         )
 
@@ -57,6 +64,9 @@ class EnvironmentConfigTest {
                     "AI_APPS_ENV" to name,
                     "AI_APPS_AI_BASE_URL" to "http://localhost:8080",
                     "AI_APPS_AI_API_KEY" to "example-test-key",
+                    "AI_APPS_AI_LUNA_MODEL" to "model-luna",
+                    "AI_APPS_AI_MINI_MODEL" to "model-mini",
+                    "AI_APPS_AI_TERRA_MODEL" to "model-terra",
                 ),
             )
             assertEquals(expected, assertIs<Outcome.Success<EnvironmentConfig>>(result).value.environment)
@@ -129,6 +139,28 @@ class EnvironmentConfigTest {
                 ConfigError.MissingOrEmpty("AI_APPS_AI_API_KEY"),
                 assertIs<Outcome.Failure<ConfigError>>(result).error,
             )
+        }
+    }
+    @Test
+    fun rejectsMissingEmptyAndWhitespaceOnlyModels() {
+        val modelKeys = listOf("AI_APPS_AI_LUNA_MODEL", "AI_APPS_AI_MINI_MODEL", "AI_APPS_AI_TERRA_MODEL")
+        for (key in modelKeys) {
+            for (value in listOf(null, "", " ", "\t\n")) {
+                val variables = mutableMapOf(
+                    "AI_APPS_ENV" to "test",
+                    "AI_APPS_AI_BASE_URL" to "https://example.com",
+                    "AI_APPS_AI_API_KEY" to "example-test-key",
+                )
+                modelKeys.forEach { variables[it] = "configured-model" }
+                if (value == null) variables.remove(key) else variables[key] = value
+
+                val result = EnvironmentConfig.load(EnvironmentReader { variables[it] })
+
+                assertEquals(
+                    ConfigError.MissingOrEmpty(key),
+                    assertIs<Outcome.Failure<ConfigError>>(result).error,
+                )
+            }
         }
     }
 }

@@ -8,12 +8,14 @@ data class EnvironmentConfig(
     val environment: AppEnvironment,
     val aiBaseUrl: URI,
     val aiApiKey: String,
+    val aiModels: AiModelsConfig,
 ) {
     override fun toString(): String =
         "EnvironmentConfig(" +
             "environment=$environment, " +
             "aiBaseUrl=$aiBaseUrl, " +
-            "aiApiKey=[REDACTED])"
+            "aiApiKey=[REDACTED], " +
+            "aiModels=$aiModels)"
 
     companion object {
         fun load(reader: EnvironmentReader = SystemEnvironmentReader): Outcome<EnvironmentConfig, ConfigError> {
@@ -53,7 +55,22 @@ data class EnvironmentConfig(
                 return Outcome.Failure(ConfigError.MissingOrEmpty("AI_APPS_AI_API_KEY"))
             }
 
-            return Outcome.Success(EnvironmentConfig(environment, url, apiKey))
+            val luna = reader.get("AI_APPS_AI_LUNA_MODEL")
+            if (luna.isNullOrBlank()) {
+                return Outcome.Failure(ConfigError.MissingOrEmpty("AI_APPS_AI_LUNA_MODEL"))
+            }
+
+            val mini = reader.get("AI_APPS_AI_MINI_MODEL")
+            if (mini.isNullOrBlank()) {
+                return Outcome.Failure(ConfigError.MissingOrEmpty("AI_APPS_AI_MINI_MODEL"))
+            }
+
+            val terra = reader.get("AI_APPS_AI_TERRA_MODEL")
+            if (terra.isNullOrBlank()) {
+                return Outcome.Failure(ConfigError.MissingOrEmpty("AI_APPS_AI_TERRA_MODEL"))
+            }
+
+            return Outcome.Success(EnvironmentConfig(environment, url, apiKey, AiModelsConfig(luna, mini, terra)))
         }
     }
 }

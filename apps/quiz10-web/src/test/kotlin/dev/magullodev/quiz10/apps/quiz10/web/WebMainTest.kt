@@ -1,76 +1,59 @@
 package dev.magullodev.quiz10.apps.quiz10.web
 
 import dev.magullodev.aiapps.core.ai.AiError
-import dev.magullodev.aiapps.core.ai.StructuredGeneration
-import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
+import dev.magullodev.aiapps.core.config.AiModelsConfig
+import dev.magullodev.aiapps.core.config.AppEnvironment
+import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
+import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionContext
+import dev.magullodev.quiz10.systems.quiz10.interaction.Quiz10InteractionEvent
+import java.net.URI
 import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
+import kotlin.test.assertEquals
 
 class WebMainTest {
-    private val legacyQuestionModelKey = "QUIZ10_" + "QUESTION_MODEL"
+    private val config = EnvironmentConfig(
+        AppEnvironment.TEST,
+        URI("https://example.com"),
+        "example-test-key",
+        AiModelsConfig("configured-luna", "configured-mini", "configured-terra"),
+    )
 
     @Test
-    fun createQuizPreparerRequiresOnlyCoverageModel() {
-        val preparer = createQuizPreparer(
-            environment = { key ->
-                when (key) {
-                    "QUIZ10_COVERAGE_MODEL" -> "gpt-strong"
-                    legacyQuestionModelKey -> error("Question model should not be requested")
-                    else -> null
-                }
-            },
-            generateStructured = ::unusedGeneration,
-        )
-
-        assertNotNull(preparer)
-    }
-
-    @Test
-    fun createInteractionPresenterRequiresOnlyInteractionModel() {
-        val presenter = createInteractionPresenter(
-            environment = { key ->
-                when (key) {
-                    "QUIZ10_INTERACTION_MODEL" -> "gpt-luna"
-                    legacyQuestionModelKey -> error("Question model should not be requested")
-                    else -> null
-                }
-            },
-            generateStructured = ::unusedGeneration,
-        )
-
-        assertNotNull(presenter)
-    }
-
-    @Test
-    fun createQuizPreparerFailsWhenCoverageModelIsMissing() {
-        val error = assertFailsWith<IllegalArgumentException> {
-            createQuizPreparer(
-                environment = { null },
-                generateStructured = ::unusedGeneration,
-            )
+    fun createQuizPreparerUsesGlobalTerraModel() {
+        val requestedModels = mutableListOf<String>()
+        val preparer = createQuizPreparer(config) { request ->
+            requestedModels += request.model
+            Outcome.Failure(AiError.TransportFailure)
         }
 
-        assertContains(error.message.orEmpty(), "QUIZ10_COVERAGE_MODEL")
+        preparer.prepare("Historia")
+
+        assertEquals(listOf(config.aiModels.terra), requestedModels)
     }
 
     @Test
-    fun createInteractionPresenterFailsWhenInteractionModelIsMissing() {
-        val error = assertFailsWith<IllegalArgumentException> {
-            createInteractionPresenter(
-                environment = { null },
-                generateStructured = ::unusedGeneration,
-            )
+    fun createInteractionPresenterUsesGlobalLunaModel() {
+        val requestedModels = mutableListOf<String>()
+        val presenter = createInteractionPresenter(config) { request ->
+            requestedModels += request.model
+            Outcome.Failure(AiError.TransportFailure)
         }
 
-        assertContains(error.message.orEmpty(), "QUIZ10_INTERACTION_MODEL")
-    }
+        presenter.present(
+            Quiz10InteractionContext(
+                event = Quiz10InteractionEvent.WELCOME,
+                playerName = "Ana",
+                topic = "Historia",
+                answeredQuestions = 0,
+                correctAnswers = 0,
+                totalQuestions = 10,
+                stars = 0,
+                lastAnswerCorrect = null,
+                starEarned = false,
+            ),
+        )
 
-    private fun unusedGeneration(
-        request: StructuredGenerationRequest,
-    ): Outcome<StructuredGeneration, AiError> {
-        error("Structured generation should not run while building the preparer: ${request.model}")
+        assertEquals(listOf(config.aiModels.luna), requestedModels)
     }
 }

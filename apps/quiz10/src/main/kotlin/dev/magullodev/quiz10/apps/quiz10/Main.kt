@@ -44,7 +44,7 @@ fun main(args: Array<String>) {
     val transport = UrlConnectionHttpTransport(5_000, 30_000)
     val client = OpenAiResponsesClient(config, transport)
     val preparer = try {
-        createQuizPreparer(System::getenv, client::generate)
+        createQuizPreparer(config, client::generate)
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
@@ -86,14 +86,10 @@ fun main(args: Array<String>) {
 }
 
 internal fun createQuizPreparer(
-    environment: (String) -> String?,
+    config: EnvironmentConfig,
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
-    val model = environment("QUIZ10_COVERAGE_MODEL")
-    require(!model.isNullOrBlank()) {
-        "CONFIGURATION_ERROR: QUIZ10_COVERAGE_MODEL debe contener un modelo no vacío"
-    }
-    val planner = QuizContentPlanner(model, generateStructured)
+    val planner = QuizContentPlanner(config.aiModels.terra, generateStructured)
     return QuizPreparer(planner::plan)
 }
 
