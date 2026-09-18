@@ -16,7 +16,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 import kotlin.test.Test
@@ -32,11 +34,22 @@ class Quiz10WebServerTest {
         private val delayMs: Long = 0,
         private val fixedResult: Outcome<Quiz10InteractionMessage, Quiz10InteractionError> =
             Outcome.Success(Quiz10InteractionMessage("Hola")),
+        private val enteredLatch: CountDownLatch? = null,
+        private val releaseLatch: CountDownLatch? = null,
     ) {
         val contexts = CopyOnWriteArrayList<Quiz10InteractionContext>()
 
         fun present(context: Quiz10InteractionContext): Outcome<Quiz10InteractionMessage, Quiz10InteractionError> {
             contexts += context
+
+            enteredLatch?.countDown()
+
+            if (releaseLatch != null) {
+                if (!releaseLatch.await(10, TimeUnit.SECONDS)) {
+                    error("Release latch timeout")
+                }
+            }
+
             if (delayMs > 0) Thread.sleep(delayMs)
             return fixedResult
         }
@@ -232,18 +245,40 @@ class Quiz10WebServerTest {
 
     @Test
     fun slowInteractionDoesNotBlockAnswerProcessing() {
-        val interaction = InteractionProbe(delayMs = 700)
-        withServer(prepareSuccess(), interaction) { baseUrl, _, _ ->
+        val enteredPresenter = CountDownLatch(1)
+        val releasePresenter = CountDownLatch(1)
+        val interaction = InteractionProbe(
+            enteredLatch = enteredPresenter,
+            releaseLatch = releasePresenter,
+        )
+        withServer(prepareSuccess(), interaction) { baseUrl, _, probe ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
             val id = extractSessionId(start.body())
+            val revision = extractInteractionRevision(start.body())
 
-            val elapsed = measureTimeMillis {
+            var interactionResponse: HttpResponse<String>? = null
+            val interactionThread = Thread {
+                interactionResponse = get("$baseUrl/games/$id/interaction?revision=$revision")
+            }
+            interactionThread.start()
+
+            if (!enteredPresenter.await(5, TimeUnit.SECONDS)) {
+                error("Presenter did not enter within timeout")
+            }
+
+            val answerElapsed = measureTimeMillis {
                 val answer = postForm("$baseUrl/games/$id/answer", mapOf("option" to "0"))
                 assertEquals(200, answer.statusCode())
                 assertContains(answer.body(), "Pregunta 2/10")
             }
 
-            assertTrue(elapsed < 400, "POST /answer tardó demasiado: ${elapsed}ms")
+            assertTrue(answerElapsed < 400, "POST /answer tardó demasiado: ${answerElapsed}ms")
+
+            releasePresenter.countDown()
+            interactionThread.join(5000)
+
+            assertEquals(200, interactionResponse?.statusCode())
+            assertEquals(1, probe.contexts.size)
         }
     }
 

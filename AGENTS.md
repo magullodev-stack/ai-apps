@@ -35,6 +35,18 @@ Reglas de frontera:
 - Los sistemas pueden coexistir sin conocerse entre sí.
 - Las abstracciones compartidas aparecen por reutilización real, no por anticipación.
 
+### Estado y efectos inteligentes
+
+- El estado estructurado del sistema es la fuente de verdad operacional.
+- La IA nunca modifica el estado directamente.
+- Las acciones del usuario se procesan como eventos del sistema.
+- Cuando una transición necesita interpretación o generación no determinista, el sistema puede solicitar un efecto inteligente tipado.
+- La salida de un efecto inteligente es una propuesta estructurada, no estado.
+- `systems/` valida esa propuesta y decide si la convierte en un evento o en nuevo estado.
+- Si una transición puede resolverse de forma determinista, no introduzcas IA innecesariamente.
+- Los fallos de un efecto inteligente no deben dejar el sistema en un estado parcialmente aplicado o incoherente.
+- El dominio define la intención, los contratos y las validaciones; la infraestructura ejecuta la capacidad técnica y `apps/` selecciona y compone las implementaciones concretas.
+
 ## Tecnología
 
 Usa las versiones, dependencias y herramientas ya fijadas por el repositorio.

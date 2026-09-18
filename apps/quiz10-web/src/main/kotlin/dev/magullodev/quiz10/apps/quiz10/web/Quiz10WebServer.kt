@@ -19,6 +19,8 @@ import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class Quiz10WebServer(
     private val prepareQuiz: (String) -> Outcome<PreparedQuiz, QuizPreparationError>,
@@ -45,8 +47,10 @@ class Quiz10WebServer(
 
     private val sessions = ConcurrentHashMap<String, WebSession>()
     private val server = HttpServer.create(InetSocketAddress(host, port), 0)
+    private val executor: ExecutorService = Executors.newVirtualThreadPerTaskExecutor()
 
     init {
+        server.executor = executor
         server.createContext("/") { exchange ->
             try {
                 handle(exchange)
@@ -67,6 +71,7 @@ class Quiz10WebServer(
 
     override fun close() {
         server.stop(0)
+        executor.shutdown()
     }
 
     private fun handle(exchange: HttpExchange) {
