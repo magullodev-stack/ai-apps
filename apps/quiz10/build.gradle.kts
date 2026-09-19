@@ -11,7 +11,7 @@ dependencies {
     implementation(project(":core:config"))
     implementation(project(":core:network"))
     implementation(project(":core:ai"))
-    implementation(project(":systems:quiz10"))
+    implementation(project(":systems:games:quiz10"))
     testImplementation(kotlin("test"))
 }
 
@@ -28,5 +28,5 @@ tasks.jar {
 }
 
 application {
-    mainClass.set("dev.magullodev.quiz10.apps.quiz10.MainKt")
+    mainClass.set("dev.magullodev.aiapps.apps.quiz10.MainKt")
 }

@@ -7,7 +7,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":systems:quiz10"))
+    implementation(project(":systems:games:quiz10"))
     testImplementation(kotlin("test"))
 }
 
@@ -17,4 +17,8 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.jar {
+    archiveBaseName.set("quiz10-web-ui")
 }
