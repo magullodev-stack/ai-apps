@@ -1,3 +1,4 @@
+
 Lectura del árbol: AI-APPS comparte una arquitectura común, pero cada aplicación crece con su propia estructura, según las experiencias y responsabilidades que necesita.
 
 ai-apps/
@@ -8,7 +9,7 @@ ai-apps/
 │   ├── config/                        # Configuración técnica.
 │   ├── network/                       # Comunicación por red.
 │   ├── ai/                            # Ejecución técnica de operaciones mediante modelos de IA.
-│   │   └── README.md                  # Documentación técnica de core/ai y su monitor de consumo y auditorías.
+│   │   └── README.md                  # Documentación técnica del monitor de consumo y auditorías.
 │   ├── realtime/                      # Transporte de mensajes y actualizaciones en vivo. [FUTURO]
 │   └── persistence/                   # Almacenamiento y recuperación técnica.
 │
@@ -39,11 +40,11 @@ ai-apps/
 │   │   │   │
 │   │   │   └── progress/              # Progreso y logros con significado
 │   │   │                              # más allá de una actividad concreta.
+│   │   │
+│   │   ├── molecular/                 # Experiencias de construcción y exploración molecular. [FUTURO]
+│   │   ├── music/                     # Experiencias de composición y exploración musical. [FUTURO]
+│   │   └── semantic-math/             # Experiencias de exploración semántico-matemática. [FUTURO]
 │   │
-│   ├── molecular/                     # Experiencias de construcción y exploración molecular. [FUTURO]
-│   ├── music/                         # Experiencias de composición y exploración musical. [FUTURO]
-│   └── semantic-math/                 # Experiencias de exploración semántico-matemática. [FUTURO]
-│
 │   └── cuina/                         # Experiencia culinaria y continuidad de la elaboración.
 │       ├── preferences/               # Preferencias, restricciones y equipamiento. [FUTURO]
 │       ├── families/                  # Familias de elaboración y sus criterios. [FUTURO]
