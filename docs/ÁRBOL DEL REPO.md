@@ -1,28 +1,60 @@
 ai-apps/
-├── core/                                      # Mecanismos y capacidades técnicas neutrales respecto al significado de los sistemas.
-│   ├── contracts/                             # Mecanismos compartidos para expresar contratos técnicos.
-│   ├── config/                                # Mecanismos compartidos para obtener configuración técnica.
-│   ├── network/                               # Capacidad compartida de comunicación por red.
-│   └── ai/                                    # Capacidad compartida para ejecutar operaciones mediante modelos de IA.
+├── core/                              # Capacidades técnicas compartidas; no gobiernan actividades.
+│   ├── contracts/                     # Contratos técnicos.
+│   ├── config/                        # Configuración técnica.
+│   ├── network/                       # Comunicación por red.
+│   ├── ai/                            # Ejecución técnica de operaciones mediante modelos de IA.
+│   ├── realtime/                      # Transporte de mensajes y actualizaciones en vivo. [FUTURO]
+│   └── persistence/                   # Almacenamiento y recuperación técnica.
 │
-├── systems/                                   # Árbol semántico: aquí viven los sistemas y las relaciones de pertenencia entre ellos.
-│   ├── knowledge/                             # Sistema que gobierna qué conocimiento resulta admisible para su uso.
-│   └── games/                                 # Ámbito semántico al que pertenecen los sistemas de juego.
-│       └── quiz10/                            # Sistema que gobierna una partida Quiz10.
+├── systems/                           # Realidad, significado, estado y reglas de las actividades.
+│   ├── knowledge/                     # Responsabilidades de conocimiento realmente compartidas.
+│   │
+│   ├── games/
+│   │   ├── quiz10/                    # Experiencias de preguntas, estudio y competición.
+│   │   │   │
+│   │   │   ├── topics/                # Tema y enfoque de la actividad; usa clasificación
+│   │   │   │                          # compartida si existe, sin duplicar sus reglas.
+│   │   │   ├── coverage/              # Rutas de conocimiento utilizables por las modalidades.
+│   │   │   ├── question/              # Preguntas, respuestas y criterios de admisibilidad.
+│   │   │   ├── preparation/           # Preparación de actividades y sus resultados admisibles.
+│   │   │   ├── session/               # Estado y transiciones compartidos de una partida.
+│   │   │   ├── progress/              # Resultados y progreso entre actividades.
+│   │   │   ├── interaction/           # Intervenciones comunes a Quiz10, cuando existan.
+│   │   │   │
+│   │   │   └── modes/                 # Reglas propias de cada forma de participar.
+│   │   │       ├── quick-play/        # Partida rápida. [FUTURO]
+│   │   │       ├── study/             # Aprendizaje, explicaciones y repaso. [FUTURO]
+│   │   │       ├── arcade/            # Competición 1 vs. 1 y tiempo de partida. [FUTURO]
+│   │   │       └── group/             # Sala, participantes y desafíos en grupo. [FUTURO]
+│   │   │
+│   │   ├── molecular/                 # Construcción y exploración molecular. [FUTURO]
+│   │   ├── music/                     # Composición y exploración musical. [FUTURO]
+│   │   └── semantic-math/             # Exploración semántico-matemática. [FUTURO]
+│   │
+│   └── cuina/                         # Experiencia culinaria y continuidad de la elaboración.
+│       ├── preferences/               # Preferencias, restricciones y equipamiento. [FUTURO]
+│       ├── families/                  # Familias de elaboración y sus criterios. [FUTURO]
+│       ├── recipes/                   # Recetas, cantidades y adaptaciones. [FUTURO]
+│       ├── cooking/                   # Elaboración en curso y progreso de los pasos. [FUTURO]
+│       └── interaction/               # Acompañamiento común de Cuina, cuando exista. [FUTURO]
 │
-├── ui/                                        # Implementaciones que proyectan estado y convierten interacción en acciones.
-│   └── quiz10-web/                            # Presentación web actual de Quiz10.
+├── ui/                                # Experiencias visibles: escenas, controles y navegación.
+│   ├── quiz10-web/                    # Interfaz web de Quiz10 y sus modalidades.
+│   └── cuina-web/                     # Exploración de platos y cocina en curso. [FUTURO]
 │
-├── apps/                                      # Composiciones ejecutables que conectan efectos con capacidades concretas.
-│   ├── quiz10/                                # Composición ejecutable actual de Quiz10.
-│   └── quiz10-web/                            # Composición ejecutable actual de Quiz10 con su interfaz web.
+├── apps/                              # Composiciones ejecutables de sistemas, UI y capacidades.
+│   ├── quiz10/                        # Composición actual de Quiz10.
+│   ├── quiz10-web/                    # Composición web actual; futura conexión de sus
+│   │                                  # modalidades y actualizaciones en vivo.
+│   └── cuina-web/                     # Composición ejecutable de Cuina. [FUTURO]
 │
-├── docs/                                      # Documentación propia del repositorio.
-├── .devcontainer/                             # Definición del entorno aislado del repositorio.
-├── .github/                                   # Integración del repositorio con GitHub.
-├── gradle/                                    # Infraestructura del build Gradle.
-├── build.gradle.kts                           # Configuración común del build.
-├── settings.gradle.kts                        # Módulos que forman actualmente el build.
-├── gradle.properties                          # Propiedades del build.
-├── gradlew                                    # Wrapper de Gradle para Unix.
-└── gradlew.bat                                # Wrapper de Gradle para Windows.
+├── docs/
+├── .devcontainer/
+├── .github/
+├── gradle/
+├── build.gradle.kts
+├── settings.gradle.kts
+├── gradle.properties
+├── gradlew
+└── gradlew.bat

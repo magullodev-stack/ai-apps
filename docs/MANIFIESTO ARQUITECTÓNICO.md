@@ -1,5 +1,9 @@
 # Manifiesto arquitectónico de AI-APPS
 
+AI-APPS construye aplicaciones centradas en la actividad humana. Los sistemas gobiernan la realidad de cada actividad y las capacidades, incluidas las de IA, participan según las necesidades de la experiencia.
+
+---
+
 Este manifiesto fija las invariantes estructurales del repositorio al crecer.
 
 La definición de AI-APPS, sus responsabilidades arquitectónicas y su ontología operacional están establecidas en el contexto del proyecto.
