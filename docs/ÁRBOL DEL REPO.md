@@ -1,3 +1,5 @@
+Lectura del árbol: AI-APPS comparte una arquitectura común, pero cada aplicación crece con su propia estructura, según las experiencias y responsabilidades que necesita.
+
 ai-apps/
 ├── core/                              # Capacidades técnicas compartidas; no gobiernan actividades.
 │   ├── contracts/                     # Contratos técnicos.
@@ -8,45 +10,57 @@ ai-apps/
 │   └── persistence/                   # Almacenamiento y recuperación técnica.
 │
 ├── systems/                           # Realidad, significado, estado y reglas de las actividades.
-│   ├── knowledge/                     # Responsabilidades de conocimiento realmente compartidas.
+│   ├── knowledge/                     # Conocimiento compartido, cuando exista una responsabilidad común real.
 │   │
 │   ├── games/
-│   │   ├── quiz10/                    # Experiencias de preguntas, estudio y competición.
+│   │   ├── quiz10/                    # Suite de experiencias de preguntas, juego y aprendizaje.
 │   │   │   │
-│   │   │   ├── topics/                # Tema y enfoque de la actividad; usa clasificación
-│   │   │   │                          # compartida si existe, sin duplicar sus reglas.
-│   │   │   ├── coverage/              # Rutas de conocimiento utilizables por las modalidades.
-│   │   │   ├── question/              # Preguntas, respuestas y criterios de admisibilidad.
-│   │   │   ├── preparation/           # Preparación de actividades y sus resultados admisibles.
-│   │   │   ├── session/               # Estado y transiciones compartidos de una partida.
-│   │   │   ├── progress/              # Resultados y progreso entre actividades.
-│   │   │   ├── interaction/           # Intervenciones comunes a Quiz10, cuando existan.
+│   │   │   ├── rooms/                 # Salas persistentes que reúnen personas y actividades.
+│   │   │   │   ├── membership/        # Pertenencia, invitaciones y acceso a una sala.
+│   │   │   │   ├── conversation/      # Conversación y acontecimientos de la sala.
+│   │   │   │   └── challenges/        # Tests de la sala: disponibilidad,
+│   │   │   │                          # desbloqueos, participación y resultados.
 │   │   │   │
-│   │   │   └── modes/                 # Reglas propias de cada forma de participar.
-│   │   │       ├── quick-play/        # Partida rápida. [FUTURO]
-│   │   │       ├── study/             # Aprendizaje, explicaciones y repaso. [FUTURO]
-│   │   │       ├── arcade/            # Competición 1 vs. 1 y tiempo de partida. [FUTURO]
-│   │   │       └── group/             # Sala, participantes y desafíos en grupo. [FUTURO]
-│   │   │
-│   │   ├── molecular/                 # Construcción y exploración molecular. [FUTURO]
-│   │   ├── music/                     # Composición y exploración musical. [FUTURO]
-│   │   └── semantic-math/             # Exploración semántico-matemática. [FUTURO]
+│   │   │   ├── duels/                 # Encuentros 1 vs. 1 y sus reglas de competición.
+│   │   │   │
+│   │   │   ├── quick-play/            # Partidas inmediatas y aleatorias.
+│   │   │   │
+│   │   │   ├── study/                 # Actividades de aprendizaje, explicación y repaso.
+│   │   │   │
+│   │   │   ├── quiz/                  # Responsabilidades de contenido y resolución
+│   │   │   │   │                      # reutilizables por las experiencias que las necesiten.
+│   │   │   │   ├── topics/            # Tema y enfoque de una actividad de preguntas.
+│   │   │   │   ├── coverage/          # Preparación de conocimiento cuando se requiera
+│   │   │   │   │                      # una ruta de cobertura.
+│   │   │   │   └── question/          # Preguntas, respuestas y criterios de admisibilidad.
+│   │   │   │
+│   │   │   └── progress/              # Progreso y logros con significado
+│   │   │                              # más allá de una actividad concreta.
+│   │
+│   │   ├── molecular/                 # Experiencias de construcción y exploración molecular. [FUTURO]
+│   │   ├── music/                     # Experiencias de composición y exploración musical. [FUTURO]
+│   │   └── semantic-math/             # Experiencias de exploración semántico-matemática. [FUTURO]
 │   │
 │   └── cuina/                         # Experiencia culinaria y continuidad de la elaboración.
 │       ├── preferences/               # Preferencias, restricciones y equipamiento. [FUTURO]
 │       ├── families/                  # Familias de elaboración y sus criterios. [FUTURO]
 │       ├── recipes/                   # Recetas, cantidades y adaptaciones. [FUTURO]
-│       ├── cooking/                   # Elaboración en curso y progreso de los pasos. [FUTURO]
-│       └── interaction/               # Acompañamiento común de Cuina, cuando exista. [FUTURO]
+│       └── cooking/                   # Elaboración en curso y progreso. [FUTURO]
 │
-├── ui/                                # Experiencias visibles: escenas, controles y navegación.
-│   ├── quiz10-web/                    # Interfaz web de Quiz10 y sus modalidades.
-│   └── cuina-web/                     # Exploración de platos y cocina en curso. [FUTURO]
+├── ui/                                # Experiencias visibles e interacción humana.
+│   ├── quiz10-web/                    # Interfaz de la suite Quiz10.
+│   │   ├── home/                      # Entrada a las experiencias.
+│   │   ├── rooms/                     # Descubrimiento y experiencia dentro de las salas.
+│   │   ├── duels/                     # Experiencia de enfrentamiento 1 vs. 1.
+│   │   ├── quick-play/                # Entrada y desarrollo de partidas inmediatas.
+│   │   ├── study/                     # Experiencia de aprendizaje y repaso.
+│   │   └── shared/                    # Presentación reutilizable cuando realmente corresponda.
+│   │
+│   └── cuina-web/                     # Navegación y experiencia de cocina. [FUTURO]
 │
-├── apps/                              # Composiciones ejecutables de sistemas, UI y capacidades.
+├── apps/                              # Composición ejecutable de sistemas, UI y capacidades.
 │   ├── quiz10/                        # Composición actual de Quiz10.
-│   ├── quiz10-web/                    # Composición web actual; futura conexión de sus
-│   │                                  # modalidades y actualizaciones en vivo.
+│   ├── quiz10-web/                    # Composición web de la suite Quiz10.
 │   └── cuina-web/                     # Composición ejecutable de Cuina. [FUTURO]
 │
 ├── docs/
