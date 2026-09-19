@@ -8,6 +8,7 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionEvent
+import kotlin.test.assertFailsWith
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -124,5 +125,26 @@ class WebMainTest {
         )
 
         assertEquals(listOf(AiProfile.LUNA), requestedProfiles)
+    }
+
+    @Test
+    fun resolveWebPortUsesDefaultWhenVariableIsMissingOrBlank() {
+        assertEquals(8080, resolveWebPort(emptyMap()))
+        assertEquals(8080, resolveWebPort(mapOf("QUIZ10_WEB_PORT" to "   ")))
+    }
+
+    @Test
+    fun resolveWebPortAcceptsConfiguredValueAndRejectsInvalidOnes() {
+        assertEquals(8081, resolveWebPort(mapOf("QUIZ10_WEB_PORT" to "8081")))
+
+        assertFailsWith<IllegalArgumentException> {
+            resolveWebPort(mapOf("QUIZ10_WEB_PORT" to "abc"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            resolveWebPort(mapOf("QUIZ10_WEB_PORT" to "0"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            resolveWebPort(mapOf("QUIZ10_WEB_PORT" to "70000"))
+        }
     }
 }

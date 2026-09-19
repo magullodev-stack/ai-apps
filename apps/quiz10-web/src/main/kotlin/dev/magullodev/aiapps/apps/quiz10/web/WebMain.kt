@@ -45,12 +45,35 @@ fun main() {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
 
-    val server = Quiz10WebServer(preparer::prepare, turnGenerator, interactionPresenter::present)
-    val port = server.start()
-    println("Quiz10 web running on http://0.0.0.0:$port")
+    val port = try {
+        resolveWebPort()
+    } catch (error: IllegalArgumentException) {
+        fail(error.message ?: "CONFIGURATION_ERROR")
+    }
+
+    val server = Quiz10WebServer(
+        prepareQuiz = preparer::prepare,
+        generateTurn = turnGenerator,
+        presentInteraction = interactionPresenter::present,
+        port = port,
+    )
+    val boundPort = server.start()
+    println("Quiz10 web running on http://0.0.0.0:$boundPort")
 
     Runtime.getRuntime().addShutdownHook(Thread { server.close() })
     CountDownLatch(1).await()
+}
+
+internal fun resolveWebPort(env: Map<String, String> = System.getenv()): Int {
+    val raw = env["QUIZ10_WEB_PORT"]?.trim().orEmpty()
+    if (raw.isEmpty()) return 8080
+
+    val value = raw.toIntOrNull()
+        ?: throw IllegalArgumentException("CONFIGURATION_ERROR: QUIZ10_WEB_PORT must be an integer between 1 and 65535")
+    if (value !in 1..65535) {
+        throw IllegalArgumentException("CONFIGURATION_ERROR: QUIZ10_WEB_PORT must be an integer between 1 and 65535")
+    }
+    return value
 }
 
 internal fun createQuizPreparer(
