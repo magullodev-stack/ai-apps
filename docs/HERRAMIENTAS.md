@@ -5,7 +5,7 @@
 
 | Herramienta | Finalidad | Ubicación | Documentación |
 | --- | --- | --- | --- |
-| Monitor de consumo y auditorías | Consultar llamadas a modelos, tokens, tiempos, costes estimados y resultados de auditoría. | `core/ai/` | `docs/AI_USAGE_MONITOR.md` |
+| Monitor de consumo y auditorías | Consultar llamadas a modelos, tokens, tiempos, costes estimados y resultados de auditoría. | `core/ai/` | `core/ai/README.md` |
 
 ## Uso del monitor
 
