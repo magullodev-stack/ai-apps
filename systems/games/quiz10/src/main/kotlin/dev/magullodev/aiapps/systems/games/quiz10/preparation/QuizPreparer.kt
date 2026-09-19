@@ -33,6 +33,7 @@ class QuizPreparer(
     }
 
     fun prepare(plan: StandardCoveragePlan): Outcome<PreparedQuiz, QuizPreparationError> {
+        val startedNanos = System.nanoTime()
         val routeGenerator = generateCoverageRouteFromPlan
             ?: return Outcome.Failure(QuizPreparationError.StandardPreparationNotConfigured)
         val reviewer = reviewCoverageQuestions
@@ -69,7 +70,14 @@ class QuizPreparer(
                 distractors = it.distractors,
             )
         }
-        return Outcome.Success(PreparedQuiz(topic = topic, route = route, questions = questions))
+        val preparationDurationMillis = (System.nanoTime() - startedNanos).coerceAtLeast(0) / 1_000_000
+        val metrics = PreparedQuizPreparationMetrics(
+            preparationDurationMillis = preparationDurationMillis,
+            invalidatedPositions = completed.invalidatedPositions,
+            replacedQuestions = completed.replacedQuestions,
+            replacementAttempts = completed.replacementAttempts,
+        )
+        return Outcome.Success(PreparedQuiz(topic = topic, route = route, questions = questions, preparationMetrics = metrics))
     }
 
     private fun derivedTopicFromPlan(plan: StandardCoveragePlan): String {

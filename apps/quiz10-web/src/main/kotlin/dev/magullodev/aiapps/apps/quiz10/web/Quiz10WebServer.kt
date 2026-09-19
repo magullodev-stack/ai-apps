@@ -3,6 +3,10 @@ package dev.magullodev.aiapps.apps.quiz10.web
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import dev.magullodev.aiapps.core.ai.AiError
+import dev.magullodev.aiapps.core.ai.AiUsageContext
+import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
+import dev.magullodev.aiapps.core.ai.AiUsageMetricEvent
+import dev.magullodev.aiapps.core.ai.AiUsageMonitor
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
@@ -40,6 +44,7 @@ class Quiz10WebServer(
     private val presentInteraction: (Quiz10InteractionContext) -> Outcome<Quiz10InteractionMessage, Quiz10InteractionError> = {
         Outcome.Failure(Quiz10InteractionError.InvalidGeneratedMessage)
     },
+    private val usageMonitor: AiUsageMonitor = AiUsageMonitor.NOOP,
     private val renderer: Quiz10WebRenderer = Quiz10WebRenderer(),
     private val planner: StandardCoveragePlanner = StandardCoveragePlanner(),
     host: String = "0.0.0.0",
@@ -132,29 +137,51 @@ class Quiz10WebServer(
             return
         }
 
-        val prepared = when (val result = prepareQuiz(buildPlan(selection))) {
-            is Outcome.Success -> result.value
-            is Outcome.Failure -> {
-                logPreparationFailure(result.error)
-                respond(
-                    exchange,
-                    preparationErrorStatus(result.error),
-                    renderer.renderPreparationError(preparationErrorMessage(result.error)),
-                )
-                return
+        val sessionId = UUID.randomUUID().toString()
+        val prepared = withAiUsageContext(sessionId) {
+            when (val result = prepareQuiz(buildPlan(selection))) {
+                is Outcome.Success -> result.value
+                is Outcome.Failure -> {
+                    logPreparationFailure(result.error)
+                    respond(
+                        exchange,
+                        preparationErrorStatus(result.error),
+                        renderer.renderPreparationError(preparationErrorMessage(result.error)),
+                    )
+                    return
+                }
             }
         }
 
         val flow = Quiz10Flow(prepared, generateTurn)
-        val question = when (val result = flow.start()) {
-            is Outcome.Success -> result.value
-            is Outcome.Failure -> {
-                logTurnFailure(result.error)
-                respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
-                return
+        val question = withAiUsageContext(sessionId) {
+            when (val result = flow.start()) {
+                is Outcome.Success -> result.value
+                is Outcome.Failure -> {
+                    logTurnFailure(result.error)
+                    respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
+                    return
+                }
             }
         }
-        val sessionId = UUID.randomUUID().toString()
+
+        val metrics = prepared.preparationMetrics
+        if (metrics != null) {
+            usageMonitor.recordMetric(
+                AiUsageMetricEvent(
+                    application = QUIZ10_APPLICATION,
+                    metricName = "quiz10_preparation",
+                    workUnitId = sessionId,
+                    values = mapOf(
+                        "preparation_duration_ms" to metrics.preparationDurationMillis,
+                        "invalidated_positions" to metrics.invalidatedPositions.toLong(),
+                        "replaced_questions" to metrics.replacedQuestions.toLong(),
+                        "replacement_attempts" to metrics.replacementAttempts.toLong(),
+                    ),
+                ),
+            )
+        }
+
         sessions[sessionId] = WebSession(
             playerProgress = progress,
             currentSelection = selection,
@@ -206,12 +233,14 @@ class Quiz10WebServer(
             }
 
             val answered = session.activeFlow.answer(selected)
-            val advanced = when (val result = session.activeFlow.advance()) {
-                is Outcome.Success -> result.value
-                is Outcome.Failure -> {
-                    logTurnFailure(result.error)
-                    respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
-                    return
+            val advanced = withAiUsageContext(sessionId) {
+                when (val result = session.activeFlow.advance()) {
+                    is Outcome.Success -> result.value
+                    is Outcome.Failure -> {
+                        logTurnFailure(result.error)
+                        respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
+                        return
+                    }
                 }
             }
             when (advanced) {
@@ -310,35 +339,54 @@ class Quiz10WebServer(
 
             when (option) {
                 Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC -> {
-                    val prepared = when (val result = prepareQuiz(buildPlan(session.currentSelection))) {
-                        is Outcome.Success -> result.value
-                        is Outcome.Failure -> {
-                            logPreparationFailure(result.error)
-                            respond(
-                                exchange,
-                                preparationErrorStatus(result.error),
-                                renderer.renderPreparationError(
-                                    message = preparationErrorMessage(result.error),
-                                    backPath = "/games/$sessionId/panel",
-                                ),
-                            )
-                            return
+                    val prepared = withAiUsageContext(sessionId) {
+                        when (val result = prepareQuiz(buildPlan(session.currentSelection))) {
+                            is Outcome.Success -> result.value
+                            is Outcome.Failure -> {
+                                logPreparationFailure(result.error)
+                                respond(
+                                    exchange,
+                                    preparationErrorStatus(result.error),
+                                    renderer.renderPreparationError(
+                                        message = preparationErrorMessage(result.error),
+                                        backPath = "/games/$sessionId/panel",
+                                    ),
+                                )
+                                return
+                            }
                         }
                     }
-                    val flow = Quiz10Flow(prepared, generateTurn)
-                    val question = when (val result = flow.start()) {
-                        is Outcome.Success -> result.value
-                        is Outcome.Failure -> {
-                            logTurnFailure(result.error)
-                            respond(
-                                exchange,
-                                500,
-                                renderer.renderPreparationError(
-                                    message = turnErrorMessage(result.error),
-                                    backPath = "/games/$sessionId/panel",
+                    prepared.preparationMetrics?.let { metrics ->
+                        usageMonitor.recordMetric(
+                            AiUsageMetricEvent(
+                                application = QUIZ10_APPLICATION,
+                                metricName = "quiz10_preparation",
+                                workUnitId = sessionId,
+                                values = mapOf(
+                                    "preparation_duration_ms" to metrics.preparationDurationMillis,
+                                    "invalidated_positions" to metrics.invalidatedPositions.toLong(),
+                                    "replaced_questions" to metrics.replacedQuestions.toLong(),
+                                    "replacement_attempts" to metrics.replacementAttempts.toLong(),
                                 ),
-                            )
-                            return
+                            ),
+                        )
+                    }
+                    val flow = Quiz10Flow(prepared, generateTurn)
+                    val question = withAiUsageContext(sessionId) {
+                        when (val result = flow.start()) {
+                            is Outcome.Success -> result.value
+                            is Outcome.Failure -> {
+                                logTurnFailure(result.error)
+                                respond(
+                                    exchange,
+                                    500,
+                                    renderer.renderPreparationError(
+                                        message = turnErrorMessage(result.error),
+                                        backPath = "/games/$sessionId/panel",
+                                    ),
+                                )
+                                return
+                            }
                         }
                     }
                     session.activeFlow = flow
@@ -379,35 +427,54 @@ class Quiz10WebServer(
 
                 Quiz10NavigationOption.RANDOM_QUIZ -> {
                     val selection = SelectionMode.Random
-                    val prepared = when (val result = prepareQuiz(buildPlan(selection))) {
-                        is Outcome.Success -> result.value
-                        is Outcome.Failure -> {
-                            logPreparationFailure(result.error)
-                            respond(
-                                exchange,
-                                preparationErrorStatus(result.error),
-                                renderer.renderPreparationError(
-                                    message = preparationErrorMessage(result.error),
-                                    backPath = "/games/$sessionId/panel",
-                                ),
-                            )
-                            return
+                    val prepared = withAiUsageContext(sessionId) {
+                        when (val result = prepareQuiz(buildPlan(selection))) {
+                            is Outcome.Success -> result.value
+                            is Outcome.Failure -> {
+                                logPreparationFailure(result.error)
+                                respond(
+                                    exchange,
+                                    preparationErrorStatus(result.error),
+                                    renderer.renderPreparationError(
+                                        message = preparationErrorMessage(result.error),
+                                        backPath = "/games/$sessionId/panel",
+                                    ),
+                                )
+                                return
+                            }
                         }
                     }
-                    val flow = Quiz10Flow(prepared, generateTurn)
-                    val question = when (val result = flow.start()) {
-                        is Outcome.Success -> result.value
-                        is Outcome.Failure -> {
-                            logTurnFailure(result.error)
-                            respond(
-                                exchange,
-                                500,
-                                renderer.renderPreparationError(
-                                    message = turnErrorMessage(result.error),
-                                    backPath = "/games/$sessionId/panel",
+                    prepared.preparationMetrics?.let { metrics ->
+                        usageMonitor.recordMetric(
+                            AiUsageMetricEvent(
+                                application = QUIZ10_APPLICATION,
+                                metricName = "quiz10_preparation",
+                                workUnitId = sessionId,
+                                values = mapOf(
+                                    "preparation_duration_ms" to metrics.preparationDurationMillis,
+                                    "invalidated_positions" to metrics.invalidatedPositions.toLong(),
+                                    "replaced_questions" to metrics.replacedQuestions.toLong(),
+                                    "replacement_attempts" to metrics.replacementAttempts.toLong(),
                                 ),
-                            )
-                            return
+                            ),
+                        )
+                    }
+                    val flow = Quiz10Flow(prepared, generateTurn)
+                    val question = withAiUsageContext(sessionId) {
+                        when (val result = flow.start()) {
+                            is Outcome.Success -> result.value
+                            is Outcome.Failure -> {
+                                logTurnFailure(result.error)
+                                respond(
+                                    exchange,
+                                    500,
+                                    renderer.renderPreparationError(
+                                        message = turnErrorMessage(result.error),
+                                        backPath = "/games/$sessionId/panel",
+                                    ),
+                                )
+                                return
+                            }
                         }
                     }
                     session.currentSelection = selection
@@ -473,36 +540,56 @@ class Quiz10WebServer(
         }
 
         synchronized(session.lock) {
-            val prepared = when (val result = prepareQuiz(buildPlan(selection))) {
-                is Outcome.Success -> result.value
-                is Outcome.Failure -> {
-                    logPreparationFailure(result.error)
-                    respond(
-                        exchange,
-                        preparationErrorStatus(result.error),
-                        renderer.renderPreparationError(
-                            message = preparationErrorMessage(result.error),
-                            backPath = "/games/$sessionId/panel",
-                        ),
-                    )
-                    return
+            val prepared = withAiUsageContext(sessionId) {
+                when (val result = prepareQuiz(buildPlan(selection))) {
+                    is Outcome.Success -> result.value
+                    is Outcome.Failure -> {
+                        logPreparationFailure(result.error)
+                        respond(
+                            exchange,
+                            preparationErrorStatus(result.error),
+                            renderer.renderPreparationError(
+                                message = preparationErrorMessage(result.error),
+                                backPath = "/games/$sessionId/panel",
+                            ),
+                        )
+                        return
+                    }
                 }
             }
 
-            val flow = Quiz10Flow(prepared, generateTurn)
-            val question = when (val result = flow.start()) {
-                is Outcome.Success -> result.value
-                is Outcome.Failure -> {
-                    logTurnFailure(result.error)
-                    respond(
-                        exchange,
-                        500,
-                        renderer.renderPreparationError(
-                            message = turnErrorMessage(result.error),
-                            backPath = "/games/$sessionId/panel",
+            prepared.preparationMetrics?.let { metrics ->
+                usageMonitor.recordMetric(
+                    AiUsageMetricEvent(
+                        application = QUIZ10_APPLICATION,
+                        metricName = "quiz10_preparation",
+                        workUnitId = sessionId,
+                        values = mapOf(
+                            "preparation_duration_ms" to metrics.preparationDurationMillis,
+                            "invalidated_positions" to metrics.invalidatedPositions.toLong(),
+                            "replaced_questions" to metrics.replacedQuestions.toLong(),
+                            "replacement_attempts" to metrics.replacementAttempts.toLong(),
                         ),
-                    )
-                    return
+                    ),
+                )
+            }
+
+            val flow = Quiz10Flow(prepared, generateTurn)
+            val question = withAiUsageContext(sessionId) {
+                when (val result = flow.start()) {
+                    is Outcome.Success -> result.value
+                    is Outcome.Failure -> {
+                        logTurnFailure(result.error)
+                        respond(
+                            exchange,
+                            500,
+                            renderer.renderPreparationError(
+                                message = turnErrorMessage(result.error),
+                                backPath = "/games/$sessionId/panel",
+                            ),
+                        )
+                        return
+                    }
                 }
             }
             session.currentSelection = selection
@@ -589,7 +676,7 @@ class Quiz10WebServer(
             return
         }
 
-        when (val result = presentInteraction(snapshot.context)) {
+        when (val result = withAiUsageContext(sessionId) { presentInteraction(snapshot.context) }) {
             is Outcome.Success -> respondText(exchange, 200, result.value.message)
             is Outcome.Failure -> respondText(exchange, 503, "")
         }
@@ -787,6 +874,15 @@ class Quiz10WebServer(
         AiError.MissingOutputText -> "AiError.MissingOutputText"
     }
 
+    private inline fun <T> withAiUsageContext(sessionId: String, block: () -> T): T =
+        AiUsageContextHolder.withContext(
+            AiUsageContext(
+                application = QUIZ10_APPLICATION,
+                workUnitId = sessionId,
+            ),
+            block,
+        )
+
     private fun parseForm(exchange: HttpExchange): Map<String, String> {
         val body = exchange.requestBody.readAllBytes().toString(StandardCharsets.UTF_8)
         if (body.isBlank()) return emptyMap()
@@ -835,5 +931,9 @@ class Quiz10WebServer(
         exchange.responseHeaders.add("Content-Type", "text/plain; charset=utf-8")
         exchange.sendResponseHeaders(status, bytes.size.toLong())
         exchange.responseBody.use { it.write(bytes) }
+    }
+
+    private companion object {
+        const val QUIZ10_APPLICATION = "quiz10-web"
     }
 }

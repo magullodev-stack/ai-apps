@@ -2,8 +2,16 @@ package dev.magullodev.aiapps.apps.quiz10.web
 
 import dev.magullodev.aiapps.core.ai.OpenAiResponsesClient
 import dev.magullodev.aiapps.core.ai.AiError
+import dev.magullodev.aiapps.core.ai.AiUsageFilter
+import dev.magullodev.aiapps.core.ai.AiUsageMonitor
+import dev.magullodev.aiapps.core.ai.AiUsageQueryService
+import dev.magullodev.aiapps.core.ai.AiUsageRecordRepository
+import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
+import dev.magullodev.aiapps.core.ai.formatUsageSummary
+import dev.magullodev.aiapps.core.ai.loadModelRates
+import dev.magullodev.aiapps.core.ai.resolveUsageFile
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
@@ -21,14 +29,20 @@ import dev.magullodev.aiapps.systems.games.quiz10.question.QuizQuestion
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
-fun main() {
+fun main(args: Array<String>) {
+    if (args.contains("--usage-monitor")) {
+        runUsageMonitor(args)
+        return
+    }
+
     val config = when (val result = EnvironmentConfig.load()) {
         is Outcome.Success -> result.value
         is Outcome.Failure -> fail("CONFIGURATION_ERROR: ${result.error}")
     }
 
     val transport = UrlConnectionHttpTransport(5_000, 30_000)
-    val client = OpenAiResponsesClient(config, transport)
+    val usageMonitor: AiUsageMonitor = FileAiUsageMonitor(resolveUsageFile(), loadModelRates())
+    val client = OpenAiResponsesClient(config, transport, usageMonitor)
     val preparer = try {
         createQuizPreparer(client::generate)
     } catch (error: IllegalArgumentException) {
@@ -55,6 +69,7 @@ fun main() {
         prepareQuiz = preparer::prepare,
         generateTurn = turnGenerator,
         presentInteraction = interactionPresenter::present,
+        usageMonitor = usageMonitor,
         port = port,
     )
     val boundPort = server.start()
@@ -62,6 +77,38 @@ fun main() {
 
     Runtime.getRuntime().addShutdownHook(Thread { server.close() })
     CountDownLatch(1).await()
+}
+
+internal fun runUsageMonitor(args: Array<String>, env: Map<String, String> = System.getenv()): String {
+    val usageFile = resolveUsageFile(env)
+    val query = AiUsageQueryService(AiUsageRecordRepository(usageFile))
+    val filter = parseUsageFilterArgs(args)
+    val rendered = formatUsageSummary(query.summarize(filter))
+    println(rendered)
+    return rendered
+}
+
+private fun parseUsageFilterArgs(args: Array<String>): AiUsageFilter {
+    var app: String? = null
+    var model: String? = null
+    var operation: String? = null
+    var workUnit: String? = null
+
+    args.forEach { arg ->
+        when {
+            arg.startsWith("--app=") -> app = arg.substringAfter("--app=")
+            arg.startsWith("--model=") -> model = arg.substringAfter("--model=")
+            arg.startsWith("--operation=") -> operation = arg.substringAfter("--operation=")
+            arg.startsWith("--work-unit=") -> workUnit = arg.substringAfter("--work-unit=")
+        }
+    }
+
+    return AiUsageFilter(
+        application = app?.trim()?.ifEmpty { null },
+        model = model?.trim()?.ifEmpty { null },
+        operation = operation?.trim()?.ifEmpty { null },
+        workUnitId = workUnit?.trim()?.ifEmpty { null },
+    )
 }
 
 internal fun resolveWebPort(env: Map<String, String> = System.getenv()): Int {

@@ -7,6 +7,7 @@ class PreparedQuiz(
     val topic: String,
     val route: CoverageRoute,
     questions: List<PreparedQuizQuestion>? = null,
+    val preparationMetrics: PreparedQuizPreparationMetrics? = null,
 ) {
     val questions: List<PreparedQuizQuestion>? = questions?.let { Collections.unmodifiableList(it.toList()) }
 
@@ -19,6 +20,20 @@ class PreparedQuiz(
 
     companion object {
         val correctOptionSequence = listOf(0, 1, 2, 3, 0, 1, 2, 3, 0, 1)
+    }
+}
+
+data class PreparedQuizPreparationMetrics(
+    val preparationDurationMillis: Long,
+    val invalidatedPositions: Int,
+    val replacedQuestions: Int,
+    val replacementAttempts: Int,
+) {
+    init {
+        require(preparationDurationMillis >= 0) { "Preparation duration must be >= 0" }
+        require(invalidatedPositions >= 0) { "Invalidated positions must be >= 0" }
+        require(replacedQuestions >= 0) { "Replaced questions must be >= 0" }
+        require(replacementAttempts >= 0) { "Replacement attempts must be >= 0" }
     }
 }
 

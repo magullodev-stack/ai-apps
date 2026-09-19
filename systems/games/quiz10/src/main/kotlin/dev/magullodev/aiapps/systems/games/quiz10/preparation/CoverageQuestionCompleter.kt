@@ -47,12 +47,22 @@ class CoverageQuestionCompleter(
             }
         }
 
+        val initialInvalidatedPositions = pendingPositions.size
+        var replacementAttemptsUsed = 0
+
         if (pendingPositions.isEmpty()) {
-            return Outcome.Success(CompletedCoverageQuestions.of(plan.positions.map { checkNotNull(acceptedByPosition[it.position]) }))
+            return Outcome.Success(
+                CompletedCoverageQuestions.of(
+                    positions = plan.positions.map { checkNotNull(acceptedByPosition[it.position]) },
+                    invalidatedPositions = 0,
+                    replacementAttempts = 0,
+                ),
+            )
         }
 
         repeat(maxAttempts) {
             if (pendingPositions.isEmpty()) return@repeat
+            replacementAttemptsUsed += 1
 
             val requestPositions = plan.positions
                 .filter { it.position in pendingPositions }
@@ -101,7 +111,13 @@ class CoverageQuestionCompleter(
             return Outcome.Failure(CoverageQuestionCompletionError.ExhaustedReplacementAttempts(pendingPositions.toList().sorted()))
         }
 
-        return Outcome.Success(CompletedCoverageQuestions.of(plan.positions.map { checkNotNull(acceptedByPosition[it.position]) }))
+        return Outcome.Success(
+            CompletedCoverageQuestions.of(
+                positions = plan.positions.map { checkNotNull(acceptedByPosition[it.position]) },
+                invalidatedPositions = initialInvalidatedPositions,
+                replacementAttempts = replacementAttemptsUsed,
+            ),
+        )
     }
 
     private fun validateInputs(
@@ -139,15 +155,30 @@ class CoverageQuestionCompleter(
 
 class CompletedCoverageQuestions private constructor(
     val positions: List<CompletedCoverageQuestion>,
+    val invalidatedPositions: Int,
+    val replacementAttempts: Int,
 ) {
+    val replacedQuestions: Int
+        get() = invalidatedPositions
+
     companion object {
-        fun of(positions: List<CompletedCoverageQuestion>): CompletedCoverageQuestions {
+        fun of(
+            positions: List<CompletedCoverageQuestion>,
+            invalidatedPositions: Int = 0,
+            replacementAttempts: Int = 0,
+        ): CompletedCoverageQuestions {
             val snapshot = positions.toList()
             require(snapshot.size == 10) { "Completed coverage questions must contain exactly 10 positions" }
             require(snapshot.map { it.position } == (1..10).toList()) {
                 "Completed coverage questions must remain ordered by original position"
             }
-            return CompletedCoverageQuestions(Collections.unmodifiableList(snapshot))
+            require(invalidatedPositions >= 0) { "Invalidated positions must be >= 0" }
+            require(replacementAttempts >= 0) { "Replacement attempts must be >= 0" }
+            return CompletedCoverageQuestions(
+                positions = Collections.unmodifiableList(snapshot),
+                invalidatedPositions = invalidatedPositions,
+                replacementAttempts = replacementAttempts,
+            )
         }
     }
 }

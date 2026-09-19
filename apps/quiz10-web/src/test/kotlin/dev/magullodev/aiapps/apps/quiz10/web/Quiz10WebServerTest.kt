@@ -1,5 +1,14 @@
 package dev.magullodev.aiapps.apps.quiz10.web
 
+import dev.magullodev.aiapps.core.ai.AiUsageCallEvent
+import dev.magullodev.aiapps.core.ai.AiUsageCallResult
+import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
+import dev.magullodev.aiapps.core.ai.AiUsageMonitor
+import dev.magullodev.aiapps.core.ai.AiUsageOperation
+import dev.magullodev.aiapps.core.ai.AiUsageQueryService
+import dev.magullodev.aiapps.core.ai.AiUsageRecordRepository
+import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
+import dev.magullodev.aiapps.core.ai.ModelRate
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiTransportFailureKind
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -23,6 +32,8 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -32,6 +43,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class Quiz10WebServerTest {
@@ -670,10 +682,106 @@ class Quiz10WebServerTest {
         assertFalse(stderr.contains("Bearer"))
     }
 
+    @Test
+    fun usageMonitorIntegratesPreparationAndLunaEventsPerSession() {
+        val usageFile = usageFile()
+        val monitor = FileAiUsageMonitor(
+            usageFile = usageFile,
+            ratesByModel = mapOf(
+                "model-terra" to ModelRate("USD", "2.00".toBigDecimal(), "8.00".toBigDecimal()),
+                "model-luna" to ModelRate("USD", "0.30".toBigDecimal(), "1.20".toBigDecimal()),
+            ),
+        )
+        val baseTurn = turnSuccess()
+
+        val prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = { plan ->
+            val context = AiUsageContextHolder.current()
+            assertEquals("quiz10-web", context?.application)
+            monitor.recordCall(
+                AiUsageCallEvent(
+                    application = context?.application ?: "unknown-app",
+                    operation = AiUsageOperation.COVERAGE,
+                    model = "model-terra",
+                    durationMillis = 100,
+                    result = AiUsageCallResult.SUCCESS,
+                    workUnitId = context?.workUnitId,
+                    inputTokens = 200,
+                    outputTokens = 40,
+                    totalTokens = 240,
+                    usageKnown = true,
+                ),
+            )
+            val generated = prepared(topicFromPlan(plan))
+            Outcome.Success(
+                PreparedQuiz(
+                    topic = generated.topic,
+                    route = generated.route,
+                    questions = generated.questions,
+                    preparationMetrics = dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuizPreparationMetrics(
+                        preparationDurationMillis = 250,
+                        invalidatedPositions = 2,
+                        replacedQuestions = 2,
+                        replacementAttempts = 3,
+                    ),
+                ),
+            )
+        }
+
+        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { item, correctIndex ->
+            val context = AiUsageContextHolder.current()
+            assertEquals("quiz10-web", context?.application)
+            monitor.recordCall(
+                AiUsageCallEvent(
+                    application = context?.application ?: "unknown-app",
+                    operation = AiUsageOperation.LUNA,
+                    model = "model-luna",
+                    durationMillis = 30,
+                    result = AiUsageCallResult.SUCCESS,
+                    workUnitId = context?.workUnitId,
+                    inputTokens = 20,
+                    outputTokens = 10,
+                    totalTokens = 30,
+                    usageKnown = true,
+                ),
+            )
+            baseTurn(item, correctIndex)
+        }
+
+        val interaction = InteractionProbe(
+            fixedResult = Outcome.Success(Quiz10InteractionMessage("mensaje")),
+        )
+
+        withServer(prepare = prepare, turn = turn, interactionProbe = interaction, usageMonitor = monitor) { baseUrl, _, _, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
+            val sessionId = extractSessionId(start.body())
+
+            val answer = postForm("$baseUrl/games/$sessionId/answer", mapOf("option" to "0"))
+            val revision = extractInteractionRevision(answer.body())
+            val interactionResponse = get("$baseUrl/games/$sessionId/interaction?revision=$revision")
+            assertEquals(200, interactionResponse.statusCode())
+
+            val summary = AiUsageQueryService(AiUsageRecordRepository(usageFile)).summarize(
+                dev.magullodev.aiapps.core.ai.AiUsageFilter(
+                    application = "quiz10-web",
+                    workUnitId = sessionId,
+                ),
+            )
+
+            assertEquals(3, summary.calls.size)
+            assertEquals(1, summary.byOperation["coverage"]?.calls)
+            assertEquals(2, summary.byOperation["luna"]?.calls)
+            assertEquals(1, summary.metrics.size)
+            assertEquals("quiz10_preparation", summary.metrics.single().metricName)
+            assertEquals(sessionId, summary.metrics.single().workUnitId)
+            assertNotNull(summary.totalCostByCurrency["USD"])
+        }
+    }
+
     private fun withServer(
         prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
         turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = turnSuccess(),
         interactionProbe: InteractionProbe = InteractionProbe(),
+        usageMonitor: AiUsageMonitor = AiUsageMonitor.NOOP,
         block: (
             baseUrl: String,
             prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
@@ -685,6 +793,7 @@ class Quiz10WebServerTest {
             prepareQuiz = prepare,
             generateTurn = turn,
             presentInteraction = interactionProbe::present,
+            usageMonitor = usageMonitor,
             port = 0,
         ).use { server ->
             val port = server.start()
@@ -790,4 +899,10 @@ class Quiz10WebServerTest {
     private fun encode(value: String): String = java.net.URLEncoder.encode(value, StandardCharsets.UTF_8)
 
     private fun ByteArrayOutputStream.printStream(): java.io.PrintStream = java.io.PrintStream(this, true, StandardCharsets.UTF_8)
+
+    private fun usageFile(): Path {
+        val root = Path.of("build", "tmp", "quiz10-web-usage-tests")
+        Files.createDirectories(root)
+        return Files.createTempFile(root, "usage-", ".jsonl")
+    }
 }
