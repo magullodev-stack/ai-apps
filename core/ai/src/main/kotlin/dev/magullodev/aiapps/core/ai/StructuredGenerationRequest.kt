@@ -5,4 +5,5 @@ data class StructuredGenerationRequest(
     val input: String,
     val schemaName: String,
     val schemaJson: String,
+    val operation: AiUsageOperation? = null,
 )

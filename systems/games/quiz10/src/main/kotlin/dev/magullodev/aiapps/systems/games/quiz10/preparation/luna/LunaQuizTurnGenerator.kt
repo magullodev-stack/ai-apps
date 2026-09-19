@@ -2,6 +2,7 @@ package dev.magullodev.aiapps.systems.games.quiz10.preparation.luna
 
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiProfile
+import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -37,6 +38,7 @@ class LunaQuizTurnGenerator(
             input = lunaTurnPrompt(area, group, referent, knowledge, answer),
             schemaName = "quiz10_luna_turn",
             schemaJson = schema,
+            operation = AiUsageOperation.LUNA,
         )
 
         val generation = when (val result = generate(request)) {

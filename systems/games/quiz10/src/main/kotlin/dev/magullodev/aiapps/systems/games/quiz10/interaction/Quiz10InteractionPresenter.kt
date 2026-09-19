@@ -1,6 +1,7 @@
 package dev.magullodev.aiapps.systems.games.quiz10.interaction
 
 import dev.magullodev.aiapps.core.ai.AiProfile
+import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -18,6 +19,7 @@ class Quiz10InteractionPresenter(
             input = buildPrompt(context),
             schemaName = "quiz10_interaction_message",
             schemaJson = schema,
+            operation = AiUsageOperation.LUNA,
         )
 
         val generation = when (val result = generate(request)) {

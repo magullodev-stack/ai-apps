@@ -2,6 +2,7 @@ package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
 
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiProfile
+import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -22,6 +23,7 @@ class TerraCoverageQuestionReviewer(
             input = terraCoverageQuestionPrompt(route),
             schemaName = "quiz10_coverage_question_review",
             schemaJson = schema,
+            operation = AiUsageOperation.REVIEW,
         )
 
         val generation = when (val result = generate(request)) {

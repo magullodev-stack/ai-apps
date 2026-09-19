@@ -763,17 +763,109 @@ class Quiz10WebServerTest {
             val summary = AiUsageQueryService(AiUsageRecordRepository(usageFile)).summarize(
                 dev.magullodev.aiapps.core.ai.AiUsageFilter(
                     application = "quiz10-web",
-                    workUnitId = sessionId,
                 ),
             )
+            val distinctWorkUnits = (summary.calls + summary.metrics)
+                .mapNotNull { it.workUnitId }
+                .toSet()
 
             assertEquals(3, summary.calls.size)
             assertEquals(1, summary.byOperation["coverage"]?.calls)
             assertEquals(2, summary.byOperation["luna"]?.calls)
             assertEquals(1, summary.metrics.size)
             assertEquals("quiz10_preparation", summary.metrics.single().metricName)
-            assertEquals(sessionId, summary.metrics.single().workUnitId)
+            assertEquals(1, distinctWorkUnits.size)
+            assertFalse(distinctWorkUnits.contains(sessionId))
             assertNotNull(summary.totalCostByCurrency["USD"])
+        }
+    }
+
+    @Test
+    fun usageMonitorAssignsDifferentWorkUnitForReplayInSameSession() {
+        val usageFile = usageFile()
+        val monitor = FileAiUsageMonitor(
+            usageFile = usageFile,
+            ratesByModel = mapOf(
+                "model-terra" to ModelRate("USD", "2.00".toBigDecimal(), "8.00".toBigDecimal()),
+                "model-luna" to ModelRate("USD", "0.30".toBigDecimal(), "1.20".toBigDecimal()),
+            ),
+        )
+        val baseTurn = turnSuccess()
+
+        val prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = { plan ->
+            val context = AiUsageContextHolder.current()
+            monitor.recordCall(
+                AiUsageCallEvent(
+                    application = context?.application ?: "unknown-app",
+                    operation = AiUsageOperation.COVERAGE,
+                    model = "model-terra",
+                    durationMillis = 100,
+                    result = AiUsageCallResult.SUCCESS,
+                    workUnitId = context?.workUnitId,
+                    inputTokens = 100,
+                    outputTokens = 20,
+                    totalTokens = 120,
+                    usageKnown = true,
+                ),
+            )
+            val generated = prepared(topicFromPlan(plan))
+            Outcome.Success(
+                PreparedQuiz(
+                    topic = generated.topic,
+                    route = generated.route,
+                    questions = generated.questions,
+                    preparationMetrics = dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuizPreparationMetrics(
+                        preparationDurationMillis = 200,
+                        invalidatedPositions = 1,
+                        replacedQuestions = 1,
+                        replacementAttempts = 2,
+                    ),
+                ),
+            )
+        }
+
+        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { item, correctIndex ->
+            val context = AiUsageContextHolder.current()
+            monitor.recordCall(
+                AiUsageCallEvent(
+                    application = context?.application ?: "unknown-app",
+                    operation = AiUsageOperation.LUNA,
+                    model = "model-luna",
+                    durationMillis = 20,
+                    result = AiUsageCallResult.SUCCESS,
+                    workUnitId = context?.workUnitId,
+                    inputTokens = 10,
+                    outputTokens = 5,
+                    totalTokens = 15,
+                    usageKnown = true,
+                ),
+            )
+            baseTurn(item, correctIndex)
+        }
+
+        withServer(prepare = prepare, turn = turn, usageMonitor = monitor) { baseUrl, _, _, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
+            val sessionId = extractSessionId(start.body())
+
+            var finalBody = start.body()
+            PreparedQuiz.correctOptionSequence.forEach { option ->
+                finalBody = postForm("$baseUrl/games/$sessionId/answer", mapOf("option" to option.toString())).body()
+            }
+            assertContains(finalBody, "Puntuación final 10/10")
+
+            val replay = postForm("$baseUrl/games/$sessionId/navigation", mapOf("selection" to "1"))
+            assertEquals(200, replay.statusCode())
+            assertContains(replay.body(), "Pregunta 1/10")
+
+            val summary = AiUsageQueryService(AiUsageRecordRepository(usageFile)).summarize(
+                dev.magullodev.aiapps.core.ai.AiUsageFilter(application = "quiz10-web"),
+            )
+            val workUnits = (summary.calls + summary.metrics).mapNotNull { it.workUnitId }.toSet()
+
+            assertEquals(13, summary.calls.size)
+            assertEquals(2, summary.metrics.size)
+            assertEquals(2, workUnits.size)
+            assertFalse(workUnits.contains(sessionId))
         }
     }
 

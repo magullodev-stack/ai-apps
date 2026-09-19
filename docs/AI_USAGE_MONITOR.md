@@ -87,6 +87,11 @@ The output includes:
 - success/failure counts
 - known tokens in/out
 - estimated total cost
+- application breakdown
 - model breakdown
 - operation breakdown
+- metric event values (including Quiz10 preparation duration/invalidated/replaced/attempts)
 - warning when total cost is partial or not determinable
+
+For Quiz10, each game run gets its own technical work unit id, even inside the same web session.
+This allows querying one specific game with `--work-unit=<id>`.

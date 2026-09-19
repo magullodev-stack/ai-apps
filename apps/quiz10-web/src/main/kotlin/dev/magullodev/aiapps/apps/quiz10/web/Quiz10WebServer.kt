@@ -61,8 +61,10 @@ class Quiz10WebServer(
     )
 
     private data class WebSession(
+        val sessionId: String,
         val lock: Any = Any(),
         var playerProgress: PlayerProgress,
+        var currentWorkUnitId: String,
         var currentSelection: SelectionMode,
         var currentTopic: String,
         var activeFlow: Quiz10Flow,
@@ -138,7 +140,8 @@ class Quiz10WebServer(
         }
 
         val sessionId = UUID.randomUUID().toString()
-        val prepared = withAiUsageContext(sessionId) {
+        val workUnitId = UUID.randomUUID().toString()
+        val prepared = withAiUsageContext(workUnitId) {
             when (val result = prepareQuiz(buildPlan(selection))) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
@@ -154,7 +157,7 @@ class Quiz10WebServer(
         }
 
         val flow = Quiz10Flow(prepared, generateTurn)
-        val question = withAiUsageContext(sessionId) {
+        val question = withAiUsageContext(workUnitId) {
             when (val result = flow.start()) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
@@ -171,7 +174,7 @@ class Quiz10WebServer(
                 AiUsageMetricEvent(
                     application = QUIZ10_APPLICATION,
                     metricName = "quiz10_preparation",
-                    workUnitId = sessionId,
+                    workUnitId = workUnitId,
                     values = mapOf(
                         "preparation_duration_ms" to metrics.preparationDurationMillis,
                         "invalidated_positions" to metrics.invalidatedPositions.toLong(),
@@ -183,7 +186,9 @@ class Quiz10WebServer(
         }
 
         sessions[sessionId] = WebSession(
+            sessionId = sessionId,
             playerProgress = progress,
+            currentWorkUnitId = workUnitId,
             currentSelection = selection,
             currentTopic = topicForSelection(selection),
             activeFlow = flow,
@@ -233,7 +238,7 @@ class Quiz10WebServer(
             }
 
             val answered = session.activeFlow.answer(selected)
-            val advanced = withAiUsageContext(sessionId) {
+            val advanced = withAiUsageContext(session.currentWorkUnitId) {
                 when (val result = session.activeFlow.advance()) {
                     is Outcome.Success -> result.value
                     is Outcome.Failure -> {
@@ -339,7 +344,8 @@ class Quiz10WebServer(
 
             when (option) {
                 Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC -> {
-                    val prepared = withAiUsageContext(sessionId) {
+                    val nextWorkUnitId = UUID.randomUUID().toString()
+                    val prepared = withAiUsageContext(nextWorkUnitId) {
                         when (val result = prepareQuiz(buildPlan(session.currentSelection))) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
@@ -361,7 +367,7 @@ class Quiz10WebServer(
                             AiUsageMetricEvent(
                                 application = QUIZ10_APPLICATION,
                                 metricName = "quiz10_preparation",
-                                workUnitId = sessionId,
+                                workUnitId = nextWorkUnitId,
                                 values = mapOf(
                                     "preparation_duration_ms" to metrics.preparationDurationMillis,
                                     "invalidated_positions" to metrics.invalidatedPositions.toLong(),
@@ -372,7 +378,7 @@ class Quiz10WebServer(
                         )
                     }
                     val flow = Quiz10Flow(prepared, generateTurn)
-                    val question = withAiUsageContext(sessionId) {
+                    val question = withAiUsageContext(nextWorkUnitId) {
                         when (val result = flow.start()) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
@@ -389,6 +395,7 @@ class Quiz10WebServer(
                             }
                         }
                     }
+                    session.currentWorkUnitId = nextWorkUnitId
                     session.activeFlow = flow
                     val nextRevision = updateInteractionSnapshot(
                         session = session,
@@ -427,7 +434,8 @@ class Quiz10WebServer(
 
                 Quiz10NavigationOption.RANDOM_QUIZ -> {
                     val selection = SelectionMode.Random
-                    val prepared = withAiUsageContext(sessionId) {
+                    val nextWorkUnitId = UUID.randomUUID().toString()
+                    val prepared = withAiUsageContext(nextWorkUnitId) {
                         when (val result = prepareQuiz(buildPlan(selection))) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
@@ -449,7 +457,7 @@ class Quiz10WebServer(
                             AiUsageMetricEvent(
                                 application = QUIZ10_APPLICATION,
                                 metricName = "quiz10_preparation",
-                                workUnitId = sessionId,
+                                workUnitId = nextWorkUnitId,
                                 values = mapOf(
                                     "preparation_duration_ms" to metrics.preparationDurationMillis,
                                     "invalidated_positions" to metrics.invalidatedPositions.toLong(),
@@ -460,7 +468,7 @@ class Quiz10WebServer(
                         )
                     }
                     val flow = Quiz10Flow(prepared, generateTurn)
-                    val question = withAiUsageContext(sessionId) {
+                    val question = withAiUsageContext(nextWorkUnitId) {
                         when (val result = flow.start()) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
@@ -477,6 +485,7 @@ class Quiz10WebServer(
                             }
                         }
                     }
+                    session.currentWorkUnitId = nextWorkUnitId
                     session.currentSelection = selection
                     session.currentTopic = topicForSelection(selection)
                     session.activeFlow = flow
@@ -540,7 +549,8 @@ class Quiz10WebServer(
         }
 
         synchronized(session.lock) {
-            val prepared = withAiUsageContext(sessionId) {
+            val nextWorkUnitId = UUID.randomUUID().toString()
+            val prepared = withAiUsageContext(nextWorkUnitId) {
                 when (val result = prepareQuiz(buildPlan(selection))) {
                     is Outcome.Success -> result.value
                     is Outcome.Failure -> {
@@ -563,7 +573,7 @@ class Quiz10WebServer(
                     AiUsageMetricEvent(
                         application = QUIZ10_APPLICATION,
                         metricName = "quiz10_preparation",
-                        workUnitId = sessionId,
+                        workUnitId = nextWorkUnitId,
                         values = mapOf(
                             "preparation_duration_ms" to metrics.preparationDurationMillis,
                             "invalidated_positions" to metrics.invalidatedPositions.toLong(),
@@ -575,7 +585,7 @@ class Quiz10WebServer(
             }
 
             val flow = Quiz10Flow(prepared, generateTurn)
-            val question = withAiUsageContext(sessionId) {
+            val question = withAiUsageContext(nextWorkUnitId) {
                 when (val result = flow.start()) {
                     is Outcome.Success -> result.value
                     is Outcome.Failure -> {
@@ -592,6 +602,7 @@ class Quiz10WebServer(
                     }
                 }
             }
+            session.currentWorkUnitId = nextWorkUnitId
             session.currentSelection = selection
             session.currentTopic = topicForSelection(selection)
             session.activeFlow = flow
@@ -676,7 +687,7 @@ class Quiz10WebServer(
             return
         }
 
-        when (val result = withAiUsageContext(sessionId) { presentInteraction(snapshot.context) }) {
+        when (val result = withAiUsageContext(session.currentWorkUnitId) { presentInteraction(snapshot.context) }) {
             is Outcome.Success -> respondText(exchange, 200, result.value.message)
             is Outcome.Failure -> respondText(exchange, 503, "")
         }
@@ -874,11 +885,11 @@ class Quiz10WebServer(
         AiError.MissingOutputText -> "AiError.MissingOutputText"
     }
 
-    private inline fun <T> withAiUsageContext(sessionId: String, block: () -> T): T =
+    private inline fun <T> withAiUsageContext(workUnitId: String, block: () -> T): T =
         AiUsageContextHolder.withContext(
             AiUsageContext(
                 application = QUIZ10_APPLICATION,
-                workUnitId = sessionId,
+                workUnitId = workUnitId,
             ),
             block,
         )

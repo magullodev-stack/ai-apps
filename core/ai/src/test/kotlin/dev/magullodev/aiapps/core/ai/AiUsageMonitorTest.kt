@@ -25,6 +25,7 @@ class AiUsageMonitorTest {
         input = "SECRET_TOKEN_12345 prompt text",
         schemaName = "quiz10_coverage_route_from_plan",
         schemaJson = schema,
+        operation = AiUsageOperation.COVERAGE,
     )
     private val config = EnvironmentConfig(
         environment = AppEnvironment.TEST,
@@ -74,15 +75,37 @@ class AiUsageMonitorTest {
 
         AiUsageContextHolder.withContext(AiUsageContext("quiz10-web", "session-1")) {
             terraClient.generate(request)
-            lunaClient.generate(request.copy(profile = AiProfile.LUNA, schemaName = "quiz10_luna_turn"))
+            lunaClient.generate(
+                request.copy(
+                    profile = AiProfile.LUNA,
+                    schemaName = "quiz10_luna_turn",
+                    operation = AiUsageOperation.LUNA,
+                ),
+            )
         }
+        monitor.recordCall(
+            AiUsageCallEvent(
+                application = "batch-jobs",
+                operation = AiUsageOperation.OTHER,
+                model = "model-mini",
+                durationMillis = 20,
+                result = AiUsageCallResult.SUCCESS,
+                workUnitId = "job-1",
+                inputTokens = 5,
+                outputTokens = 2,
+                totalTokens = 7,
+                usageKnown = true,
+            ),
+        )
 
         val summary = AiUsageQueryService(AiUsageRecordRepository(file)).summarize()
-        assertEquals(2, summary.calls.size)
-        assertEquals(2, summary.successfulCalls)
+        assertEquals(3, summary.calls.size)
+        assertEquals(3, summary.successfulCalls)
         assertEquals(0, summary.failedCalls)
-        assertEquals(110, summary.totalKnownInputTokens)
-        assertEquals(55, summary.totalKnownOutputTokens)
+        assertEquals(115, summary.totalKnownInputTokens)
+        assertEquals(57, summary.totalKnownOutputTokens)
+        assertEquals(2, summary.byApplication["quiz10-web"]?.calls)
+        assertEquals(1, summary.byApplication["batch-jobs"]?.calls)
         assertTrue(summary.byModel.containsKey("model-terra"))
         assertTrue(summary.byModel.containsKey("model-luna"))
         assertTrue(summary.byOperation.containsKey("coverage"))
@@ -253,13 +276,31 @@ class AiUsageMonitorTest {
                 usageKnown = true,
             ),
         )
+        monitor.recordMetric(
+            AiUsageMetricEvent(
+                application = "quiz10-web",
+                metricName = "quiz10_preparation",
+                workUnitId = "session-5",
+                values = mapOf(
+                    "preparation_duration_ms" to 123,
+                    "invalidated_positions" to 1,
+                    "replaced_questions" to 1,
+                    "replacement_attempts" to 2,
+                ),
+            ),
+        )
 
         val summary = AiUsageQueryService(AiUsageRecordRepository(file)).summarize()
         val rendered = formatUsageSummary(summary)
 
         assertTrue(rendered.contains("AI usage monitor"))
+        assertTrue(rendered.contains("By application:"))
         assertTrue(rendered.contains("By model:"))
         assertTrue(rendered.contains("By operation:"))
+        assertTrue(rendered.contains("Metric events:"))
+        assertTrue(rendered.contains("quiz10_preparation"))
+        assertTrue(rendered.contains("preparation_duration_ms=123"))
+        assertTrue(rendered.contains("replacement_attempts=2"))
         assertTrue(rendered.contains("coverage"))
         assertTrue(rendered.contains("model-terra"))
         assertNotNull(summary.totalCostByCurrency["USD"])

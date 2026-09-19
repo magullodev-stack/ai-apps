@@ -239,6 +239,7 @@ data class AiUsageSummary(
     val durationMillisByCallId: Map<String, Long>,
     val totalCostByCurrency: Map<String, BigDecimal>,
     val hasPartialOrUndeterminedCost: Boolean,
+    val byApplication: Map<String, AiUsageGroupSummary>,
     val byModel: Map<String, AiUsageGroupSummary>,
     val byOperation: Map<String, AiUsageGroupSummary>,
 )
@@ -294,6 +295,7 @@ class AiUsageQueryService(
             durationMillisByCallId = perCallDurations,
             totalCostByCurrency = costByCurrency,
             hasPartialOrUndeterminedCost = hasPartialOrUndetermined,
+            byApplication = summarizeBy(calls) { it.application },
             byModel = summarizeBy(calls) { it.model ?: "unknown-model" },
             byOperation = summarizeBy(calls) { it.operation ?: "unknown-operation" },
         )
@@ -385,6 +387,11 @@ fun formatUsageSummary(summary: AiUsageSummary): String {
             appendLine("WARNING: cost includes partial or undetermined records")
         }
 
+        appendLine("By application:")
+        summary.byApplication.forEach { (application, group) ->
+            appendLine("- $application: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost)}")
+        }
+
         appendLine("By model:")
         summary.byModel.forEach { (model, group) ->
             appendLine("- $model: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost)}")
@@ -399,6 +406,14 @@ fun formatUsageSummary(summary: AiUsageSummary): String {
         appendLine("Metric events:")
         metricByName.toSortedMap().forEach { (metricName, records) ->
             appendLine("- $metricName: events=${records.size}")
+            records.sortedBy { it.timestamp }.forEach { record ->
+                val values = if (record.metricValues.isEmpty()) {
+                    "none"
+                } else {
+                    record.metricValues.toSortedMap().entries.joinToString(", ") { (name, value) -> "$name=$value" }
+                }
+                appendLine("  event workUnit=${record.workUnitId ?: "-"}, values=$values")
+            }
         }
     }
 }

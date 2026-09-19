@@ -1,6 +1,7 @@
 package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
 
 import dev.magullodev.aiapps.core.ai.AiProfile
+import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
@@ -23,6 +24,7 @@ class TerraCoverageRouteGenerator(
             input = terraCoveragePrompt(plan),
             schemaName = "quiz10_coverage_route_from_plan",
             schemaJson = planSchema,
+            operation = AiUsageOperation.COVERAGE,
         )
         val generation = when (val result = generate(request)) {
             is Outcome.Success -> result.value
@@ -42,6 +44,7 @@ class TerraCoverageRouteGenerator(
             input = terraCoveragePrompt(topic),
             schemaName = "quiz10_coverage_route",
             schemaJson = schema,
+            operation = AiUsageOperation.COVERAGE,
         )
         val generation = when (val result = generate(request)) {
             is Outcome.Success -> result.value

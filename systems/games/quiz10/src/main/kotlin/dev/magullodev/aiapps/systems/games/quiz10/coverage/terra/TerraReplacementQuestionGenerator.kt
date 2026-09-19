@@ -2,6 +2,7 @@ package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
 
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiProfile
+import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -29,6 +30,7 @@ class TerraReplacementQuestionGenerator(
             input = terraReplacementQuestionPrompt(targets, acceptedQuestions),
             schemaName = "quiz10_replacement_questions",
             schemaJson = schemaJson(targets.size),
+            operation = AiUsageOperation.SUBSTITUTIONS,
         )
 
         val generation = when (val result = generate(request)) {

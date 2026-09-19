@@ -145,7 +145,7 @@ class OpenAiResponsesClient(
         usageMonitor.recordCall(
             AiUsageCallEvent(
                 application = context?.application ?: "unknown-app",
-                operation = classifyOperation(request),
+                operation = request.operation ?: AiUsageOperation.OTHER,
                 model = model,
                 durationMillis = (System.nanoTime() - startedNanos).coerceAtLeast(0) / 1_000_000,
                 result = result,
@@ -157,20 +157,6 @@ class OpenAiResponsesClient(
                 errorCode = error?.let(::safeErrorCode),
             ),
         )
-    }
-
-    private fun classifyOperation(request: StructuredGenerationRequest): AiUsageOperation {
-        if (request.profile == AiProfile.LUNA) return AiUsageOperation.LUNA
-        return when (request.schemaName) {
-            "quiz10_coverage_route",
-            "quiz10_coverage_route_from_plan",
-            "quiz10_coverage_route_validation",
-            -> AiUsageOperation.COVERAGE
-
-            "quiz10_coverage_question_review" -> AiUsageOperation.REVIEW
-            "quiz10_replacement_questions" -> AiUsageOperation.SUBSTITUTIONS
-            else -> AiUsageOperation.OTHER
-        }
     }
 
     private fun safeErrorCode(error: AiError): String = when (error) {

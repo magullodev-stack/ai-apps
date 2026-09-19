@@ -2,6 +2,7 @@ package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
 
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiProfile
+import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -21,6 +22,7 @@ class TerraCoverageRouteValidator(
             input = terraCoverageRouteValidationPrompt(topic, route),
             schemaName = "quiz10_coverage_route_validation",
             schemaJson = schema,
+            operation = AiUsageOperation.COVERAGE,
         )
 
         val generation = when (val result = generate(request)) {
