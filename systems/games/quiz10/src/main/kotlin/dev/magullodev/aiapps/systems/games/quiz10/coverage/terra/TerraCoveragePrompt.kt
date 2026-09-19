@@ -1,5 +1,8 @@
 package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
 
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
+
 internal fun terraCoveragePrompt(topic: String): String = """
     Tema: [  ]
 
@@ -70,3 +73,35 @@ internal fun terraCoveragePrompt(topic: String): String = """
     9. Difícil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
     10. Muy difícil · [ÁREA] · [GRUPO] · [REFERENTE] · [CONOCIMIENTO] · [RESPUESTA]
 """.trimIndent().replaceFirst("Tema: [  ]", "Tema: [$topic]")
+
+internal fun terraCoveragePrompt(plan: StandardCoveragePlan): String {
+    val rows = plan.positions.joinToString("\n") { position ->
+        "| ${position.position} | ${difficultyLabel(position.difficulty)} | ${position.area.label} |  |  |  |  |"
+    }
+
+    return """
+        Completa la ruta de cobertura.
+
+        Grupo: ámbito de conocimiento dentro del área.
+        Referente: elemento del grupo sobre el que se selecciona un conocimiento.
+        Conocimiento: hecho, propiedad o relación verificable sobre el referente.
+
+        Genera grupos, referentes y conocimientos diversificados dentro de cada área. Evita repeticiones, solapamientos y la concentración en los referentes más habituales.
+
+        Selecciona conocimientos verificables cuya dificultad corresponda a la asignada. Evalúa la dificultad por la probabilidad de que una persona con cultura general conozca la respuesta, no por su complejidad técnica, especialización académica ni dificultad de redacción. Cada respuesta debe ser precisa e inequívoca.
+
+        ## RUTA DE COBERTURA
+
+        | N.º | Dificultad | Área | Grupo | Referente | Conocimiento | Respuesta |
+        | --- | --- | --- | --- | --- | --- | --- |
+        $rows
+    """.trimIndent()
+}
+
+private fun difficultyLabel(difficulty: CoverageDifficulty): String =
+    when (difficulty) {
+        CoverageDifficulty.EASY -> "Fácil"
+        CoverageDifficulty.MODERATE -> "Moderado"
+        CoverageDifficulty.HARD -> "Difícil"
+        CoverageDifficulty.VERY_HARD -> "Muy difícil"
+    }
