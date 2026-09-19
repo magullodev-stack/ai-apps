@@ -13,7 +13,7 @@ ai-apps/
 │   ├── knowledge/                     # Conocimiento compartido, cuando exista una responsabilidad común real.
 │   │
 │   ├── games/
-│   │   ├── quiz10/                    # Suite de experiencias de preguntas, juego y aprendizaje.
+│   │   ├── quiz10/                    # Suite interactiva de conocimiento, juego y aprendizaje mediante experiencias individuales y sociales basadas en preguntas.
 │   │   │   │
 │   │   │   ├── rooms/                 # Salas persistentes que reúnen personas y actividades.
 │   │   │   │   ├── membership/        # Pertenencia, invitaciones y acceso a una sala.
