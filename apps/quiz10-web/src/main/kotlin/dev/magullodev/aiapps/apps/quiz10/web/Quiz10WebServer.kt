@@ -4,7 +4,11 @@ import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.contracts.Outcome
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlanner
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
@@ -13,6 +17,7 @@ import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionE
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionMessage
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationOption
+import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompletionError
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuiz
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparationError
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.QuizTurnGenerationError
@@ -30,15 +35,21 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class Quiz10WebServer(
-    private val prepareQuiz: (String) -> Outcome<PreparedQuiz, QuizPreparationError>,
+    private val prepareQuiz: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
     private val generateTurn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
     private val presentInteraction: (Quiz10InteractionContext) -> Outcome<Quiz10InteractionMessage, Quiz10InteractionError> = {
         Outcome.Failure(Quiz10InteractionError.InvalidGeneratedMessage)
     },
     private val renderer: Quiz10WebRenderer = Quiz10WebRenderer(),
+    private val planner: StandardCoveragePlanner = StandardCoveragePlanner(),
     host: String = "0.0.0.0",
     port: Int = 8080,
 ) : AutoCloseable {
+    private sealed interface SelectionMode {
+        data object Random : SelectionMode
+        data class Area(val area: Quiz10Area) : SelectionMode
+    }
+
     private data class InteractionSnapshot(
         val revision: Long,
         val context: Quiz10InteractionContext,
@@ -47,6 +58,7 @@ class Quiz10WebServer(
     private data class WebSession(
         val lock: Any = Any(),
         var playerProgress: PlayerProgress,
+        var currentSelection: SelectionMode,
         var currentTopic: String,
         var activeFlow: Quiz10Flow,
         var lastFinished: Quiz10FlowState.Finished? = null,
@@ -100,10 +112,16 @@ class Quiz10WebServer(
     private fun handleCreateGame(exchange: HttpExchange) {
         val form = parseForm(exchange)
         val name = form["name"]?.trim().orEmpty()
-        val topic = form["topic"]?.trim().orEmpty()
+        val selectionRaw = form["selection"]?.trim().orEmpty()
 
-        if (name.isEmpty() || topic.isEmpty()) {
-            respond(exchange, 400, renderer.renderBadRequest("Nombre y tema son obligatorios.", "/"))
+        if (name.isEmpty() || selectionRaw.isEmpty()) {
+            respond(exchange, 400, renderer.renderBadRequest("Nombre y modalidad/área son obligatorios.", "/"))
+            return
+        }
+
+        val selection = parseSelectionMode(selectionRaw)
+        if (selection == null) {
+            respond(exchange, 400, renderer.renderBadRequest("Selección de área desconocida.", "/"))
             return
         }
 
@@ -114,7 +132,7 @@ class Quiz10WebServer(
             return
         }
 
-        val prepared = when (val result = prepareQuiz(topic)) {
+        val prepared = when (val result = prepareQuiz(buildPlan(selection))) {
             is Outcome.Success -> result.value
             is Outcome.Failure -> {
                 logPreparationFailure(result.error)
@@ -139,14 +157,15 @@ class Quiz10WebServer(
         val sessionId = UUID.randomUUID().toString()
         sessions[sessionId] = WebSession(
             playerProgress = progress,
-            currentTopic = topic,
+            currentSelection = selection,
+            currentTopic = topicForSelection(selection),
             activeFlow = flow,
             interactionSnapshot = InteractionSnapshot(
                 revision = 1,
                 context = Quiz10InteractionContext(
                     event = Quiz10InteractionEvent.WELCOME,
                     playerName = progress.playerName,
-                    topic = topic,
+                    topic = topicForSelection(selection),
                     answeredQuestions = 0,
                     correctAnswers = 0,
                     totalQuestions = 10,
@@ -160,7 +179,7 @@ class Quiz10WebServer(
         respond(
             exchange,
             200,
-            renderer.renderQuestion(sessionId, progress.playerName, topic, question, interactionRevision = 1),
+            renderer.renderQuestion(sessionId, progress.playerName, topicForSelection(selection), question, interactionRevision = 1),
         )
     }
 
@@ -291,7 +310,7 @@ class Quiz10WebServer(
 
             when (option) {
                 Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC -> {
-                    val prepared = when (val result = prepareQuiz(session.currentTopic)) {
+                    val prepared = when (val result = prepareQuiz(buildPlan(session.currentSelection))) {
                         is Outcome.Success -> result.value
                         is Outcome.Failure -> {
                             logPreparationFailure(result.error)
@@ -354,7 +373,70 @@ class Quiz10WebServer(
                     respond(
                         exchange,
                         200,
-                        renderer.renderChooseTopic(sessionId, session.playerProgress.playerName, session.currentTopic),
+                        renderer.renderChooseTopic(sessionId, session.playerProgress.playerName, selectionValue(session.currentSelection)),
+                    )
+                }
+
+                Quiz10NavigationOption.RANDOM_QUIZ -> {
+                    val selection = SelectionMode.Random
+                    val prepared = when (val result = prepareQuiz(buildPlan(selection))) {
+                        is Outcome.Success -> result.value
+                        is Outcome.Failure -> {
+                            logPreparationFailure(result.error)
+                            respond(
+                                exchange,
+                                preparationErrorStatus(result.error),
+                                renderer.renderPreparationError(
+                                    message = preparationErrorMessage(result.error),
+                                    backPath = "/games/$sessionId/panel",
+                                ),
+                            )
+                            return
+                        }
+                    }
+                    val flow = Quiz10Flow(prepared, generateTurn)
+                    val question = when (val result = flow.start()) {
+                        is Outcome.Success -> result.value
+                        is Outcome.Failure -> {
+                            logTurnFailure(result.error)
+                            respond(
+                                exchange,
+                                500,
+                                renderer.renderPreparationError(
+                                    message = turnErrorMessage(result.error),
+                                    backPath = "/games/$sessionId/panel",
+                                ),
+                            )
+                            return
+                        }
+                    }
+                    session.currentSelection = selection
+                    session.currentTopic = topicForSelection(selection)
+                    session.activeFlow = flow
+                    val nextRevision = updateInteractionSnapshot(
+                        session = session,
+                        context = Quiz10InteractionContext(
+                            event = Quiz10InteractionEvent.WELCOME,
+                            playerName = session.playerProgress.playerName,
+                            topic = session.currentTopic,
+                            answeredQuestions = 0,
+                            correctAnswers = 0,
+                            totalQuestions = 10,
+                            stars = session.playerProgress.stars,
+                            lastAnswerCorrect = null,
+                            starEarned = false,
+                        ),
+                    )
+                    respond(
+                        exchange,
+                        200,
+                        renderer.renderQuestion(
+                            sessionId,
+                            session.playerProgress.playerName,
+                            session.currentTopic,
+                            question,
+                            interactionRevision = nextRevision,
+                        ),
                     )
                 }
 
@@ -362,7 +444,6 @@ class Quiz10WebServer(
                     respond(exchange, 200, renderer.renderFailedAnswers(sessionId, lastFinished))
                 }
 
-                Quiz10NavigationOption.RANDOM_QUIZ,
                 Quiz10NavigationOption.VIEW_SOURCES,
                 Quiz10NavigationOption.CREATE_IMAGE_QUIZ -> {
                     respond(exchange, 200, renderer.renderUnavailable(sessionId))
@@ -380,14 +461,19 @@ class Quiz10WebServer(
         }
 
         val form = parseForm(exchange)
-        val topic = form["topic"]?.trim().orEmpty()
-        if (topic.isEmpty()) {
-            respond(exchange, 400, renderer.renderBadRequest("El tema no puede estar vacío.", "/games/$sessionId/panel"))
+        val selectionRaw = form["selection"]?.trim().orEmpty()
+        if (selectionRaw.isEmpty()) {
+            respond(exchange, 400, renderer.renderBadRequest("Debes seleccionar modalidad o área.", "/games/$sessionId/panel"))
+            return
+        }
+        val selection = parseSelectionMode(selectionRaw)
+        if (selection == null) {
+            respond(exchange, 400, renderer.renderBadRequest("Selección de área desconocida.", "/games/$sessionId/panel"))
             return
         }
 
         synchronized(session.lock) {
-            val prepared = when (val result = prepareQuiz(topic)) {
+            val prepared = when (val result = prepareQuiz(buildPlan(selection))) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
                     logPreparationFailure(result.error)
@@ -419,7 +505,8 @@ class Quiz10WebServer(
                     return
                 }
             }
-            session.currentTopic = topic
+            session.currentSelection = selection
+            session.currentTopic = topicForSelection(selection)
             session.activeFlow = flow
             val nextRevision = updateInteractionSnapshot(
                 session = session,
@@ -509,12 +596,18 @@ class Quiz10WebServer(
     }
 
     private fun logPreparationFailure(error: QuizPreparationError) {
-        val cause = when (error) {
-            is QuizPreparationError.CoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause)
-            is QuizPreparationError.CoverageRouteValidationFailed -> describeCoverageValidationError(error.cause)
-            is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
-        }
+        val cause = describePreparationCause(error)
         System.err.println("quiz10-web stage=coverage error=${describePreparationError(error)} cause=${cause}")
+    }
+
+    private fun describePreparationCause(error: QuizPreparationError): String = when (error) {
+        is QuizPreparationError.CoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause)
+        is QuizPreparationError.CoverageRouteValidationFailed -> describeCoverageValidationError(error.cause)
+        is QuizPreparationError.StandardCoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause)
+        is QuizPreparationError.CoverageQuestionReviewFailed -> describeCoverageQuestionReviewError(error.cause)
+        is QuizPreparationError.CoverageQuestionCompletionFailed -> describeCoverageQuestionCompletionError(error.cause)
+        is QuizPreparationError.StandardPreparationNotConfigured -> "QuizPreparationError.StandardPreparationNotConfigured"
+        is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
     }
 
     private fun preparationErrorStatus(error: QuizPreparationError): Int = when (error) {
@@ -522,6 +615,8 @@ class Quiz10WebServer(
             is CoverageRouteValidationError.RouteRejected -> 422
             else -> 500
         }
+        is QuizPreparationError.CoverageQuestionReviewFailed -> 502
+        is QuizPreparationError.CoverageQuestionCompletionFailed -> 502
         else -> 500
     }
 
@@ -560,6 +655,25 @@ class Quiz10WebServer(
                 "No se pudo validar la ruta de cobertura: CoverageRouteValidationFailed(InvalidStructuredResponse)"
             }
         }
+
+        is QuizPreparationError.StandardCoverageRouteGenerationFailed -> {
+            val causeName = when (val cause = error.cause) {
+                is CoverageRouteGenerationError.BlankTopic -> "BlankTopic"
+                is CoverageRouteGenerationError.GenerationFailed -> "CoverageRouteGenerationFailed(${describeAiError(cause.cause)})"
+                is CoverageRouteGenerationError.InvalidGeneratedRoute -> "InvalidGeneratedRoute"
+            }
+            "No se pudo generar la ruta de cobertura estándar: CoverageRouteGenerationFailed($causeName)"
+        }
+
+        is QuizPreparationError.CoverageQuestionReviewFailed ->
+            "No se pudo validar por fila la cobertura: ${describeCoverageQuestionReviewError(error.cause)}"
+
+        is QuizPreparationError.CoverageQuestionCompletionFailed ->
+            "No se pudo completar la cobertura con reemplazos: ${describeCoverageQuestionCompletionError(error.cause)}"
+
+        is QuizPreparationError.StandardPreparationNotConfigured ->
+            "La preparación estándar no está configurada"
+
         is QuizPreparationError.InvalidCoverageRouteSize -> "No se pudo generar la ruta de cobertura: InvalidCoverageRouteSize(size=${error.size})"
     }
 
@@ -575,6 +689,10 @@ class Quiz10WebServer(
     private fun describePreparationError(error: QuizPreparationError): String = when (error) {
         is QuizPreparationError.CoverageRouteGenerationFailed -> "QuizPreparationError.CoverageRouteGenerationFailed"
         is QuizPreparationError.CoverageRouteValidationFailed -> "QuizPreparationError.CoverageRouteValidationFailed"
+        is QuizPreparationError.StandardCoverageRouteGenerationFailed -> "QuizPreparationError.StandardCoverageRouteGenerationFailed"
+        is QuizPreparationError.CoverageQuestionReviewFailed -> "QuizPreparationError.CoverageQuestionReviewFailed"
+        is QuizPreparationError.CoverageQuestionCompletionFailed -> "QuizPreparationError.CoverageQuestionCompletionFailed"
+        is QuizPreparationError.StandardPreparationNotConfigured -> "QuizPreparationError.StandardPreparationNotConfigured"
         is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
     }
 
@@ -592,6 +710,45 @@ class Quiz10WebServer(
         is CoverageRouteValidationError.GenerationFailed -> "CoverageRouteValidationError.GenerationFailed"
         CoverageRouteValidationError.InvalidStructuredResponse -> "CoverageRouteValidationError.InvalidStructuredResponse"
         is CoverageRouteValidationError.RouteRejected -> "CoverageRouteValidationError.RouteRejected"
+    }
+
+    private fun describeCoverageQuestionReviewError(error: CoverageQuestionReviewError): String = when (error) {
+        is CoverageQuestionReviewError.GenerationFailed -> "CoverageQuestionReviewError.GenerationFailed(cause=${describeAiError(error.cause)})"
+        CoverageQuestionReviewError.InvalidStructuredResponse -> "CoverageQuestionReviewError.InvalidStructuredResponse"
+    }
+
+    private fun describeCoverageQuestionCompletionError(error: CoverageQuestionCompletionError): String = when (error) {
+        is CoverageQuestionCompletionError.InputMismatch ->
+            "CoverageQuestionCompletionError.InputMismatch(detail=${error.detail})"
+
+        is CoverageQuestionCompletionError.ReplacementGenerationFailed ->
+            "CoverageQuestionCompletionError.ReplacementGenerationFailed(cause=${error.cause})"
+
+        is CoverageQuestionCompletionError.ExhaustedReplacementAttempts ->
+            "CoverageQuestionCompletionError.ExhaustedReplacementAttempts(pendingPositions=${error.pendingPositions})"
+    }
+
+    private fun parseSelectionMode(selectionRaw: String): SelectionMode? {
+        if (selectionRaw == Quiz10WebRenderer.RANDOM_SELECTION_VALUE) {
+            return SelectionMode.Random
+        }
+        val area = Quiz10Area.fromLabel(selectionRaw) ?: return null
+        return SelectionMode.Area(area)
+    }
+
+    private fun buildPlan(selection: SelectionMode): StandardCoveragePlan = when (selection) {
+        SelectionMode.Random -> planner.random()
+        is SelectionMode.Area -> planner.forArea(selection.area)
+    }
+
+    private fun selectionValue(selection: SelectionMode): String = when (selection) {
+        SelectionMode.Random -> Quiz10WebRenderer.RANDOM_SELECTION_VALUE
+        is SelectionMode.Area -> selection.area.label
+    }
+
+    private fun topicForSelection(selection: SelectionMode): String = when (selection) {
+        SelectionMode.Random -> "Aleatorio"
+        is SelectionMode.Area -> selection.area.label
     }
 
     private fun describeTurnGenerationError(error: QuizTurnGenerationError): String = when (error) {

@@ -5,6 +5,7 @@ import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
@@ -33,6 +34,8 @@ import kotlin.test.assertTrue
 
 class Quiz10WebServerTest {
     private val client = HttpClient.newHttpClient()
+    private val defaultSelection = "Historia"
+    private val alternativeSelection = "Física"
 
     private class InteractionProbe(
         private val delayMs: Long = 0,
@@ -79,7 +82,7 @@ class Quiz10WebServerTest {
             turnSuccess { _, _ -> turnCalls.incrementAndGet() },
             interaction,
         ) { baseUrl, _, _, probe ->
-            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
 
             assertEquals(1, coverageCalls.get())
             assertEquals(1, turnCalls.get())
@@ -99,7 +102,7 @@ class Quiz10WebServerTest {
             turnSuccess { _, _ -> turnCalls.incrementAndGet() },
             interaction,
         ) { baseUrl, _, _, probe ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             assertEquals(1, prepareCalls.get())
             assertEquals(1, turnCalls.get())
@@ -119,7 +122,7 @@ class Quiz10WebServerTest {
     fun onlyInteractionEndpointInvokesPresenter() {
         val interaction = InteractionProbe()
         withServer(prepareSuccess(), interactionProbe = interaction) { baseUrl, _, _, probe ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             val revision = extractInteractionRevision(start.body())
 
@@ -137,7 +140,7 @@ class Quiz10WebServerTest {
     fun interactionContextsAreWelcomeAfterAnswerAndFinish() {
         val interaction = InteractionProbe()
         withServer(prepareSuccess(), interactionProbe = interaction) { baseUrl, _, _, probe ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
 
             val welcomeRevision = extractInteractionRevision(start.body())
@@ -184,7 +187,7 @@ class Quiz10WebServerTest {
     fun starEarnedIsTrueOnlyOnTenOutOfTen() {
         val interaction = InteractionProbe()
         withServer(prepareSuccess(), interactionProbe = interaction) { baseUrl, _, _, probe ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
 
             var finalBody = ""
@@ -206,7 +209,7 @@ class Quiz10WebServerTest {
     fun obsoleteRevisionDoesNotUseNewState() {
         val interaction = InteractionProbe()
         withServer(prepareSuccess(), interactionProbe = interaction) { baseUrl, _, _, probe ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             val firstRevision = extractInteractionRevision(start.body())
 
@@ -234,7 +237,7 @@ class Quiz10WebServerTest {
             fixedResult = Outcome.Failure(Quiz10InteractionError.InvalidGeneratedMessage),
         )
         withServer(prepareSuccess(), interactionProbe = interaction) { baseUrl, _, _, probe ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             val firstRevision = extractInteractionRevision(start.body())
 
@@ -269,7 +272,7 @@ class Quiz10WebServerTest {
             releaseLatch = releasePresenter,
         )
         withServer(prepareSuccess(), interactionProbe = interaction) { baseUrl, _, _, probe ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             val revision = extractInteractionRevision(start.body())
 
@@ -302,7 +305,7 @@ class Quiz10WebServerTest {
     @Test
     fun replaySameTopicKeepsProgress() {
         withServer(prepareSuccess()) { baseUrl, _, _, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             PreparedQuiz.correctOptionSequence.forEach { option -> postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())) }
 
@@ -322,15 +325,15 @@ class Quiz10WebServerTest {
     @Test
     fun replaySameTopicPreparationFailurePreservesFinishedGameAndAllowsRetry() {
         val prepareCalls = AtomicInteger(0)
-        val prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { topic ->
+        val prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = { plan ->
             when (prepareCalls.incrementAndGet()) {
                 2 -> Outcome.Failure(QuizPreparationError.InvalidCoverageRouteSize(8))
-                else -> Outcome.Success(prepared(topic))
+                else -> Outcome.Success(prepared(topicFromPlan(plan)))
             }
         }
 
         withServer(prepare = prepare) { baseUrl, _, _, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             var finished = ""
             PreparedQuiz.correctOptionSequence.forEach { option ->
@@ -370,7 +373,7 @@ class Quiz10WebServerTest {
         }
 
         withServer(prepare = prepareSuccess(), turn = turn) { baseUrl, _, _, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             var finished = ""
             PreparedQuiz.correctOptionSequence.forEach { option ->
@@ -399,15 +402,15 @@ class Quiz10WebServerTest {
     @Test
     fun chooseAnotherTopicKeepsProgress() {
         withServer(prepareSuccess()) { baseUrl, _, _, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             PreparedQuiz.correctOptionSequence.forEach { option -> postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())) }
 
             val choose = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
-            assertContains(choose.body(), "Elegir otro tema")
+            assertContains(choose.body(), "Elegir modalidad o área")
 
-            val changed = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
-            assertContains(changed.body(), "Tema:</strong> Ciencia")
+            val changed = postForm("$baseUrl/games/$id/topic", mapOf("selection" to alternativeSelection))
+            assertContains(changed.body(), "Tema:</strong> Física")
 
             var final = changed.body()
             PreparedQuiz.correctOptionSequence.forEach { option ->
@@ -415,22 +418,22 @@ class Quiz10WebServerTest {
             }
 
             assertContains(final, "Aciertos acumulados: 20")
-            assertContains(final, "1. 🔂 Otro Quiz10 de Ciencia")
+            assertContains(final, "1. 🔂 Otro Quiz10 de Física")
         }
     }
 
     @Test
     fun chooseAnotherTopicPreparationFailurePreservesFinishedGameAndAllowsRetry() {
         val prepareCalls = AtomicInteger(0)
-        val prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { topic ->
+        val prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = { plan ->
             when (prepareCalls.incrementAndGet()) {
                 2 -> Outcome.Failure(QuizPreparationError.CoverageRouteGenerationFailed(CoverageRouteGenerationError.GenerationFailed(AiError.TransportFailure)))
-                else -> Outcome.Success(prepared(topic))
+                else -> Outcome.Success(prepared(topicFromPlan(plan)))
             }
         }
 
         withServer(prepare = prepare) { baseUrl, _, _, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             var finished = ""
             PreparedQuiz.correctOptionSequence.forEach { option ->
@@ -440,9 +443,9 @@ class Quiz10WebServerTest {
             val finishedRevision = extractInteractionRevision(finished)
             val choose = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
             assertEquals(200, choose.statusCode())
-            assertContains(choose.body(), "Elegir otro tema")
+            assertContains(choose.body(), "Elegir modalidad o área")
 
-            val failedChange = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            val failedChange = postForm("$baseUrl/games/$id/topic", mapOf("selection" to alternativeSelection))
             assertEquals(500, failedChange.statusCode())
             assertContains(failedChange.body(), "CoverageRouteGenerationFailed")
             assertContains(failedChange.body(), "/games/$id/panel")
@@ -455,10 +458,10 @@ class Quiz10WebServerTest {
 
             val chooseAgain = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
             assertEquals(200, chooseAgain.statusCode())
-            val changed = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            val changed = postForm("$baseUrl/games/$id/topic", mapOf("selection" to alternativeSelection))
             assertEquals(200, changed.statusCode())
             assertContains(changed.body(), "Pregunta 1/10")
-            assertContains(changed.body(), "Tema:</strong> Ciencia")
+            assertContains(changed.body(), "Tema:</strong> Física")
         }
     }
 
@@ -475,7 +478,7 @@ class Quiz10WebServerTest {
         }
 
         withServer(prepare = prepareSuccess(), turn = turn) { baseUrl, _, _, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
             var finished = ""
             PreparedQuiz.correctOptionSequence.forEach { option ->
@@ -486,7 +489,7 @@ class Quiz10WebServerTest {
             val choose = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
             assertEquals(200, choose.statusCode())
 
-            val failedChange = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            val failedChange = postForm("$baseUrl/games/$id/topic", mapOf("selection" to alternativeSelection))
             assertEquals(500, failedChange.statusCode())
             assertContains(failedChange.body(), "pregunta 1")
             assertContains(failedChange.body(), "/games/$id/panel")
@@ -499,17 +502,17 @@ class Quiz10WebServerTest {
 
             val chooseAgain = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
             assertEquals(200, chooseAgain.statusCode())
-            val changed = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            val changed = postForm("$baseUrl/games/$id/topic", mapOf("selection" to alternativeSelection))
             assertEquals(200, changed.statusCode())
             assertContains(changed.body(), "Pregunta 1/10")
-            assertContains(changed.body(), "Tema:</strong> Ciencia")
+            assertContains(changed.body(), "Tema:</strong> Física")
         }
     }
 
     @Test
     fun reviewFailedAnswersDoesNotChangeProgress() {
         withServer(prepareSuccess()) { baseUrl, _, _, _ ->
-            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val id = extractSessionId(start.body())
 
             var finalBody = ""
@@ -542,7 +545,7 @@ class Quiz10WebServerTest {
     @Test
     fun invalidInputReturns400() {
         withServer(prepareSuccess()) { baseUrl, _, _, _ ->
-            val response = postForm("$baseUrl/games", mapOf("name" to "", "topic" to ""))
+            val response = postForm("$baseUrl/games", mapOf("name" to "", "selection" to ""))
 
             assertEquals(400, response.statusCode())
             assertContains(response.body(), "Solicitud inválida")
@@ -552,7 +555,7 @@ class Quiz10WebServerTest {
     @Test
     fun coverageGenerationFailureShowsTypedCoverageMessage() {
         withServer(prepareFailure(QuizPreparationError.CoverageRouteGenerationFailed(CoverageRouteGenerationError.GenerationFailed(AiError.TransportFailure)))) { baseUrl, _, _, _ ->
-            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
 
             assertEquals(500, response.statusCode())
             val body = response.body()
@@ -566,7 +569,7 @@ class Quiz10WebServerTest {
     @Test
     fun invalidCoverageRouteSizeIsDistinguishedFromAiFailure() {
         withServer(prepareFailure(QuizPreparationError.InvalidCoverageRouteSize(8))) { baseUrl, _, _, _ ->
-            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
 
             assertEquals(500, response.statusCode())
             val body = response.body()
@@ -588,7 +591,7 @@ class Quiz10WebServerTest {
                 ),
             ),
         ) { baseUrl, _, _, _ ->
-            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
 
             assertEquals(422, response.statusCode())
             val body = response.body()
@@ -604,7 +607,7 @@ class Quiz10WebServerTest {
             prepareSuccess(),
             turnFailure(QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure), questionNumber = 1),
         ) { baseUrl, _, _, _ ->
-            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
 
             assertEquals(500, response.statusCode())
             val body = response.body()
@@ -617,7 +620,7 @@ class Quiz10WebServerTest {
     @Test
     fun happyPathStillReturnsTheQuestionNormally() {
         withServer(prepareSuccess(), turnSuccess()) { baseUrl, _, _, _ ->
-            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
 
             assertEquals(200, response.statusCode())
             assertContains(response.body(), "Pregunta 1/10")
@@ -626,12 +629,12 @@ class Quiz10WebServerTest {
     }
 
     private fun withServer(
-        prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError>,
+        prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
         turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = turnSuccess(),
         interactionProbe: InteractionProbe = InteractionProbe(),
         block: (
             baseUrl: String,
-            prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError>,
+            prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
             turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
             interactionProbe: InteractionProbe,
         ) -> Unit,
@@ -647,14 +650,19 @@ class Quiz10WebServerTest {
         }
     }
 
-    private fun prepareFailure(error: QuizPreparationError, onCall: () -> Unit = {}): (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { _ ->
+    private fun prepareFailure(error: QuizPreparationError, onCall: () -> Unit = {}): (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = { _ ->
         onCall()
         Outcome.Failure(error)
     }
 
-    private fun prepareSuccess(onCall: () -> Unit = {}): (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { topic ->
+    private fun prepareSuccess(onCall: () -> Unit = {}): (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = { plan ->
         onCall()
-        Outcome.Success(prepared(topic))
+        Outcome.Success(prepared(topicFromPlan(plan)))
+    }
+
+    private fun topicFromPlan(plan: StandardCoveragePlan): String {
+        val labels = plan.positions.map { it.area.label }.distinct()
+        return if (labels.size == 1) labels.single() else "Aleatorio"
     }
 
     private fun turnFailure(

@@ -1,5 +1,6 @@
 package dev.magullodev.aiapps.ui.quiz10.web
 
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.aiapps.systems.games.quiz10.progress.PlayerProgress
@@ -7,6 +8,10 @@ import dev.magullodev.aiapps.systems.games.quiz10.result.QuizAnswerRecord
 import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10FlowState
 
 class Quiz10WebRenderer {
+    companion object {
+        const val RANDOM_SELECTION_VALUE: String = "__RANDOM__"
+    }
+
     data class Correction(
         val isCorrect: Boolean,
         val correctAnswer: String,
@@ -20,7 +25,11 @@ class Quiz10WebRenderer {
         }
         appendLine("<form method=\"post\" action=\"/games\" id=\"start-form\">")
         appendLine("<label>Nombre <input name=\"name\" required></label>")
-        appendLine("<label>Tema <input name=\"topic\" required></label>")
+        appendLine("<label>Modalidad / Área")
+        appendLine("<select name=\"selection\" required>")
+        appendLine(selectionOptionsHtml())
+        appendLine("</select>")
+        appendLine("</label>")
         appendLine("<button type=\"submit\">Empezar Quiz10</button>")
         appendLine("<p id=\"preparing\" style=\"display:none\">Preparando Quiz10...</p>")
         appendLine("</form>")
@@ -77,7 +86,6 @@ class Quiz10WebRenderer {
         menu.options.forEachIndexed { index, entry ->
             val optionNumber = index + 1
             val disabled = entry.option in setOf(
-                Quiz10NavigationOption.RANDOM_QUIZ,
                 Quiz10NavigationOption.VIEW_SOURCES,
                 Quiz10NavigationOption.CREATE_IMAGE_QUIZ,
             )
@@ -88,11 +96,15 @@ class Quiz10WebRenderer {
         appendLine("</form>")
     }
 
-    fun renderChooseTopic(sessionId: String, playerName: String, currentTopic: String): String = page("Quiz10 - Elegir tema") {
-        appendLine("<h1>Elegir otro tema</h1>")
-        appendLine("<p>${escapeHtml(playerName)}, escribe un tema nuevo para seguir.</p>")
+    fun renderChooseTopic(sessionId: String, playerName: String, currentSelection: String): String = page("Quiz10 - Elegir modalidad") {
+        appendLine("<h1>Elegir modalidad o área</h1>")
+        appendLine("<p>${escapeHtml(playerName)}, selecciona la modalidad para la siguiente partida.</p>")
         appendLine("<form method=\"post\" action=\"/games/${escapeHtml(sessionId)}/topic\" id=\"topic-form\">")
-        appendLine("<label>Tema <input name=\"topic\" value=\"${escapeHtml(currentTopic)}\" required></label>")
+        appendLine("<label>Modalidad / Área")
+        appendLine("<select name=\"selection\" required>")
+        appendLine(selectionOptionsHtml(currentSelection))
+        appendLine("</select>")
+        appendLine("</label>")
         appendLine("<button type=\"submit\">Preparar Quiz10</button>")
         appendLine("<p id=\"preparing\" style=\"display:none\">Preparando Quiz10...</p>")
         appendLine("</form>")
@@ -164,8 +176,22 @@ class Quiz10WebRenderer {
 
     fun renderPreparationError(message: String = "No se pudo preparar Quiz10", backPath: String = "/"): String = page("Quiz10 - Error") {
         appendLine("<h1>${escapeHtml(message)}</h1>")
-        appendLine("<p>Inténtalo de nuevo con otro tema.</p>")
+        appendLine("<p>Inténtalo de nuevo con otra modalidad o área.</p>")
         appendLine("<a href=\"${escapeHtml(backPath)}\">Volver</a>")
+    }
+
+    private fun selectionOptionsHtml(selected: String? = null): String {
+        val lines = mutableListOf<String>()
+        lines += optionHtml(RANDOM_SELECTION_VALUE, "🎲 Aleatorio (10 áreas distintas)", selected)
+        Quiz10Area.catalog.forEach { area ->
+            lines += optionHtml(area.label, area.label, selected)
+        }
+        return lines.joinToString("\n")
+    }
+
+    private fun optionHtml(value: String, label: String, selected: String?): String {
+        val attr = if (value == selected) " selected" else ""
+        return "<option value=\"${escapeHtml(value)}\"$attr>${escapeHtml(label)}</option>"
     }
 
     private fun page(title: String, body: StringBuilder.() -> Unit): String {

@@ -1,16 +1,36 @@
 package dev.magullodev.aiapps.systems.games.quiz10.preparation
 
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
+import java.util.Collections
 
 class PreparedQuiz(
     val topic: String,
     val route: CoverageRoute,
+    questions: List<PreparedQuizQuestion>? = null,
 ) {
+    val questions: List<PreparedQuizQuestion>? = questions?.let { Collections.unmodifiableList(it.toList()) }
+
     init {
         require(route.size == 10) { "Prepared quiz route must have exactly 10 positions" }
+        if (this.questions != null) {
+            require(this.questions.size == route.size) { "Prepared quiz questions must match route size" }
+        }
     }
 
     companion object {
         val correctOptionSequence = listOf(0, 1, 2, 3, 0, 1, 2, 3, 0, 1)
+    }
+}
+
+data class PreparedQuizQuestion(
+    val question: String,
+    val answer: String,
+    val distractors: List<String>,
+) {
+    init {
+        require(question.isNotBlank()) { "Prepared question text must not be blank" }
+        require(answer.isNotBlank()) { "Prepared question answer must not be blank" }
+        require(distractors.size == 3) { "Prepared question must contain exactly three distractors" }
+        require(distractors.all { it.isNotBlank() }) { "Prepared question distractors must not be blank" }
     }
 }

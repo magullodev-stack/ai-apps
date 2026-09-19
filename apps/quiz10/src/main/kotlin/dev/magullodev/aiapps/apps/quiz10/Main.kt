@@ -129,6 +129,14 @@ private fun playQuiz(
                 }
                 else -> fail("COVERAGE_ERROR: coverage validation failed: $cause")
             }
+            is QuizPreparationError.StandardCoverageRouteGenerationFailed ->
+                fail("COVERAGE_ERROR: standard coverage generation failed: ${error.cause}")
+            is QuizPreparationError.CoverageQuestionReviewFailed ->
+                fail("COVERAGE_ERROR: coverage question review failed: ${error.cause}")
+            is QuizPreparationError.CoverageQuestionCompletionFailed ->
+                fail("COVERAGE_ERROR: coverage question completion failed: ${error.cause}")
+            QuizPreparationError.StandardPreparationNotConfigured ->
+                fail("COVERAGE_ERROR: standard preparation not configured")
             is QuizPreparationError.InvalidCoverageRouteSize -> fail("COVERAGE_ERROR: invalid route size ${error.size}")
         }
     }

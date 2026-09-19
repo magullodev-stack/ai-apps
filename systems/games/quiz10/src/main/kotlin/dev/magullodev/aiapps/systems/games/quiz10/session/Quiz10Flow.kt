@@ -3,6 +3,7 @@ package dev.magullodev.aiapps.systems.games.quiz10.session
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuiz
+import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuizQuestion
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.QuizTurnGenerationError
 import dev.magullodev.aiapps.systems.games.quiz10.question.QuizQuestion
 import dev.magullodev.aiapps.systems.games.quiz10.result.QuizAnswerRecord
@@ -25,15 +26,13 @@ class Quiz10Flow(
         answerRecords.clear()
 
         val questionNumber = newSession.currentQuestionNumber ?: error("Prepared quiz unexpectedly has no current question")
-        val item = preparedQuiz.route.items[questionNumber - 1]
-        val correctOptionIndex = PreparedQuiz.correctOptionSequence[questionNumber - 1]
-        val question = when (val result = generateTurn(item, correctOptionIndex)) {
-            is Outcome.Success -> result.value
+        val question = when (val resolved = resolveQuestion(questionNumber)) {
+            is Outcome.Success -> resolved.value
             is Outcome.Failure -> {
                 return Outcome.Failure(
                     Quiz10FlowTransitionError.TurnGenerationFailed(
                         questionNumber = questionNumber,
-                        cause = result.error,
+                        cause = resolved.error,
                     ),
                 )
             }
@@ -103,15 +102,13 @@ class Quiz10Flow(
 
         val nextQuestionNumber = sessionSnapshot.currentQuestionNumber
             ?: throw IllegalStateException("Quiz session has no pending question")
-        val item = preparedQuiz.route.items[nextQuestionNumber - 1]
-        val correctOptionIndex = PreparedQuiz.correctOptionSequence[nextQuestionNumber - 1]
-        val nextQuestion = when (val result = generateTurn(item, correctOptionIndex)) {
-            is Outcome.Success -> result.value
+        val nextQuestion = when (val resolved = resolveQuestion(nextQuestionNumber)) {
+            is Outcome.Success -> resolved.value
             is Outcome.Failure -> {
                 return Outcome.Failure(
                     Quiz10FlowTransitionError.TurnGenerationFailed(
                         questionNumber = nextQuestionNumber,
-                        cause = result.error,
+                        cause = resolved.error,
                     ),
                 )
             }
@@ -127,6 +124,31 @@ class Quiz10Flow(
         )
         currentState = nextState
         return Outcome.Success(nextState)
+    }
+
+    private fun resolveQuestion(questionNumber: Int): Outcome<QuizQuestion, QuizTurnGenerationError> {
+        val prebuilt = preparedQuiz.questions
+        if (prebuilt != null) {
+            return Outcome.Success(toQuizQuestion(prebuilt[questionNumber - 1], questionNumber))
+        }
+
+        val item = preparedQuiz.route.items[questionNumber - 1]
+        val correctOptionIndex = PreparedQuiz.correctOptionSequence[questionNumber - 1]
+        return generateTurn(item, correctOptionIndex)
+    }
+
+    private fun toQuizQuestion(prepared: PreparedQuizQuestion, questionNumber: Int): QuizQuestion {
+        val correctOptionIndex = PreparedQuiz.correctOptionSequence[questionNumber - 1]
+        val options = prepared.distractors.toMutableList()
+        options.add(correctOptionIndex, prepared.answer)
+        val feedback = MutableList(4) { "Respuesta correcta: ${prepared.answer}" }
+        feedback[correctOptionIndex] = "Correcto. Respuesta: ${prepared.answer}"
+        return QuizQuestion(
+            text = prepared.question,
+            options = options,
+            feedbackByOption = feedback,
+            correctOptionIndex = correctOptionIndex,
+        )
     }
 }
 

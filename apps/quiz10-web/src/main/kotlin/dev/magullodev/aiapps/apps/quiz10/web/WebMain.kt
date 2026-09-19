@@ -8,9 +8,12 @@ import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageQuestionReviewer
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteGenerator
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteValidator
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraReplacementQuestionGenerator
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionPresenter
+import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompleter
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparer
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.LunaQuizTurnGenerator
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.QuizTurnGenerationError
@@ -55,7 +58,16 @@ internal fun createQuizPreparer(
 ): QuizPreparer {
     val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
     val coverageValidator = TerraCoverageRouteValidator(generateStructured)
-    return QuizPreparer(coverageGenerator::generate, coverageValidator::validate)
+    val reviewer = TerraCoverageQuestionReviewer(generateStructured)
+    val replacementGenerator = TerraReplacementQuestionGenerator(generateStructured)
+    val completer = CoverageQuestionCompleter(replacementGenerator::generate)
+    return QuizPreparer(
+        generateCoverageRoute = coverageGenerator::generate,
+        validateCoverageRoute = coverageValidator::validate,
+        generateCoverageRouteFromPlan = coverageGenerator::generate,
+        reviewCoverageQuestions = reviewer::review,
+        completeCoverageQuestions = completer::complete,
+    )
 }
 
 internal fun createTurnGenerator(

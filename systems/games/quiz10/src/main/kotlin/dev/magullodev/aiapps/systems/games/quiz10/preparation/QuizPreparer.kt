@@ -2,12 +2,18 @@ package dev.magullodev.aiapps.systems.games.quiz10.preparation
 
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReview
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
 
 class QuizPreparer(
     private val generateCoverageRoute: (String) -> Outcome<CoverageRoute, CoverageRouteGenerationError>,
     private val validateCoverageRoute: (String, CoverageRoute) -> Outcome<Unit, CoverageRouteValidationError>,
+    private val generateCoverageRouteFromPlan: ((StandardCoveragePlan) -> Outcome<CoverageRoute, CoverageRouteGenerationError>)? = null,
+    private val reviewCoverageQuestions: ((CoverageRoute) -> Outcome<CoverageQuestionReview, CoverageQuestionReviewError>)? = null,
+    private val completeCoverageQuestions: ((StandardCoveragePlan, CoverageRoute, CoverageQuestionReview) -> Outcome<CompletedCoverageQuestions, CoverageQuestionCompletionError>)? = null,
 ) {
     fun prepare(topic: String): Outcome<PreparedQuiz, QuizPreparationError> {
         val route = when (val result = generateCoverageRoute(topic)) {
@@ -25,10 +31,59 @@ class QuizPreparer(
 
         return Outcome.Success(PreparedQuiz(topic, route))
     }
+
+    fun prepare(plan: StandardCoveragePlan): Outcome<PreparedQuiz, QuizPreparationError> {
+        val routeGenerator = generateCoverageRouteFromPlan
+            ?: return Outcome.Failure(QuizPreparationError.StandardPreparationNotConfigured)
+        val reviewer = reviewCoverageQuestions
+            ?: return Outcome.Failure(QuizPreparationError.StandardPreparationNotConfigured)
+        val completer = completeCoverageQuestions
+            ?: return Outcome.Failure(QuizPreparationError.StandardPreparationNotConfigured)
+
+        val route = when (val result = routeGenerator(plan)) {
+            is Outcome.Success -> result.value
+            is Outcome.Failure -> {
+                return Outcome.Failure(QuizPreparationError.StandardCoverageRouteGenerationFailed(result.error))
+            }
+        }
+
+        val review = when (val result = reviewer(route)) {
+            is Outcome.Success -> result.value
+            is Outcome.Failure -> {
+                return Outcome.Failure(QuizPreparationError.CoverageQuestionReviewFailed(result.error))
+            }
+        }
+
+        val completed = when (val result = completer(plan, route, review)) {
+            is Outcome.Success -> result.value
+            is Outcome.Failure -> {
+                return Outcome.Failure(QuizPreparationError.CoverageQuestionCompletionFailed(result.error))
+            }
+        }
+
+        val topic = derivedTopicFromPlan(plan)
+        val questions = completed.positions.map {
+            PreparedQuizQuestion(
+                question = it.question,
+                answer = it.answer,
+                distractors = it.distractors,
+            )
+        }
+        return Outcome.Success(PreparedQuiz(topic = topic, route = route, questions = questions))
+    }
+
+    private fun derivedTopicFromPlan(plan: StandardCoveragePlan): String {
+        val labels = plan.positions.map { it.area.label }.distinct()
+        return if (labels.size == 1) labels.single() else "Aleatorio"
+    }
 }
 
 sealed interface QuizPreparationError {
     data class CoverageRouteGenerationFailed(val cause: CoverageRouteGenerationError) : QuizPreparationError
     data class CoverageRouteValidationFailed(val cause: CoverageRouteValidationError) : QuizPreparationError
+    data class StandardCoverageRouteGenerationFailed(val cause: CoverageRouteGenerationError) : QuizPreparationError
+    data class CoverageQuestionReviewFailed(val cause: CoverageQuestionReviewError) : QuizPreparationError
+    data class CoverageQuestionCompletionFailed(val cause: CoverageQuestionCompletionError) : QuizPreparationError
+    data object StandardPreparationNotConfigured : QuizPreparationError
     data class InvalidCoverageRouteSize(val size: Int) : QuizPreparationError
 }

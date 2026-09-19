@@ -20,7 +20,8 @@ class Quiz10WebRendererTest {
         val html = renderer.renderHome()
 
         assertContains(html, "Nombre")
-        assertContains(html, "Tema")
+        assertContains(html, "Modalidad / Área")
+        assertContains(html, "Aleatorio (10 áreas distintas)")
         assertContains(html, "Empezar Quiz10")
     }
 
