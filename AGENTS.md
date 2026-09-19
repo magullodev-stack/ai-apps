@@ -2,7 +2,11 @@
 
 ## Fuente de verdad
 
-El estado actual del repositorio es la fuente de verdad.
+La rama `dev` es la fuente de verdad del estado actual de desarrollo.
+
+La rama `main` se consulta solo cuando la tarea solicita explicitamente comparar, revisar o promover la rama estable.
+
+Antes de modificar codigo en una nueva unidad de desarrollo, ejecuta `scripts/check-dev-context.sh`.
 
 Antes de modificar algo existente, inspecciona el archivo y las dependencias relevantes.
 
@@ -88,6 +92,8 @@ Las claves de proveedores externos no deben introducirse en aplicaciones cliente
 No hagas `commit`, `push`, `merge`, `rebase`, cambios de rama ni operaciones destructivas salvo instrucción explícita.
 
 No descartes ni sobrescribas cambios ajenos a la tarea actual.
+
+Cuando una herramienta consulte GitHub y la API lo permita, fija explicitamente `dev` como referencia.
 
 ## Verificación
 
