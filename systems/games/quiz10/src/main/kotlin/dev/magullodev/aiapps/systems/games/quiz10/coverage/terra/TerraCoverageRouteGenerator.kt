@@ -5,7 +5,7 @@ import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficultyByPosition
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import kotlinx.serialization.json.Json
@@ -51,7 +51,7 @@ class TerraCoverageRouteGenerator(
                 return content
             }
             CoverageRouteItem(
-                difficulty = difficultyForPosition(index + 1),
+                difficulty = CoverageDifficultyByPosition.forPosition(index + 1),
                 area = field("area"),
                 group = field("group"),
                 referent = field("referent"),
@@ -64,15 +64,6 @@ class TerraCoverageRouteGenerator(
     private companion object {
         const val expectedItems = 10
         val itemFields = setOf("area", "group", "referent", "knowledge", "answer")
-
-        fun difficultyForPosition(position: Int): CoverageDifficulty =
-            when (position) {
-                in 1..4 -> CoverageDifficulty.EASY
-                in 5..7 -> CoverageDifficulty.MODERATE
-                in 8..9 -> CoverageDifficulty.HARD
-                10 -> CoverageDifficulty.VERY_HARD
-                else -> throw IllegalArgumentException("Coverage position must be between 1 and 10")
-            }
 
         val schema = """
             {
