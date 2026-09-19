@@ -23,6 +23,12 @@ For application/game metrics events:
 - optional work unit id
 - metric name and numeric values
 
+For audit events (including Quiz10 review by question position):
+
+- application and optional work unit id
+- audit name, phase and accepted/rejected result
+- optional position (one-based), replacement attempt and short reason
+
 Sensitive data is not recorded:
 
 - API keys
@@ -30,6 +36,8 @@ Sensitive data is not recorded:
 - prompts
 - generated questions/answers
 - player names
+
+Audit reasons are trimmed, whitespace-normalized, limited to 180 characters and redact common credential terms. Do not put prompts, answers or personal data in audit reasons.
 
 ## Storage
 
@@ -91,7 +99,16 @@ The output includes:
 - model breakdown
 - operation breakdown
 - metric event values (including Quiz10 preparation duration/invalidated/replaced/attempts)
+- audit events grouped by work unit and position, with phase, result, attempt and reason when present
 - warning when total cost is partial or not determinable
 
 For Quiz10, each game run gets its own technical work unit id, even inside the same web session.
 This allows querying one specific game with `--work-unit=<id>`.
+
+Use that id to inspect the rejected initial review for each position and the accepted or rejected replacement attempts:
+
+```bash
+./gradlew :apps:quiz10-web:run --args="--usage-monitor --app=quiz10-web --work-unit=<game-work-unit-id>"
+```
+
+Route validation issues appear under `global`; question reviews and replacements appear under `position N`. The command lists recorded audit events, including accepted replacements. If a recent preparation has no audit events, it reports `no rejections recorded` when its metric includes `audit_detail_version=1`; older records without that marker report `detail not recorded (legacy records)`. The `--model` and `--operation` filters apply to call records, so use `--app` and `--work-unit` when inspecting audit rows.
