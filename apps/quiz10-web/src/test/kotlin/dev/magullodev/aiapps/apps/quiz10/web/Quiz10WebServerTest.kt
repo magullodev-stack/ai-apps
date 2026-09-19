@@ -1,6 +1,7 @@
 package dev.magullodev.aiapps.apps.quiz10.web
 
 import dev.magullodev.aiapps.core.ai.AiError
+import dev.magullodev.aiapps.core.ai.AiTransportFailureKind
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
@@ -20,6 +21,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CopyOnWriteArrayList
@@ -628,6 +630,46 @@ class Quiz10WebServerTest {
         }
     }
 
+    @Test
+    fun diagnosedTransportFailureIsLoggedButNotExposedAndGameDoesNotStart() {
+        val diagnosed = AiError.TransportFailureDiagnosed(
+            kind = AiTransportFailureKind.CONNECT_TIMEOUT,
+            detail = "SocketTimeoutException: connect timed out",
+        )
+
+        val originalErr = System.err
+        val captured = ByteArrayOutputStream()
+        System.setErr(captured.printStream())
+        try {
+            withServer(
+                prepareFailure(
+                    QuizPreparationError.StandardCoverageRouteGenerationFailed(
+                        CoverageRouteGenerationError.GenerationFailed(diagnosed),
+                    ),
+                ),
+            ) { baseUrl, _, _, _ ->
+                val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
+
+                assertEquals(500, response.statusCode())
+                val body = response.body()
+                assertContains(body, "ruta de cobertura estándar")
+                assertContains(body, "TransportFailure(CONNECT_TIMEOUT)")
+                assertFalse(body.contains("SocketTimeoutException"))
+                assertFalse(body.contains("connect timed out"))
+                assertFalse(body.contains("Pregunta 1/10"))
+            }
+        } finally {
+            System.err.flush()
+            System.setErr(originalErr)
+        }
+
+        val stderr = captured.toString(StandardCharsets.UTF_8)
+        assertContains(stderr, "CONNECT_TIMEOUT")
+        assertContains(stderr, "SocketTimeoutException")
+        assertFalse(stderr.contains("Authorization"))
+        assertFalse(stderr.contains("Bearer"))
+    }
+
     private fun withServer(
         prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
         turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = turnSuccess(),
@@ -746,4 +788,6 @@ class Quiz10WebServerTest {
     }
 
     private fun encode(value: String): String = java.net.URLEncoder.encode(value, StandardCharsets.UTF_8)
+
+    private fun ByteArrayOutputStream.printStream(): java.io.PrintStream = java.io.PrintStream(this, true, StandardCharsets.UTF_8)
 }

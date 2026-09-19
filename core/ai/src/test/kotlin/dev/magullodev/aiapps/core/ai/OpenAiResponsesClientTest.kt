@@ -9,6 +9,7 @@ import dev.magullodev.aiapps.core.network.HttpRequest
 import dev.magullodev.aiapps.core.network.HttpResponse
 import dev.magullodev.aiapps.core.network.HttpTransport
 import dev.magullodev.aiapps.core.network.NetworkError
+import dev.magullodev.aiapps.core.network.NetworkTransportFailureKind
 import java.io.IOException
 import java.net.URI
 import kotlinx.serialization.json.Json
@@ -124,11 +125,51 @@ class OpenAiResponsesClientTest {
 
     @Test
     fun returnsTypedErrorForTransportFailure() {
-        val transport = ControlledTransport(Outcome.Failure(NetworkError.TransportFailure(IOException("connection failed"))))
+        val transport = ControlledTransport(
+            Outcome.Failure(
+                NetworkError.TransportFailure(
+                    cause = IOException("connect timed out"),
+                    kind = NetworkTransportFailureKind.CONNECT_TIMEOUT,
+                ),
+            ),
+        )
 
         val result = OpenAiResponsesClient(config, transport).generate(request)
 
-        assertEquals(AiError.TransportFailure, assertIs<Outcome.Failure<AiError>>(result).error)
+        val error = assertIs<Outcome.Failure<AiError>>(result).error
+        val diagnosed = assertIs<AiError.TransportFailureDiagnosed>(error)
+        assertEquals(AiTransportFailureKind.CONNECT_TIMEOUT, diagnosed.kind)
+        assertEquals("IOException: connect timed out", diagnosed.detail)
+    }
+
+    @Test
+    fun mapsReadTimeoutAndInvalidRequestTransportFailures() {
+        val readTimeoutTransport = ControlledTransport(
+            Outcome.Failure(
+                NetworkError.TransportFailure(
+                    cause = IOException("Read timed out"),
+                    kind = NetworkTransportFailureKind.READ_TIMEOUT,
+                ),
+            ),
+        )
+        val invalidRequestTransport = ControlledTransport(
+            Outcome.Failure(NetworkError.InvalidRequest("URI must be absolute HTTP(S) with a host")),
+        )
+
+        val readTimeoutResult = OpenAiResponsesClient(config, readTimeoutTransport).generate(request)
+        val invalidRequestResult = OpenAiResponsesClient(config, invalidRequestTransport).generate(request)
+
+        val readTimeoutError = assertIs<AiError.TransportFailureDiagnosed>(
+            assertIs<Outcome.Failure<AiError>>(readTimeoutResult).error,
+        )
+        assertEquals(AiTransportFailureKind.READ_TIMEOUT, readTimeoutError.kind)
+        assertEquals("IOException: Read timed out", readTimeoutError.detail)
+
+        val invalidRequestError = assertIs<AiError.TransportFailureDiagnosed>(
+            assertIs<Outcome.Failure<AiError>>(invalidRequestResult).error,
+        )
+        assertEquals(AiTransportFailureKind.INVALID_REQUEST, invalidRequestError.kind)
+        assertEquals("URI must be absolute HTTP(S) with a host", invalidRequestError.detail)
     }
 
     @Test

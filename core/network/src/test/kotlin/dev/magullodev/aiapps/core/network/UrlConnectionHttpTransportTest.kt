@@ -8,6 +8,7 @@ import java.net.ServerSocket
 import java.net.URI
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.assertIs
 
 class UrlConnectionHttpTransportTest {
@@ -97,7 +98,21 @@ class UrlConnectionHttpTransportTest {
 
         val result = transport.execute(request)
 
-        val error = assertIs<Outcome.Failure<NetworkError>>(result).error
-        assertIs<NetworkError.TransportFailure>(error)
+        val error = assertIs<NetworkError.TransportFailure>(assertIs<Outcome.Failure<NetworkError>>(result).error)
+        assertTrue(error.kind != NetworkTransportFailureKind.READ_TIMEOUT)
+    }
+
+    @Test
+    fun slowResponseReadIsClassifiedAsReadTimeout() = withServer(
+        handler = { exchange ->
+            Thread.sleep(1_500)
+            respond(exchange, 200, "late")
+        },
+    ) { uri ->
+        val timeoutTransport = UrlConnectionHttpTransport(1_000, 200)
+        val result = timeoutTransport.execute(HttpRequest(HttpMethod.GET, uri))
+
+        val error = assertIs<NetworkError.TransportFailure>(assertIs<Outcome.Failure<NetworkError>>(result).error)
+        assertEquals(NetworkTransportFailureKind.READ_TIMEOUT, error.kind)
     }
 }

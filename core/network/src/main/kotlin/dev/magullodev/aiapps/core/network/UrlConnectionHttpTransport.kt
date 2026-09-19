@@ -3,6 +3,7 @@ package dev.magullodev.aiapps.core.network
 import dev.magullodev.aiapps.core.contracts.Outcome
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 
 class UrlConnectionHttpTransport(
     private val connectTimeoutMillis: Int,
@@ -27,6 +28,7 @@ class UrlConnectionHttpTransport(
         }
 
         var connection: HttpURLConnection? = null
+        var phase = IoPhase.CONNECT_OR_SEND
         try {
             connection = uri.toURL().openConnection() as HttpURLConnection
             connection.connectTimeout = connectTimeoutMillis
@@ -41,6 +43,7 @@ class UrlConnectionHttpTransport(
                 }
             }
 
+            phase = IoPhase.RECEIVE
             val status = connection.responseCode
             val headers = connection.headerFields
                 .filterKeys { it != null }
@@ -49,12 +52,23 @@ class UrlConnectionHttpTransport(
             val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
 
             return Outcome.Success(HttpResponse(status, headers, body))
+        } catch (cause: SocketTimeoutException) {
+            val kind = when (phase) {
+                IoPhase.CONNECT_OR_SEND -> NetworkTransportFailureKind.CONNECT_TIMEOUT
+                IoPhase.RECEIVE -> NetworkTransportFailureKind.READ_TIMEOUT
+            }
+            return Outcome.Failure(NetworkError.TransportFailure(cause, kind))
         } catch (cause: IOException) {
-            return Outcome.Failure(NetworkError.TransportFailure(cause))
+            return Outcome.Failure(NetworkError.TransportFailure(cause, NetworkTransportFailureKind.IO))
         } catch (cause: IllegalArgumentException) {
             return Outcome.Failure(NetworkError.InvalidRequest(cause.message ?: "Invalid HTTP request"))
         } finally {
             connection?.disconnect()
         }
+    }
+
+    private enum class IoPhase {
+        CONNECT_OR_SEND,
+        RECEIVE,
     }
 }

@@ -5,6 +5,8 @@ import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.HttpMethod
 import dev.magullodev.aiapps.core.network.HttpRequest
 import dev.magullodev.aiapps.core.network.HttpTransport
+import dev.magullodev.aiapps.core.network.NetworkError
+import dev.magullodev.aiapps.core.network.NetworkTransportFailureKind
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -55,7 +57,7 @@ class OpenAiResponsesClient(
 
         val response = when (val result = transport.execute(httpRequest)) {
             is Outcome.Success -> result.value
-            is Outcome.Failure -> return Outcome.Failure(AiError.TransportFailure)
+            is Outcome.Failure -> return Outcome.Failure(toAiTransportFailure(result.error))
         }
         if (response.status !in 200..299) {
             return Outcome.Failure(AiError.HttpFailure(response.status))
@@ -105,5 +107,32 @@ class OpenAiResponsesClient(
         }
 
         return Outcome.Success(StructuredGeneration(outputText, usage))
+    }
+
+    private fun toAiTransportFailure(error: NetworkError): AiError = when (error) {
+        is NetworkError.InvalidRequest -> AiError.TransportFailureDiagnosed(
+            kind = AiTransportFailureKind.INVALID_REQUEST,
+            detail = limitDiagnostic(error.reason),
+        )
+
+        is NetworkError.TransportFailure -> {
+            val kind = when (error.kind) {
+                NetworkTransportFailureKind.CONNECT_TIMEOUT -> AiTransportFailureKind.CONNECT_TIMEOUT
+                NetworkTransportFailureKind.READ_TIMEOUT -> AiTransportFailureKind.READ_TIMEOUT
+                NetworkTransportFailureKind.IO -> AiTransportFailureKind.IO
+            }
+            val message = error.cause.message?.trim().orEmpty()
+            val detail = if (message.isEmpty()) {
+                error.cause::class.simpleName ?: "IOException"
+            } else {
+                "${error.cause::class.simpleName ?: "IOException"}: $message"
+            }
+            AiError.TransportFailureDiagnosed(kind = kind, detail = limitDiagnostic(detail))
+        }
+    }
+
+    private fun limitDiagnostic(value: String): String {
+        val sanitized = value.replace(Regex("\\s+"), " ").trim()
+        return if (sanitized.length <= 180) sanitized else sanitized.take(180)
     }
 }

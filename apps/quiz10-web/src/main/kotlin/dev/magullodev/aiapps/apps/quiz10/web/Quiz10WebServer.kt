@@ -596,15 +596,15 @@ class Quiz10WebServer(
     }
 
     private fun logPreparationFailure(error: QuizPreparationError) {
-        val cause = describePreparationCause(error)
+        val cause = describePreparationCauseForLog(error)
         System.err.println("quiz10-web stage=coverage error=${describePreparationError(error)} cause=${cause}")
     }
 
-    private fun describePreparationCause(error: QuizPreparationError): String = when (error) {
-        is QuizPreparationError.CoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause)
-        is QuizPreparationError.CoverageRouteValidationFailed -> describeCoverageValidationError(error.cause)
-        is QuizPreparationError.StandardCoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause)
-        is QuizPreparationError.CoverageQuestionReviewFailed -> describeCoverageQuestionReviewError(error.cause)
+    private fun describePreparationCauseForLog(error: QuizPreparationError): String = when (error) {
+        is QuizPreparationError.CoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause, includeAiDetail = true)
+        is QuizPreparationError.CoverageRouteValidationFailed -> describeCoverageValidationError(error.cause, includeAiDetail = true)
+        is QuizPreparationError.StandardCoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause, includeAiDetail = true)
+        is QuizPreparationError.CoverageQuestionReviewFailed -> describeCoverageQuestionReviewError(error.cause, includeAiDetail = true)
         is QuizPreparationError.CoverageQuestionCompletionFailed -> describeCoverageQuestionCompletionError(error.cause)
         is QuizPreparationError.StandardPreparationNotConfigured -> "QuizPreparationError.StandardPreparationNotConfigured"
         is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
@@ -626,7 +626,7 @@ class Quiz10WebServer(
         }
         val cause = when (error) {
             is Quiz10FlowTransitionError.TurnGenerationFailed -> when (val turnCause = error.cause) {
-                is QuizTurnGenerationError.GenerationFailed -> describeAiError(turnCause.cause)
+                is QuizTurnGenerationError.GenerationFailed -> describeAiErrorForLog(turnCause.cause)
                 else -> describeTurnGenerationError(turnCause)
             }
         }
@@ -666,7 +666,7 @@ class Quiz10WebServer(
         }
 
         is QuizPreparationError.CoverageQuestionReviewFailed ->
-            "No se pudo validar por fila la cobertura: ${describeCoverageQuestionReviewError(error.cause)}"
+            "No se pudo validar por fila la cobertura: ${describeCoverageQuestionReviewError(error.cause, includeAiDetail = false)}"
 
         is QuizPreparationError.CoverageQuestionCompletionFailed ->
             "No se pudo completar la cobertura con reemplazos: ${describeCoverageQuestionCompletionError(error.cause)}"
@@ -700,20 +700,29 @@ class Quiz10WebServer(
         is Quiz10FlowTransitionError.TurnGenerationFailed -> "Quiz10FlowTransitionError.TurnGenerationFailed"
     }
 
-    private fun describeCoverageGenerationError(error: CoverageRouteGenerationError): String = when (error) {
+    private fun describeCoverageGenerationError(error: CoverageRouteGenerationError, includeAiDetail: Boolean): String = when (error) {
         is CoverageRouteGenerationError.BlankTopic -> "CoverageRouteGenerationError.BlankTopic"
-        is CoverageRouteGenerationError.GenerationFailed -> "CoverageRouteGenerationError.GenerationFailed"
+        is CoverageRouteGenerationError.GenerationFailed -> {
+            val ai = if (includeAiDetail) describeAiErrorForLog(error.cause) else describeAiError(error.cause)
+            "CoverageRouteGenerationError.GenerationFailed(cause=$ai)"
+        }
         is CoverageRouteGenerationError.InvalidGeneratedRoute -> "CoverageRouteGenerationError.InvalidGeneratedRoute"
     }
 
-    private fun describeCoverageValidationError(error: CoverageRouteValidationError): String = when (error) {
-        is CoverageRouteValidationError.GenerationFailed -> "CoverageRouteValidationError.GenerationFailed"
+    private fun describeCoverageValidationError(error: CoverageRouteValidationError, includeAiDetail: Boolean): String = when (error) {
+        is CoverageRouteValidationError.GenerationFailed -> {
+            val ai = if (includeAiDetail) describeAiErrorForLog(error.cause) else describeAiError(error.cause)
+            "CoverageRouteValidationError.GenerationFailed(cause=$ai)"
+        }
         CoverageRouteValidationError.InvalidStructuredResponse -> "CoverageRouteValidationError.InvalidStructuredResponse"
         is CoverageRouteValidationError.RouteRejected -> "CoverageRouteValidationError.RouteRejected"
     }
 
-    private fun describeCoverageQuestionReviewError(error: CoverageQuestionReviewError): String = when (error) {
-        is CoverageQuestionReviewError.GenerationFailed -> "CoverageQuestionReviewError.GenerationFailed(cause=${describeAiError(error.cause)})"
+    private fun describeCoverageQuestionReviewError(error: CoverageQuestionReviewError, includeAiDetail: Boolean): String = when (error) {
+        is CoverageQuestionReviewError.GenerationFailed -> {
+            val ai = if (includeAiDetail) describeAiErrorForLog(error.cause) else describeAiError(error.cause)
+            "CoverageQuestionReviewError.GenerationFailed(cause=$ai)"
+        }
         CoverageQuestionReviewError.InvalidStructuredResponse -> "CoverageQuestionReviewError.InvalidStructuredResponse"
     }
 
@@ -761,6 +770,18 @@ class Quiz10WebServer(
     private fun describeAiError(error: AiError): String = when (error) {
         AiError.InvalidSchemaJson -> "AiError.InvalidSchemaJson"
         AiError.TransportFailure -> "AiError.TransportFailure"
+        is AiError.TransportFailureDiagnosed -> "AiError.TransportFailure(${error.kind})"
+        is AiError.HttpFailure -> "AiError.HttpFailure(${error.status})"
+        AiError.InvalidResponseJson -> "AiError.InvalidResponseJson"
+        AiError.MissingOutputText -> "AiError.MissingOutputText"
+    }
+
+    private fun describeAiErrorForLog(error: AiError): String = when (error) {
+        AiError.InvalidSchemaJson -> "AiError.InvalidSchemaJson"
+        AiError.TransportFailure -> "AiError.TransportFailure"
+        is AiError.TransportFailureDiagnosed ->
+            "AiError.TransportFailure(kind=${error.kind}, detail=${error.detail})"
+
         is AiError.HttpFailure -> "AiError.HttpFailure(${error.status})"
         AiError.InvalidResponseJson -> "AiError.InvalidResponseJson"
         AiError.MissingOutputText -> "AiError.MissingOutputText"
