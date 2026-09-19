@@ -5,6 +5,7 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -29,18 +30,22 @@ class QuizPreparerTest {
     @Test
     fun prepareBuildsPreparedQuizFromSingleCoverageGenerationOnly() {
         var coverageCalls = 0
-        var turnCalls = 0
+        var validationCalls = 0
         val prepared = assertIs<Outcome.Success<PreparedQuiz>>(
             QuizPreparer(
                 generateCoverageRoute = {
                     coverageCalls += 1
                     Outcome.Success(route())
                 },
+                validateCoverageRoute = { _, _ ->
+                    validationCalls += 1
+                    Outcome.Success(Unit)
+                },
             ).prepare("IA"),
         ).value
 
         assertEquals(1, coverageCalls)
-        assertEquals(0, turnCalls)
+        assertEquals(1, validationCalls)
         assertEquals(10, prepared.route.size)
         assertEquals(route().items, prepared.route.items)
     }
@@ -51,6 +56,7 @@ class QuizPreparerTest {
         val prepared = assertIs<Outcome.Success<PreparedQuiz>>(
             QuizPreparer(
                 generateCoverageRoute = { Outcome.Success(sourceRoute) },
+                validateCoverageRoute = { _, _ -> Outcome.Success(Unit) },
             ).prepare("IA"),
         ).value
 
@@ -63,6 +69,7 @@ class QuizPreparerTest {
         val error = assertIs<Outcome.Failure<QuizPreparationError>>(
             QuizPreparer(
                 generateCoverageRoute = { Outcome.Failure(CoverageRouteGenerationError.BlankTopic) },
+                validateCoverageRoute = { _, _ -> Outcome.Success(Unit) },
             ).prepare("IA"),
         ).error
 
@@ -78,9 +85,64 @@ class QuizPreparerTest {
         val error = assertIs<Outcome.Failure<QuizPreparationError>>(
             QuizPreparer(
                 generateCoverageRoute = { Outcome.Success(shortRoute) },
+                validateCoverageRoute = { _, _ -> Outcome.Success(Unit) },
             ).prepare("IA"),
         ).error
 
         assertEquals(QuizPreparationError.InvalidCoverageRouteSize(9), error)
+    }
+
+    @Test
+    fun validationRunsAfterSuccessfulGenerationWithSameTopicAndRoute() {
+        val generatedRoute = route()
+        val events = mutableListOf<String>()
+        val result = QuizPreparer(
+            generateCoverageRoute = { topic ->
+                events += "generate:$topic"
+                Outcome.Success(generatedRoute)
+            },
+            validateCoverageRoute = { topic, receivedRoute ->
+                events += "validate:$topic:${receivedRoute.size}"
+                assertEquals(generatedRoute.items, receivedRoute.items)
+                Outcome.Success(Unit)
+            },
+        ).prepare("Astronomía")
+
+        val prepared = assertIs<Outcome.Success<PreparedQuiz>>(result).value
+        assertEquals(listOf("generate:Astronomía", "validate:Astronomía:10"), events)
+        assertEquals(generatedRoute.items, prepared.route.items)
+    }
+
+    @Test
+    fun validationRejectionStopsPreparation() {
+        val error = assertIs<Outcome.Failure<QuizPreparationError>>(
+            QuizPreparer(
+                generateCoverageRoute = { Outcome.Success(route()) },
+                validateCoverageRoute = {
+                    _, _ -> Outcome.Failure(CoverageRouteValidationError.RouteRejected(listOf("Grupo inconsistente")))
+                },
+            ).prepare("IA"),
+        ).error
+
+        assertEquals(
+            QuizPreparationError.CoverageRouteValidationFailed(
+                CoverageRouteValidationError.RouteRejected(listOf("Grupo inconsistente")),
+            ),
+            error,
+        )
+    }
+
+    @Test
+    fun generationFailurePreventsValidationCall() {
+        var validationCalls = 0
+        QuizPreparer(
+            generateCoverageRoute = { Outcome.Failure(CoverageRouteGenerationError.InvalidGeneratedRoute) },
+            validateCoverageRoute = { _, _ ->
+                validationCalls += 1
+                Outcome.Success(Unit)
+            },
+        ).prepare("IA")
+
+        assertEquals(0, validationCalls)
     }
 }

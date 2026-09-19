@@ -9,6 +9,7 @@ import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteGenerator
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteValidator
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionPresenter
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparer
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.LunaQuizTurnGenerator
@@ -53,7 +54,8 @@ internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
     val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
-    return QuizPreparer(coverageGenerator::generate)
+    val coverageValidator = TerraCoverageRouteValidator(generateStructured)
+    return QuizPreparer(coverageGenerator::generate, coverageValidator::validate)
 }
 
 internal fun createTurnGenerator(

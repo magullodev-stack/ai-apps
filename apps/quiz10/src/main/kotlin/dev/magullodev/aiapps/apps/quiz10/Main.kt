@@ -9,6 +9,8 @@ import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteGenerator
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteValidator
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparer
@@ -99,7 +101,8 @@ internal fun createQuizPreparer(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
     val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
-    return QuizPreparer(coverageGenerator::generate)
+    val coverageValidator = TerraCoverageRouteValidator(generateStructured)
+    return QuizPreparer(coverageGenerator::generate, coverageValidator::validate)
 }
 
 internal fun createTurnGenerator(
@@ -120,6 +123,12 @@ private fun playQuiz(
         is Outcome.Success -> result.value
         is Outcome.Failure -> when (val error = result.error) {
             is QuizPreparationError.CoverageRouteGenerationFailed -> fail("COVERAGE_ERROR: ${error.cause}")
+            is QuizPreparationError.CoverageRouteValidationFailed -> when (val cause = error.cause) {
+                is CoverageRouteValidationError.RouteRejected -> {
+                    fail("COVERAGE_ERROR: route rejected: ${cause.issues.joinToString("; ")}")
+                }
+                else -> fail("COVERAGE_ERROR: coverage validation failed: $cause")
+            }
             is QuizPreparationError.InvalidCoverageRouteSize -> fail("COVERAGE_ERROR: invalid route size ${error.size}")
         }
     }

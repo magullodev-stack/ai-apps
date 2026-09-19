@@ -6,6 +6,7 @@ import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionError
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionEvent
@@ -117,7 +118,11 @@ class Quiz10WebServer(
             is Outcome.Success -> result.value
             is Outcome.Failure -> {
                 logPreparationFailure(result.error)
-                respond(exchange, 500, renderer.renderPreparationError(preparationErrorMessage(result.error)))
+                respond(
+                    exchange,
+                    preparationErrorStatus(result.error),
+                    renderer.renderPreparationError(preparationErrorMessage(result.error)),
+                )
                 return
             }
         }
@@ -292,7 +297,7 @@ class Quiz10WebServer(
                             logPreparationFailure(result.error)
                             respond(
                                 exchange,
-                                500,
+                                preparationErrorStatus(result.error),
                                 renderer.renderPreparationError(
                                     message = preparationErrorMessage(result.error),
                                     backPath = "/games/$sessionId/panel",
@@ -388,7 +393,7 @@ class Quiz10WebServer(
                     logPreparationFailure(result.error)
                     respond(
                         exchange,
-                        500,
+                        preparationErrorStatus(result.error),
                         renderer.renderPreparationError(
                             message = preparationErrorMessage(result.error),
                             backPath = "/games/$sessionId/panel",
@@ -506,9 +511,18 @@ class Quiz10WebServer(
     private fun logPreparationFailure(error: QuizPreparationError) {
         val cause = when (error) {
             is QuizPreparationError.CoverageRouteGenerationFailed -> describeCoverageGenerationError(error.cause)
+            is QuizPreparationError.CoverageRouteValidationFailed -> describeCoverageValidationError(error.cause)
             is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
         }
         System.err.println("quiz10-web stage=coverage error=${describePreparationError(error)} cause=${cause}")
+    }
+
+    private fun preparationErrorStatus(error: QuizPreparationError): Int = when (error) {
+        is QuizPreparationError.CoverageRouteValidationFailed -> when (error.cause) {
+            is CoverageRouteValidationError.RouteRejected -> 422
+            else -> 500
+        }
+        else -> 500
     }
 
     private fun logTurnFailure(error: Quiz10FlowTransitionError) {
@@ -534,6 +548,18 @@ class Quiz10WebServer(
             }
             "No se pudo generar la ruta de cobertura: CoverageRouteGenerationFailed($causeName)"
         }
+        is QuizPreparationError.CoverageRouteValidationFailed -> when (val cause = error.cause) {
+            is CoverageRouteValidationError.RouteRejected -> {
+                val details = cause.issues.joinToString("; ")
+                "La ruta de cobertura fue rechazada por validación semántica: $details"
+            }
+            is CoverageRouteValidationError.GenerationFailed -> {
+                "No se pudo validar la ruta de cobertura: CoverageRouteValidationFailed(${describeAiError(cause.cause)})"
+            }
+            CoverageRouteValidationError.InvalidStructuredResponse -> {
+                "No se pudo validar la ruta de cobertura: CoverageRouteValidationFailed(InvalidStructuredResponse)"
+            }
+        }
         is QuizPreparationError.InvalidCoverageRouteSize -> "No se pudo generar la ruta de cobertura: InvalidCoverageRouteSize(size=${error.size})"
     }
 
@@ -548,6 +574,7 @@ class Quiz10WebServer(
 
     private fun describePreparationError(error: QuizPreparationError): String = when (error) {
         is QuizPreparationError.CoverageRouteGenerationFailed -> "QuizPreparationError.CoverageRouteGenerationFailed"
+        is QuizPreparationError.CoverageRouteValidationFailed -> "QuizPreparationError.CoverageRouteValidationFailed"
         is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
     }
 
@@ -559,6 +586,12 @@ class Quiz10WebServer(
         is CoverageRouteGenerationError.BlankTopic -> "CoverageRouteGenerationError.BlankTopic"
         is CoverageRouteGenerationError.GenerationFailed -> "CoverageRouteGenerationError.GenerationFailed"
         is CoverageRouteGenerationError.InvalidGeneratedRoute -> "CoverageRouteGenerationError.InvalidGeneratedRoute"
+    }
+
+    private fun describeCoverageValidationError(error: CoverageRouteValidationError): String = when (error) {
+        is CoverageRouteValidationError.GenerationFailed -> "CoverageRouteValidationError.GenerationFailed"
+        CoverageRouteValidationError.InvalidStructuredResponse -> "CoverageRouteValidationError.InvalidStructuredResponse"
+        is CoverageRouteValidationError.RouteRejected -> "CoverageRouteValidationError.RouteRejected"
     }
 
     private fun describeTurnGenerationError(error: QuizTurnGenerationError): String = when (error) {

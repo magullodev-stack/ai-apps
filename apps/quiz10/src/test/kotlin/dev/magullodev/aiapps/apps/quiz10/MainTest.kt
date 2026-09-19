@@ -26,10 +26,18 @@ class MainTest {
             ]}
         """.trimIndent()
 
+    private fun validationJson(approved: Boolean = true): String =
+        if (approved) {
+            "{\"approved\":true,\"issues\":[]}"
+        } else {
+            "{\"approved\":false,\"issues\":[\"Issue\"]}"
+        }
+
     @Test
-    fun createQuizPreparerUsesTerraCoverageOnly() {
+    fun createQuizPreparerUsesTerraForCoverageGenerationAndValidation() {
         val requestedProfiles = mutableListOf<AiProfile>()
         var coverageCalls = 0
+        var validationCalls = 0
 
         val preparer = createQuizPreparer { request ->
             requestedProfiles += request.profile
@@ -38,6 +46,10 @@ class MainTest {
                     coverageCalls += 1
                     Outcome.Success(StructuredGeneration(coverageJson(), null))
                 }
+                "quiz10_coverage_route_validation" -> {
+                    validationCalls += 1
+                    Outcome.Success(StructuredGeneration(validationJson(), null))
+                }
                 else -> Outcome.Failure(AiError.TransportFailure)
             }
         }
@@ -45,7 +57,8 @@ class MainTest {
         preparer.prepare("Historia")
 
         assertEquals(1, coverageCalls)
-        assertEquals(listOf(AiProfile.TERRA), requestedProfiles)
+        assertEquals(1, validationCalls)
+        assertEquals(listOf(AiProfile.TERRA, AiProfile.TERRA), requestedProfiles)
     }
 
     @Test

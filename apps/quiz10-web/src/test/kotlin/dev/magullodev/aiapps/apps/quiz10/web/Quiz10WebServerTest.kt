@@ -6,6 +6,7 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionError
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionMessage
@@ -572,6 +573,27 @@ class Quiz10WebServerTest {
             assertContains(body, "ruta de cobertura")
             assertContains(body, "InvalidCoverageRouteSize")
             assertFalse(body.contains("AiError.TransportFailure"))
+            assertFalse(body.contains("Authorization"))
+        }
+    }
+
+    @Test
+    fun rejectedCoverageRouteShowsReadableMessageAndBlocksGameCreation() {
+        withServer(
+            prepareFailure(
+                QuizPreparationError.CoverageRouteValidationFailed(
+                    CoverageRouteValidationError.RouteRejected(
+                        listOf("La ruta repite referentes sin justificación"),
+                    ),
+                ),
+            ),
+        ) { baseUrl, _, _, _ ->
+            val response = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+
+            assertEquals(422, response.statusCode())
+            val body = response.body()
+            assertContains(body, "rechazada por validación semántica")
+            assertContains(body, "repite referentes")
             assertFalse(body.contains("Authorization"))
         }
     }
