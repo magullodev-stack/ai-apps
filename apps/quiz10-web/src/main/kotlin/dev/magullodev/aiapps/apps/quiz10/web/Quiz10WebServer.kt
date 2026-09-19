@@ -290,20 +290,34 @@ class Quiz10WebServer(
                         is Outcome.Success -> result.value
                         is Outcome.Failure -> {
                             logPreparationFailure(result.error)
-                            respond(exchange, 500, renderer.renderPreparationError(preparationErrorMessage(result.error)))
+                            respond(
+                                exchange,
+                                500,
+                                renderer.renderPreparationError(
+                                    message = preparationErrorMessage(result.error),
+                                    backPath = "/games/$sessionId/panel",
+                                ),
+                            )
                             return
                         }
                     }
                     val flow = Quiz10Flow(prepared, generateTurn)
-                    session.activeFlow = flow
                     val question = when (val result = flow.start()) {
                         is Outcome.Success -> result.value
                         is Outcome.Failure -> {
                             logTurnFailure(result.error)
-                            respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
+                            respond(
+                                exchange,
+                                500,
+                                renderer.renderPreparationError(
+                                    message = turnErrorMessage(result.error),
+                                    backPath = "/games/$sessionId/panel",
+                                ),
+                            )
                             return
                         }
                     }
+                    session.activeFlow = flow
                     val nextRevision = updateInteractionSnapshot(
                         session = session,
                         context = Quiz10InteractionContext(
@@ -372,22 +386,36 @@ class Quiz10WebServer(
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
                     logPreparationFailure(result.error)
-                    respond(exchange, 500, renderer.renderPreparationError(preparationErrorMessage(result.error)))
+                    respond(
+                        exchange,
+                        500,
+                        renderer.renderPreparationError(
+                            message = preparationErrorMessage(result.error),
+                            backPath = "/games/$sessionId/panel",
+                        ),
+                    )
                     return
                 }
             }
 
-            session.currentTopic = topic
             val flow = Quiz10Flow(prepared, generateTurn)
-            session.activeFlow = flow
             val question = when (val result = flow.start()) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
                     logTurnFailure(result.error)
-                    respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
+                    respond(
+                        exchange,
+                        500,
+                        renderer.renderPreparationError(
+                            message = turnErrorMessage(result.error),
+                            backPath = "/games/$sessionId/panel",
+                        ),
+                    )
                     return
                 }
             }
+            session.currentTopic = topic
+            session.activeFlow = flow
             val nextRevision = updateInteractionSnapshot(
                 session = session,
                 context = Quiz10InteractionContext(

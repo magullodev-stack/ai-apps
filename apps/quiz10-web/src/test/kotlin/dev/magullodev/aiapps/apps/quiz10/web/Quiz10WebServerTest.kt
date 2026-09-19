@@ -319,6 +319,83 @@ class Quiz10WebServerTest {
     }
 
     @Test
+    fun replaySameTopicPreparationFailurePreservesFinishedGameAndAllowsRetry() {
+        val prepareCalls = AtomicInteger(0)
+        val prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { topic ->
+            when (prepareCalls.incrementAndGet()) {
+                2 -> Outcome.Failure(QuizPreparationError.InvalidCoverageRouteSize(8))
+                else -> Outcome.Success(prepared(topic))
+            }
+        }
+
+        withServer(prepare = prepare) { baseUrl, _, _, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            var finished = ""
+            PreparedQuiz.correctOptionSequence.forEach { option ->
+                finished = postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())).body()
+            }
+
+            val finishedRevision = extractInteractionRevision(finished)
+            val failedReplay = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "1"))
+            assertEquals(500, failedReplay.statusCode())
+            assertContains(failedReplay.body(), "InvalidCoverageRouteSize")
+            assertContains(failedReplay.body(), "/games/$id/panel")
+
+            val panel = get("$baseUrl/games/$id/panel")
+            assertEquals(200, panel.statusCode())
+            assertContains(panel.body(), "Puntuación final 10/10")
+            assertContains(panel.body(), "Aciertos acumulados: 10")
+            assertContains(panel.body(), "1. 🔂 Otro Quiz10 de Historia")
+            assertEquals(finishedRevision, extractInteractionRevision(panel.body()))
+
+            val retry = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "1"))
+            assertEquals(200, retry.statusCode())
+            assertContains(retry.body(), "Pregunta 1/10")
+            assertContains(retry.body(), "Tema:</strong> Historia")
+        }
+    }
+
+    @Test
+    fun replaySameTopicTurnFailurePreservesFinishedGameAndAllowsRetry() {
+        val turnCalls = AtomicInteger(0)
+        val successfulTurn = turnSuccess()
+        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { item, correctIndex ->
+            if (turnCalls.incrementAndGet() == 11) {
+                Outcome.Failure(QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure))
+            } else {
+                successfulTurn(item, correctIndex)
+            }
+        }
+
+        withServer(prepare = prepareSuccess(), turn = turn) { baseUrl, _, _, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            var finished = ""
+            PreparedQuiz.correctOptionSequence.forEach { option ->
+                finished = postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())).body()
+            }
+
+            val finishedRevision = extractInteractionRevision(finished)
+            val failedReplay = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "1"))
+            assertEquals(500, failedReplay.statusCode())
+            assertContains(failedReplay.body(), "pregunta 1")
+            assertContains(failedReplay.body(), "/games/$id/panel")
+
+            val panel = get("$baseUrl/games/$id/panel")
+            assertEquals(200, panel.statusCode())
+            assertContains(panel.body(), "Aciertos acumulados: 10")
+            assertContains(panel.body(), "1. 🔂 Otro Quiz10 de Historia")
+            assertEquals(finishedRevision, extractInteractionRevision(panel.body()))
+
+            val retry = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "1"))
+            assertEquals(200, retry.statusCode())
+            assertContains(retry.body(), "Pregunta 1/10")
+            assertContains(retry.body(), "Tema:</strong> Historia")
+        }
+    }
+
+    @Test
     fun chooseAnotherTopicKeepsProgress() {
         withServer(prepareSuccess()) { baseUrl, _, _, _ ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
@@ -338,6 +415,93 @@ class Quiz10WebServerTest {
 
             assertContains(final, "Aciertos acumulados: 20")
             assertContains(final, "1. 🔂 Otro Quiz10 de Ciencia")
+        }
+    }
+
+    @Test
+    fun chooseAnotherTopicPreparationFailurePreservesFinishedGameAndAllowsRetry() {
+        val prepareCalls = AtomicInteger(0)
+        val prepare: (String) -> Outcome<PreparedQuiz, QuizPreparationError> = { topic ->
+            when (prepareCalls.incrementAndGet()) {
+                2 -> Outcome.Failure(QuizPreparationError.CoverageRouteGenerationFailed(CoverageRouteGenerationError.GenerationFailed(AiError.TransportFailure)))
+                else -> Outcome.Success(prepared(topic))
+            }
+        }
+
+        withServer(prepare = prepare) { baseUrl, _, _, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            var finished = ""
+            PreparedQuiz.correctOptionSequence.forEach { option ->
+                finished = postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())).body()
+            }
+
+            val finishedRevision = extractInteractionRevision(finished)
+            val choose = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
+            assertEquals(200, choose.statusCode())
+            assertContains(choose.body(), "Elegir otro tema")
+
+            val failedChange = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            assertEquals(500, failedChange.statusCode())
+            assertContains(failedChange.body(), "CoverageRouteGenerationFailed")
+            assertContains(failedChange.body(), "/games/$id/panel")
+
+            val panel = get("$baseUrl/games/$id/panel")
+            assertEquals(200, panel.statusCode())
+            assertContains(panel.body(), "Aciertos acumulados: 10")
+            assertContains(panel.body(), "1. 🔂 Otro Quiz10 de Historia")
+            assertEquals(finishedRevision, extractInteractionRevision(panel.body()))
+
+            val chooseAgain = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
+            assertEquals(200, chooseAgain.statusCode())
+            val changed = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            assertEquals(200, changed.statusCode())
+            assertContains(changed.body(), "Pregunta 1/10")
+            assertContains(changed.body(), "Tema:</strong> Ciencia")
+        }
+    }
+
+    @Test
+    fun chooseAnotherTopicTurnFailurePreservesFinishedGameAndAllowsRetry() {
+        val turnCalls = AtomicInteger(0)
+        val successfulTurn = turnSuccess()
+        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { item, correctIndex ->
+            if (turnCalls.incrementAndGet() == 11) {
+                Outcome.Failure(QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure))
+            } else {
+                successfulTurn(item, correctIndex)
+            }
+        }
+
+        withServer(prepare = prepareSuccess(), turn = turn) { baseUrl, _, _, _ ->
+            val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "topic" to "Historia"))
+            val id = extractSessionId(start.body())
+            var finished = ""
+            PreparedQuiz.correctOptionSequence.forEach { option ->
+                finished = postForm("$baseUrl/games/$id/answer", mapOf("option" to option.toString())).body()
+            }
+
+            val finishedRevision = extractInteractionRevision(finished)
+            val choose = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
+            assertEquals(200, choose.statusCode())
+
+            val failedChange = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            assertEquals(500, failedChange.statusCode())
+            assertContains(failedChange.body(), "pregunta 1")
+            assertContains(failedChange.body(), "/games/$id/panel")
+
+            val panel = get("$baseUrl/games/$id/panel")
+            assertEquals(200, panel.statusCode())
+            assertContains(panel.body(), "Aciertos acumulados: 10")
+            assertContains(panel.body(), "1. 🔂 Otro Quiz10 de Historia")
+            assertEquals(finishedRevision, extractInteractionRevision(panel.body()))
+
+            val chooseAgain = postForm("$baseUrl/games/$id/navigation", mapOf("selection" to "3"))
+            assertEquals(200, chooseAgain.statusCode())
+            val changed = postForm("$baseUrl/games/$id/topic", mapOf("topic" to "Ciencia"))
+            assertEquals(200, changed.statusCode())
+            assertContains(changed.body(), "Pregunta 1/10")
+            assertContains(changed.body(), "Tema:</strong> Ciencia")
         }
     }
 

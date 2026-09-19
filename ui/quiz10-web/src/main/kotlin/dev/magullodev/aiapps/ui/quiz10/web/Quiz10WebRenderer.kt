@@ -162,10 +162,10 @@ class Quiz10WebRenderer {
                 </script>
         """.trimIndent()
 
-    fun renderPreparationError(message: String = "No se pudo preparar Quiz10"): String = page("Quiz10 - Error") {
+    fun renderPreparationError(message: String = "No se pudo preparar Quiz10", backPath: String = "/"): String = page("Quiz10 - Error") {
         appendLine("<h1>${escapeHtml(message)}</h1>")
         appendLine("<p>Inténtalo de nuevo con otro tema.</p>")
-        appendLine("<a href=\"/\">Volver al inicio</a>")
+        appendLine("<a href=\"${escapeHtml(backPath)}\">Volver</a>")
     }
 
     private fun page(title: String, body: StringBuilder.() -> Unit): String {
