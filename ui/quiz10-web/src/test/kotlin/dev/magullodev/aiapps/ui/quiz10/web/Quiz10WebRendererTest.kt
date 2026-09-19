@@ -11,6 +11,7 @@ import dev.magullodev.aiapps.systems.games.quiz10.result.QuizAnswerRecord
 import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10FlowState
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertFalse
 
 class Quiz10WebRendererTest {
     private val renderer = Quiz10WebRenderer()
@@ -37,15 +38,14 @@ class Quiz10WebRendererTest {
             correctAnswers = 0,
         )
 
-        val html = renderer.renderQuestion("session-1", "Ada", "Tema", state, interactionRevision = 1)
+        val html = renderer.renderQuestion("session-1", "Ada", "Tema", state)
 
         assertContains(html, "value=\"0\"")
         assertContains(html, "value=\"1\"")
         assertContains(html, "value=\"2\"")
         assertContains(html, "value=\"3\"")
-        assertContains(html, "luna-message")
-        assertContains(html, "textContent")
-        assertContains(html, "/games/session-1/interaction?revision=1")
+        assertFalse(html.contains("Luna"))
+        assertFalse(html.contains("Cargando comentario"))
     }
 
     @Test
@@ -65,7 +65,6 @@ class Quiz10WebRendererTest {
             playerName = "Ada",
             topic = "Tema",
             state = state,
-            interactionRevision = 2,
             correction = Quiz10WebRenderer.Correction(isCorrect = false, correctAnswer = "B", selectedFeedback = "Porque A contradice el dato."),
         )
 
@@ -84,7 +83,7 @@ class Quiz10WebRendererTest {
         val finished = finishedState(correctAnswers = 10, failedIndices = emptyList())
         val menu = Quiz10NavigationMenu.forTopic("Historia")
 
-        val html = renderer.renderFinished("session-1", progress, finished, menu, interactionRevision = 11)
+        val html = renderer.renderFinished("session-1", progress, finished, menu)
 
         assertContains(html, "Puntuación final 10/10")
         assertContains(html, "Aciertos acumulados: 10")
@@ -93,7 +92,7 @@ class Quiz10WebRendererTest {
         assertContains(html, "Estrellas: ⭐ 1")
         assertContains(html, "Panel de navegación")
         assertContains(html, "1. 🔂 Otro Quiz10 de Historia")
-        assertContains(html, "/games/session-1/interaction?revision=11")
+        assertFalse(html.contains("Luna"))
     }
 
     @Test
@@ -128,7 +127,6 @@ class Quiz10WebRendererTest {
             dangerousName,
             dangerousTopic,
             state,
-            interactionRevision = 1,
             correction = Quiz10WebRenderer.Correction(
                 isCorrect = false,
                 correctAnswer = "<Correct>",

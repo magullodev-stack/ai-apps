@@ -15,10 +15,6 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
-import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
-import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionError
-import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionEvent
-import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionMessage
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompletionError
@@ -41,9 +37,6 @@ import java.util.concurrent.Executors
 class Quiz10WebServer(
     private val prepareQuiz: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
     private val generateTurn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
-    private val presentInteraction: (Quiz10InteractionContext) -> Outcome<Quiz10InteractionMessage, Quiz10InteractionError> = {
-        Outcome.Failure(Quiz10InteractionError.InvalidGeneratedMessage)
-    },
     private val usageMonitor: AiUsageMonitor = AiUsageMonitor.NOOP,
     private val renderer: Quiz10WebRenderer = Quiz10WebRenderer(),
     private val planner: StandardCoveragePlanner = StandardCoveragePlanner(),
@@ -55,13 +48,7 @@ class Quiz10WebServer(
         data class Area(val area: Quiz10Area) : SelectionMode
     }
 
-    private data class InteractionSnapshot(
-        val revision: Long,
-        val context: Quiz10InteractionContext,
-    )
-
     private data class WebSession(
-        val sessionId: String,
         val lock: Any = Any(),
         var playerProgress: PlayerProgress,
         var currentWorkUnitId: String,
@@ -69,7 +56,6 @@ class Quiz10WebServer(
         var currentTopic: String,
         var activeFlow: Quiz10Flow,
         var lastFinished: Quiz10FlowState.Finished? = null,
-        var interactionSnapshot: InteractionSnapshot,
     )
 
     private val sessions = ConcurrentHashMap<String, WebSession>()
@@ -111,7 +97,6 @@ class Quiz10WebServer(
             method == "POST" && path.matches(Regex("^/games/[^/]+/navigation$")) -> handleNavigation(exchange)
             method == "POST" && path.matches(Regex("^/games/[^/]+/topic$")) -> handleTopicChange(exchange)
             method == "GET" && path.matches(Regex("^/games/[^/]+/panel$")) -> handlePanel(exchange)
-            method == "GET" && path.matches(Regex("^/games/[^/]+/interaction$")) -> handleInteraction(exchange)
             else -> respond(exchange, 404, renderer.renderNotFound())
         }
     }
@@ -186,32 +171,17 @@ class Quiz10WebServer(
         }
 
         sessions[sessionId] = WebSession(
-            sessionId = sessionId,
             playerProgress = progress,
             currentWorkUnitId = workUnitId,
             currentSelection = selection,
             currentTopic = topicForSelection(selection),
             activeFlow = flow,
-            interactionSnapshot = InteractionSnapshot(
-                revision = 1,
-                context = Quiz10InteractionContext(
-                    event = Quiz10InteractionEvent.WELCOME,
-                    playerName = progress.playerName,
-                    topic = topicForSelection(selection),
-                    answeredQuestions = 0,
-                    correctAnswers = 0,
-                    totalQuestions = 10,
-                    stars = progress.stars,
-                    lastAnswerCorrect = null,
-                    starEarned = false,
-                ),
-            ),
         )
 
         respond(
             exchange,
             200,
-            renderer.renderQuestion(sessionId, progress.playerName, topicForSelection(selection), question, interactionRevision = 1),
+            renderer.renderQuestion(sessionId, progress.playerName, topicForSelection(selection), question),
         )
     }
 
@@ -250,20 +220,6 @@ class Quiz10WebServer(
             }
             when (advanced) {
                 is Quiz10FlowState.Question -> {
-                    val nextRevision = updateInteractionSnapshot(
-                        session = session,
-                        context = Quiz10InteractionContext(
-                            event = Quiz10InteractionEvent.AFTER_ANSWER,
-                            playerName = session.playerProgress.playerName,
-                            topic = session.currentTopic,
-                            answeredQuestions = answered.answeredQuestions,
-                            correctAnswers = answered.correctAnswers,
-                            totalQuestions = answered.totalQuestions,
-                            stars = session.playerProgress.stars,
-                            lastAnswerCorrect = answered.isCorrect,
-                            starEarned = false,
-                        ),
-                    )
                     respond(
                         exchange,
                         200,
@@ -272,7 +228,6 @@ class Quiz10WebServer(
                             playerName = session.playerProgress.playerName,
                             topic = session.currentTopic,
                             state = advanced,
-                            interactionRevision = nextRevision,
                             correction = Quiz10WebRenderer.Correction(
                                 isCorrect = answered.isCorrect,
                                 correctAnswer = answered.question.options[answered.question.correctOptionIndex],
@@ -284,25 +239,11 @@ class Quiz10WebServer(
                 is Quiz10FlowState.Finished -> {
                     session.playerProgress = session.playerProgress.recordQuiz(advanced.correctAnswers)
                     session.lastFinished = advanced
-                    val nextRevision = updateInteractionSnapshot(
-                        session = session,
-                        context = Quiz10InteractionContext(
-                            event = Quiz10InteractionEvent.FINISH,
-                            playerName = session.playerProgress.playerName,
-                            topic = session.currentTopic,
-                            answeredQuestions = 10,
-                            correctAnswers = advanced.correctAnswers,
-                            totalQuestions = advanced.totalQuestions,
-                            stars = session.playerProgress.stars,
-                            lastAnswerCorrect = answered.isCorrect,
-                            starEarned = advanced.correctAnswers == 10,
-                        ),
-                    )
                     val menu = Quiz10NavigationMenu.forTopic(session.currentTopic)
                     respond(
                         exchange,
                         200,
-                        renderer.renderFinished(sessionId, session.playerProgress, advanced, menu, interactionRevision = nextRevision),
+                        renderer.renderFinished(sessionId, session.playerProgress, advanced, menu),
                     )
                 }
                 else -> {
@@ -397,20 +338,6 @@ class Quiz10WebServer(
                     }
                     session.currentWorkUnitId = nextWorkUnitId
                     session.activeFlow = flow
-                    val nextRevision = updateInteractionSnapshot(
-                        session = session,
-                        context = Quiz10InteractionContext(
-                            event = Quiz10InteractionEvent.WELCOME,
-                            playerName = session.playerProgress.playerName,
-                            topic = session.currentTopic,
-                            answeredQuestions = 0,
-                            correctAnswers = 0,
-                            totalQuestions = 10,
-                            stars = session.playerProgress.stars,
-                            lastAnswerCorrect = null,
-                            starEarned = false,
-                        ),
-                    )
                     respond(
                         exchange,
                         200,
@@ -419,7 +346,6 @@ class Quiz10WebServer(
                             session.playerProgress.playerName,
                             session.currentTopic,
                             question,
-                            interactionRevision = nextRevision,
                         ),
                     )
                 }
@@ -489,20 +415,6 @@ class Quiz10WebServer(
                     session.currentSelection = selection
                     session.currentTopic = topicForSelection(selection)
                     session.activeFlow = flow
-                    val nextRevision = updateInteractionSnapshot(
-                        session = session,
-                        context = Quiz10InteractionContext(
-                            event = Quiz10InteractionEvent.WELCOME,
-                            playerName = session.playerProgress.playerName,
-                            topic = session.currentTopic,
-                            answeredQuestions = 0,
-                            correctAnswers = 0,
-                            totalQuestions = 10,
-                            stars = session.playerProgress.stars,
-                            lastAnswerCorrect = null,
-                            starEarned = false,
-                        ),
-                    )
                     respond(
                         exchange,
                         200,
@@ -511,7 +423,6 @@ class Quiz10WebServer(
                             session.playerProgress.playerName,
                             session.currentTopic,
                             question,
-                            interactionRevision = nextRevision,
                         ),
                     )
                 }
@@ -606,20 +517,6 @@ class Quiz10WebServer(
             session.currentSelection = selection
             session.currentTopic = topicForSelection(selection)
             session.activeFlow = flow
-            val nextRevision = updateInteractionSnapshot(
-                session = session,
-                context = Quiz10InteractionContext(
-                    event = Quiz10InteractionEvent.WELCOME,
-                    playerName = session.playerProgress.playerName,
-                    topic = session.currentTopic,
-                    answeredQuestions = 0,
-                    correctAnswers = 0,
-                    totalQuestions = 10,
-                    stars = session.playerProgress.stars,
-                    lastAnswerCorrect = null,
-                    starEarned = false,
-                ),
-            )
             respond(
                 exchange,
                 200,
@@ -628,7 +525,6 @@ class Quiz10WebServer(
                     session.playerProgress.playerName,
                     session.currentTopic,
                     question,
-                    interactionRevision = nextRevision,
                 ),
             )
         }
@@ -657,39 +553,8 @@ class Quiz10WebServer(
                     session.playerProgress,
                     finished,
                     menu,
-                    interactionRevision = session.interactionSnapshot.revision,
                 ),
             )
-        }
-    }
-
-    private fun handleInteraction(exchange: HttpExchange) {
-        val sessionId = exchange.requestURI.path.split("/")[2]
-        val session = sessions[sessionId]
-        if (session == null) {
-            respondText(exchange, 404, "Sesión no encontrada")
-            return
-        }
-
-        val requestedRevision = parseRevision(exchange.requestURI.query)
-        if (requestedRevision == null) {
-            respondText(exchange, 400, "revision inválida")
-            return
-        }
-
-        val snapshot = synchronized(session.lock) {
-            val current = session.interactionSnapshot
-            if (current.revision != requestedRevision) null else current
-        }
-
-        if (snapshot == null) {
-            respondText(exchange, 409, "revision obsoleta")
-            return
-        }
-
-        when (val result = withAiUsageContext(session.currentWorkUnitId) { presentInteraction(snapshot.context) }) {
-            is Outcome.Success -> respondText(exchange, 200, result.value.message)
-            is Outcome.Failure -> respondText(exchange, 503, "")
         }
     }
 
@@ -909,37 +774,9 @@ class Quiz10WebServer(
 
     private fun urlDecode(text: String): String = java.net.URLDecoder.decode(text, StandardCharsets.UTF_8)
 
-    private fun parseRevision(query: String?): Long? {
-        if (query.isNullOrBlank()) return null
-        val entries = query.split("&")
-            .mapNotNull {
-                val parts = it.split("=", limit = 2)
-                val key = parts.getOrNull(0) ?: return@mapNotNull null
-                val value = parts.getOrNull(1).orEmpty()
-                urlDecode(key) to urlDecode(value)
-            }
-            .toMap()
-
-        val value = entries["revision"] ?: return null
-        return value.toLongOrNull()?.takeIf { it > 0 }
-    }
-
-    private fun updateInteractionSnapshot(session: WebSession, context: Quiz10InteractionContext): Long {
-        val nextRevision = session.interactionSnapshot.revision + 1
-        session.interactionSnapshot = InteractionSnapshot(nextRevision, context)
-        return nextRevision
-    }
-
     private fun respond(exchange: HttpExchange, status: Int, html: String) {
         val bytes = html.toByteArray(StandardCharsets.UTF_8)
         exchange.responseHeaders.add("Content-Type", "text/html; charset=utf-8")
-        exchange.sendResponseHeaders(status, bytes.size.toLong())
-        exchange.responseBody.use { it.write(bytes) }
-    }
-
-    private fun respondText(exchange: HttpExchange, status: Int, text: String) {
-        val bytes = text.toByteArray(StandardCharsets.UTF_8)
-        exchange.responseHeaders.add("Content-Type", "text/plain; charset=utf-8")
         exchange.sendResponseHeaders(status, bytes.size.toLong())
         exchange.responseBody.use { it.write(bytes) }
     }

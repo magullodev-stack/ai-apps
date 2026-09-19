@@ -41,13 +41,11 @@ class Quiz10WebRenderer {
         playerName: String,
         topic: String,
         state: Quiz10FlowState.Question,
-        interactionRevision: Long,
         correction: Correction? = null,
     ): String = page("Quiz10 - Pregunta ${state.questionNumber}") {
         appendLine("<h1>Quiz10</h1>")
         appendLine("<p><strong>Nombre:</strong> ${escapeHtml(playerName)}</p>")
         appendLine("<p><strong>Tema:</strong> ${escapeHtml(topic)}</p>")
-        appendLine(renderInteractionPanel(sessionId, interactionRevision))
         if (correction != null) {
             val prefix = if (correction.isCorrect) "✅ CORRECTO" else "❌ INCORRECTO"
             appendLine("<div class=\"correction\"><p>$prefix</p><p>Respuesta correcta: ${escapeHtml(correction.correctAnswer)}</p><p>${escapeHtml(correction.selectedFeedback)}</p></div>")
@@ -70,10 +68,8 @@ class Quiz10WebRenderer {
         playerProgress: PlayerProgress,
         finished: Quiz10FlowState.Finished,
         menu: Quiz10NavigationMenu,
-        interactionRevision: Long,
     ): String = page("Quiz10 - Resultado") {
         appendLine("<h1>Partida terminada</h1>")
-        appendLine(renderInteractionPanel(sessionId, interactionRevision))
         appendLine("<p>Puntuación final ${finished.correctAnswers}/10</p>")
         appendLine("<h2>Progreso global</h2>")
         appendLine("<p>Nombre: ${escapeHtml(playerProgress.playerName)}</p>")
@@ -145,35 +141,6 @@ class Quiz10WebRenderer {
         appendLine("<a href=\"/games/${escapeHtml(sessionId)}/panel\">Volver al panel</a>")
     }
 
-        private fun renderInteractionPanel(sessionId: String, interactionRevision: Long): String = """
-                <aside class="presenter" aria-live="polite">
-                    <h2>Luna</h2>
-                    <p id="luna-message">Cargando comentario...</p>
-                </aside>
-                <script>
-                    (function(){
-                        var messageNode = document.getElementById('luna-message');
-                        fetch('/games/${escapeHtml(sessionId)}/interaction?revision=$interactionRevision')
-                            .then(function(response){
-                                if(!response.ok){
-                                    messageNode.textContent = '';
-                                    return null;
-                                }
-                                return response.text();
-                            })
-                            .then(function(text){
-                                if(text === null){
-                                    return;
-                                }
-                                messageNode.textContent = (text || '').trim();
-                            })
-                            .catch(function(){
-                                messageNode.textContent = '';
-                            });
-                    })();
-                </script>
-        """.trimIndent()
-
     fun renderPreparationError(message: String = "No se pudo preparar Quiz10", backPath: String = "/"): String = page("Quiz10 - Error") {
         appendLine("<h1>${escapeHtml(message)}</h1>")
         appendLine("<p>Inténtalo de nuevo con otra modalidad o área.</p>")
@@ -213,9 +180,6 @@ class Quiz10WebRenderer {
                 input { padding: .5rem; border: 1px solid #8c8c8c; }
                 .error { color: #8d1f1f; }
                 .correction { border-left: 4px solid #2f6f4f; padding-left: .75rem; margin-bottom: 1rem; }
-                                .presenter { border: 1px solid #6c7d62; padding: .75rem .9rem; background: #fffbef; margin: .8rem 0 1rem; }
-                                .presenter h2 { margin: 0 0 .4rem; font-size: 1.05rem; }
-                                .presenter p { margin: 0; }
               </style>
             </head>
             <body>

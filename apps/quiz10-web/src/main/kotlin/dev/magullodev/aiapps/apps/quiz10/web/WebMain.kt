@@ -53,12 +53,6 @@ fun main(args: Array<String>) {
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
-    val interactionPresenter = try {
-        createInteractionPresenter(client::generate)
-    } catch (error: IllegalArgumentException) {
-        fail(error.message ?: "CONFIGURATION_ERROR")
-    }
-
     val port = try {
         resolveWebPort()
     } catch (error: IllegalArgumentException) {
@@ -68,7 +62,6 @@ fun main(args: Array<String>) {
     val server = Quiz10WebServer(
         prepareQuiz = preparer::prepare,
         generateTurn = turnGenerator,
-        presentInteraction = interactionPresenter::present,
         usageMonitor = usageMonitor,
         port = port,
     )
