@@ -314,6 +314,7 @@ class Quiz10WebServer(
                                     "invalidated_positions" to metrics.invalidatedPositions.toLong(),
                                     "replaced_questions" to metrics.replacedQuestions.toLong(),
                                     "replacement_attempts" to metrics.replacementAttempts.toLong(),
+                                    "audit_detail_version" to 1,
                                 ),
                             ),
                         )
@@ -389,6 +390,7 @@ class Quiz10WebServer(
                                     "invalidated_positions" to metrics.invalidatedPositions.toLong(),
                                     "replaced_questions" to metrics.replacedQuestions.toLong(),
                                     "replacement_attempts" to metrics.replacementAttempts.toLong(),
+                                    "audit_detail_version" to 1,
                                 ),
                             ),
                         )
@@ -490,6 +492,8 @@ class Quiz10WebServer(
                             "invalidated_positions" to metrics.invalidatedPositions.toLong(),
                             "replaced_questions" to metrics.replacedQuestions.toLong(),
                             "replacement_attempts" to metrics.replacementAttempts.toLong(),
+                                    "audit_detail_version" to 1,
+                            "audit_detail_version" to 1,
                         ),
                     ),
                 )

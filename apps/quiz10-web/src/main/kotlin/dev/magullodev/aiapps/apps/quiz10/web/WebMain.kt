@@ -2,6 +2,9 @@ package dev.magullodev.aiapps.apps.quiz10.web
 
 import dev.magullodev.aiapps.core.ai.OpenAiResponsesClient
 import dev.magullodev.aiapps.core.ai.AiError
+import dev.magullodev.aiapps.core.ai.AiUsageAuditEvent
+import dev.magullodev.aiapps.core.ai.AiUsageAuditResult
+import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
 import dev.magullodev.aiapps.core.ai.AiUsageFilter
 import dev.magullodev.aiapps.core.ai.AiUsageMonitor
 import dev.magullodev.aiapps.core.ai.AiUsageQueryService
@@ -16,11 +19,14 @@ import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewPosition
+import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageQuestionReviewer
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteGenerator
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteValidator
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraReplacementQuestionGenerator
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionPresenter
+import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionAuditListener
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompleter
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparer
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.LunaQuizTurnGenerator
@@ -44,7 +50,7 @@ fun main(args: Array<String>) {
     val usageMonitor: AiUsageMonitor = FileAiUsageMonitor(resolveUsageFile(), loadModelRates())
     val client = OpenAiResponsesClient(config, transport, usageMonitor)
     val preparer = try {
-        createQuizPreparer(client::generate)
+        createQuizPreparer(usageMonitor = usageMonitor, generateStructured = client::generate)
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
@@ -117,21 +123,95 @@ internal fun resolveWebPort(env: Map<String, String> = System.getenv()): Int {
 }
 
 internal fun createQuizPreparer(
+    usageMonitor: AiUsageMonitor = AiUsageMonitor.NOOP,
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
 ): QuizPreparer {
     val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
     val coverageValidator = TerraCoverageRouteValidator(generateStructured)
     val reviewer = TerraCoverageQuestionReviewer(generateStructured)
     val replacementGenerator = TerraReplacementQuestionGenerator(generateStructured)
-    val completer = CoverageQuestionCompleter(replacementGenerator::generate)
+
+    val validateWithAudit: (String, dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute) -> Outcome<Unit, CoverageRouteValidationError> = { topic, route ->
+        val result = coverageValidator.validate(topic, route)
+        val error = (result as? Outcome.Failure)?.error
+        if (error is CoverageRouteValidationError.RouteRejected) {
+            error.issues.forEach { issue ->
+                usageMonitor.recordAudit(
+                    AiUsageAuditEvent(
+                        application = currentUsageApplication(),
+                        workUnitId = currentWorkUnitId(),
+                        audit = "quiz10_route_validation",
+                        phase = "route_validation",
+                        position = null,
+                        attempt = null,
+                        result = AiUsageAuditResult.REJECTED,
+                        reason = issue,
+                    ),
+                )
+            }
+        }
+        result
+    }
+
+    val reviewWithAudit: (dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute) -> Outcome<dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReview, dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewError> = { route ->
+        val result = reviewer.review(route)
+        if (result is Outcome.Success) {
+            result.value.positions.forEachIndexed { index, reviewed ->
+                if (reviewed is CoverageQuestionReviewPosition.Invalid) {
+                    usageMonitor.recordAudit(
+                        AiUsageAuditEvent(
+                            application = currentUsageApplication(),
+                            workUnitId = currentWorkUnitId(),
+                            audit = "quiz10_question_review",
+                            phase = "initial_review",
+                            position = index + 1,
+                            attempt = null,
+                            result = AiUsageAuditResult.REJECTED,
+                            reason = reviewed.issue,
+                        ),
+                    )
+                }
+            }
+        }
+        result
+    }
+
+    val completer = CoverageQuestionCompleter(
+        generateReplacements = replacementGenerator::generate,
+        auditListener = object : CoverageQuestionAuditListener {
+            override fun onInitialReviewRejected(position: Int, issue: String) {
+                // Initial review rejections are recorded in reviewWithAudit to preserve original issues.
+            }
+
+            override fun onReplacementOutcome(position: Int, attempt: Int, accepted: Boolean, issue: String?) {
+                usageMonitor.recordAudit(
+                    AiUsageAuditEvent(
+                        application = currentUsageApplication(),
+                        workUnitId = currentWorkUnitId(),
+                        audit = "quiz10_question_replacement",
+                        phase = "replacement",
+                        position = position,
+                        attempt = attempt,
+                        result = if (accepted) AiUsageAuditResult.ACCEPTED else AiUsageAuditResult.REJECTED,
+                        reason = issue,
+                    ),
+                )
+            }
+        },
+    )
+
     return QuizPreparer(
         generateCoverageRoute = coverageGenerator::generate,
-        validateCoverageRoute = coverageValidator::validate,
+        validateCoverageRoute = validateWithAudit,
         generateCoverageRouteFromPlan = coverageGenerator::generate,
-        reviewCoverageQuestions = reviewer::review,
+        reviewCoverageQuestions = reviewWithAudit,
         completeCoverageQuestions = completer::complete,
     )
 }
+
+private fun currentUsageApplication(): String = AiUsageContextHolder.current()?.application ?: QUIZ10_APPLICATION
+
+private fun currentWorkUnitId(): String? = AiUsageContextHolder.current()?.workUnitId
 
 internal fun createTurnGenerator(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
@@ -152,3 +232,5 @@ private fun fail(message: String): Nothing {
     }
     exitProcess(1)
 }
+
+private const val QUIZ10_APPLICATION = "quiz10-web"

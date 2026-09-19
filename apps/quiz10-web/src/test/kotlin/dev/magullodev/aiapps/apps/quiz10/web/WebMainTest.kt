@@ -2,15 +2,27 @@ package dev.magullodev.aiapps.apps.quiz10.web
 
 import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
+import dev.magullodev.aiapps.core.ai.AiUsageContext
+import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
+import dev.magullodev.aiapps.core.ai.AiUsageFilter
+import dev.magullodev.aiapps.core.ai.AiUsageQueryService
+import dev.magullodev.aiapps.core.ai.AiUsageRecordRepository
+import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionEvent
+import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparationError
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.assertFailsWith
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class WebMainTest {
     private fun coverageJson(): String =
@@ -146,5 +158,84 @@ class WebMainTest {
         assertFailsWith<IllegalArgumentException> {
             resolveWebPort(mapOf("QUIZ10_WEB_PORT" to "70000"))
         }
+    }
+
+    @Test
+    fun routeRejectionAuditsArePersistedWhenPreparationFails() {
+        val usageFile = usageFile()
+        val monitor = FileAiUsageMonitor(usageFile = usageFile, ratesByModel = emptyMap())
+        val preparer = createQuizPreparer(
+            generateStructured = { request ->
+                when (request.schemaName) {
+                    "quiz10_coverage_route" -> Outcome.Success(StructuredGeneration(coverageJson(), null))
+                    "quiz10_coverage_route_validation" -> {
+                        Outcome.Success(
+                            StructuredGeneration(
+                                "{\"approved\":false,\"issues\":[\"Grupo inconsistente\",\"Sin progresión de dificultad\"]}",
+                                null,
+                            ),
+                        )
+                    }
+                    else -> Outcome.Failure(AiError.TransportFailure)
+                }
+            },
+            usageMonitor = monitor,
+        )
+
+        val result = AiUsageContextHolder.withContext(AiUsageContext("quiz10-web", "wu-fail")) {
+            preparer.prepare("Historia")
+        }
+
+        assertIs<Outcome.Failure<QuizPreparationError>>(result)
+        val summary = AiUsageQueryService(AiUsageRecordRepository(usageFile)).summarize(
+            AiUsageFilter(workUnitId = "wu-fail"),
+        )
+        assertEquals(2, summary.audits.size)
+        assertTrue(summary.audits.all { it.auditPosition == null })
+        assertTrue(summary.audits.all { it.auditResult == "rejected" })
+        assertTrue(summary.audits.mapNotNull { it.auditReason }.contains("Grupo inconsistente"))
+        assertTrue(summary.audits.mapNotNull { it.auditReason }.contains("Sin progresión de dificultad"))
+    }
+
+    @Test
+    fun usageMonitorOutputCanBeScopedByWorkUnitWithAudits() {
+        val usageFile = usageFile()
+        val monitor = FileAiUsageMonitor(usageFile = usageFile, ratesByModel = emptyMap())
+
+        monitor.recordAudit(
+            dev.magullodev.aiapps.core.ai.AiUsageAuditEvent(
+                application = "quiz10-web",
+                workUnitId = "wu-1",
+                audit = "quiz10_question_review",
+                phase = "initial_review",
+                position = 3,
+                result = dev.magullodev.aiapps.core.ai.AiUsageAuditResult.REJECTED,
+                reason = "Distractores repetidos",
+            ),
+        )
+        monitor.recordAudit(
+            dev.magullodev.aiapps.core.ai.AiUsageAuditEvent(
+                application = "quiz10-web",
+                workUnitId = "wu-2",
+                audit = "quiz10_route_validation",
+                phase = "route_validation",
+                result = dev.magullodev.aiapps.core.ai.AiUsageAuditResult.REJECTED,
+                reason = "Cobertura desbalanceada",
+            ),
+        )
+
+        val rendered = runUsageMonitor(
+            args = arrayOf("--usage-monitor", "--app=quiz10-web", "--work-unit=wu-2"),
+            env = mapOf("AI_APPS_USAGE_FILE" to usageFile.toString()),
+        )
+
+        assertContains(rendered, "workUnit=wu-2")
+        assertContains(rendered, "Cobertura desbalanceada")
+    }
+
+    private fun usageFile(): Path {
+        val root = Path.of("build", "tmp", "quiz10-web-main-tests")
+        Files.createDirectories(root)
+        return Files.createTempFile(root, "usage-", ".jsonl")
     }
 }

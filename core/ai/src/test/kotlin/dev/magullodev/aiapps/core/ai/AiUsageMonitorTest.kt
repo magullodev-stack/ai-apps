@@ -15,6 +15,7 @@ import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertContains
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -304,6 +305,135 @@ class AiUsageMonitorTest {
         assertTrue(rendered.contains("coverage"))
         assertTrue(rendered.contains("model-terra"))
         assertNotNull(summary.totalCostByCurrency["USD"])
+    }
+
+    @Test
+    fun formattingShowsAuditEventsByWorkUnitAndPosition() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(
+            usageFile = file,
+            ratesByModel = mapOf("model-terra" to ModelRate("USD", "2.00".toBigDecimal(), "8.00".toBigDecimal())),
+        )
+
+        monitor.recordMetric(
+            AiUsageMetricEvent(
+                application = "quiz10-web",
+                metricName = "quiz10_preparation",
+                workUnitId = "wu-1",
+                values = mapOf("audit_detail_version" to 1),
+            ),
+        )
+        monitor.recordAudit(
+            AiUsageAuditEvent(
+                application = "quiz10-web",
+                workUnitId = "wu-1",
+                audit = "quiz10_question_review",
+                phase = "initial_review",
+                position = 4,
+                result = AiUsageAuditResult.REJECTED,
+                reason = "Distractores repetidos",
+            ),
+        )
+        monitor.recordAudit(
+            AiUsageAuditEvent(
+                application = "quiz10-web",
+                workUnitId = "wu-1",
+                audit = "quiz10_question_replacement",
+                phase = "replacement",
+                position = 4,
+                attempt = 1,
+                result = AiUsageAuditResult.ACCEPTED,
+            ),
+        )
+
+        val summary = AiUsageQueryService(AiUsageRecordRepository(file)).summarize(
+            AiUsageFilter(workUnitId = "wu-1"),
+        )
+        val rendered = formatUsageSummary(summary)
+
+        assertContains(rendered, "Audit events:")
+        assertContains(rendered, "workUnit=wu-1")
+        assertContains(rendered, "position 4")
+        assertContains(rendered, "quiz10_question_review/initial_review -> rejected")
+        assertContains(rendered, "quiz10_question_replacement/replacement -> accepted attempt=1")
+    }
+
+    @Test
+    fun formattingDistinguishesNoRejectionsFromLegacyWithoutDetail() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(
+            usageFile = file,
+            ratesByModel = emptyMap(),
+        )
+
+        monitor.recordMetric(
+            AiUsageMetricEvent(
+                application = "quiz10-web",
+                metricName = "quiz10_preparation",
+                workUnitId = "wu-new",
+                values = mapOf("audit_detail_version" to 1, "invalidated_positions" to 0),
+            ),
+        )
+        val withDetail = formatUsageSummary(
+            AiUsageQueryService(AiUsageRecordRepository(file)).summarize(
+                AiUsageFilter(workUnitId = "wu-new"),
+            ),
+        )
+        assertContains(withDetail, "no rejections recorded")
+
+        monitor.recordMetric(
+            AiUsageMetricEvent(
+                application = "quiz10-web",
+                metricName = "quiz10_preparation",
+                workUnitId = "wu-legacy",
+                values = mapOf("invalidated_positions" to 0),
+            ),
+        )
+        val legacy = formatUsageSummary(
+            AiUsageQueryService(AiUsageRecordRepository(file)).summarize(
+                AiUsageFilter(workUnitId = "wu-legacy"),
+            ),
+        )
+        assertContains(legacy, "detail not recorded (legacy records)")
+    }
+
+    @Test
+    fun auditEventsDoNotAffectTokenOrCostTotals() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(
+            usageFile = file,
+            ratesByModel = mapOf("model-terra" to ModelRate("USD", "2.00".toBigDecimal(), "8.00".toBigDecimal())),
+        )
+
+        monitor.recordCall(
+            AiUsageCallEvent(
+                application = "quiz10-web",
+                operation = AiUsageOperation.COVERAGE,
+                model = "model-terra",
+                durationMillis = 100,
+                result = AiUsageCallResult.SUCCESS,
+                workUnitId = "wu-2",
+                inputTokens = 200,
+                outputTokens = 50,
+                totalTokens = 250,
+                usageKnown = true,
+            ),
+        )
+        monitor.recordAudit(
+            AiUsageAuditEvent(
+                application = "quiz10-web",
+                workUnitId = "wu-2",
+                audit = "quiz10_route_validation",
+                phase = "route_validation",
+                result = AiUsageAuditResult.REJECTED,
+                reason = "Issue",
+            ),
+        )
+
+        val summary = AiUsageQueryService(AiUsageRecordRepository(file)).summarize()
+        assertEquals(200, summary.totalKnownInputTokens)
+        assertEquals(50, summary.totalKnownOutputTokens)
+        assertTrue((summary.totalCostByCurrency["USD"] ?: "0".toBigDecimal()) > java.math.BigDecimal.ZERO)
     }
 
     private class StaticTransport(

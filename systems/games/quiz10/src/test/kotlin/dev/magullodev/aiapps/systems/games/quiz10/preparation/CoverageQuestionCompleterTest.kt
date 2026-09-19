@@ -23,6 +23,14 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class CoverageQuestionCompleterTest {
+    private data class AuditEvent(
+        val kind: String,
+        val position: Int,
+        val attempt: Int? = null,
+        val accepted: Boolean? = null,
+        val issue: String? = null,
+    )
+
     private fun planRandom(): StandardCoveragePlan = StandardCoveragePlanner(Random(13)).random()
 
     private fun planSingleArea(): StandardCoveragePlan = StandardCoveragePlanner(Random(13)).forArea(Quiz10Area.HISTORY)
@@ -80,6 +88,33 @@ class CoverageQuestionCompleterTest {
         val completed = assertIs<Outcome.Success<CompletedCoverageQuestions>>(result).value
         assertEquals(0, calls)
         assertEquals((1..10).toList(), completed.positions.map { it.position })
+    }
+
+    @Test
+    fun tenValidRowsEmitNoAuditEvents() {
+        val plan = planRandom()
+        val route = routeFromPlan(plan)
+        val review = validReview(plan)
+        val audit = mutableListOf<AuditEvent>()
+
+        val completer = CoverageQuestionCompleter(
+            generateReplacements = { _, _ ->
+                error("Must not call replacements")
+            },
+            auditListener = object : CoverageQuestionAuditListener {
+                override fun onInitialReviewRejected(position: Int, issue: String) {
+                    audit += AuditEvent(kind = "review", position = position, issue = issue)
+                }
+
+                override fun onReplacementOutcome(position: Int, attempt: Int, accepted: Boolean, issue: String?) {
+                    audit += AuditEvent(kind = "replacement", position = position, attempt = attempt, accepted = accepted, issue = issue)
+                }
+            },
+        )
+
+        val result = completer.complete(plan, route, review)
+        assertIs<Outcome.Success<CompletedCoverageQuestions>>(result)
+        assertTrue(audit.isEmpty())
     }
 
     @Test
@@ -260,6 +295,80 @@ class CoverageQuestionCompleterTest {
         assertTrue(2 in acceptedByCall[1])
         assertEquals("Replacement Q2", completed.positions[1].question)
         assertEquals("Replacement Q8", completed.positions[7].question)
+    }
+
+    @Test
+    fun auditCapturesReviewRejectionAndReplacementOutcomesAcrossAttempts() {
+        val plan = planRandom()
+        val route = routeFromPlan(plan)
+        val review = mixedReview(plan, setOf(6))
+        val audit = mutableListOf<AuditEvent>()
+        var call = 0
+
+        val completer = CoverageQuestionCompleter(
+            generateReplacements = { pending, _ ->
+                call += 1
+                val position = pending.single().position
+                when (call) {
+                    1 -> Outcome.Success(
+                        ReplacementQuestionBatch.of(
+                            listOf(
+                                ReplacementQuestionResult(
+                                    position = position,
+                                    outcome = ReplacementQuestionOutcome.Invalid("Duplicada"),
+                                ),
+                            ),
+                        ),
+                    )
+                    2 -> Outcome.Success(
+                        ReplacementQuestionBatch.of(
+                            listOf(
+                                ReplacementQuestionResult(
+                                    position = position,
+                                    outcome = ReplacementQuestionOutcome.Invalid("Fuera de tema"),
+                                ),
+                            ),
+                        ),
+                    )
+                    else -> Outcome.Success(
+                        ReplacementQuestionBatch.of(
+                            listOf(
+                                ReplacementQuestionResult(
+                                    position = position,
+                                    outcome = ReplacementQuestionOutcome.Valid(
+                                        question = "Replacement Q6",
+                                        answer = "Replacement A6",
+                                        distractors = listOf("A", "B", "C"),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    )
+                }
+            },
+            auditListener = object : CoverageQuestionAuditListener {
+                override fun onInitialReviewRejected(position: Int, issue: String) {
+                    audit += AuditEvent(kind = "review", position = position, issue = issue)
+                }
+
+                override fun onReplacementOutcome(position: Int, attempt: Int, accepted: Boolean, issue: String?) {
+                    audit += AuditEvent(kind = "replacement", position = position, attempt = attempt, accepted = accepted, issue = issue)
+                }
+            },
+        )
+
+        val completed = assertIs<Outcome.Success<CompletedCoverageQuestions>>(completer.complete(plan, route, review)).value
+
+        assertEquals("Replacement Q6", completed.positions[5].question)
+        assertEquals(
+            listOf(
+                AuditEvent(kind = "review", position = 6, issue = "Invalid 6"),
+                AuditEvent(kind = "replacement", position = 6, attempt = 1, accepted = false, issue = "Duplicada"),
+                AuditEvent(kind = "replacement", position = 6, attempt = 2, accepted = false, issue = "Fuera de tema"),
+                AuditEvent(kind = "replacement", position = 6, attempt = 3, accepted = true, issue = null),
+            ),
+            audit,
+        )
     }
 
     @Test

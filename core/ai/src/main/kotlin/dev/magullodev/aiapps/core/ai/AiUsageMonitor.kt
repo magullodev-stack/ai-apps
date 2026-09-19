@@ -16,6 +16,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 
@@ -24,11 +25,15 @@ interface AiUsageMonitor {
 
     fun recordMetric(event: AiUsageMetricEvent)
 
+    fun recordAudit(event: AiUsageAuditEvent)
+
     companion object {
         val NOOP: AiUsageMonitor = object : AiUsageMonitor {
             override fun recordCall(event: AiUsageCallEvent) = Unit
 
             override fun recordMetric(event: AiUsageMetricEvent) = Unit
+
+            override fun recordAudit(event: AiUsageAuditEvent) = Unit
         }
     }
 }
@@ -67,6 +72,22 @@ data class AiUsageMetricEvent(
     val workUnitId: String? = null,
 )
 
+enum class AiUsageAuditResult {
+    ACCEPTED,
+    REJECTED,
+}
+
+data class AiUsageAuditEvent(
+    val application: String,
+    val audit: String,
+    val phase: String,
+    val result: AiUsageAuditResult,
+    val workUnitId: String? = null,
+    val position: Int? = null,
+    val attempt: Int? = null,
+    val reason: String? = null,
+)
+
 data class AiUsageRateSnapshot(
     val currency: String,
     val inputCostPerMillion: String,
@@ -91,6 +112,12 @@ data class AiUsageRecord(
     val rate: AiUsageRateSnapshot? = null,
     val metricName: String? = null,
     val metricValues: Map<String, Long> = emptyMap(),
+    val auditName: String? = null,
+    val auditPhase: String? = null,
+    val auditResult: String? = null,
+    val auditPosition: Int? = null,
+    val auditAttempt: Int? = null,
+    val auditReason: String? = null,
 )
 
 data class ModelRate(
@@ -153,6 +180,23 @@ class FileAiUsageMonitor(
         writeSafely(record)
     }
 
+    override fun recordAudit(event: AiUsageAuditEvent) {
+        val record = AiUsageRecord(
+            recordId = UUID.randomUUID().toString(),
+            timestamp = Instant.now(clock).toString(),
+            type = TYPE_AUDIT,
+            application = event.application.trim().ifEmpty { UNKNOWN_APPLICATION },
+            workUnitId = event.workUnitId?.trim()?.ifEmpty { null },
+            auditName = event.audit.trim().ifEmpty { "unknown-audit" },
+            auditPhase = event.phase.trim().ifEmpty { "unknown-phase" },
+            auditResult = event.result.name.lowercase(),
+            auditPosition = event.position?.takeIf { it > 0 },
+            auditAttempt = event.attempt?.takeIf { it > 0 },
+            auditReason = sanitizeAuditReason(event.reason),
+        )
+        writeSafely(record)
+    }
+
     private fun writeSafely(record: AiUsageRecord) {
         try {
             val parent = usageFile.parent
@@ -183,6 +227,7 @@ class FileAiUsageMonitor(
     companion object {
         private const val TYPE_CALL = "ai_call"
         private const val TYPE_METRIC = "metric"
+        private const val TYPE_AUDIT = "audit"
         private const val UNKNOWN_APPLICATION = "unknown-app"
     }
 }
@@ -232,6 +277,7 @@ data class AiUsageCostEstimate(
 data class AiUsageSummary(
     val calls: List<AiUsageRecord>,
     val metrics: List<AiUsageRecord>,
+    val audits: List<AiUsageRecord>,
     val successfulCalls: Int,
     val failedCalls: Int,
     val totalKnownInputTokens: Long,
@@ -267,6 +313,7 @@ class AiUsageQueryService(
 
         val calls = filtered.filter { it.type == "ai_call" }
         val metrics = filtered.filter { it.type == "metric" }
+        val audits = filtered.filter { it.type == "audit" }
 
         val successfulCalls = calls.count { it.result == "success" }
         val failedCalls = calls.size - successfulCalls
@@ -288,6 +335,7 @@ class AiUsageQueryService(
         return AiUsageSummary(
             calls = calls,
             metrics = metrics,
+            audits = audits,
             successfulCalls = successfulCalls,
             failedCalls = failedCalls,
             totalKnownInputTokens = inputTokens,
@@ -361,11 +409,11 @@ fun estimateCallCost(record: AiUsageRecord): AiUsageCostEstimate {
 }
 
 fun formatUsageSummary(summary: AiUsageSummary): String {
-    if (summary.calls.isEmpty() && summary.metrics.isEmpty()) {
+    if (summary.calls.isEmpty() && summary.metrics.isEmpty() && summary.audits.isEmpty()) {
         return "AI usage monitor\nNo records found."
     }
 
-    val allTimes = (summary.calls + summary.metrics).mapNotNull { runCatching { Instant.parse(it.timestamp) }.getOrNull() }
+    val allTimes = (summary.calls + summary.metrics + summary.audits).mapNotNull { runCatching { Instant.parse(it.timestamp) }.getOrNull() }
     val from = allTimes.minOrNull()
     val to = allTimes.maxOrNull()
 
@@ -415,6 +463,9 @@ fun formatUsageSummary(summary: AiUsageSummary): String {
                 appendLine("  event workUnit=${record.workUnitId ?: "-"}, values=$values")
             }
         }
+
+        appendLine("Audit events:")
+        append(renderAuditSummary(summary))
     }
 }
 
@@ -469,6 +520,48 @@ private fun formatCosts(costByCurrency: Map<String, BigDecimal>, partial: Boolea
     return if (partial) "$known (partial)" else known
 }
 
+private fun renderAuditSummary(summary: AiUsageSummary): String {
+    val records = summary.audits.sortedBy { it.timestamp }
+    if (records.isEmpty()) {
+        val hasAuditDetailMarker = summary.metrics.any { metric ->
+            metric.metricName == "quiz10_preparation" &&
+                (metric.metricValues["audit_detail_version"] ?: 0L) >= 1L
+        }
+        return if (hasAuditDetailMarker) {
+            "- no rejections recorded\n"
+        } else {
+            "- detail not recorded (legacy records)\n"
+        }
+    }
+
+    val grouped = records.groupBy { it.workUnitId ?: "-" }
+    return buildString {
+        grouped.toSortedMap().forEach { (workUnit, byWorkUnit) ->
+            appendLine("- workUnit=$workUnit")
+            val byPosition = byWorkUnit.groupBy { it.auditPosition }
+            byPosition.toSortedMap(compareBy<Int?> { it == null }.thenBy { it ?: Int.MAX_VALUE }).forEach { (position, scoped) ->
+                val header = if (position == null) "global" else "position $position"
+                appendLine("  $header:")
+                scoped.forEach { record ->
+                    val attempt = record.auditAttempt?.let { " attempt=$it" } ?: ""
+                    val reason = record.auditReason?.let { " reason=$it" } ?: ""
+                    appendLine("    ${record.auditName ?: "audit"}/${record.auditPhase ?: "phase"} -> ${record.auditResult ?: "unknown"}$attempt$reason")
+                }
+            }
+        }
+    }
+}
+
+private fun sanitizeAuditReason(reason: String?): String? {
+    val raw = reason?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val collapsed = raw.replace(Regex("\\s+"), " ")
+    val redacted = collapsed
+        .replace(Regex("(?i)authorization"), "[redacted]")
+        .replace(Regex("(?i)bearer"), "[redacted]")
+        .replace(Regex("(?i)api[_-]?key"), "[redacted]")
+    return redacted.take(180)
+}
+
 private val ONE_MILLION = BigDecimal("1000000")
 
 private fun AiUsageRecord.toJsonLine(json: Json): String = json.encodeToString(toJsonObject()) + "\n"
@@ -507,6 +600,12 @@ private fun AiUsageRecord.toJsonObject(): JsonObject = buildJsonObject {
             },
         )
     }
+    auditName?.let { put("auditName", it) }
+    auditPhase?.let { put("auditPhase", it) }
+    auditResult?.let { put("auditResult", it) }
+    auditPosition?.let { put("auditPosition", it) }
+    auditAttempt?.let { put("auditAttempt", it) }
+    auditReason?.let { put("auditReason", it) }
 }
 
 private fun parseRecord(json: Json, line: String): AiUsageRecord? {
@@ -551,6 +650,12 @@ private fun parseRecord(json: Json, line: String): AiUsageRecord? {
         rate = rate,
         metricName = (obj["metricName"] as? JsonPrimitive)?.content,
         metricValues = metricValues,
+        auditName = (obj["auditName"] as? JsonPrimitive)?.content,
+        auditPhase = (obj["auditPhase"] as? JsonPrimitive)?.content,
+        auditResult = (obj["auditResult"] as? JsonPrimitive)?.content,
+        auditPosition = (obj["auditPosition"] as? JsonPrimitive)?.intOrNull,
+        auditAttempt = (obj["auditAttempt"] as? JsonPrimitive)?.intOrNull,
+        auditReason = sanitizeAuditReason((obj["auditReason"] as? JsonPrimitive)?.content),
     )
 }
 

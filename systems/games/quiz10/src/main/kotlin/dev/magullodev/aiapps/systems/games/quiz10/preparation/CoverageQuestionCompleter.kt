@@ -16,6 +16,7 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.ReplacementQues
 import java.util.Collections
 
 class CoverageQuestionCompleter(
+    private val auditListener: CoverageQuestionAuditListener = CoverageQuestionAuditListener.NOOP,
     private val generateReplacements: (List<ReplacementQuestionPosition>, List<AcceptedCoverageQuestion>) -> Outcome<ReplacementQuestionBatch, ReplacementQuestionGenerationError>,
 ) {
     fun complete(
@@ -43,7 +44,10 @@ class CoverageQuestionCompleter(
                         distractors = reviewed.distractors,
                     )
                 }
-                is CoverageQuestionReviewPosition.Invalid -> pendingPositions += position.position
+                is CoverageQuestionReviewPosition.Invalid -> {
+                    pendingPositions += position.position
+                    auditListener.onInitialReviewRejected(position.position, reviewed.issue)
+                }
             }
         }
 
@@ -91,6 +95,7 @@ class CoverageQuestionCompleter(
 
                 when (val outcome = generated.outcome) {
                     is ReplacementQuestionOutcome.Valid -> {
+                        auditListener.onReplacementOutcome(position, replacementAttemptsUsed, accepted = true, issue = null)
                         val planPosition = checkNotNull(plan.positions.find { it.position == position })
                         acceptedByPosition[position] = CompletedCoverageQuestion(
                             position = position,
@@ -102,7 +107,14 @@ class CoverageQuestionCompleter(
                         )
                         pendingPositions -= position
                     }
-                    is ReplacementQuestionOutcome.Invalid -> Unit
+                    is ReplacementQuestionOutcome.Invalid -> {
+                        auditListener.onReplacementOutcome(
+                            position = position,
+                            attempt = replacementAttemptsUsed,
+                            accepted = false,
+                            issue = outcome.issue,
+                        )
+                    }
                 }
             }
         }
@@ -150,6 +162,20 @@ class CoverageQuestionCompleter(
 
     private companion object {
         const val maxAttempts = 3
+    }
+}
+
+interface CoverageQuestionAuditListener {
+    fun onInitialReviewRejected(position: Int, issue: String)
+
+    fun onReplacementOutcome(position: Int, attempt: Int, accepted: Boolean, issue: String?)
+
+    companion object {
+        val NOOP: CoverageQuestionAuditListener = object : CoverageQuestionAuditListener {
+            override fun onInitialReviewRejected(position: Int, issue: String) = Unit
+
+            override fun onReplacementOutcome(position: Int, attempt: Int, accepted: Boolean, issue: String?) = Unit
+        }
     }
 }
 
