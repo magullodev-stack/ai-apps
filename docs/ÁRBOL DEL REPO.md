@@ -1,43 +1,28 @@
 ai-apps/
-├── core/                                  # Base técnica neutral compartida
-│   ├── contracts/                         # Contratos técnicos comunes
-│   ├── config/                            # Configuración y entorno
-│   ├── network/                           # Transporte y comunicación
-│   ├── ai/                                # Acceso técnico a modelos/proveedores de IA
-│   ├── persistence/                       # Persistencia genérica
-│   ├── auth/                              # Autenticación
-│   ├── identity/                          # Identidad
-│   ├── localization/                      # Localización
-│   ├── security/                          # Seguridad y secretos
-│   ├── telemetry/                         # Telemetría y observabilidad
-│   ├── time/                              # Tiempo y temporización
-│   └── ...                                # Otras capacidades técnicas neutrales
+├── core/                                      # Mecanismos y capacidades técnicas neutrales respecto al significado de los sistemas.
+│   ├── contracts/                             # Mecanismos compartidos para expresar contratos técnicos.
+│   ├── config/                                # Mecanismos compartidos para obtener configuración técnica.
+│   ├── network/                               # Capacidad compartida de comunicación por red.
+│   └── ai/                                    # Capacidad compartida para ejecutar operaciones mediante modelos de IA.
 │
-├── systems/                               # Sistemas de comportamiento y dominio
-│   ├── <Sistema>/
-│   │   ├── ...                            # Reglas, estado, procesos y datos del sistema
-│   │   └── ...
-│   └── ...                                # Más sistemas independientes
+├── systems/                                   # Árbol semántico: aquí viven los sistemas y las relaciones de pertenencia entre ellos.
+│   ├── knowledge/                             # Sistema que gobierna qué conocimiento resulta admisible para su uso.
+│   └── games/                                 # Ámbito semántico al que pertenecen los sistemas de juego.
+│       └── quiz10/                            # Sistema que gobierna una partida Quiz10.
 │
-├── ui/                                    # Materialización visible e interactiva
-│   ├── screens/                           # Pantallas y vistas completas
-│   │   └── ...
-│   ├── shared/                            # Componentes reutilizables reales
-│   │   └── ...
-│   └── ...                                # Otras formas de presentación cuando aparezcan
+├── ui/                                        # Implementaciones que proyectan estado y convierten interacción en acciones.
+│   └── quiz10-web/                            # Presentación web actual de Quiz10.
 │
-├── apps/                                  # Composición de aplicaciones concretas
-│   ├── <App>/
-│   │   ├── ...                            # Entrada, ensamblaje y configuración de esa app
-│   │   └── ...
-│   └── ...                                # Más aplicaciones construidas sobre el mismo árbol
+├── apps/                                      # Composiciones ejecutables que conectan efectos con capacidades concretas.
+│   ├── quiz10/                                # Composición ejecutable actual de Quiz10.
+│   └── quiz10-web/                            # Composición ejecutable actual de Quiz10 con su interfaz web.
 │
-├── docs/
-├── .devcontainer/
-├── .github/
-├── gradle/
-├── build.gradle.kts
-├── settings.gradle.kts
-├── gradle.properties
-├── gradlew
-└── gradlew.bat
+├── docs/                                      # Documentación propia del repositorio.
+├── .devcontainer/                             # Definición del entorno aislado del repositorio.
+├── .github/                                   # Integración del repositorio con GitHub.
+├── gradle/                                    # Infraestructura del build Gradle.
+├── build.gradle.kts                           # Configuración común del build.
+├── settings.gradle.kts                        # Módulos que forman actualmente el build.
+├── gradle.properties                          # Propiedades del build.
+├── gradlew                                    # Wrapper de Gradle para Unix.
+└── gradlew.bat                                # Wrapper de Gradle para Windows.
