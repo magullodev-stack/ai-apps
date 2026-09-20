@@ -8,8 +8,6 @@ import dev.magullodev.aiapps.tools.monitor.AiUsageCostEstimate
 import dev.magullodev.aiapps.tools.monitor.estimateCallCost
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.NumberFormat
-import java.util.Locale
 
 private val preparationOperations = setOf("coverage", "review", "substitutions")
 
@@ -119,7 +117,7 @@ fun buildQuiz10History(
     return Quiz10History(tests, rolling, window, comparison)
 }
 
-private fun aggregateCost(costs: List<AiUsageCostEstimate>): AiUsageCostEstimate {
+internal fun aggregateCost(costs: List<AiUsageCostEstimate>): AiUsageCostEstimate {
     val currencies = costs.mapNotNull { it.currency }.toSet()
     val complete = costs.isNotEmpty() && costs.all { it.determinability == AiCostDeterminability.KNOWN } && currencies.size == 1
     val amounts = costs.mapNotNull { it.amount }
@@ -144,103 +142,3 @@ private fun averageTotalCost(tests: List<Quiz10Test>): AiUsageCostEstimate {
 }
 
 private fun unavailableCost() = AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, null, null)
-
-private fun costText(cost: AiUsageCostEstimate): String {
-    val value = cost.amount?.setScale(6, RoundingMode.HALF_UP)?.toPlainString()
-    val amount = when (cost.determinability) {
-        AiCostDeterminability.KNOWN -> "$value ${cost.currency}"
-        AiCostDeterminability.PARTIAL -> "${value ?: "unknown"} ${cost.currency ?: ""} (partial)".trim()
-        AiCostDeterminability.NOT_DETERMINABLE -> "not determinable"
-    }
-    val source = when (cost.rateSource) {
-        AiCostRateSource.SNAPSHOT -> " (historical rate)"
-        AiCostRateSource.RETROSPECTIVE -> " (retrospective estimate)"
-        AiCostRateSource.UNKNOWN -> ""
-    }
-    val missing = if (cost.missingRateModels.isEmpty()) "" else
-        "; missing rate for ${cost.missingRateModels.sorted().joinToString(", ")}; configure AI_APPS_PRICING_FILE"
-    return amount + source + missing
-}
-
-private fun tokenText(calls: List<AiUsageRecord>, input: Boolean): String {
-    val values = calls.map { if (input) it.inputTokens else it.outputTokens }
-    val known = NumberFormat.getIntegerInstance(Locale.GERMANY).format(values.filterNotNull().sum())
-    return known + if (values.any { it == null }) " (partial)" else ""
-}
-
-fun formatQuiz10History(history: Quiz10History, width: Int = 80): String = buildString {
-    appendLine(renderQuiz10Chart(history.rolling, width))
-    appendLine()
-    appendLine("Partidas (~ coste provisional, * tarifa retrospectiva)")
-    appendLine("# | ESTADO | COSTE TOTAL")
-    history.tests.asReversed().forEach { game ->
-        val cost = game.totalCost
-        val amount = cost.amount?.setScale(6, RoundingMode.HALF_UP)?.toPlainString()
-        val value = when (cost.determinability) {
-            AiCostDeterminability.KNOWN -> "$amount ${cost.currency}"
-            AiCostDeterminability.PARTIAL -> "${amount?.let { "$it ${cost.currency ?: ""}" } ?: "indeterminable"} (parcial)"
-            AiCostDeterminability.NOT_DETERMINABLE -> "indeterminable"
-        }
-        val provisional = if (game.status == Quiz10GameStatus.IN_PROGRESS) "~" else ""
-        val retrospective = if (cost.rateSource == AiCostRateSource.RETROSPECTIVE) "*" else ""
-        appendLine("#${game.position} | ${game.status} | $value$provisional$retrospective")
-    }
-}
-
-fun formatQuiz10Game(game: Quiz10Test): String = buildString {
-    appendLine("Latest test #${game.position} ${game.workUnitId}: status=${game.status} started=${game.startedAt} finished=${game.finishedAt ?: "-"}")
-    appendLine("PARTIDA: ${game.workUnitId}")
-    appendLine("ESTADO: ${game.status}${if (game.status == Quiz10GameStatus.IN_PROGRESS) " (provisional)" else ""}")
-    appendLine("MODELO | OPERACIÓN | ENTRADA | SALIDA | COSTE | DURACIÓN | RESULTADO")
-    game.allCalls.forEach { call ->
-        appendLine("${call.model ?: "unknown-model"} | ${call.operation ?: "unknown-operation"} | ${call.inputTokens ?: "unknown"} | ${call.outputTokens ?: "unknown"} | ${costText(estimateCallCost(call, game.ratesByModel))} | ${call.durationMillis ?: "unknown"}ms | ${call.result ?: "unknown"}")
-    }
-    if (game.calls.isNotEmpty()) appendLine("Preparation total: ${costText(game.cost)}")
-    if (game.developmentCalls.isNotEmpty()) appendLine("Development total: ${costText(game.developmentCost)}")
-    appendLine("TOTAL PARTIDA${if (game.status == Quiz10GameStatus.IN_PROGRESS) " (acumulado provisional)" else ""}: ${costText(game.totalCost)}")
-    appendLine("Entrada: ${tokenText(game.allCalls, true)} tokens")
-    appendLine("Salida: ${tokenText(game.allCalls, false)} tokens")
-    if (game.audits.isEmpty()) appendLine(if (game.rejectedRows == 0) "No rejections recorded" else "Audit detail unavailable")
-    else game.audits.forEach { audit ->
-        appendLine("- ${audit.auditPhase ?: "audit"} position=${audit.auditPosition ?: "unknown"} attempt=${audit.auditAttempt ?: "-"} result=${audit.auditResult ?: "unknown"} reason=${audit.auditReason ?: "-"}")
-    }
-}
-
-fun renderQuiz10Chart(points: List<Quiz10RollingPoint>, width: Int = 80): String {
-    if (points.isEmpty()) return "Chart: no games recorded"
-    val available = width.coerceAtLeast(2)
-    val indices = if (points.size <= available) points.indices.toList() else
-        (0 until available).map { it.toLong() * (points.size - 1) / (available - 1) }.map(Long::toInt).distinct()
-    val chosen = indices.map(points::get)
-    fun plotted(cost: AiUsageCostEstimate): BigDecimal? =
-        cost.amount?.takeIf { cost.determinability == AiCostDeterminability.KNOWN && cost.currency == "USD" }
-    val max = points.flatMap { point -> listOfNotNull(plotted(point.individualCost), plotted(point.cost)) }
-        .maxOrNull() ?: BigDecimal.ZERO
-    val height = 8
-    fun panel(title: String, values: List<BigDecimal?>, symbols: List<Char>): String = buildString {
-        appendLine(title)
-        (height downTo 0).forEach { row ->
-            val cells = values.mapIndexed { index, value ->
-                if (value == null) ' ' else if (max.signum() == 0 && row == 0) symbols[index] else if (max.signum() != 0 &&
-                    value.multiply(BigDecimal(height)).divide(max, 0, RoundingMode.HALF_UP).toInt() == row) symbols[index] else ' '
-            }.joinToString("")
-            val axis = if (row == height) max.setScale(6, RoundingMode.HALF_UP).toPlainString() else if (row == 0) "0.000000" else ""
-            appendLine("${axis.padStart(10)} |$cells")
-        }
-        appendLine("${" ".repeat(11)}+${"-".repeat(chosen.size)}")
-    }
-    val symbols = chosen.map { point -> when (point.status) {
-        Quiz10GameStatus.COMPLETED -> 'C'
-        Quiz10GameStatus.FAILED -> 'F'
-        Quiz10GameStatus.IN_PROGRESS -> 'P'
-        Quiz10GameStatus.UNKNOWN -> 'U'
-    } }
-    return buildString {
-        appendLine("Total game cost chart (USD/game; y starts at zero)")
-        append(panel("Individual game: C completed, F failed, P in progress, U unknown status; blank indeterminable",
-            chosen.map { plotted(it.individualCost) }, symbols))
-        append(panel("Rolling average of closed games: * measured, blank unavailable or indeterminable",
-            chosen.map { plotted(it.cost) }, chosen.map { '*' }))
-        append("Game #${chosen.first().position} -> #${chosen.last().position}; scale 0 to ${max.setScale(6, RoundingMode.HALF_UP)} USD; ${points.size} points calculated, ${chosen.size} shown")
-    }
-}

@@ -6,6 +6,10 @@ import dev.magullodev.aiapps.core.ai.AiUsageMetricEvent
 import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.ModelRate
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
@@ -20,42 +24,86 @@ class MonitorMainTest {
         return Files.createTempFile(root, "usage-", ".jsonl")
     }
 
+    private fun page(port: Int, query: String = ""): HttpResponse<String> = HttpClient.newHttpClient().send(
+        HttpRequest.newBuilder(URI.create("http://127.0.0.1:$port/$query")).GET().build(),
+        HttpResponse.BodyHandlers.ofString(),
+    )
+
     @Test
-    fun standaloneDefaultAndFiltersReadExistingRecords() {
+    fun servesSvgAndEconomicTableWithAllModelsAndRetries() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(file, mapOf(
+            "terra" to ModelRate("USD", "1000000".toBigDecimal(), "2000000".toBigDecimal()),
+            "luna" to ModelRate("USD", "3000000".toBigDecimal(), "4000000".toBigDecimal()),
+        ))
+        monitor.recordMetric(AiUsageMetricEvent("quiz10-web", "quiz10_game_started", emptyMap(), "game-1"))
+        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 1,
+            AiUsageCallResult.SUCCESS, "game-1", 2, 3, 5, true))
+        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.REVIEW, "terra", 1,
+            AiUsageCallResult.ERROR, "game-1", 1, 1, 2, true))
+        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.LUNA, "luna", 1,
+            AiUsageCallResult.SUCCESS, "game-1", 2, 1, 3, true))
+        monitor.recordMetric(AiUsageMetricEvent("quiz10-web", "quiz10_game_completed", emptyMap(), "game-1"))
+        val env = mapOf("AI_APPS_USAGE_FILE" to file.toString())
+        val server = startMonitorServer(0, env)
+        try {
+            val response = page(server.address.port)
+            assertEquals(200, response.statusCode())
+            val html = response.body()
+            assertContains(html, "<svg")
+            assertContains(html, "class=\"individual\"")
+            assertContains(html, "class=\"rolling\"")
+            assertContains(html, "Coste de IA (USD)")
+            assertContains(html, "Coste total por partida")
+            assertContains(html, "Media móvil de partidas cerradas")
+            assertContains(html, "<th scope=\"col\">COSTE ENTRADA</th>")
+            assertContains(html, "<th scope=\"col\">COSTE SALIDA</th>")
+            assertContains(html, "<td>terra</td><td>3</td><td>4</td><td>3.000000 USD</td><td>8.000000 USD</td><td>11.000000 USD</td>")
+            assertContains(html, "<td>luna</td><td>2</td><td>1</td><td>6.000000 USD</td><td>4.000000 USD</td><td>10.000000 USD</td>")
+            assertContains(html, "<td>TOTAL PARTIDA</td><td>5</td><td>5</td><td>9.000000 USD</td><td>12.000000 USD</td><td>21.000000 USD</td>")
+            assertContains(html, "<option value=\"50\" selected>")
+            assertContains(page(server.address.port, "?window=10").body(), "<option value=\"10\" selected>")
+            assertFalse(html.contains("<pre>"))
+        } finally { server.stop(0) }
+    }
+
+    @Test
+    fun pageReadsNewRecordsOnEveryRequest() {
         val file = usageFile()
         val monitor = FileAiUsageMonitor(file, mapOf("terra" to ModelRate("USD", "1000000".toBigDecimal(), "0".toBigDecimal())))
-        monitor.recordMetric(AiUsageMetricEvent("quiz10-web", "quiz10_game_started", emptyMap(), "game-1"))
-        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 2,
-            AiUsageCallResult.SUCCESS, "game-1", 2, 0, 2, true))
-        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.LUNA, "terra", 3,
-            AiUsageCallResult.SUCCESS, "game-1", 3, 0, 3, true))
-        monitor.recordCall(AiUsageCallEvent("batch-jobs", AiUsageOperation.OTHER, "terra", 1,
-            AiUsageCallResult.SUCCESS, "job-1", 7, 0, 7, true))
-        val env = mapOf("AI_APPS_USAGE_FILE" to file.toString())
-        val default = runMonitor(emptyArray(), env)
-        assertContains(default, "Total game cost chart")
-        assertContains(default, "# | ESTADO | COSTE TOTAL")
-        assertContains(default, "#1 | IN_PROGRESS | 5.000000 USD~")
-        assertFalse(default.contains("game-1"))
-        assertFalse(default.contains("TOTAL PARTIDA"))
-        assertFalse(default.contains("Comparison"))
-        assertFalse(default.contains("tokens"))
-        assertFalse(default.contains("audit"))
-        assertEquals(default, runMonitor(arrayOf("--app=quiz10-web"), env))
-        assertEquals(runMonitor(arrayOf("--window=25"), env),
-            runMonitor(arrayOf("--app=quiz10-web", "--window=25"), env))
-        val global = runMonitor(arrayOf("--all"), env)
-        assertContains(global, "app=quiz10-web workUnit=game-1")
-        assertContains(global, "app=batch-jobs workUnit=job-1")
-        assertEquals(2, AiUsageQueryService(AiUsageRecordRepository(file)).summarize().byExecution.size)
-        val scoped = runMonitor(arrayOf("--work-unit=game-1"), env)
-        assertContains(scoped, "status=IN_PROGRESS")
-        assertContains(scoped, "terra | luna")
-        assertContains(scoped, "TOTAL PARTIDA (acumulado provisional): 5.000000 USD")
-        assertFalse(scoped.contains("job-1"))
-        assertContains(runMonitor(arrayOf("--app=batch-jobs"), env), "batch-jobs")
-        assertContains(runMonitor(arrayOf("--model=terra"), env), "By model:")
-        assertContains(runMonitor(arrayOf("--operation=coverage"), env), "coverage")
+        val server = startMonitorServer(0, mapOf("AI_APPS_USAGE_FILE" to file.toString()))
+        try {
+            assertContains(page(server.address.port).body(), "0 partidas registradas")
+            monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 1,
+                AiUsageCallResult.SUCCESS, "new-game", 2, 0, 2, true))
+            val updated = page(server.address.port).body()
+            assertContains(updated, "1 partidas registradas")
+            assertContains(updated, "new-game")
+            assertContains(updated, "2.000000 USD")
+        } finally { server.stop(0) }
+    }
+
+    @Test
+    fun retrospectivePricingAndMissingCostsAreIdentified() {
+        val file = usageFile()
+        val pricing = Files.createTempFile(file.parent, "rates-", ".json")
+        Files.writeString(pricing, """{"currency":"USD","models":{"terra":{"inputCostPerMillion":"1000000","outputCostPerMillion":"2000000"}}}""")
+        val monitor = FileAiUsageMonitor(file, emptyMap())
+        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 1,
+            AiUsageCallResult.SUCCESS, "retrospective", 10, 5, 15, true))
+        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.LUNA, "unknown-model", 1,
+            AiUsageCallResult.SUCCESS, "missing", 2, 3, 5, true))
+        val env = mapOf("AI_APPS_USAGE_FILE" to file.toString(), "AI_APPS_PRICING_FILE" to pricing.toString())
+        val server = startMonitorServer(0, env)
+        try {
+            val html = page(server.address.port).body()
+            assertContains(html, "10.000000 USD")
+            assertContains(html, "20.000000 USD")
+            assertContains(html, "Retrospectivo")
+            assertContains(html, "Indeterminable")
+            assertContains(html, "Sin tarifa: unknown-model")
+            assertFalse(html.contains("NaN"))
+        } finally { server.stop(0) }
     }
 
     @Test
@@ -65,45 +113,12 @@ class MonitorMainTest {
         val root = Files.createTempDirectory(rootBase, "root-")
         val rootFile = root.resolve(Path.of(".ai-apps", "usage", "ai-usage.jsonl"))
         val legacyFile = root.resolve(Path.of("apps", "another-app", ".ai-apps", "usage", "ai-usage.jsonl"))
-        val monitor = FileAiUsageMonitor(rootFile, emptyMap())
-        monitor.recordMetric(AiUsageMetricEvent("quiz10-web", "quiz10_game_started", emptyMap(), "root-game"))
+        FileAiUsageMonitor(rootFile, emptyMap()).recordMetric(AiUsageMetricEvent("quiz10-web", "quiz10_game_started", emptyMap(), "root-game"))
         FileAiUsageMonitor(legacyFile, emptyMap()).recordCall(AiUsageCallEvent(
             "another-app", AiUsageOperation.OTHER, "model", 1, AiUsageCallResult.SUCCESS, "legacy-job", usageKnown = false))
         val files = usageFiles(emptyMap(), root)
         assertEquals(2, files.size)
-        val records = AiUsageRecordRepository(files).readAll()
-        assertEquals(2, records.size)
-        assertEquals(setOf("quiz10-web", "another-app"), records.map { it.application }.toSet())
+        assertEquals(2, AiUsageRecordRepository(files).readAll().size)
         assertEquals(listOf(legacyFile), usageFiles(mapOf("AI_APPS_USAGE_FILE" to legacyFile.toString()), root))
-    }
-
-    @Test
-    fun explicitPricingFileRepricesOnlyRecordsWithoutSnapshots() {
-        val file = usageFile()
-        val pricing = Files.createTempFile(file.parent, "rates-", ".json")
-        Files.writeString(pricing, """{"currency":"USD","models":{"terra":{"inputCostPerMillion":"1000000","outputCostPerMillion":"2000000"}}}""")
-        val monitor = FileAiUsageMonitor(file, emptyMap())
-        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 1,
-            AiUsageCallResult.SUCCESS, "historical-game", 10, 5, 15, true))
-        val env = mapOf("AI_APPS_USAGE_FILE" to file.toString(), "AI_APPS_PRICING_FILE" to pricing.toString())
-        val detail = runMonitor(arrayOf("--app=quiz10-web", "--work-unit=historical-game"), env)
-        assertContains(detail, "TOTAL PARTIDA: 20.000000 USD (retrospective estimate)")
-        assertContains(detail, "terra | coverage | 10 | 5 | 20.000000 USD (retrospective estimate)")
-        val global = runMonitor(arrayOf("--all", "--work-unit=historical-game"), env)
-        assertContains(global, "Rates: includes retrospective estimates from AI_APPS_PRICING_FILE")
-    }
-
-    @Test
-    fun distinctApplicationsWithSameWorkUnitStaySeparate() {
-        val file = usageFile()
-        val monitor = FileAiUsageMonitor(file, emptyMap())
-        for (application in listOf("quiz10-web", "another-app")) {
-            monitor.recordCall(AiUsageCallEvent(application, AiUsageOperation.OTHER, "model", 1,
-                AiUsageCallResult.SUCCESS, "shared-id", usageKnown = false))
-        }
-        val summary = AiUsageQueryService(AiUsageRecordRepository(file)).summarize()
-        assertEquals(2, summary.byExecution.size)
-        assertContains(formatUsageSummary(summary), "app=another-app workUnit=shared-id")
-        assertContains(formatUsageSummary(summary), "app=quiz10-web workUnit=shared-id")
     }
 }

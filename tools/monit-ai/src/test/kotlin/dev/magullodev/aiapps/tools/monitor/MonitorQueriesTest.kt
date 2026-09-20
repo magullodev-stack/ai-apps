@@ -258,149 +258,7 @@ class MonitorQueriesTest {
         assertTrue(lines.contains("model-terra"))
     }
 
-    @Test
-    fun formattingIncludesGlobalAndBreakdownSections() {
-        val file = usageFile()
-        val monitor = FileAiUsageMonitor(
-            usageFile = file,
-            ratesByModel = mapOf("model-terra" to ModelRate("USD", "2.00".toBigDecimal(), "8.00".toBigDecimal())),
-        )
-
-        monitor.recordCall(
-            AiUsageCallEvent(
-                application = "quiz10-web",
-                operation = AiUsageOperation.COVERAGE,
-                model = "model-terra",
-                durationMillis = 123,
-                result = AiUsageCallResult.SUCCESS,
-                workUnitId = "session-5",
-                inputTokens = 200,
-                outputTokens = 100,
-                totalTokens = 300,
-                usageKnown = true,
-            ),
-        )
-        monitor.recordMetric(
-            AiUsageMetricEvent(
-                application = "quiz10-web",
-                metricName = "quiz10_preparation",
-                workUnitId = "session-5",
-                values = mapOf(
-                    "preparation_duration_ms" to 123,
-                    "invalidated_positions" to 1,
-                    "replaced_questions" to 1,
-                    "replacement_attempts" to 2,
-                ),
-            ),
-        )
-
-        val summary = AiUsageQueryService(AiUsageRecordRepository(file)).summarize()
-        val rendered = formatUsageSummary(summary)
-
-        assertTrue(rendered.contains("AI usage monitor"))
-        assertTrue(rendered.contains("By application:"))
-        assertTrue(rendered.contains("By model:"))
-        assertTrue(rendered.contains("By operation:"))
-        assertTrue(rendered.contains("Metric events:"))
-        assertTrue(rendered.contains("quiz10_preparation"))
-        assertTrue(rendered.contains("preparation_duration_ms=123"))
-        assertTrue(rendered.contains("replacement_attempts=2"))
-        assertTrue(rendered.contains("coverage"))
-        assertTrue(rendered.contains("model-terra"))
-        assertNotNull(summary.totalCostByCurrency["USD"])
-    }
-
-    @Test
-    fun formattingShowsAuditEventsByWorkUnitAndPosition() {
-        val file = usageFile()
-        val monitor = FileAiUsageMonitor(
-            usageFile = file,
-            ratesByModel = mapOf("model-terra" to ModelRate("USD", "2.00".toBigDecimal(), "8.00".toBigDecimal())),
-        )
-
-        monitor.recordMetric(
-            AiUsageMetricEvent(
-                application = "quiz10-web",
-                metricName = "quiz10_preparation",
-                workUnitId = "wu-1",
-                values = mapOf("audit_detail_version" to 1),
-            ),
-        )
-        monitor.recordAudit(
-            AiUsageAuditEvent(
-                application = "quiz10-web",
-                workUnitId = "wu-1",
-                audit = "quiz10_question_review",
-                phase = "initial_review",
-                position = 4,
-                result = AiUsageAuditResult.REJECTED,
-                reason = "Distractores repetidos",
-            ),
-        )
-        monitor.recordAudit(
-            AiUsageAuditEvent(
-                application = "quiz10-web",
-                workUnitId = "wu-1",
-                audit = "quiz10_question_replacement",
-                phase = "replacement",
-                position = 4,
-                attempt = 1,
-                result = AiUsageAuditResult.ACCEPTED,
-            ),
-        )
-
-        val summary = AiUsageQueryService(AiUsageRecordRepository(file)).summarize(
-            AiUsageFilter(workUnitId = "wu-1"),
-        )
-        val rendered = formatUsageSummary(summary)
-
-        assertContains(rendered, "Audit events:")
-        assertContains(rendered, "workUnit=wu-1")
-        assertContains(rendered, "position 4")
-        assertContains(rendered, "quiz10_question_review/initial_review -> rejected")
-        assertContains(rendered, "quiz10_question_replacement/replacement -> accepted attempt=1")
-    }
-
-    @Test
-    fun formattingDistinguishesNoRejectionsFromLegacyWithoutDetail() {
-        val file = usageFile()
-        val monitor = FileAiUsageMonitor(
-            usageFile = file,
-            ratesByModel = emptyMap(),
-        )
-
-        monitor.recordMetric(
-            AiUsageMetricEvent(
-                application = "quiz10-web",
-                metricName = "quiz10_preparation",
-                workUnitId = "wu-new",
-                values = mapOf("audit_detail_version" to 1, "invalidated_positions" to 0),
-            ),
-        )
-        val withDetail = formatUsageSummary(
-            AiUsageQueryService(AiUsageRecordRepository(file)).summarize(
-                AiUsageFilter(workUnitId = "wu-new"),
-            ),
-        )
-        assertContains(withDetail, "no rejections recorded")
-
-        monitor.recordMetric(
-            AiUsageMetricEvent(
-                application = "quiz10-web",
-                metricName = "quiz10_preparation",
-                workUnitId = "wu-legacy",
-                values = mapOf("invalidated_positions" to 0),
-            ),
-        )
-        val legacy = formatUsageSummary(
-            AiUsageQueryService(AiUsageRecordRepository(file)).summarize(
-                AiUsageFilter(workUnitId = "wu-legacy"),
-            ),
-        )
-        assertContains(legacy, "detail not recorded (legacy records)")
-    }
-
-    @Test
+     @Test
     fun auditEventsDoNotAffectTokenOrCostTotals() {
         val file = usageFile()
         val monitor = FileAiUsageMonitor(
@@ -464,14 +322,12 @@ class MonitorQueriesTest {
             assertTrue(history.rolling.last().cost.amount!! > history.tests.last().cost.amount!!)
             assertEquals(window, history.comparison!!.difference.toInt())
             assertEquals(1, history.tests.last().calls.size)
-            val chart = renderQuiz10Chart(history.rolling, 40)
-            assertContains(chart, "Game #1 -> #500")
-            assertContains(chart, "500 points calculated, 40 shown")
             if (window == 50) {
-                val rows = formatQuiz10History(history).lines().filter { it.matches(Regex("^#\\d+ \\|.*")) }
-                assertEquals(500, rows.size)
-                assertContains(rows.first(), "#500 | COMPLETED | 1500.000000 USD")
-                assertContains(rows.last(), "#1 | COMPLETED | 1001.000000 USD")
+                val html = renderMonitorPage(history)
+                assertContains(html, "<svg")
+                assertEquals(500, "<tr class=\"total\">".toRegex().findAll(html).count())
+                assertContains(html, "#500 · test-500")
+                assertContains(html, "#1 · test-001")
             }
         }
     }
@@ -492,9 +348,8 @@ class MonitorQueriesTest {
         assertEquals(1, history.tests.first().rejectedRows)
         assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.tests.last().cost.determinability)
         assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.rolling.last().cost.determinability)
-        val report = formatQuiz10History(history)
         assertEquals(2, history.tests.first().audits.single().auditPosition)
-        assertContains(report, "#2 | UNKNOWN | indeterminable")
+        assertContains(renderMonitorPage(history), "Indeterminable")
     }
 
     @Test
@@ -509,6 +364,7 @@ class MonitorQueriesTest {
         assertEquals(null, history.tests.single().cost.amount)
         assertEquals(AiCostDeterminability.PARTIAL, history.tests.single().cost.determinability)
         assertEquals(null, history.rolling.single().cost.amount)
+        assertContains(renderMonitorPage(history), "Indeterminable (parcial)")
     }
 
     @Test
@@ -549,9 +405,10 @@ class MonitorQueriesTest {
         assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.tests.single { it.workUnitId == "failed" }.totalCost.determinability)
         assertEquals(Quiz10GameStatus.UNKNOWN, history.tests.first().status)
         assertEquals(4, history.rolling.size)
-        val report = formatQuiz10History(history)
-        assertContains(report, "#4 | FAILED | indeterminable")
-        assertContains(report, "#2 | IN_PROGRESS | 9.000000 USD~")
+        val html = renderMonitorPage(history)
+        assertContains(html, "FAILED")
+        assertContains(html, "9.000000 USD")
+        assertContains(html, "Provisional")
     }
 
     private class StaticTransport(

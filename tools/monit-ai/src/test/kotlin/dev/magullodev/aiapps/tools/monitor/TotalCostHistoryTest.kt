@@ -5,9 +5,6 @@ import dev.magullodev.aiapps.core.ai.AiUsageRecord
 import dev.magullodev.aiapps.core.ai.ModelRate
 import dev.magullodev.aiapps.tools.monitor.quiz10.Quiz10GameStatus
 import dev.magullodev.aiapps.tools.monitor.quiz10.buildQuiz10History
-import dev.magullodev.aiapps.tools.monitor.quiz10.formatQuiz10Game
-import dev.magullodev.aiapps.tools.monitor.quiz10.formatQuiz10History
-import dev.magullodev.aiapps.tools.monitor.quiz10.renderQuiz10Chart
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -48,14 +45,10 @@ class TotalCostHistoryTest {
         assertEquals(1778, game.totalOutputTokens)
         assertEquals(0, game.totalCost.amount!!.compareTo(BigDecimal("4979")))
         assertEquals(0, history.rolling.single().cost.amount!!.compareTo(game.totalCost.amount))
-        val detail = formatQuiz10Game(game)
-        assertContains(detail, "terra | coverage | 442 | 938 | 2318.000000 USD (historical rate)")
-        assertContains(detail, "terra | review | 981 | 840 | 2661.000000 USD (historical rate)")
-        assertContains(detail, "TOTAL PARTIDA: 4979.000000 USD (historical rate)")
-        assertContains(detail, "Entrada: 1.423 tokens")
-        assertContains(detail, "Salida: 1.778 tokens")
-        assertFalse(detail.contains("Development total:"))
-        assertContains(renderQuiz10Chart(history.rolling), "4979.000000")
+        val html = renderMonitorPage(history)
+        assertContains(html, "<svg")
+        assertContains(html, "<td>terra</td><td>1423</td><td>1778</td><td>1423.000000 USD</td><td>3556.000000 USD</td><td>4979.000000 USD</td>")
+        assertContains(html, "<td>TOTAL PARTIDA</td><td>1423</td><td>1778</td><td>1423.000000 USD</td><td>3556.000000 USD</td><td>4979.000000 USD</td>")
     }
 
     @Test
@@ -75,10 +68,12 @@ class TotalCostHistoryTest {
         assertEquals(0, live.rolling.single().individualCost.amount!!.compareTo(BigDecimal("14")))
         assertEquals(0, live.rolling.single().sampleSize)
         assertNull(live.rolling.single().cost.amount)
-        assertContains(formatQuiz10History(live), "#1 | IN_PROGRESS | 14.000000 USD~*")
-        assertContains(renderQuiz10Chart(live.rolling), "P in progress")
-        assertContains(formatQuiz10Game(live.tests.single()), "TOTAL PARTIDA (acumulado provisional): 14.000000 USD (retrospective estimate)")
-        assertContains(formatQuiz10Game(live.tests.single()), "mini | other | 3 | 0 | 9.000000 USD (retrospective estimate)")
+        val html = renderMonitorPage(live)
+        assertContains(html, "<svg")
+        assertContains(html, "14.000000 USD")
+        assertContains(html, "Provisional")
+        assertContains(html, "Retrospectivo")
+        assertContains(html, "<td>mini</td><td>3</td><td>0</td><td>9.000000 USD")
 
         val updatedRecords = initial + call("m2", "game", 4, "mini", "other", 2, 0)
         val updated = buildQuiz10History(updatedRecords, 10, rates)
@@ -89,7 +84,7 @@ class TotalCostHistoryTest {
         assertEquals(Quiz10GameStatus.COMPLETED, closed.tests.single().status)
         assertEquals(1, closed.rolling.single().sampleSize)
         assertEquals(0, closed.rolling.single().cost.amount!!.compareTo(BigDecimal("20")))
-        assertContains(renderQuiz10Chart(closed.rolling), "C completed")
+        assertContains(renderMonitorPage(closed), "Media móvil de partidas cerradas")
     }
 
     @Test
@@ -105,8 +100,10 @@ class TotalCostHistoryTest {
         assertEquals(AiCostDeterminability.PARTIAL, history.rolling.single().individualCost.determinability)
         assertNull(history.rolling.single().cost.amount)
         assertNull(history.comparison)
-        assertContains(formatQuiz10Game(history.tests.single()), "missing rate for mini; configure AI_APPS_PRICING_FILE")
-        assertFalse(renderQuiz10Chart(history.rolling).contains("|*"))
+        val html = renderMonitorPage(history)
+        assertContains(html, "Sin tarifa: mini")
+        assertContains(html, "(parcial)")
+        assertFalse(html.contains("class=\"individual-point\" cx="))
     }
 
     @Test
@@ -127,7 +124,7 @@ class TotalCostHistoryTest {
         assertEquals(0, comparison.current.amount!!.compareTo(BigDecimal("3")))
         assertEquals(0, comparison.difference.compareTo(BigDecimal("1")))
         assertEquals(0, comparison.percent!!.compareTo(BigDecimal("50")))
-        assertContains(formatQuiz10History(history), "#20 | COMPLETED | 3.000000 USD")
+        assertContains(renderMonitorPage(history), "#20 · game-20")
     }
 
     @Test
@@ -145,16 +142,11 @@ class TotalCostHistoryTest {
         assertEquals(listOf(1, 1, 1), history.rolling.map { it.sampleSize })
         assertEquals(listOf("2", "5", "7"), history.rolling.map { it.individualCost.amount!!.stripTrailingZeros().toPlainString() })
         assertTrue(history.rolling.all { it.cost.amount!!.compareTo(BigDecimal("2")) == 0 })
-        val chart = renderQuiz10Chart(history.rolling)
-        assertContains(chart, "C completed, F failed, P in progress, U unknown status")
-        assertContains(chart, "Rolling average of closed games")
-        assertContains(chart, "Game #1 -> #3")
-        assertTrue(chart.lines().any { it.contains("|") && it.contains("C") })
-        assertTrue(chart.lines().any { it.contains("|") && it.contains("P") })
-        assertTrue(chart.lines().any { it.contains("|") && it.contains("U") })
-        assertTrue(chart.lines().any { it.contains("|") && it.contains("*") })
-        assertContains(formatQuiz10History(history), "#3 | UNKNOWN | 7.000000 USD")
-        assertFalse(formatQuiz10History(history).contains("Latest test"))
+        val html = renderMonitorPage(history)
+        assertContains(html, "<svg")
+        assertContains(html, "#3 · unknown")
+        assertContains(html, "UNKNOWN")
+        assertContains(html, "Media móvil de partidas cerradas")
     }
 
     @Test
@@ -167,7 +159,7 @@ class TotalCostHistoryTest {
         assertEquals(Quiz10GameStatus.FAILED, history.tests.single().status)
         assertEquals(1, history.rolling.single().sampleSize)
         assertEquals(0, history.rolling.single().cost.amount!!.compareTo(BigDecimal("4")))
-        assertContains(renderQuiz10Chart(history.rolling), "F failed")
+        assertContains(renderMonitorPage(history), "FAILED")
     }
 
     @Test
@@ -211,8 +203,20 @@ class TotalCostHistoryTest {
         val history = buildQuiz10History(records, 10)
         assertEquals(AiCostDeterminability.PARTIAL, history.rolling.last().cost.determinability)
         assertNull(history.comparison)
-        assertFalse(formatQuiz10History(history).contains("Comparison"))
+        assertContains(renderMonitorPage(history), "Indeterminable")
         assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.rolling.last().individualCost.determinability)
+    }
+
+    @Test
+    fun missingInputUsageKeepsSeparateOutputAndPartialTotal() {
+        val record = call("partial", "game", 1, "terra", "coverage", 0, 1,
+            AiUsageRateSnapshot("USD", "1000000", "2000000")).copy(inputTokens = null)
+        val costs = estimateCallCosts(record)
+        assertEquals(AiCostDeterminability.NOT_DETERMINABLE, costs.input.determinability)
+        assertEquals(0, costs.output.amount!!.compareTo(BigDecimal("2")))
+        assertEquals(AiCostDeterminability.PARTIAL, costs.total.determinability)
+        val html = renderMonitorPage(buildQuiz10History(listOf(record), 10))
+        assertContains(html, "<td>terra</td><td>—</td><td>1</td><td>Indeterminable</td><td>2.000000 USD</td><td>2.000000 USD (parcial)</td>")
     }
 
     @Test
@@ -223,7 +227,10 @@ class TotalCostHistoryTest {
         val estimate = estimateCallCost(record, configured)
         assertEquals(0, estimate.amount!!.compareTo(BigDecimal.ONE))
         assertEquals(AiCostRateSource.SNAPSHOT, estimate.rateSource)
+        val costs = estimateCallCosts(record, configured)
+        assertEquals(0, costs.input.amount!!.compareTo(BigDecimal.ONE))
+        assertEquals(0, costs.output.amount!!.compareTo(BigDecimal.ZERO))
         val history = buildQuiz10History(listOf(record), 10, configured)
-        assertContains(formatQuiz10Game(history.tests.single()), "TOTAL PARTIDA: 1.000000 USD (historical rate)")
+        assertContains(renderMonitorPage(history), "1.000000 USD")
     }
 }

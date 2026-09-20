@@ -12,64 +12,15 @@ AI usage instrumentation and append-only recording remain in `core/ai`.
 From the repository root:
 
 ```bash
+AI_APPS_PRICING_FILE="$PWD/.ai-apps/pricing.json" \
 ./gradlew -q :tools:monit-ai:run
 ```
 
-The default view displays a cost chart and a compact execution table for the currently integrated game history.
+MONIT-AI starts a local read-only web application at `http://localhost:8081`. Open that address in a browser through the Dev Container port forwarding. The page reads the existing usage records on every request; refreshing it updates the view without starting Quiz10 or calling AI models. The server binds to the container's loopback interface.
 
-The chart shows the total AI cost of each game and a rolling average calculated from closed games. The table lists all recorded games from newest to oldest, with their number, state, and total cost.
+The current visual integration shows Quiz10's game history. Its SVG chart plots each game's total AI cost in red and the rolling average of closed games in blue. Select a 10, 25, 50 (default), or 100-game window on the page. Games in progress and games with unknown lifecycle state stay in the individual history, but do not enter the rolling average. Indeterminable costs leave gaps in the chart.
 
-The current default chart is a game-history view, not a cross-application chart. Other applications can be inspected through MONIT-AI's usage queries.
-
-### Rolling averages
-
-```bash
-./gradlew -q :tools:monit-ai:run --args="--window=50"
-```
-
-Supported windows are 10, 25, 50 (default), and 100 closed games.
-
-Early windows use the available closed-game count. Games in progress remain visible with provisional accumulated costs but do not affect rolling averages.
-
-The current game-history integration distinguishes these states:
-
-- `COMPLETED`: execution completed.
-- `FAILED`: execution ended in failure.
-- `IN_PROGRESS`: execution started but has no recorded terminal event.
-- `UNKNOWN`: available records do not establish the execution's lifecycle state.
-
-Rolling averages use completed and failed games. Games of unknown state remain visible in the individual cost history but are excluded from these averages.
-
-An unavailable or indeterminable cost is not plotted as a measured value.
-
-## Usage queries
-
-```bash
-# Global usage report
-./gradlew -q :tools:monit-ai:run --args="--all"
-
-# Usage for a specific application
-./gradlew -q :tools:monit-ai:run --args="--app=<application-id>"
-
-# Usage for a specific execution
-./gradlew -q :tools:monit-ai:run --args="--app=<application-id> --work-unit=<id>"
-
-# Usage for a specific model
-./gradlew -q :tools:monit-ai:run --args="--model=<model-id>"
-
-# Usage for a specific operation
-./gradlew -q :tools:monit-ai:run --args="--operation=<operation-id>"
-```
-
-`--all` displays the technical usage report, including breakdowns by application, model, operation, and execution.
-
-`--app`, `--model`, `--operation`, and `--work-unit` provide exact-match filtering.
-
-An execution is identified by its application and `workUnitId`. Identical work-unit identifiers belonging to different applications remain separate.
-
-The current game-history integration also supports a consolidated execution detail containing recorded AI calls, token consumption, costs, durations, results, and available audit information.
-
-The default chart and table omit these technical details. They remain available through the corresponding detailed queries.
+Below the chart, the table lists every game from newest to oldest. It groups calls by model and shows input tokens, output tokens, their separate estimated costs, and the total for each model and game. Provisional, retrospective, partial, and indeterminable amounts are identified in the table.
 
 ## Files
 
@@ -93,7 +44,7 @@ To select a specific usage file, set `AI_APPS_USAGE_FILE`:
 
 ```bash
 AI_APPS_USAGE_FILE="/path/to/ai-usage.jsonl" \
-./gradlew -q :tools:monit-ai:run --args="--all"
+./gradlew -q :tools:monit-ai:run
 ```
 
 Selecting an explicit file overrides automatic file discovery.
@@ -110,7 +61,7 @@ If a call has no recorded rate, an explicit pricing file may provide a retrospec
 
 ```bash
 AI_APPS_PRICING_FILE="$PWD/.ai-apps/pricing.json" \
-./gradlew -q :tools:monit-ai:run --args="--window=50"
+./gradlew -q :tools:monit-ai:run
 ```
 
 Retrospectively estimated costs are identified as such. They are not presented as rates recorded at the time of the original call.
