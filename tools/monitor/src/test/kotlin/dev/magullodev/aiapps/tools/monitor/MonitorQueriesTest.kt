@@ -467,6 +467,12 @@ class MonitorQueriesTest {
             val chart = renderQuiz10Chart(history.rolling, 40)
             assertContains(chart, "Game #1 -> #500")
             assertContains(chart, "500 points calculated, 40 shown")
+            if (window == 50) {
+                val rows = formatQuiz10History(history).lines().filter { it.matches(Regex("^#\\d+ \\|.*")) }
+                assertEquals(500, rows.size)
+                assertContains(rows.first(), "#500 | COMPLETED | 1500.000000 USD")
+                assertContains(rows.last(), "#1 | COMPLETED | 1001.000000 USD")
+            }
         }
     }
 
@@ -488,7 +494,7 @@ class MonitorQueriesTest {
         assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.rolling.last().cost.determinability)
         val report = formatQuiz10History(history)
         assertEquals(2, history.tests.first().audits.single().auditPosition)
-        assertContains(report, "TOTAL PARTIDA: not determinable")
+        assertContains(report, "#2 | UNKNOWN | indeterminable")
     }
 
     @Test
@@ -544,8 +550,8 @@ class MonitorQueriesTest {
         assertEquals(Quiz10GameStatus.UNKNOWN, history.tests.first().status)
         assertEquals(4, history.rolling.size)
         val report = formatQuiz10History(history)
-        assertContains(report, "status=FAILED")
-        assertContains(report, "TOTAL PARTIDA: not determinable")
+        assertContains(report, "#4 | FAILED | indeterminable")
+        assertContains(report, "#2 | IN_PROGRESS | 9.000000 USD~")
     }
 
     private class StaticTransport(

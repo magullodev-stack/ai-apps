@@ -23,6 +23,7 @@ internal fun runMonitor(args: Array<String>, env: Map<String, String> = System.g
                 query.quiz10History(window).tests.firstOrNull { it.workUnitId == filter.workUnitId } else null
             if (game == null) summary else summary + "\n" + formatQuiz10Game(game)
         }
+        filter.application == "quiz10-web" && filter.model == null && filter.operation == null -> formatQuiz10History(query.quiz10History(window))
         filter.application != null || filter.model != null || filter.operation != null -> formatUsageSummary(query.summarize(filter))
         else -> formatQuiz10History(query.quiz10History(window))
     }

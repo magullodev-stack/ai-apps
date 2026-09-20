@@ -169,27 +169,22 @@ private fun tokenText(calls: List<AiUsageRecord>, input: Boolean): String {
 }
 
 fun formatQuiz10History(history: Quiz10History, width: Int = 80): String = buildString {
-    appendLine("Quiz10 total AI cost history (${history.tests.size} games)")
-    appendLine("Rolling average of total game cost: last ${history.window} closed games; early samples use available closed games")
     appendLine(renderQuiz10Chart(history.rolling, width))
-    val latest = history.rolling.lastOrNull()
-    if (latest != null) appendLine("Latest rolling average (n=${latest.sampleSize}): ${if (latest.sampleSize == 0) "unavailable" else costText(latest.cost)}")
-    val comparison = history.comparison
-    if (comparison == null) appendLine("Comparison with previous ${history.window} closed games: unavailable")
-    else {
-        appendLine("Current ${history.window} closed-game average: ${costText(comparison.current)}")
-        appendLine("Previous ${history.window} closed-game average: ${costText(comparison.previous)}")
-        val direction = if (comparison.difference.signum() < 0) "reduction" else "increase"
-        appendLine("Change: $direction ${comparison.difference.abs().setScale(6, RoundingMode.HALF_UP)} USD (${comparison.percent?.abs()?.setScale(2, RoundingMode.HALF_UP) ?: "unavailable"}%)")
+    appendLine()
+    appendLine("Partidas (~ coste provisional, * tarifa retrospectiva)")
+    appendLine("# | ESTADO | COSTE TOTAL")
+    history.tests.asReversed().forEach { game ->
+        val cost = game.totalCost
+        val amount = cost.amount?.setScale(6, RoundingMode.HALF_UP)?.toPlainString()
+        val value = when (cost.determinability) {
+            AiCostDeterminability.KNOWN -> "$amount ${cost.currency}"
+            AiCostDeterminability.PARTIAL -> "${amount?.let { "$it ${cost.currency ?: ""}" } ?: "indeterminable"} (parcial)"
+            AiCostDeterminability.NOT_DETERMINABLE -> "indeterminable"
+        }
+        val provisional = if (game.status == Quiz10GameStatus.IN_PROGRESS) "~" else ""
+        val retrospective = if (cost.rateSource == AiCostRateSource.RETROSPECTIVE) "*" else ""
+        appendLine("#${game.position} | ${game.status} | $value$provisional$retrospective")
     }
-    val recent = history.tests.takeLast(10).asReversed()
-    appendLine("Last 10 games (n=${recent.size}):")
-    recent.forEach { game ->
-        appendLine("#${game.position} ${game.workUnitId} ${game.startedAt} status=${game.status}${if (game.status == Quiz10GameStatus.IN_PROGRESS) " (provisional)" else ""} calls=${game.totalCalls} input=${tokenText(game.allCalls, true)} output=${tokenText(game.allCalls, false)} total=${costText(game.totalCost)} rejected=${game.rejectedRows ?: "unknown"} substitutions=${game.substitutionAttempts}")
-    }
-    val recentClosed = recent.filter { it.status == Quiz10GameStatus.COMPLETED || it.status == Quiz10GameStatus.FAILED }
-    appendLine("Last 10 closed-game average (n=${recentClosed.size}): ${if (recentClosed.isEmpty()) "unavailable" else costText(averageTotalCost(recentClosed))}")
-    recent.firstOrNull()?.let { append(formatQuiz10Game(it)) }
 }
 
 fun formatQuiz10Game(game: Quiz10Test): String = buildString {

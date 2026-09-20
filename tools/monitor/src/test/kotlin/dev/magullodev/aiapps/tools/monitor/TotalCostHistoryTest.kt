@@ -75,7 +75,7 @@ class TotalCostHistoryTest {
         assertEquals(0, live.rolling.single().individualCost.amount!!.compareTo(BigDecimal("14")))
         assertEquals(0, live.rolling.single().sampleSize)
         assertNull(live.rolling.single().cost.amount)
-        assertContains(formatQuiz10History(live), "Latest rolling average (n=0): unavailable")
+        assertContains(formatQuiz10History(live), "#1 | IN_PROGRESS | 14.000000 USD~*")
         assertContains(renderQuiz10Chart(live.rolling), "P in progress")
         assertContains(formatQuiz10Game(live.tests.single()), "TOTAL PARTIDA (acumulado provisional): 14.000000 USD (retrospective estimate)")
         assertContains(formatQuiz10Game(live.tests.single()), "mini | other | 3 | 0 | 9.000000 USD (retrospective estimate)")
@@ -127,7 +127,7 @@ class TotalCostHistoryTest {
         assertEquals(0, comparison.current.amount!!.compareTo(BigDecimal("3")))
         assertEquals(0, comparison.difference.compareTo(BigDecimal("1")))
         assertEquals(0, comparison.percent!!.compareTo(BigDecimal("50")))
-        assertContains(formatQuiz10History(history), "Change: increase 1.000000 USD (50.00%)")
+        assertContains(formatQuiz10History(history), "#20 | COMPLETED | 3.000000 USD")
     }
 
     @Test
@@ -153,8 +153,8 @@ class TotalCostHistoryTest {
         assertTrue(chart.lines().any { it.contains("|") && it.contains("P") })
         assertTrue(chart.lines().any { it.contains("|") && it.contains("U") })
         assertTrue(chart.lines().any { it.contains("|") && it.contains("*") })
-        assertContains(formatQuiz10History(history), "Last 10 closed-game average (n=1): 2.000000 USD")
-        assertFalse(formatQuiz10History(history).contains("average (provisional)"))
+        assertContains(formatQuiz10History(history), "#3 | UNKNOWN | 7.000000 USD")
+        assertFalse(formatQuiz10History(history).contains("Latest test"))
     }
 
     @Test
@@ -211,7 +211,7 @@ class TotalCostHistoryTest {
         val history = buildQuiz10History(records, 10)
         assertEquals(AiCostDeterminability.PARTIAL, history.rolling.last().cost.determinability)
         assertNull(history.comparison)
-        assertContains(formatQuiz10History(history), "Comparison with previous 10 closed games: unavailable")
+        assertFalse(formatQuiz10History(history).contains("Comparison"))
         assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.rolling.last().individualCost.determinability)
     }
 
