@@ -1,6 +1,11 @@
-# MONITOR
 
-MONITOR is the standalone observation tool for AI-APPS. It reads the existing JSONL usage records; it does not start Quiz10 Web or call models. Instrumentation and append-only recording remain in `core/ai`.
+# MONIT-AI
+
+MONIT-AI is the standalone AI usage and cost observation tool for AI-APPS.
+
+It reads existing usage records to report AI consumption, attribute costs to applications and executions, and inspect historical activity. It does not launch observed applications or call AI models.
+
+AI usage instrumentation and append-only recording remain in `core/ai`.
 
 ## Run
 
@@ -8,26 +13,116 @@ From the repository root:
 
 ```bash
 ./gradlew -q :tools:monitor:run
+```
+
+The default view displays a cost chart and a compact execution table for the currently integrated game history.
+
+The chart shows the total AI cost of each game and a rolling average calculated from closed games. The table lists all recorded games from newest to oldest, with their number, state, and total cost.
+
+The current default chart is a game-history view, not a cross-application chart. Other applications can be inspected through MONIT-AI's usage queries.
+
+### Rolling averages
+
+```bash
 ./gradlew -q :tools:monitor:run --args="--window=50"
 ```
 
-The default report shows a chart of individual Quiz10 game costs and the closed-game rolling average, followed by a compact table of every game from newest to oldest. The table shows each game number, state, and total cost. A tilde marks provisional accumulated costs, and an asterisk marks retrospective pricing. The window can be 10, 25, 50 (default), or 100 games. Early windows show their actual sample size. Each game point uses its total from every recorded AI call, including preparation, later play, failed calls, and retries. The chart marks completed, failed, in-progress, and unknown-status games separately. An in-progress point shows its provisional accumulated cost and updates as calls arrive. Rolling averages and comparisons use only completed and failed games; their windows count closed games, and early samples show the actual closed-game count. Unknown costs remain unknown and are not plotted as measured values.
+Supported windows are 10, 25, 50 (default), and 100 closed games.
 
-Other queries:
+Early windows use the available closed-game count. Games in progress remain visible with provisional accumulated costs but do not affect rolling averages.
+
+The current game-history integration distinguishes these states:
+
+- `COMPLETED`: execution completed.
+- `FAILED`: execution ended in failure.
+- `IN_PROGRESS`: execution started but has no recorded terminal event.
+- `UNKNOWN`: available records do not establish the execution's lifecycle state.
+
+Rolling averages use completed and failed games. Games of unknown state remain visible in the individual cost history but are excluded from these averages.
+
+An unavailable or indeterminable cost is not plotted as a measured value.
+
+## Usage queries
 
 ```bash
+# Global usage report
 ./gradlew -q :tools:monitor:run --args="--all"
-./gradlew -q :tools:monitor:run --args="--app=quiz10-web --work-unit=<id>"
-./gradlew -q :tools:monitor:run --args="--model=<id>"
-./gradlew -q :tools:monitor:run --args="--operation=<id>"
+
+# Usage for a specific application
+./gradlew -q :tools:monitor:run --args="--app=<application-id>"
+
+# Usage for a specific execution
+./gradlew -q :tools:monitor:run --args="--app=<application-id> --work-unit=<id>"
+
+# Usage for a specific model
+./gradlew -q :tools:monitor:run --args="--model=<model-id>"
+
+# Usage for a specific operation
+./gradlew -q :tools:monitor:run --args="--operation=<operation-id>"
 ```
 
-`--app=quiz10-web` gives the same chart and table as the default command. `--all` gives the global report with application, model, operation, and execution breakdowns. An execution is identified by its application and `workUnitId`, so identical identifiers from different applications stay separate. `--app`, `--model`, `--operation`, and `--work-unit` retain the existing exact-match filtering behavior. A Quiz10 `--work-unit` query includes its consolidated game detail. The default chart and table omit call details, audits, tokens, work-unit IDs, and period comparisons. Audit rows include positions, reasons, and replacement attempts where recorded.
+`--all` displays the technical usage report, including breakdowns by application, model, operation, and execution.
 
-## Files and costs
+`--app`, `--model`, `--operation`, and `--work-unit` provide exact-match filtering.
 
-The default path is `.ai-apps/usage/ai-usage.jsonl` at the repository root. MONITOR also reads existing usage files under `apps/*/.ai-apps/usage/` and deduplicates records by `recordId`. `AI_APPS_USAGE_FILE` selects one explicit file and overrides discovery. Gradle runs both the web application and MONITOR from the repository root for new recordings. No historical file is moved or rewritten.
+An execution is identified by its application and `workUnitId`. Identical work-unit identifiers belonging to different applications remain separate.
 
-Each call uses its recorded rate snapshot. If a call has no snapshot, an explicit `AI_APPS_PRICING_FILE` may supply a retrospective estimate for that model. The report labels historical rates and retrospective estimates separately. Missing rates or usage produce partial or indeterminable estimates; the missing model is named and the report points to `AI_APPS_PRICING_FILE`. Different currencies are not summed. The Quiz10 preparation cost covers every `coverage`, `review`, and `substitutions` call, including failed attempts. Development cost covers Luna and other later calls. Total cost includes both. A game with a recorded start and no terminal event is `IN_PROGRESS`; a terminal event yields `COMPLETED` or `FAILED`; older games without lifecycle events are `UNKNOWN`. An individual game detail lists each recorded call with model, operation, input and output tokens, estimated cost, duration, and result, followed by total game cost and token totals. Preparation and later-call subtotals appear only when those calls exist. The individual chart points use total game cost. Rolling averages and comparisons use that same total for closed games only. Incomplete costs prevent a complete average; they are not plotted as measured values. A game in progress has a provisional accumulated total; the completed or failed event closes its recorded total.
+The current game-history integration also supports a consolidated execution detail containing recorded AI calls, token consumption, costs, durations, results, and available audit information.
 
-The JSONL format and pricing configuration are documented in [`core/ai/README.md`](../../core/ai/README.md).
+The default chart and table omit these technical details. They remain available through the corresponding detailed queries.
+
+## Files
+
+MONIT-AI reads usage records from:
+
+```text
+.ai-apps/usage/ai-usage.jsonl
+```
+
+This path is relative to the repository root.
+
+MONIT-AI also reads existing usage files under:
+
+```text
+apps/*/.ai-apps/usage/
+```
+
+Records are deduplicated by `recordId`.
+
+To select a specific usage file, set `AI_APPS_USAGE_FILE`:
+
+```bash
+AI_APPS_USAGE_FILE="/path/to/ai-usage.jsonl" \
+./gradlew -q :tools:monitor:run --args="--all"
+```
+
+Selecting an explicit file overrides automatic file discovery.
+
+MONIT-AI does not move or rewrite historical usage records.
+
+## Cost calculation
+
+The total AI cost of an execution is the sum of the costs of all AI calls attributed to it, including retries and failed attempts when their consumption is recorded.
+
+Each call uses its recorded rate snapshot when available.
+
+If a call has no recorded rate, an explicit pricing file may provide a retrospective estimate for its model:
+
+```bash
+AI_APPS_PRICING_FILE="$PWD/.ai-apps/pricing.json" \
+./gradlew -q :tools:monitor:run
+```
+
+Retrospectively estimated costs are identified as such. They are not presented as rates recorded at the time of the original call.
+
+If required consumption or pricing information is missing, MONIT-AI reports the cost as partial or indeterminable rather than silently treating missing costs as zero.
+
+Costs expressed in different currencies are not summed.
+
+An execution in progress has a provisional accumulated cost that can change as further AI calls are recorded. A recorded terminal event closes its execution lifecycle.
+
+Historical reports are recalculated from the available records whenever MONIT-AI runs. The underlying usage records are not modified.
+
+## Data format
+
+The JSONL usage format and pricing configuration are documented in [`core/ai/README.md`](../../core/ai/README.md).

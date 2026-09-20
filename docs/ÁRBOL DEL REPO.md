@@ -65,9 +65,9 @@ ai-apps/
 │   └── cuina/                         # Composición móvil de Cuina. [FUTURO]
 │
 ├── tools/                             # Herramientas autónomas y transversales de AI-APPS.
-│   └── monitor/                       # Observación, análisis e informes de consumo, costes,
+│   └── monit-ai/                       # Observación, análisis e informes de consumo, costes,
 │       │                              # rendimiento y auditorías de las ejecuciones de AI-APPS.
-│       └── README.md                  # Documentación de la herramienta MONITOR.
+│       └── README.md                  # Documentación de la herramienta MONIT-AI.
 │
 ├── docs/
 │   ├── MANIFIESTO ARQUITECTÓNICO.md   # Arquitectura global.
