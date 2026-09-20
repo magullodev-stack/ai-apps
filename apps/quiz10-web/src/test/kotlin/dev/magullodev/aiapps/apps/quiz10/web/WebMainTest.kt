@@ -233,6 +233,22 @@ class WebMainTest {
         assertContains(rendered, "Cobertura desbalanceada")
     }
 
+    @Test
+    fun monitorDefaultsToHistoricalReportAndKeepsLegacyAllView() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(file, mapOf("terra" to dev.magullodev.aiapps.core.ai.ModelRate("USD", "1".toBigDecimal(), "1".toBigDecimal())))
+        monitor.recordCall(dev.magullodev.aiapps.core.ai.AiUsageCallEvent("quiz10-web",
+            dev.magullodev.aiapps.core.ai.AiUsageOperation.COVERAGE, "terra", 3,
+            dev.magullodev.aiapps.core.ai.AiUsageCallResult.SUCCESS, "test-1", 10, 5, 15, true))
+        val env = mapOf("AI_APPS_USAGE_FILE" to file.toString())
+        val historical = runUsageMonitor(arrayOf("--usage-monitor", "--window=25"), env)
+        assertContains(historical, "Rolling average: last 25 tests")
+        assertContains(historical, "Latest test #1 test-1")
+        assertContains(historical, "coverage terra")
+        val all = runUsageMonitor(arrayOf("--usage-monitor", "--all"), env)
+        assertContains(all, "AI usage monitor")
+    }
+
     private fun usageFile(): Path {
         val root = Path.of("build", "tmp", "quiz10-web-main-tests")
         Files.createDirectories(root)

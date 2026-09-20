@@ -13,6 +13,7 @@ import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.ai.formatUsageSummary
+import dev.magullodev.aiapps.core.ai.formatQuiz10History
 import dev.magullodev.aiapps.core.ai.loadModelRates
 import dev.magullodev.aiapps.core.ai.resolveUsageFile
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
@@ -82,7 +83,9 @@ internal fun runUsageMonitor(args: Array<String>, env: Map<String, String> = Sys
     val usageFile = resolveUsageFile(env)
     val query = AiUsageQueryService(AiUsageRecordRepository(usageFile))
     val filter = parseUsageFilterArgs(args)
-    val rendered = formatUsageSummary(query.summarize(filter))
+    val window = args.firstOrNull { it.startsWith("--window=") }?.substringAfter("=")?.toIntOrNull() ?: 50
+    val rendered = if (args.contains("--all") || filter.workUnitId != null || filter.application != null || filter.model != null || filter.operation != null)
+        formatUsageSummary(query.summarize(filter)) else formatQuiz10History(query.quiz10History(window))
     println(rendered)
     return rendered
 }

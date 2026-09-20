@@ -436,7 +436,71 @@ class AiUsageMonitorTest {
         assertTrue((summary.totalCostByCurrency["USD"] ?: "0".toBigDecimal()) > java.math.BigDecimal.ZERO)
     }
 
+    // Historical reconstruction is verified with synthetic persisted calls.
+    @Test
+    fun reconstructsFiveHundredTestsAndRollingWindows() {
+        val file = usageFile()
+        val rate = ModelRate("USD", "1000000".toBigDecimal(), "0".toBigDecimal())
+        val monitor = FileAiUsageMonitor(file, mapOf("terra" to rate, "luna" to rate))
+        (1..500).forEach { number ->
+            val id = "test-${number.toString().padStart(3, '0')}"
+            monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 1,
+                AiUsageCallResult.SUCCESS, id, number.toLong(), 0, number.toLong(), true))
+            monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.LUNA, "luna", 1,
+                AiUsageCallResult.SUCCESS, id, 1000, 0, 1000, true))
+        }
+        val query = AiUsageQueryService(AiUsageRecordRepository(file))
+        for (window in listOf(10, 25, 50, 100)) {
+            val history = query.quiz10History(window)
+            assertEquals(500, history.tests.size)
+            assertEquals(1, history.tests.first().position)
+            assertEquals(500, history.tests.last().position)
+            assertEquals(window, history.rolling.last().sampleSize)
+            assertEquals(window, history.comparison!!.difference.toInt())
+            assertEquals(1, history.tests.last().calls.size)
+            val chart = renderQuiz10Chart(history.rolling, 40)
+            assertContains(chart, "Test #1 -> #500")
+            assertContains(chart, "500 points calculated, 40 shown")
+        }
+    }
+
+    @Test
+    fun retainsUnknownCostsAuditsAndFailedPreparation() {
+        val records = listOf(
+            AiUsageRecord("a", "2026-01-01T00:00:00Z", "ai_call", "quiz10-web", "one", "coverage", "terra", result = "error",
+                inputTokens = 2, outputTokens = 0, rate = AiUsageRateSnapshot("USD", "1000000", "0")),
+            AiUsageRecord("b", "2026-01-01T00:00:01Z", "ai_call", "quiz10-web", "one", "substitutions", "terra", result = "success",
+                inputTokens = 3, outputTokens = 0, rate = AiUsageRateSnapshot("USD", "1000000", "0")),
+            AiUsageRecord("c", "2026-01-01T00:00:02Z", "audit", "quiz10-web", "one", auditPhase = "initial_review",
+                auditResult = "rejected", auditPosition = 2, auditReason = "incorrect"),
+            AiUsageRecord("d", "2026-01-02T00:00:00Z", "ai_call", "quiz10-web", "two", "review", "terra", result = "error"),
+        )
+        val history = buildQuiz10History(records, 10)
+        assertEquals("5", history.tests.first().cost.amount?.stripTrailingZeros()?.toPlainString())
+        assertEquals(1, history.tests.first().rejectedRows)
+        assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.tests.last().cost.determinability)
+        assertEquals(AiCostDeterminability.PARTIAL, history.rolling.last().cost.determinability)
+        val report = formatQuiz10History(history)
+        assertEquals(2, history.tests.first().audits.single().auditPosition)
+        assertContains(report, "cost=not determinable")
+    }
+
+    @Test
+    fun doesNotCombineCurrencies() {
+        val records = listOf(
+            AiUsageRecord("usd", "2026-01-01T00:00:00Z", "ai_call", "quiz10-web", "mixed", "coverage", "terra",
+                inputTokens = 1, outputTokens = 0, rate = AiUsageRateSnapshot("USD", "1000000", "0")),
+            AiUsageRecord("eur", "2026-01-01T00:00:01Z", "ai_call", "quiz10-web", "mixed", "review", "terra",
+                inputTokens = 1, outputTokens = 0, rate = AiUsageRateSnapshot("EUR", "1000000", "0")),
+        )
+        val history = buildQuiz10History(records, 10)
+        assertEquals(null, history.tests.single().cost.amount)
+        assertEquals(AiCostDeterminability.PARTIAL, history.tests.single().cost.determinability)
+        assertEquals(null, history.rolling.single().cost.amount)
+    }
+
     private class StaticTransport(
+
         private val response: Outcome<HttpResponse, NetworkError>,
     ) : HttpTransport {
         override fun execute(request: dev.magullodev.aiapps.core.network.HttpRequest): Outcome<HttpResponse, NetworkError> = response

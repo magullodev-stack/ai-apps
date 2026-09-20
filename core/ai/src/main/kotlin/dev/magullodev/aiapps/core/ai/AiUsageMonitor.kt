@@ -302,6 +302,8 @@ data class AiUsageGroupSummary(
 class AiUsageQueryService(
     private val repository: AiUsageRecordRepository,
 ) {
+    fun quiz10History(window: Int = 50): Quiz10History = buildQuiz10History(repository.readAll(), window)
+
     fun summarize(filter: AiUsageFilter = AiUsageFilter()): AiUsageSummary {
         val all = repository.readAll()
         val filtered = all.filter { record ->
