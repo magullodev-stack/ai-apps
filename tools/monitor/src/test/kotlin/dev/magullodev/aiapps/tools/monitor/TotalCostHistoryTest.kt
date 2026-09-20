@@ -72,21 +72,24 @@ class TotalCostHistoryTest {
         val live = buildQuiz10History(initial, 10, rates)
         assertEquals(Quiz10GameStatus.IN_PROGRESS, live.tests.single().status)
         assertEquals(0, live.tests.single().totalCost.amount!!.compareTo(BigDecimal("14")))
-        assertEquals(0, live.rolling.single().cost.amount!!.compareTo(BigDecimal("14")))
-        assertTrue(live.rolling.single().provisional)
-        assertContains(formatQuiz10History(live), "Latest rolling average (provisional)")
+        assertEquals(0, live.rolling.single().individualCost.amount!!.compareTo(BigDecimal("14")))
+        assertEquals(0, live.rolling.single().sampleSize)
+        assertNull(live.rolling.single().cost.amount)
+        assertContains(formatQuiz10History(live), "Latest rolling average (n=0): unavailable")
+        assertContains(renderQuiz10Chart(live.rolling), "P in progress")
         assertContains(formatQuiz10Game(live.tests.single()), "TOTAL PARTIDA (acumulado provisional): 14.000000 USD (retrospective estimate)")
         assertContains(formatQuiz10Game(live.tests.single()), "mini | other | 3 | 0 | 9.000000 USD (retrospective estimate)")
 
         val updatedRecords = initial + call("m2", "game", 4, "mini", "other", 2, 0)
         val updated = buildQuiz10History(updatedRecords, 10, rates)
         assertEquals(0, updated.tests.single().totalCost.amount!!.compareTo(BigDecimal("20")))
-        assertEquals(0, updated.rolling.single().cost.amount!!.compareTo(BigDecimal("20")))
-        assertTrue(updated.rolling.single().provisional)
+        assertEquals(0, updated.rolling.single().individualCost.amount!!.compareTo(BigDecimal("20")))
+        assertNull(updated.rolling.single().cost.amount)
         val closed = buildQuiz10History(updatedRecords + event("end", "game", 5, "quiz10_game_completed"), 10, rates)
         assertEquals(Quiz10GameStatus.COMPLETED, closed.tests.single().status)
-        assertFalse(closed.rolling.single().provisional)
+        assertEquals(1, closed.rolling.single().sampleSize)
         assertEquals(0, closed.rolling.single().cost.amount!!.compareTo(BigDecimal("20")))
+        assertContains(renderQuiz10Chart(closed.rolling), "C completed")
     }
 
     @Test
@@ -99,7 +102,8 @@ class TotalCostHistoryTest {
         val total = history.tests.single().totalCost
         assertEquals(AiCostDeterminability.PARTIAL, total.determinability)
         assertEquals(setOf("mini"), total.missingRateModels)
-        assertEquals(AiCostDeterminability.PARTIAL, history.rolling.single().cost.determinability)
+        assertEquals(AiCostDeterminability.PARTIAL, history.rolling.single().individualCost.determinability)
+        assertNull(history.rolling.single().cost.amount)
         assertNull(history.comparison)
         assertContains(formatQuiz10Game(history.tests.single()), "missing rate for mini; configure AI_APPS_PRICING_FILE")
         assertFalse(renderQuiz10Chart(history.rolling).contains("|*"))
@@ -124,6 +128,91 @@ class TotalCostHistoryTest {
         assertEquals(0, comparison.difference.compareTo(BigDecimal("1")))
         assertEquals(0, comparison.percent!!.compareTo(BigDecimal("50")))
         assertContains(formatQuiz10History(history), "Change: increase 1.000000 USD (50.00%)")
+    }
+
+    @Test
+    fun individualHistoryKeepsClosedLiveAndUnknownButOnlyClosedContributesToAverage() {
+        val rate = AiUsageRateSnapshot("USD", "1000000", "0")
+        val records = listOf(
+            call("closed-call", "closed", 1, "terra", "coverage", 2, 0, rate),
+            event("closed-end", "closed", 2, "quiz10_game_completed"),
+            event("live-start", "live", 3, "quiz10_game_started"),
+            call("live-call", "live", 4, "luna", "play", 5, 0, rate),
+            call("unknown-call", "unknown", 5, "mini", "play", 7, 0, rate),
+        )
+        val history = buildQuiz10History(records, 10)
+        assertEquals(listOf("closed", "live", "unknown"), history.tests.map { it.workUnitId })
+        assertEquals(listOf(1, 1, 1), history.rolling.map { it.sampleSize })
+        assertEquals(listOf("2", "5", "7"), history.rolling.map { it.individualCost.amount!!.stripTrailingZeros().toPlainString() })
+        assertTrue(history.rolling.all { it.cost.amount!!.compareTo(BigDecimal("2")) == 0 })
+        val chart = renderQuiz10Chart(history.rolling)
+        assertContains(chart, "C completed, F failed, P in progress, U unknown status")
+        assertContains(chart, "Rolling average of closed games")
+        assertContains(chart, "Game #1 -> #3")
+        assertTrue(chart.lines().any { it.contains("|") && it.contains("C") })
+        assertTrue(chart.lines().any { it.contains("|") && it.contains("P") })
+        assertTrue(chart.lines().any { it.contains("|") && it.contains("U") })
+        assertTrue(chart.lines().any { it.contains("|") && it.contains("*") })
+        assertContains(formatQuiz10History(history), "Last 10 closed-game average (n=1): 2.000000 USD")
+        assertFalse(formatQuiz10History(history).contains("average (provisional)"))
+    }
+
+    @Test
+    fun failedGameContributesItsRecordedCostToClosedAverage() {
+        val rate = AiUsageRateSnapshot("USD", "1000000", "0")
+        val history = buildQuiz10History(listOf(
+            call("failed-call", "failed", 1, "terra", "coverage", 4, 0, rate),
+            event("failed-end", "failed", 2, "quiz10_game_preparation_failed"),
+        ), 10)
+        assertEquals(Quiz10GameStatus.FAILED, history.tests.single().status)
+        assertEquals(1, history.rolling.single().sampleSize)
+        assertEquals(0, history.rolling.single().cost.amount!!.compareTo(BigDecimal("4")))
+        assertContains(renderQuiz10Chart(history.rolling), "F failed")
+    }
+
+    @Test
+    fun allWindowSizesAndComparisonsSkipInterleavedOpenAndUnknownGames() {
+        val rate = AiUsageRateSnapshot("USD", "1000000", "0")
+        val records = (1..200).flatMap { n ->
+            val unit = "closed-${n.toString().padStart(3, '0')}"
+            listOf(
+                call("call-$n", unit, 1, "terra", "coverage", n.toLong(), 0, rate).copy(timestamp = "2026-01-${(n / 24 + 1).toString().padStart(2, '0')}T${(n % 24).toString().padStart(2, '0')}:00:00Z"),
+                event("end-$n", unit, 2, if (n % 2 == 0) "quiz10_game_completed" else "quiz10_game_execution_failed")
+                    .copy(timestamp = "2026-01-${(n / 24 + 1).toString().padStart(2, '0')}T${(n % 24).toString().padStart(2, '0')}:00:01Z"),
+            )
+        } + listOf(
+            event("live-start", "live-last", 1, "quiz10_game_started").copy(timestamp = "2026-02-01T00:00:00Z"),
+            call("live-call", "live-last", 2, "luna", "play", 999, 0, rate).copy(timestamp = "2026-02-01T00:00:01Z"),
+            call("unknown-call", "unknown-last", 3, "mini", "play", 888, 0, rate).copy(timestamp = "2026-02-01T00:00:02Z"),
+        )
+        for (window in listOf(10, 25, 50, 100)) {
+            val history = buildQuiz10History(records, window)
+            assertEquals(202, history.tests.size)
+            assertEquals(window, history.rolling.last().sampleSize)
+            assertEquals(0, history.rolling.last().cost.amount!!.compareTo(BigDecimal(200 - (window - 1) / 2.0).setScale(1)))
+            assertEquals(0, history.comparison!!.difference.compareTo(BigDecimal(window)))
+            assertEquals(Quiz10GameStatus.UNKNOWN, history.rolling.last().status)
+            assertEquals(0, history.rolling.last().individualCost.amount!!.compareTo(BigDecimal("888")))
+        }
+    }
+
+    @Test
+    fun incompleteClosedCostBlocksAverageAndComparisonWithoutPlottingZero() {
+        val rate = AiUsageRateSnapshot("USD", "1000000", "0")
+        val records = (1..20).flatMap { n ->
+            val unit = "game-$n"
+            listOf(
+                call("call-$n", unit, 1, "terra", "coverage", 1, 0, if (n == 20) null else rate)
+                    .copy(timestamp = "2026-01-${n.toString().padStart(2, '0')}T00:00:00Z"),
+                event("end-$n", unit, 2, "quiz10_game_completed")
+                    .copy(timestamp = "2026-01-${n.toString().padStart(2, '0')}T00:00:01Z"),
+            )
+        }
+        val history = buildQuiz10History(records, 10)
+        assertEquals(AiCostDeterminability.PARTIAL, history.rolling.last().cost.determinability)
+        assertNull(history.comparison)
+        assertContains(formatQuiz10History(history), "Comparison with previous 10 closed games: unavailable")
+        assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.rolling.last().individualCost.determinability)
     }
 
     @Test

@@ -451,6 +451,7 @@ class MonitorQueriesTest {
                     inputTokens = number.toLong(), outputTokens = 0, rate = rate),
                 AiUsageRecord("luna-$number", time, "ai_call", "quiz10-web", id, "luna", "luna",
                     inputTokens = 1000, outputTokens = 0, rate = rate),
+                AiUsageRecord("end-$number", time, "metric", "quiz10-web", id, metricName = "quiz10_game_completed"),
             )
         }
         val query = { window: Int -> buildQuiz10History(records, window) }
@@ -484,7 +485,7 @@ class MonitorQueriesTest {
         assertEquals("5", history.tests.first().cost.amount?.stripTrailingZeros()?.toPlainString())
         assertEquals(1, history.tests.first().rejectedRows)
         assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.tests.last().cost.determinability)
-        assertEquals(AiCostDeterminability.PARTIAL, history.rolling.last().cost.determinability)
+        assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.rolling.last().cost.determinability)
         val report = formatQuiz10History(history)
         assertEquals(2, history.tests.first().audits.single().auditPosition)
         assertContains(report, "TOTAL PARTIDA: not determinable")

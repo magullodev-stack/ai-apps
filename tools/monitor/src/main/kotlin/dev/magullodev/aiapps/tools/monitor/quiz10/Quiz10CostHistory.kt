@@ -56,7 +56,8 @@ data class Quiz10RollingPoint(
     val position: Int,
     val sampleSize: Int,
     val cost: AiUsageCostEstimate,
-    val provisional: Boolean = false,
+    val individualCost: AiUsageCostEstimate,
+    val status: Quiz10GameStatus,
 )
 
 data class Quiz10Comparison(
@@ -64,11 +65,7 @@ data class Quiz10Comparison(
     val previous: AiUsageCostEstimate,
     val difference: BigDecimal,
     val percent: BigDecimal?,
-    val currentProvisional: Boolean = false,
-    val previousProvisional: Boolean = false,
-) {
-    val provisional: Boolean get() = currentProvisional || previousProvisional
-}
+)
 
 data class Quiz10History(
     val tests: List<Quiz10Test>,
@@ -102,12 +99,14 @@ fun buildQuiz10History(
                 allCalls, status, terminal?.timestamp, ratesByModel)
         }.sortedWith(compareBy<Quiz10Test> { it.startedAt }.thenBy { it.workUnitId })
         .mapIndexed { index, test -> test.copy(position = index + 1) }
-    val rolling = tests.indices.map { index ->
-        val sample = tests.subList((index - window + 1).coerceAtLeast(0), index + 1)
-        Quiz10RollingPoint(index + 1, sample.size, averageTotalCost(sample), sample.any { it.status == Quiz10GameStatus.IN_PROGRESS })
+    val closed = tests.filter { it.status == Quiz10GameStatus.COMPLETED || it.status == Quiz10GameStatus.FAILED }
+    val rolling = tests.map { test ->
+        val sample = closed.takeWhile { it.position <= test.position }.takeLast(window)
+        Quiz10RollingPoint(test.position, sample.size,
+            if (sample.isEmpty()) unavailableCost() else averageTotalCost(sample), test.totalCost, test.status)
     }
-    val currentTests = tests.takeLast(window)
-    val previousTests = tests.dropLast(window).takeLast(window)
+    val currentTests = closed.takeLast(window)
+    val previousTests = closed.dropLast(window).takeLast(window)
     val current = if (currentTests.size == window) averageTotalCost(currentTests) else null
     val previous = if (previousTests.size == window) averageTotalCost(previousTests) else null
     val comparison = if (current?.determinability == AiCostDeterminability.KNOWN &&
@@ -115,9 +114,7 @@ fun buildQuiz10History(
         current.currency == "USD") {
         val difference = current.amount!!.subtract(previous.amount!!)
         Quiz10Comparison(current, previous, difference, if (previous.amount.signum() == 0) null else
-            difference.multiply(BigDecimal(100)).divide(previous.amount, 4, RoundingMode.HALF_UP),
-            currentTests.any { it.status == Quiz10GameStatus.IN_PROGRESS },
-            previousTests.any { it.status == Quiz10GameStatus.IN_PROGRESS })
+            difference.multiply(BigDecimal(100)).divide(previous.amount, 4, RoundingMode.HALF_UP))
     } else null
     return Quiz10History(tests, rolling, window, comparison)
 }
@@ -146,6 +143,8 @@ private fun averageTotalCost(tests: List<Quiz10Test>): AiUsageCostEstimate {
     return total.copy(amount = total.amount?.divide(BigDecimal(tests.size), 12, RoundingMode.HALF_UP))
 }
 
+private fun unavailableCost() = AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, null, null)
+
 private fun costText(cost: AiUsageCostEstimate): String {
     val value = cost.amount?.setScale(6, RoundingMode.HALF_UP)?.toPlainString()
     val amount = when (cost.determinability) {
@@ -171,24 +170,25 @@ private fun tokenText(calls: List<AiUsageRecord>, input: Boolean): String {
 
 fun formatQuiz10History(history: Quiz10History, width: Int = 80): String = buildString {
     appendLine("Quiz10 total AI cost history (${history.tests.size} games)")
-    appendLine("Rolling average of total game cost: last ${history.window} games; early samples use available games")
+    appendLine("Rolling average of total game cost: last ${history.window} closed games; early samples use available closed games")
     appendLine(renderQuiz10Chart(history.rolling, width))
     val latest = history.rolling.lastOrNull()
-    if (latest != null) appendLine("Latest rolling average${if (latest.provisional) " (provisional)" else ""} (n=${latest.sampleSize}): ${costText(latest.cost)}")
+    if (latest != null) appendLine("Latest rolling average (n=${latest.sampleSize}): ${if (latest.sampleSize == 0) "unavailable" else costText(latest.cost)}")
     val comparison = history.comparison
-    if (comparison == null) appendLine("Comparison with previous ${history.window} games: unavailable")
+    if (comparison == null) appendLine("Comparison with previous ${history.window} closed games: unavailable")
     else {
-        appendLine("Current ${history.window} average${if (comparison.currentProvisional) " (provisional)" else ""}: ${costText(comparison.current)}")
-        appendLine("Previous ${history.window} average${if (comparison.previousProvisional) " (provisional)" else ""}: ${costText(comparison.previous)}")
+        appendLine("Current ${history.window} closed-game average: ${costText(comparison.current)}")
+        appendLine("Previous ${history.window} closed-game average: ${costText(comparison.previous)}")
         val direction = if (comparison.difference.signum() < 0) "reduction" else "increase"
-        appendLine("Change${if (comparison.provisional) " (provisional)" else ""}: $direction ${comparison.difference.abs().setScale(6, RoundingMode.HALF_UP)} USD (${comparison.percent?.abs()?.setScale(2, RoundingMode.HALF_UP) ?: "unavailable"}%)")
+        appendLine("Change: $direction ${comparison.difference.abs().setScale(6, RoundingMode.HALF_UP)} USD (${comparison.percent?.abs()?.setScale(2, RoundingMode.HALF_UP) ?: "unavailable"}%)")
     }
     val recent = history.tests.takeLast(10).asReversed()
     appendLine("Last 10 games (n=${recent.size}):")
     recent.forEach { game ->
         appendLine("#${game.position} ${game.workUnitId} ${game.startedAt} status=${game.status}${if (game.status == Quiz10GameStatus.IN_PROGRESS) " (provisional)" else ""} calls=${game.totalCalls} input=${tokenText(game.allCalls, true)} output=${tokenText(game.allCalls, false)} total=${costText(game.totalCost)} rejected=${game.rejectedRows ?: "unknown"} substitutions=${game.substitutionAttempts}")
     }
-    if (recent.isNotEmpty()) appendLine("Last ${recent.size} average${if (recent.any { it.status == Quiz10GameStatus.IN_PROGRESS }) " (provisional)" else ""}: ${costText(averageTotalCost(recent))}")
+    val recentClosed = recent.filter { it.status == Quiz10GameStatus.COMPLETED || it.status == Quiz10GameStatus.FAILED }
+    appendLine("Last 10 closed-game average (n=${recentClosed.size}): ${if (recentClosed.isEmpty()) "unavailable" else costText(averageTotalCost(recentClosed))}")
     recent.firstOrNull()?.let { append(formatQuiz10Game(it)) }
 }
 
@@ -217,23 +217,35 @@ fun renderQuiz10Chart(points: List<Quiz10RollingPoint>, width: Int = 80): String
     val indices = if (points.size <= available) points.indices.toList() else
         (0 until available).map { it.toLong() * (points.size - 1) / (available - 1) }.map(Long::toInt).distinct()
     val chosen = indices.map(points::get)
-    val values = chosen.map { it.cost.amount?.takeIf { _ -> it.cost.determinability == AiCostDeterminability.KNOWN && it.cost.currency == "USD" } }
-    val max = points.mapNotNull { it.cost.amount?.takeIf { _ -> it.cost.determinability == AiCostDeterminability.KNOWN && it.cost.currency == "USD" } }.maxOrNull() ?: BigDecimal.ZERO
+    fun plotted(cost: AiUsageCostEstimate): BigDecimal? =
+        cost.amount?.takeIf { cost.determinability == AiCostDeterminability.KNOWN && cost.currency == "USD" }
+    val max = points.flatMap { point -> listOfNotNull(plotted(point.individualCost), plotted(point.cost)) }
+        .maxOrNull() ?: BigDecimal.ZERO
     val height = 8
-    val rows = (height downTo 0).map { row ->
-        val cells = values.mapIndexed { index, value ->
-            if (value == null) ' ' else if (max.signum() == 0 && row == 0) mark(chosen[index]) else if (max.signum() != 0 &&
-                value.multiply(BigDecimal(height)).divide(max, 0, RoundingMode.HALF_UP).toInt() == row) mark(chosen[index]) else ' '
-        }.joinToString("")
-        val axis = if (row == height) max.setScale(6, RoundingMode.HALF_UP).toPlainString() else if (row == 0) "0.000000" else ""
-        "${axis.padStart(10)} |$cells"
-    }
-    return buildString {
-        appendLine("Rolling total game cost chart (USD/game; * closed or legacy, o provisional, blank unknown cost; y starts at zero)")
-        rows.forEach(::appendLine)
+    fun panel(title: String, values: List<BigDecimal?>, symbols: List<Char>): String = buildString {
+        appendLine(title)
+        (height downTo 0).forEach { row ->
+            val cells = values.mapIndexed { index, value ->
+                if (value == null) ' ' else if (max.signum() == 0 && row == 0) symbols[index] else if (max.signum() != 0 &&
+                    value.multiply(BigDecimal(height)).divide(max, 0, RoundingMode.HALF_UP).toInt() == row) symbols[index] else ' '
+            }.joinToString("")
+            val axis = if (row == height) max.setScale(6, RoundingMode.HALF_UP).toPlainString() else if (row == 0) "0.000000" else ""
+            appendLine("${axis.padStart(10)} |$cells")
+        }
         appendLine("${" ".repeat(11)}+${"-".repeat(chosen.size)}")
+    }
+    val symbols = chosen.map { point -> when (point.status) {
+        Quiz10GameStatus.COMPLETED -> 'C'
+        Quiz10GameStatus.FAILED -> 'F'
+        Quiz10GameStatus.IN_PROGRESS -> 'P'
+        Quiz10GameStatus.UNKNOWN -> 'U'
+    } }
+    return buildString {
+        appendLine("Total game cost chart (USD/game; y starts at zero)")
+        append(panel("Individual game: C completed, F failed, P in progress, U unknown status; blank indeterminable",
+            chosen.map { plotted(it.individualCost) }, symbols))
+        append(panel("Rolling average of closed games: * measured, blank unavailable or indeterminable",
+            chosen.map { plotted(it.cost) }, chosen.map { '*' }))
         append("Game #${chosen.first().position} -> #${chosen.last().position}; scale 0 to ${max.setScale(6, RoundingMode.HALF_UP)} USD; ${points.size} points calculated, ${chosen.size} shown")
     }
 }
-
-private fun mark(point: Quiz10RollingPoint): Char = if (point.provisional) 'o' else '*'
