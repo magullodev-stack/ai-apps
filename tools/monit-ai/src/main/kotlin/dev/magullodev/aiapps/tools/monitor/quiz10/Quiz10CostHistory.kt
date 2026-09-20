@@ -101,7 +101,7 @@ fun buildQuiz10History(
     val rolling = tests.map { test ->
         val sample = closed.takeWhile { it.position <= test.position }.takeLast(window)
         Quiz10RollingPoint(test.position, sample.size,
-            if (sample.isEmpty()) unavailableCost() else averageTotalCost(sample), test.totalCost, test.status)
+            if (sample.size < window) unavailableCost() else averageTotalCost(sample), test.totalCost, test.status)
     }
     val currentTests = closed.takeLast(window)
     val previousTests = closed.dropLast(window).takeLast(window)
