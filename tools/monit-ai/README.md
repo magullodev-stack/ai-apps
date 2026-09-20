@@ -18,9 +18,9 @@ AI_APPS_PRICING_FILE="$PWD/.ai-apps/pricing.json" \
 
 MONIT-AI starts a local read-only web application at `http://localhost:8081`. Open that address in a browser through the Dev Container port forwarding. The page reads the existing usage records on every request; refreshing it updates the view without starting Quiz10 or calling AI models. The server binds to the container's loopback interface.
 
-The current visual integration shows Quiz10's game history. Its SVG chart plots each game's total AI cost in red and the rolling average of closed games in blue. Select a 10, 25, 50 (default), or 100-game window on the page. Games in progress and games with unknown lifecycle state stay in the individual history, but do not enter the rolling average. Indeterminable costs leave gaps in the chart.
+The current visual integration shows Quiz10 as an expandable product with its accumulated cost and `systems/games/quiz10/` path. Inside it, the SVG chart plots each game's total AI cost in red and the rolling average of closed games in blue. Select a 10, 25, 50 (default), or 100-game window on the page. Games in progress and games with unknown lifecycle state stay in the individual history, but do not enter the rolling average. Indeterminable costs leave gaps in the chart.
 
-Below the chart, the table lists every game from newest to oldest. It groups calls by model and shows input tokens, output tokens, their separate estimated costs, and the total for each model and game. Provisional, retrospective, partial, and indeterminable amounts are identified in the table.
+Below the chart, each game appears once as an expandable execution, newest first. Its heading shows the game number, state, and total cost. Opening it reveals a table with one row per model and input tokens, output tokens, their separate estimated costs, and the model total. Technical work-unit IDs are not shown. Provisional, retrospective, partial, and indeterminable amounts are identified in the headings and tables.
 
 ## Files
 

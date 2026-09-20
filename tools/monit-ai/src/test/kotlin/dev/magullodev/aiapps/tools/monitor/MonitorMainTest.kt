@@ -60,7 +60,14 @@ class MonitorMainTest {
             assertContains(html, "<th scope=\"col\">COSTE SALIDA</th>")
             assertContains(html, "<td>terra</td><td>3</td><td>4</td><td>3.000000 USD</td><td>8.000000 USD</td><td>11.000000 USD</td>")
             assertContains(html, "<td>luna</td><td>2</td><td>1</td><td>6.000000 USD</td><td>4.000000 USD</td><td>10.000000 USD</td>")
-            assertContains(html, "<td>TOTAL PARTIDA</td><td>5</td><td>5</td><td>9.000000 USD</td><td>12.000000 USD</td><td>21.000000 USD</td>")
+            assertContains(html, "<details class=\"product\" open>")
+            assertContains(html, "systems/games/quiz10/")
+            assertContains(html, "Partida #1 · COMPLETADA")
+            assertContains(html, "COSTE TOTAL <strong>21.000000 USD</strong>")
+            assertEquals(1, "<details class=\"execution\"".toRegex().findAll(html).count())
+            assertEquals(2, "<tr><td>".toRegex().findAll(html).count())
+            assertFalse(html.contains("TOTAL PARTIDA"))
+            assertFalse(html.contains("game-1"))
             assertContains(html, "<option value=\"50\" selected>")
             assertContains(page(server.address.port, "?window=10").body(), "<option value=\"10\" selected>")
             assertFalse(html.contains("<pre>"))
@@ -73,12 +80,12 @@ class MonitorMainTest {
         val monitor = FileAiUsageMonitor(file, mapOf("terra" to ModelRate("USD", "1000000".toBigDecimal(), "0".toBigDecimal())))
         val server = startMonitorServer(0, mapOf("AI_APPS_USAGE_FILE" to file.toString()))
         try {
-            assertContains(page(server.address.port).body(), "0 partidas registradas")
+            assertFalse(page(server.address.port).body().contains("<details class=\"execution\""))
             monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 1,
                 AiUsageCallResult.SUCCESS, "new-game", 2, 0, 2, true))
             val updated = page(server.address.port).body()
-            assertContains(updated, "1 partidas registradas")
-            assertContains(updated, "new-game")
+            assertContains(updated, "Partida #1 · ESTADO DESCONOCIDO")
+            assertFalse(updated.contains("new-game"))
             assertContains(updated, "2.000000 USD")
         } finally { server.stop(0) }
     }

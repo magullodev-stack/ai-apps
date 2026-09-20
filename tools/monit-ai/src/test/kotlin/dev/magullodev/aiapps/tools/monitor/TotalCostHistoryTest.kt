@@ -48,7 +48,9 @@ class TotalCostHistoryTest {
         val html = renderMonitorPage(history)
         assertContains(html, "<svg")
         assertContains(html, "<td>terra</td><td>1423</td><td>1778</td><td>1423.000000 USD</td><td>3556.000000 USD</td><td>4979.000000 USD</td>")
-        assertContains(html, "<td>TOTAL PARTIDA</td><td>1423</td><td>1778</td><td>1423.000000 USD</td><td>3556.000000 USD</td><td>4979.000000 USD</td>")
+        assertContains(html, "Partida #1 · COMPLETADA")
+        assertContains(html, "COSTE TOTAL <strong>4979.000000 USD</strong>")
+        assertFalse(html.contains("TOTAL PARTIDA"))
     }
 
     @Test
@@ -124,7 +126,7 @@ class TotalCostHistoryTest {
         assertEquals(0, comparison.current.amount!!.compareTo(BigDecimal("3")))
         assertEquals(0, comparison.difference.compareTo(BigDecimal("1")))
         assertEquals(0, comparison.percent!!.compareTo(BigDecimal("50")))
-        assertContains(renderMonitorPage(history), "#20 · game-20")
+        assertContains(renderMonitorPage(history), "Partida #20 · COMPLETADA")
     }
 
     @Test
@@ -144,8 +146,15 @@ class TotalCostHistoryTest {
         assertTrue(history.rolling.all { it.cost.amount!!.compareTo(BigDecimal("2")) == 0 })
         val html = renderMonitorPage(history)
         assertContains(html, "<svg")
-        assertContains(html, "#3 · unknown")
-        assertContains(html, "UNKNOWN")
+        assertContains(html, "Partida #3 · ESTADO DESCONOCIDO")
+        assertContains(html, "COSTE ACUMULADO <strong>14.000000 USD")
+        assertEquals(1, "<details class=\"product\"".toRegex().findAll(html).count())
+        assertEquals(3, "<details class=\"execution\"".toRegex().findAll(html).count())
+        assertTrue(html.indexOf("<details class=\"product\"") < html.indexOf("<svg"))
+        assertTrue(html.indexOf("<svg") < html.indexOf("Partida #3"))
+        assertTrue(html.indexOf("Partida #3") < html.indexOf("Partida #2"))
+        assertTrue(html.indexOf("Partida #2") < html.indexOf("Partida #1"))
+        assertFalse(html.contains("unknown-call"))
         assertContains(html, "Media móvil de partidas cerradas")
     }
 
@@ -159,7 +168,7 @@ class TotalCostHistoryTest {
         assertEquals(Quiz10GameStatus.FAILED, history.tests.single().status)
         assertEquals(1, history.rolling.single().sampleSize)
         assertEquals(0, history.rolling.single().cost.amount!!.compareTo(BigDecimal("4")))
-        assertContains(renderMonitorPage(history), "FAILED")
+        assertContains(renderMonitorPage(history), "Partida #1 · FALLIDA")
     }
 
     @Test

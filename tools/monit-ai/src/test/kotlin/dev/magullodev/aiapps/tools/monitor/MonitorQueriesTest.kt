@@ -325,9 +325,10 @@ class MonitorQueriesTest {
             if (window == 50) {
                 val html = renderMonitorPage(history)
                 assertContains(html, "<svg")
-                assertEquals(500, "<tr class=\"total\">".toRegex().findAll(html).count())
-                assertContains(html, "#500 · test-500")
-                assertContains(html, "#1 · test-001")
+                assertEquals(500, "<details class=\"execution\"".toRegex().findAll(html).count())
+                assertContains(html, "Partida #500 · COMPLETADA")
+                assertContains(html, "Partida #1 · COMPLETADA")
+                assertFalse(html.contains("test-500"))
             }
         }
     }
@@ -406,7 +407,7 @@ class MonitorQueriesTest {
         assertEquals(Quiz10GameStatus.UNKNOWN, history.tests.first().status)
         assertEquals(4, history.rolling.size)
         val html = renderMonitorPage(history)
-        assertContains(html, "FAILED")
+        assertContains(html, "FALLIDA")
         assertContains(html, "9.000000 USD")
         assertContains(html, "Provisional")
     }
