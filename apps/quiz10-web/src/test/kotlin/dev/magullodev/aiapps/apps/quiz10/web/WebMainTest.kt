@@ -231,6 +231,8 @@ class WebMainTest {
 
         assertContains(rendered, "workUnit=wu-2")
         assertContains(rendered, "Cobertura desbalanceada")
+        assertContains(rendered, "Latest test #")
+        assertContains(rendered, "status=UNKNOWN")
     }
 
     @Test
@@ -247,6 +249,33 @@ class WebMainTest {
         assertContains(historical, "coverage terra")
         val all = runUsageMonitor(arrayOf("--usage-monitor", "--all"), env)
         assertContains(all, "AI usage monitor")
+    }
+
+    @Test
+    fun monitorShowsLiveClosedFailedAndLegacyGamesFromOneUsageFile() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(file, mapOf("terra" to dev.magullodev.aiapps.core.ai.ModelRate("USD", "1000000".toBigDecimal(), "0".toBigDecimal())))
+        listOf("legacy", "live", "closed", "failed").forEach { id ->
+            if (id != "legacy") monitor.recordMetric(dev.magullodev.aiapps.core.ai.AiUsageMetricEvent(
+                "quiz10-web", "quiz10_game_started", emptyMap(), id))
+            monitor.recordCall(dev.magullodev.aiapps.core.ai.AiUsageCallEvent("quiz10-web",
+                dev.magullodev.aiapps.core.ai.AiUsageOperation.COVERAGE, "terra", 1,
+                dev.magullodev.aiapps.core.ai.AiUsageCallResult.SUCCESS, id, 2, 0, 2, true))
+            if (id == "closed") monitor.recordMetric(dev.magullodev.aiapps.core.ai.AiUsageMetricEvent(
+                "quiz10-web", "quiz10_game_completed", emptyMap(), id))
+            if (id == "failed") monitor.recordMetric(dev.magullodev.aiapps.core.ai.AiUsageMetricEvent(
+                "quiz10-web", "quiz10_game_execution_failed", emptyMap(), id))
+        }
+        val rendered = runUsageMonitor(arrayOf("--usage-monitor"), mapOf("AI_APPS_USAGE_FILE" to file.toString()))
+        assertContains(rendered, "legacy")
+        assertContains(rendered, "status=UNKNOWN")
+        assertContains(rendered, "status=IN_PROGRESS")
+        assertContains(rendered, "status=COMPLETED")
+        assertContains(rendered, "status=FAILED")
+        assertContains(rendered, "Preparation total:")
+        assertContains(rendered, "Development total:")
+        assertContains(rendered, "Game total:")
+        assertContains(rendered, "Rolling cost chart")
     }
 
     private fun usageFile(): Path {

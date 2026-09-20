@@ -5,7 +5,7 @@
 
 | Herramienta | Finalidad | Ubicación | Documentación |
 | --- | --- | --- | --- |
-| Monitor de consumo y auditorías | Analizar el histórico de costes de preparación de Quiz10 mediante gráfico y medias móviles; consultar llamadas, tokens y auditorías. | `core/ai/` | `core/ai/README.md` |
+| Monitor de consumo y auditorías | Analizar el histórico de preparación y el estado, consumo total, llamadas y auditorías de cada partida de Quiz10. | `core/ai/` | `core/ai/README.md` |
 
 ## Mantenimiento
 

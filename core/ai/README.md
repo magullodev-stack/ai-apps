@@ -126,3 +126,11 @@ The default `--usage-monitor` view reads the existing JSONL file without startin
 Preparation costs include all `coverage`, `review` and `substitutions` calls, including failures and retries, using the rate snapshot on each call. `luna` and other later game calls are excluded. Missing usage or rates yield partial or indeterminable costs; different currencies are never added. The last-test audit detail uses recorded rejected positions, reasons and replacement attempts. An explicit zero rejection count requires the preparation metric or its audit detail marker.
 
 Use `--all` for the previous global report. `--work-unit=<id>` and the `--app`, `--model`, `--operation` filters also select that report.
+
+## Quiz10 game lifecycle and total AI consumption
+
+Each new game writes persistent lifecycle metrics under its own `workUnitId`: `quiz10_game_started`, `quiz10_game_prepared`, `quiz10_game_preparation_failed`, `quiz10_game_execution_failed`, and `quiz10_game_completed`. The preparation metric is recorded as soon as preparation succeeds, before generating the first question. The completed event is written once after question ten. These records contain no player name, question, answer or prompt content.
+
+The default historical report now reconstructs the status of each game from its events: `IN_PROGRESS` after a start without a terminal event, `COMPLETED` or `FAILED` after a terminal event, and `UNKNOWN` for older records without lifecycle events. A terminal event supplies the close time. Preparation, development and total AI costs are shown separately; total includes every registered call, including failed calls. The report retains partial and indeterminable estimates where usage or rates are missing and does not add different currencies. The rolling graph continues to use preparation costs only. Rejected rows are read from `invalidated_positions` in the preparation metric, with audit events as a fallback.
+
+`--work-unit=<id>` keeps the existing filtered call and audit report and appends the consolidated Quiz10 game detail, including its lifecycle status and total cost. `--all` keeps the original global report.

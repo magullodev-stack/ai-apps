@@ -5,6 +5,13 @@ import java.math.RoundingMode
 
 private val preparationOperations = setOf("coverage", "review", "substitutions")
 
+enum class Quiz10GameStatus { IN_PROGRESS, COMPLETED, FAILED, UNKNOWN }
+
+private const val GAME_STARTED = "quiz10_game_started"
+private const val GAME_COMPLETED = "quiz10_game_completed"
+private const val GAME_PREPARATION_FAILED = "quiz10_game_preparation_failed"
+private const val GAME_EXECUTION_FAILED = "quiz10_game_execution_failed"
+
 data class Quiz10Test(
     val position: Int,
     val workUnitId: String,
@@ -13,9 +20,24 @@ data class Quiz10Test(
     val metrics: List<AiUsageRecord>,
     val audits: List<AiUsageRecord>,
     val cost: AiUsageCostEstimate,
+    val allCalls: List<AiUsageRecord> = calls,
+    val status: Quiz10GameStatus = Quiz10GameStatus.UNKNOWN,
+    val finishedAt: String? = null,
 ) {
+    val developmentCalls: List<AiUsageRecord> get() = allCalls.filterNot { it.operation in preparationOperations }
+    val developmentCost: AiUsageCostEstimate get() = if (developmentCalls.isEmpty())
+        AiUsageCostEstimate(AiCostDeterminability.KNOWN, cost.currency ?: "USD", BigDecimal.ZERO)
+        else aggregateCost(developmentCalls.map(::estimateCallCost))
+    val totalCost: AiUsageCostEstimate get() = aggregateCost(allCalls.map(::estimateCallCost))
+    val preparationInputTokens: Long get() = calls.mapNotNull { it.inputTokens }.sum()
+    val preparationOutputTokens: Long get() = calls.mapNotNull { it.outputTokens }.sum()
+    val developmentInputTokens: Long get() = developmentCalls.mapNotNull { it.inputTokens }.sum()
+    val developmentOutputTokens: Long get() = developmentCalls.mapNotNull { it.outputTokens }.sum()
+    val totalInputTokens: Long get() = allCalls.mapNotNull { it.inputTokens }.sum()
+    val totalOutputTokens: Long get() = allCalls.mapNotNull { it.outputTokens }.sum()
+    val totalCalls: Int get() = allCalls.size
     val rejectedRows: Int? get() = metrics.lastOrNull { it.metricName == "quiz10_preparation" }
-        ?.metricValues?.get("invalidated_questions")?.toInt()
+        ?.metricValues?.let { it["invalidated_positions"] ?: it["invalidated_questions"] }?.toInt()
         ?: audits.count { it.auditPhase == "initial_review" && it.auditResult == "rejected" }
             .takeIf { it > 0 || metrics.any { m -> m.metricValues["audit_detail_version"] ?: 0L >= 1L } }
     val substitutionAttempts: Int get() = metrics.lastOrNull { it.metricName == "quiz10_preparation" }
@@ -43,9 +65,17 @@ fun buildQuiz10History(records: List<AiUsageRecord>, window: Int = 50): Quiz10Hi
         .groupBy { it.workUnitId!! }.map { (id, grouped) ->
             val ordered = grouped.sortedWith(compareBy<AiUsageRecord> { it.timestamp }.thenBy { it.recordId })
             val calls = ordered.filter { it.type == "ai_call" && it.operation in preparationOperations }
-            Quiz10Test(0, id, ordered.first().timestamp, calls,
-                ordered.filter { it.type == "metric" }, ordered.filter { it.type == "audit" },
-                aggregateCost(calls.map(::estimateCallCost)))
+            val metrics = ordered.filter { it.type == "metric" }
+            val terminal = metrics.firstOrNull { it.metricName in setOf(GAME_COMPLETED, GAME_PREPARATION_FAILED, GAME_EXECUTION_FAILED) }
+            val status = when {
+                terminal?.metricName == GAME_COMPLETED -> Quiz10GameStatus.COMPLETED
+                terminal != null -> Quiz10GameStatus.FAILED
+                metrics.any { it.metricName == GAME_STARTED } -> Quiz10GameStatus.IN_PROGRESS
+                else -> Quiz10GameStatus.UNKNOWN
+            }
+            Quiz10Test(0, id, ordered.first().timestamp, calls, metrics,
+                ordered.filter { it.type == "audit" }, aggregateCost(calls.map(::estimateCallCost)),
+                ordered.filter { it.type == "ai_call" }, status, terminal?.timestamp)
         }.sortedWith(compareBy<Quiz10Test> { it.startedAt }.thenBy { it.workUnitId })
         .mapIndexed { index, test -> test.copy(position = index + 1) }
     val rolling = tests.indices.map { index ->
@@ -109,22 +139,27 @@ fun formatQuiz10History(history: Quiz10History, width: Int = 80): String = build
     val recent = history.tests.takeLast(10).asReversed()
     appendLine("Last 10 tests (n=${recent.size}):")
     recent.forEach { test ->
-        appendLine("#${test.position} ${test.workUnitId} ${test.startedAt} Terra calls=${test.calls.size} input=${test.calls.mapNotNull { it.inputTokens }.sum()} output=${test.calls.mapNotNull { it.outputTokens }.sum()} cost=${costText(test.cost)} rejected=${test.rejectedRows ?: "unknown"} substitutions=${test.substitutionAttempts}")
+        appendLine("#${test.position} ${test.workUnitId} ${test.startedAt} status=${test.status} Terra calls=${test.calls.size} input=${test.preparationInputTokens} output=${test.preparationOutputTokens} preparation=${costText(test.cost)} total=${costText(test.totalCost)} rejected=${test.rejectedRows ?: "unknown"} substitutions=${test.substitutionAttempts}")
     }
     if (recent.isNotEmpty()) appendLine("Last ${recent.size} average: ${costText(averageCost(recent))}")
-    val last = recent.firstOrNull()
-    if (last != null) {
-        appendLine("Latest test #${last.position} ${last.workUnitId}:")
-        last.calls.forEach { call ->
-            appendLine("- ${call.operation} ${call.model ?: "unknown-model"} duration=${call.durationMillis ?: "unknown"}ms input=${call.inputTokens ?: "unknown"} output=${call.outputTokens ?: "unknown"} cost=${costText(estimateCallCost(call))} result=${call.result ?: "unknown"}")
-        }
-        appendLine("Preparation total: ${costText(last.cost)}")
-        if (last.audits.isEmpty()) appendLine(if (last.rejectedRows == 0) "No rejections recorded" else "Audit detail unavailable")
-        else last.audits.forEach { audit ->
-            appendLine("- ${audit.auditPhase ?: "audit"} position=${audit.auditPosition ?: "unknown"} attempt=${audit.auditAttempt ?: "-"} result=${audit.auditResult ?: "unknown"} reason=${audit.auditReason ?: "-"}")
-        }
+    recent.firstOrNull()?.let { append(formatQuiz10Game(it)) }
+}
+fun formatQuiz10Game(game: Quiz10Test): String = buildString {
+    appendLine("Latest test #${game.position} ${game.workUnitId}: status=${game.status} started=${game.startedAt} finished=${game.finishedAt ?: "-"}")
+    appendLine("AI calls=${game.totalCalls} total input=${game.totalInputTokens} output=${game.totalOutputTokens}")
+    appendLine("Preparation input=${game.preparationInputTokens} output=${game.preparationOutputTokens}; development input=${game.developmentInputTokens} output=${game.developmentOutputTokens}")
+    game.allCalls.forEach { call ->
+        appendLine("- ${call.operation} ${call.model ?: "unknown-model"} duration=${call.durationMillis ?: "unknown"}ms input=${call.inputTokens ?: "unknown"} output=${call.outputTokens ?: "unknown"} cost=${costText(estimateCallCost(call))} result=${call.result ?: "unknown"}")
+    }
+    appendLine("Preparation total: ${costText(game.cost)}")
+    appendLine("Development total: ${costText(game.developmentCost)}")
+    appendLine("Game total${if (game.status == Quiz10GameStatus.IN_PROGRESS) " so far" else ""}: ${costText(game.totalCost)}")
+    if (game.audits.isEmpty()) appendLine(if (game.rejectedRows == 0) "No rejections recorded" else "Audit detail unavailable")
+    else game.audits.forEach { audit ->
+        appendLine("- ${audit.auditPhase ?: "audit"} position=${audit.auditPosition ?: "unknown"} attempt=${audit.auditAttempt ?: "-"} result=${audit.auditResult ?: "unknown"} reason=${audit.auditReason ?: "-"}")
     }
 }
+
 
 fun renderQuiz10Chart(points: List<Quiz10RollingPoint>, width: Int = 80): String {
     if (points.isEmpty()) return "Chart: no tests recorded"

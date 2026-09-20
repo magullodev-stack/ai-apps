@@ -126,10 +126,12 @@ class Quiz10WebServer(
 
         val sessionId = UUID.randomUUID().toString()
         val workUnitId = UUID.randomUUID().toString()
+        recordLifecycle(workUnitId, "quiz10_game_started")
         val prepared = withAiUsageContext(workUnitId) {
             when (val result = prepareQuiz(buildPlan(selection))) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
+                    recordLifecycle(workUnitId, "quiz10_game_preparation_failed")
                     logPreparationFailure(result.error)
                     respond(
                         exchange,
@@ -141,33 +143,19 @@ class Quiz10WebServer(
             }
         }
 
+        recordPreparationCompleted(workUnitId, prepared)
+
         val flow = Quiz10Flow(prepared, generateTurn)
         val question = withAiUsageContext(workUnitId) {
             when (val result = flow.start()) {
                 is Outcome.Success -> result.value
                 is Outcome.Failure -> {
+                    recordLifecycle(workUnitId, "quiz10_game_execution_failed")
                     logTurnFailure(result.error)
                     respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
                     return
                 }
             }
-        }
-
-        val metrics = prepared.preparationMetrics
-        if (metrics != null) {
-            usageMonitor.recordMetric(
-                AiUsageMetricEvent(
-                    application = QUIZ10_APPLICATION,
-                    metricName = "quiz10_preparation",
-                    workUnitId = workUnitId,
-                    values = mapOf(
-                        "preparation_duration_ms" to metrics.preparationDurationMillis,
-                        "invalidated_positions" to metrics.invalidatedPositions.toLong(),
-                        "replaced_questions" to metrics.replacedQuestions.toLong(),
-                        "replacement_attempts" to metrics.replacementAttempts.toLong(),
-                    ),
-                ),
-            )
         }
 
         sessions[sessionId] = WebSession(
@@ -212,6 +200,7 @@ class Quiz10WebServer(
                 when (val result = session.activeFlow.advance()) {
                     is Outcome.Success -> result.value
                     is Outcome.Failure -> {
+                        recordLifecycle(session.currentWorkUnitId, "quiz10_game_execution_failed")
                         logTurnFailure(result.error)
                         respond(exchange, 500, renderer.renderPreparationError(turnErrorMessage(result.error)))
                         return
@@ -239,6 +228,7 @@ class Quiz10WebServer(
                 is Quiz10FlowState.Finished -> {
                     session.playerProgress = session.playerProgress.recordQuiz(advanced.correctAnswers)
                     session.lastFinished = advanced
+                    recordLifecycle(session.currentWorkUnitId, "quiz10_game_completed")
                     val menu = Quiz10NavigationMenu.forTopic(session.currentTopic)
                     respond(
                         exchange,
@@ -286,10 +276,12 @@ class Quiz10WebServer(
             when (option) {
                 Quiz10NavigationOption.ANOTHER_QUIZ_SAME_TOPIC -> {
                     val nextWorkUnitId = UUID.randomUUID().toString()
+                    recordLifecycle(nextWorkUnitId, "quiz10_game_started")
                     val prepared = withAiUsageContext(nextWorkUnitId) {
                         when (val result = prepareQuiz(buildPlan(session.currentSelection))) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
+                                recordLifecycle(nextWorkUnitId, "quiz10_game_preparation_failed")
                                 logPreparationFailure(result.error)
                                 respond(
                                     exchange,
@@ -303,27 +295,13 @@ class Quiz10WebServer(
                             }
                         }
                     }
-                    prepared.preparationMetrics?.let { metrics ->
-                        usageMonitor.recordMetric(
-                            AiUsageMetricEvent(
-                                application = QUIZ10_APPLICATION,
-                                metricName = "quiz10_preparation",
-                                workUnitId = nextWorkUnitId,
-                                values = mapOf(
-                                    "preparation_duration_ms" to metrics.preparationDurationMillis,
-                                    "invalidated_positions" to metrics.invalidatedPositions.toLong(),
-                                    "replaced_questions" to metrics.replacedQuestions.toLong(),
-                                    "replacement_attempts" to metrics.replacementAttempts.toLong(),
-                                    "audit_detail_version" to 1,
-                                ),
-                            ),
-                        )
-                    }
+                    recordPreparationCompleted(nextWorkUnitId, prepared)
                     val flow = Quiz10Flow(prepared, generateTurn)
                     val question = withAiUsageContext(nextWorkUnitId) {
                         when (val result = flow.start()) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
+                                recordLifecycle(nextWorkUnitId, "quiz10_game_execution_failed")
                                 logTurnFailure(result.error)
                                 respond(
                                     exchange,
@@ -362,10 +340,12 @@ class Quiz10WebServer(
                 Quiz10NavigationOption.RANDOM_QUIZ -> {
                     val selection = SelectionMode.Random
                     val nextWorkUnitId = UUID.randomUUID().toString()
+                    recordLifecycle(nextWorkUnitId, "quiz10_game_started")
                     val prepared = withAiUsageContext(nextWorkUnitId) {
                         when (val result = prepareQuiz(buildPlan(selection))) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
+                                recordLifecycle(nextWorkUnitId, "quiz10_game_preparation_failed")
                                 logPreparationFailure(result.error)
                                 respond(
                                     exchange,
@@ -379,27 +359,13 @@ class Quiz10WebServer(
                             }
                         }
                     }
-                    prepared.preparationMetrics?.let { metrics ->
-                        usageMonitor.recordMetric(
-                            AiUsageMetricEvent(
-                                application = QUIZ10_APPLICATION,
-                                metricName = "quiz10_preparation",
-                                workUnitId = nextWorkUnitId,
-                                values = mapOf(
-                                    "preparation_duration_ms" to metrics.preparationDurationMillis,
-                                    "invalidated_positions" to metrics.invalidatedPositions.toLong(),
-                                    "replaced_questions" to metrics.replacedQuestions.toLong(),
-                                    "replacement_attempts" to metrics.replacementAttempts.toLong(),
-                                    "audit_detail_version" to 1,
-                                ),
-                            ),
-                        )
-                    }
+                    recordPreparationCompleted(nextWorkUnitId, prepared)
                     val flow = Quiz10Flow(prepared, generateTurn)
                     val question = withAiUsageContext(nextWorkUnitId) {
                         when (val result = flow.start()) {
                             is Outcome.Success -> result.value
                             is Outcome.Failure -> {
+                                recordLifecycle(nextWorkUnitId, "quiz10_game_execution_failed")
                                 logTurnFailure(result.error)
                                 respond(
                                     exchange,
@@ -463,10 +429,12 @@ class Quiz10WebServer(
 
         synchronized(session.lock) {
             val nextWorkUnitId = UUID.randomUUID().toString()
+            recordLifecycle(nextWorkUnitId, "quiz10_game_started")
             val prepared = withAiUsageContext(nextWorkUnitId) {
                 when (val result = prepareQuiz(buildPlan(selection))) {
                     is Outcome.Success -> result.value
                     is Outcome.Failure -> {
+                        recordLifecycle(nextWorkUnitId, "quiz10_game_preparation_failed")
                         logPreparationFailure(result.error)
                         respond(
                             exchange,
@@ -480,30 +448,13 @@ class Quiz10WebServer(
                     }
                 }
             }
-
-            prepared.preparationMetrics?.let { metrics ->
-                usageMonitor.recordMetric(
-                    AiUsageMetricEvent(
-                        application = QUIZ10_APPLICATION,
-                        metricName = "quiz10_preparation",
-                        workUnitId = nextWorkUnitId,
-                        values = mapOf(
-                            "preparation_duration_ms" to metrics.preparationDurationMillis,
-                            "invalidated_positions" to metrics.invalidatedPositions.toLong(),
-                            "replaced_questions" to metrics.replacedQuestions.toLong(),
-                            "replacement_attempts" to metrics.replacementAttempts.toLong(),
-                                    "audit_detail_version" to 1,
-                            "audit_detail_version" to 1,
-                        ),
-                    ),
-                )
-            }
-
+            recordPreparationCompleted(nextWorkUnitId, prepared)
             val flow = Quiz10Flow(prepared, generateTurn)
             val question = withAiUsageContext(nextWorkUnitId) {
                 when (val result = flow.start()) {
                     is Outcome.Success -> result.value
                     is Outcome.Failure -> {
+                        recordLifecycle(nextWorkUnitId, "quiz10_game_execution_failed")
                         logTurnFailure(result.error)
                         respond(
                             exchange,
@@ -752,6 +703,37 @@ class Quiz10WebServer(
         is AiError.HttpFailure -> "AiError.HttpFailure(${error.status})"
         AiError.InvalidResponseJson -> "AiError.InvalidResponseJson"
         AiError.MissingOutputText -> "AiError.MissingOutputText"
+    }
+
+    private fun recordLifecycle(workUnitId: String, event: String) {
+        usageMonitor.recordMetric(
+            AiUsageMetricEvent(
+                application = QUIZ10_APPLICATION,
+                metricName = event,
+                workUnitId = workUnitId,
+                values = emptyMap(),
+            ),
+        )
+    }
+
+    private fun recordPreparationCompleted(workUnitId: String, prepared: PreparedQuiz) {
+        prepared.preparationMetrics?.let { metrics ->
+            usageMonitor.recordMetric(
+                AiUsageMetricEvent(
+                    application = QUIZ10_APPLICATION,
+                    metricName = "quiz10_preparation",
+                    workUnitId = workUnitId,
+                    values = mapOf(
+                        "preparation_duration_ms" to metrics.preparationDurationMillis,
+                        "invalidated_positions" to metrics.invalidatedPositions.toLong(),
+                        "replaced_questions" to metrics.replacedQuestions.toLong(),
+                        "replacement_attempts" to metrics.replacementAttempts.toLong(),
+                        "audit_detail_version" to 1L,
+                    ),
+                ),
+            )
+        }
+        recordLifecycle(workUnitId, "quiz10_game_prepared")
     }
 
     private inline fun <T> withAiUsageContext(workUnitId: String, block: () -> T): T =

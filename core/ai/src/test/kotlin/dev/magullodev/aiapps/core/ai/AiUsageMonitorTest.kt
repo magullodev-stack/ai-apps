@@ -499,6 +499,49 @@ class AiUsageMonitorTest {
         assertEquals(null, history.rolling.single().cost.amount)
     }
 
+    @Test
+    fun consolidatesLifecycleAndAllCallCostsWithoutChangingHistoricalChart() {
+        val rate = AiUsageRateSnapshot("USD", "1000000", "0")
+        fun call(id: String, unit: String, operation: String, tokens: Long, time: String, priced: Boolean = true) =
+            AiUsageRecord(id, time, "ai_call", "quiz10-web", unit, operation, "model", result = "success",
+                inputTokens = tokens, outputTokens = 0, rate = if (priced) rate else null)
+        fun event(id: String, unit: String, name: String, time: String) =
+            AiUsageRecord(id, time, "metric", "quiz10-web", unit, metricName = name)
+        val records = listOf(
+            event("start-1", "active", "quiz10_game_started", "2026-01-01T00:00:00Z"),
+            call("coverage", "active", "coverage", 2, "2026-01-01T00:00:01Z"),
+            call("retry", "active", "review", 3, "2026-01-01T00:00:02Z"),
+            call("luna", "active", "luna", 4, "2026-01-01T00:00:03Z"),
+            AiUsageRecord("metric", "2026-01-01T00:00:04Z", "metric", "quiz10-web", "active",
+                metricName = "quiz10_preparation", metricValues = mapOf("invalidated_positions" to 2, "replacement_attempts" to 1)),
+            event("start-2", "done", "quiz10_game_started", "2026-01-02T00:00:00Z"),
+            call("done-call", "done", "coverage", 1, "2026-01-02T00:00:01Z"),
+            event("close-2", "done", "quiz10_game_completed", "2026-01-02T00:00:02Z"),
+            event("start-3", "failed", "quiz10_game_started", "2026-01-03T00:00:00Z"),
+            call("failed-call", "failed", "coverage", 1, "2026-01-03T00:00:01Z", false),
+            event("fail-3", "failed", "quiz10_game_preparation_failed", "2026-01-03T00:00:02Z"),
+            call("legacy", "old", "coverage", 1, "2025-12-31T00:00:00Z"),
+        )
+        val history = buildQuiz10History(records, 10)
+        val active = history.tests.single { it.workUnitId == "active" }
+        assertEquals(Quiz10GameStatus.IN_PROGRESS, active.status)
+        assertEquals(3, active.totalCalls)
+        assertEquals("5", active.cost.amount?.stripTrailingZeros()?.toPlainString())
+        assertEquals("4", active.developmentCost.amount?.stripTrailingZeros()?.toPlainString())
+        assertEquals("9", active.totalCost.amount?.stripTrailingZeros()?.toPlainString())
+        assertEquals(2, active.rejectedRows)
+        assertEquals(1, active.substitutionAttempts)
+        assertEquals(Quiz10GameStatus.COMPLETED, history.tests.single { it.workUnitId == "done" }.status)
+        assertEquals("2026-01-02T00:00:02Z", history.tests.single { it.workUnitId == "done" }.finishedAt)
+        assertEquals(Quiz10GameStatus.FAILED, history.tests.single { it.workUnitId == "failed" }.status)
+        assertEquals(AiCostDeterminability.NOT_DETERMINABLE, history.tests.single { it.workUnitId == "failed" }.totalCost.determinability)
+        assertEquals(Quiz10GameStatus.UNKNOWN, history.tests.first().status)
+        assertEquals(4, history.rolling.size)
+        val report = formatQuiz10History(history)
+        assertContains(report, "status=FAILED")
+        assertContains(report, "Game total: not determinable")
+    }
+
     private class StaticTransport(
 
         private val response: Outcome<HttpResponse, NetworkError>,

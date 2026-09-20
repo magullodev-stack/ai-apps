@@ -418,6 +418,7 @@ class Quiz10WebServerTest {
                 finalBody = postForm("$baseUrl/games/$sessionId/answer", mapOf("option" to option.toString())).body()
             }
             assertContains(finalBody, "Puntuación final 10/10")
+            assertEquals(400, postForm("$baseUrl/games/$sessionId/answer", mapOf("option" to "0")).statusCode())
 
             val replay = postForm("$baseUrl/games/$sessionId/navigation", mapOf("selection" to "1"))
             assertEquals(200, replay.statusCode())
@@ -432,8 +433,13 @@ class Quiz10WebServerTest {
         assertEquals(0, turnCalls.get())
         assertEquals(2, summary.byOperation["coverage"]?.calls)
         assertEquals(null, summary.byOperation["luna"])
-        assertEquals(2, summary.metrics.size)
+        assertEquals(2, summary.metrics.count { it.metricName == "quiz10_preparation" })
         assertEquals(2, workUnits.size)
+        val history = AiUsageQueryService(AiUsageRecordRepository(usageFile)).quiz10History()
+        assertEquals(1, history.tests.count { it.status == dev.magullodev.aiapps.core.ai.Quiz10GameStatus.COMPLETED })
+        assertEquals(1, history.tests.count { it.status == dev.magullodev.aiapps.core.ai.Quiz10GameStatus.IN_PROGRESS })
+        assertEquals(1, history.tests.sumOf { test -> test.metrics.count { it.metricName == "quiz10_game_completed" } })
+        assertEquals(1, history.tests.single { it.status == dev.magullodev.aiapps.core.ai.Quiz10GameStatus.COMPLETED }.totalCalls)
     }
 
     @Test
@@ -488,6 +494,62 @@ class Quiz10WebServerTest {
         assertEquals(0, turnCalls.get())
         assertTrue((summary.byOperation["coverage"]?.calls ?: 0) >= 1)
         assertEquals(null, summary.byOperation["luna"])
+    }
+
+    @Test
+    fun failedPreparationKeepsItsCallsAndAuditsUnderTheStartedWorkUnit() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(file, mapOf("model-terra" to ModelRate("USD", "1000000".toBigDecimal(), "0".toBigDecimal())))
+        val prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = {
+            val id = AiUsageContextHolder.current()?.workUnitId
+            monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "model-terra", 5,
+                AiUsageCallResult.ERROR, id, 2, 0, 2, true))
+            monitor.recordAudit(dev.magullodev.aiapps.core.ai.AiUsageAuditEvent("quiz10-web", "review", "initial_review",
+                dev.magullodev.aiapps.core.ai.AiUsageAuditResult.REJECTED, id, 1, reason = "invalid row"))
+            Outcome.Failure(QuizPreparationError.InvalidCoverageRouteSize(8))
+        }
+        withServer(prepare, usageMonitor = monitor) { baseUrl, _, _ ->
+            assertEquals(500, postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection)).statusCode())
+        }
+        val game = AiUsageQueryService(AiUsageRecordRepository(file)).quiz10History().tests.single()
+        assertEquals(dev.magullodev.aiapps.core.ai.Quiz10GameStatus.FAILED, game.status)
+        assertEquals(1, game.totalCalls)
+        assertEquals(1, game.audits.size)
+        assertEquals("2", game.totalCost.amount?.stripTrailingZeros()?.toPlainString())
+        assertTrue(game.metrics.any { it.metricName == "quiz10_game_started" })
+        assertTrue(game.metrics.any { it.metricName == "quiz10_game_preparation_failed" })
+    }
+
+    @Test
+    fun failedFirstTurnKeepsPreparationMetricAndDevelopmentUsage() {
+        val file = usageFile()
+        val monitor = FileAiUsageMonitor(file, mapOf("model" to ModelRate("USD", "1000000".toBigDecimal(), "0".toBigDecimal())))
+        val prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = { plan ->
+            val id = AiUsageContextHolder.current()?.workUnitId
+            monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "model", 1,
+                AiUsageCallResult.SUCCESS, id, 2, 0, 2, true))
+            val quiz = prepared(topicFromPlan(plan))
+            Outcome.Success(PreparedQuiz(quiz.topic, quiz.route,
+                preparationMetrics = PreparedQuizPreparationMetrics(1, 1, 0, 0)))
+        }
+        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { _, _ ->
+            val id = AiUsageContextHolder.current()?.workUnitId
+            monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.LUNA, "model", 1,
+                AiUsageCallResult.ERROR, id, 3, 0, 3, true))
+            Outcome.Failure(QuizTurnGenerationError.InvalidGeneratedTurn)
+        }
+        withServer(prepare, turn, monitor) { baseUrl, _, _ ->
+            assertEquals(500, postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection)).statusCode())
+        }
+        val game = AiUsageQueryService(AiUsageRecordRepository(file)).quiz10History().tests.single()
+        assertEquals(dev.magullodev.aiapps.core.ai.Quiz10GameStatus.FAILED, game.status)
+        assertEquals(2, game.totalCalls)
+        assertEquals("2", game.cost.amount?.stripTrailingZeros()?.toPlainString())
+        assertEquals("3", game.developmentCost.amount?.stripTrailingZeros()?.toPlainString())
+        assertEquals("5", game.totalCost.amount?.stripTrailingZeros()?.toPlainString())
+        assertEquals(1, game.rejectedRows)
+        assertTrue(game.metrics.any { it.metricName == "quiz10_game_prepared" })
+        assertTrue(game.metrics.any { it.metricName == "quiz10_preparation" })
     }
 
     private fun <T> withServer(
