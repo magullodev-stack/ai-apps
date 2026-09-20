@@ -2,6 +2,7 @@ package dev.magullodev.aiapps.tools.monitor
 
 import dev.magullodev.aiapps.tools.monitor.quiz10.formatQuiz10Game
 import dev.magullodev.aiapps.tools.monitor.quiz10.formatQuiz10History
+import dev.magullodev.aiapps.core.ai.loadModelRates
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -10,7 +11,7 @@ fun main(args: Array<String>) {
 }
 
 internal fun runMonitor(args: Array<String>, env: Map<String, String> = System.getenv()): String {
-    val query = AiUsageQueryService(AiUsageRecordRepository(usageFiles(env)))
+    val query = AiUsageQueryService(AiUsageRecordRepository(usageFiles(env)), loadModelRates(env))
     val filter = parseUsageFilterArgs(args)
     val window = args.firstOrNull { it.startsWith("--window=") }?.substringAfter('=')?.toIntOrNull() ?: 50
     return when {

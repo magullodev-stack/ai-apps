@@ -33,19 +33,19 @@ class MonitorMainTest {
             AiUsageCallResult.SUCCESS, "job-1", 7, 0, 7, true))
         val env = mapOf("AI_APPS_USAGE_FILE" to file.toString())
         val default = runMonitor(emptyArray(), env)
-        assertContains(default, "Rolling cost chart")
+        assertContains(default, "Rolling total game cost chart")
         assertContains(default, "Latest test #1 game-1")
         assertContains(default, "Preparation total: 2.000000 USD")
         assertContains(default, "Development total: 3.000000 USD")
-        assertContains(default, "Game total so far: 5.000000 USD")
-        assertContains(runMonitor(arrayOf("--window=25"), env), "Rolling average: last 25 tests")
+        assertContains(default, "TOTAL PARTIDA (acumulado provisional): 5.000000 USD")
+        assertContains(runMonitor(arrayOf("--window=25"), env), "Rolling average of total game cost: last 25 games")
         val global = runMonitor(arrayOf("--all"), env)
         assertContains(global, "app=quiz10-web workUnit=game-1")
         assertContains(global, "app=batch-jobs workUnit=job-1")
         assertEquals(2, AiUsageQueryService(AiUsageRecordRepository(file)).summarize().byExecution.size)
         val scoped = runMonitor(arrayOf("--work-unit=game-1"), env)
         assertContains(scoped, "status=IN_PROGRESS")
-        assertContains(scoped, "luna terra")
+        assertContains(scoped, "terra | luna")
         assertFalse(scoped.contains("job-1"))
         assertContains(runMonitor(arrayOf("--app=batch-jobs"), env), "batch-jobs")
         assertContains(runMonitor(arrayOf("--model=terra"), env), "By model:")
@@ -69,6 +69,22 @@ class MonitorMainTest {
         assertEquals(2, records.size)
         assertEquals(setOf("quiz10-web", "another-app"), records.map { it.application }.toSet())
         assertEquals(listOf(legacyFile), usageFiles(mapOf("AI_APPS_USAGE_FILE" to legacyFile.toString()), root))
+    }
+
+    @Test
+    fun explicitPricingFileRepricesOnlyRecordsWithoutSnapshots() {
+        val file = usageFile()
+        val pricing = Files.createTempFile(file.parent, "rates-", ".json")
+        Files.writeString(pricing, """{"currency":"USD","models":{"terra":{"inputCostPerMillion":"1000000","outputCostPerMillion":"2000000"}}}""")
+        val monitor = FileAiUsageMonitor(file, emptyMap())
+        monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.COVERAGE, "terra", 1,
+            AiUsageCallResult.SUCCESS, "historical-game", 10, 5, 15, true))
+        val env = mapOf("AI_APPS_USAGE_FILE" to file.toString(), "AI_APPS_PRICING_FILE" to pricing.toString())
+        val detail = runMonitor(arrayOf("--app=quiz10-web", "--work-unit=historical-game"), env)
+        assertContains(detail, "TOTAL PARTIDA: 20.000000 USD (retrospective estimate)")
+        assertContains(detail, "terra | coverage | 10 | 5 | 20.000000 USD (retrospective estimate)")
+        val global = runMonitor(arrayOf("--all", "--work-unit=historical-game"), env)
+        assertContains(global, "Rates: includes retrospective estimates from AI_APPS_PRICING_FILE")
     }
 
     @Test

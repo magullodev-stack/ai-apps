@@ -460,10 +460,11 @@ class MonitorQueriesTest {
             assertEquals(1, history.tests.first().position)
             assertEquals(500, history.tests.last().position)
             assertEquals(window, history.rolling.last().sampleSize)
+            assertTrue(history.rolling.last().cost.amount!! > history.tests.last().cost.amount!!)
             assertEquals(window, history.comparison!!.difference.toInt())
             assertEquals(1, history.tests.last().calls.size)
             val chart = renderQuiz10Chart(history.rolling, 40)
-            assertContains(chart, "Test #1 -> #500")
+            assertContains(chart, "Game #1 -> #500")
             assertContains(chart, "500 points calculated, 40 shown")
         }
     }
@@ -486,7 +487,7 @@ class MonitorQueriesTest {
         assertEquals(AiCostDeterminability.PARTIAL, history.rolling.last().cost.determinability)
         val report = formatQuiz10History(history)
         assertEquals(2, history.tests.first().audits.single().auditPosition)
-        assertContains(report, "cost=not determinable")
+        assertContains(report, "TOTAL PARTIDA: not determinable")
     }
 
     @Test
@@ -543,7 +544,7 @@ class MonitorQueriesTest {
         assertEquals(4, history.rolling.size)
         val report = formatQuiz10History(history)
         assertContains(report, "status=FAILED")
-        assertContains(report, "Game total: not determinable")
+        assertContains(report, "TOTAL PARTIDA: not determinable")
     }
 
     private class StaticTransport(

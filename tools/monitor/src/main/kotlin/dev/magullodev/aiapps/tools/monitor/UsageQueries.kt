@@ -2,6 +2,7 @@ package dev.magullodev.aiapps.tools.monitor
 
 import dev.magullodev.aiapps.core.ai.AiUsageRecord
 import dev.magullodev.aiapps.core.ai.AiUsageRateSnapshot
+import dev.magullodev.aiapps.core.ai.ModelRate
 import dev.magullodev.aiapps.tools.monitor.quiz10.Quiz10History
 import dev.magullodev.aiapps.tools.monitor.quiz10.buildQuiz10History
 import java.math.BigDecimal
@@ -54,10 +55,14 @@ enum class AiCostDeterminability {
     NOT_DETERMINABLE,
 }
 
+enum class AiCostRateSource { SNAPSHOT, RETROSPECTIVE, UNKNOWN }
+
 data class AiUsageCostEstimate(
     val determinability: AiCostDeterminability,
     val currency: String?,
     val amount: BigDecimal?,
+    val rateSource: AiCostRateSource = AiCostRateSource.UNKNOWN,
+    val missingRateModels: Set<String> = emptySet(),
 )
 
 data class AiUsageSummary(
@@ -71,6 +76,8 @@ data class AiUsageSummary(
     val durationMillisByCallId: Map<String, Long>,
     val totalCostByCurrency: Map<String, BigDecimal>,
     val hasPartialOrUndeterminedCost: Boolean,
+    val hasRetrospectiveRates: Boolean,
+    val missingRateModels: Set<String>,
     val byApplication: Map<String, AiUsageGroupSummary>,
     val byModel: Map<String, AiUsageGroupSummary>,
     val byOperation: Map<String, AiUsageGroupSummary>,
@@ -84,6 +91,8 @@ data class AiUsageGroupSummary(
     val totalKnownOutputTokens: Long,
     val totalCostByCurrency: Map<String, BigDecimal>,
     val hasPartialOrUndeterminedCost: Boolean,
+    val hasRetrospectiveRates: Boolean,
+    val missingRateModels: Set<String>,
 )
 
 data class AiUsageExecutionKey(val application: String, val workUnitId: String)
@@ -94,13 +103,16 @@ data class AiUsageExecutionSummary(
     val audits: Int,
     val totalCostByCurrency: Map<String, BigDecimal>,
     val hasPartialOrUndeterminedCost: Boolean,
+    val hasRetrospectiveRates: Boolean,
+    val missingRateModels: Set<String>,
 )
 
 
 class AiUsageQueryService(
     private val repository: AiUsageRecordRepository,
+    private val ratesByModel: Map<String, ModelRate> = emptyMap(),
 ) {
-    fun quiz10History(window: Int = 50): Quiz10History = buildQuiz10History(repository.readAll(), window)
+    fun quiz10History(window: Int = 50): Quiz10History = buildQuiz10History(repository.readAll(), window, ratesByModel)
 
     fun summarize(filter: AiUsageFilter = AiUsageFilter()): AiUsageSummary {
         val all = repository.readAll()
@@ -123,7 +135,7 @@ class AiUsageQueryService(
 
         val perCallDurations = calls.associate { it.recordId to (it.durationMillis ?: 0L) }
 
-        val costEstimates = calls.map { estimateCallCost(it) }
+        val costEstimates = calls.map { estimateCallCost(it, ratesByModel) }
         val costByCurrency = costEstimates.mapNotNull { estimate ->
             val currency = estimate.currency ?: return@mapNotNull null
             val amount = estimate.amount ?: return@mapNotNull null
@@ -143,6 +155,8 @@ class AiUsageQueryService(
             durationMillisByCallId = perCallDurations,
             totalCostByCurrency = costByCurrency,
             hasPartialOrUndeterminedCost = hasPartialOrUndetermined,
+            hasRetrospectiveRates = costEstimates.any { it.rateSource == AiCostRateSource.RETROSPECTIVE },
+            missingRateModels = costEstimates.flatMap { it.missingRateModels }.toSet(),
             byApplication = summarizeBy(calls) { it.application },
             byModel = summarizeBy(calls) { it.model ?: "unknown-model" },
             byOperation = summarizeBy(calls) { it.operation ?: "unknown-operation" },
@@ -150,7 +164,7 @@ class AiUsageQueryService(
                 .toSortedMap(compareBy<AiUsageExecutionKey> { it.application }.thenBy { it.workUnitId })
                 .mapValues { (_, records) ->
                     val group = records.filter { it.type == "ai_call" }
-                    val costs = group.map(::estimateCallCost)
+                    val costs = group.map { estimateCallCost(it, ratesByModel) }
                     AiUsageExecutionSummary(
                         calls = group.size,
                         metrics = records.count { it.type == "metric" },
@@ -161,6 +175,8 @@ class AiUsageQueryService(
                             currency to amount
                         }.groupBy({ it.first }, { it.second }).mapValues { (_, values) -> values.fold(BigDecimal.ZERO, BigDecimal::add) },
                         hasPartialOrUndeterminedCost = costs.any { it.determinability != AiCostDeterminability.KNOWN },
+                        hasRetrospectiveRates = costs.any { it.rateSource == AiCostRateSource.RETROSPECTIVE },
+                        missingRateModels = costs.flatMap { it.missingRateModels }.toSet(),
                     )
                 },
         )
@@ -170,7 +186,7 @@ class AiUsageQueryService(
         calls: List<AiUsageRecord>,
         keySelector: (AiUsageRecord) -> String,
     ): Map<String, AiUsageGroupSummary> = calls.groupBy(keySelector).toSortedMap().mapValues { (_, group) ->
-        val estimates = group.map(::estimateCallCost)
+        val estimates = group.map { estimateCallCost(it, ratesByModel) }
         AiUsageGroupSummary(
             calls = group.size,
             failedCalls = group.count { it.result == "error" },
@@ -182,6 +198,8 @@ class AiUsageQueryService(
                 currency to amount
             }.groupBy({ it.first }, { it.second }).mapValues { (_, values) -> values.fold(BigDecimal.ZERO) { acc, value -> acc + value } },
             hasPartialOrUndeterminedCost = estimates.any { it.determinability != AiCostDeterminability.KNOWN },
+            hasRetrospectiveRates = estimates.any { it.rateSource == AiCostRateSource.RETROSPECTIVE },
+            missingRateModels = estimates.flatMap { it.missingRateModels }.toSet(),
         )
     }
 
@@ -191,11 +209,19 @@ class AiUsageQueryService(
     }
 }
 
-fun estimateCallCost(record: AiUsageRecord): AiUsageCostEstimate {
-    val rate = record.rate ?: return AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, null, null)
-
-    val inputRate = rate.inputCostPerMillion.toBigDecimalOrNull() ?: return AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, rate.currency, null)
-    val outputRate = rate.outputCostPerMillion.toBigDecimalOrNull() ?: return AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, rate.currency, null)
+fun estimateCallCost(
+    record: AiUsageRecord,
+    ratesByModel: Map<String, ModelRate> = emptyMap(),
+): AiUsageCostEstimate {
+    val model = record.model ?: "unknown-model"
+    val rate = record.rate ?: ratesByModel[model]?.snapshot()
+        ?: return AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, null, null,
+            missingRateModels = setOf(model))
+    val source = if (record.rate != null) AiCostRateSource.SNAPSHOT else AiCostRateSource.RETROSPECTIVE
+    val inputRate = rate.inputCostPerMillion.toBigDecimalOrNull()
+        ?: return AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, rate.currency, null, source, setOf(model))
+    val outputRate = rate.outputCostPerMillion.toBigDecimalOrNull()
+        ?: return AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, rate.currency, null, source, setOf(model))
 
     val inputCost = record.inputTokens?.let { tokens ->
         inputRate.multiply(BigDecimal(tokens)).divide(ONE_MILLION, 12, RoundingMode.HALF_UP)
@@ -203,25 +229,13 @@ fun estimateCallCost(record: AiUsageRecord): AiUsageCostEstimate {
     val outputCost = record.outputTokens?.let { tokens ->
         outputRate.multiply(BigDecimal(tokens)).divide(ONE_MILLION, 12, RoundingMode.HALF_UP)
     }
-
     return when {
         inputCost != null && outputCost != null -> AiUsageCostEstimate(
-            determinability = AiCostDeterminability.KNOWN,
-            currency = rate.currency,
-            amount = inputCost + outputCost,
-        )
-
+            AiCostDeterminability.KNOWN, rate.currency, inputCost + outputCost, source)
         inputCost != null || outputCost != null -> AiUsageCostEstimate(
-            determinability = AiCostDeterminability.PARTIAL,
-            currency = rate.currency,
-            amount = (inputCost ?: BigDecimal.ZERO) + (outputCost ?: BigDecimal.ZERO),
-        )
-
-        else -> AiUsageCostEstimate(
-            determinability = AiCostDeterminability.NOT_DETERMINABLE,
-            currency = rate.currency,
-            amount = null,
-        )
+            AiCostDeterminability.PARTIAL, rate.currency,
+            (inputCost ?: BigDecimal.ZERO) + (outputCost ?: BigDecimal.ZERO), source)
+        else -> AiUsageCostEstimate(AiCostDeterminability.NOT_DETERMINABLE, rate.currency, null, source)
     }
 }
 
@@ -251,25 +265,27 @@ fun formatUsageSummary(summary: AiUsageSummary): String {
         if (summary.hasPartialOrUndeterminedCost) {
             appendLine("WARNING: cost includes partial or undetermined records")
         }
+        if (summary.hasRetrospectiveRates) appendLine("Rates: includes retrospective estimates from AI_APPS_PRICING_FILE")
+        if (summary.missingRateModels.isNotEmpty()) appendLine("Missing rates for models: ${summary.missingRateModels.sorted().joinToString(", ")}; configure AI_APPS_PRICING_FILE")
 
         appendLine("By application:")
         summary.byApplication.forEach { (application, group) ->
-            appendLine("- $application: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost)}")
+            appendLine("- $application: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost, group.hasRetrospectiveRates, group.missingRateModels)}")
         }
 
         appendLine("By model:")
         summary.byModel.forEach { (model, group) ->
-            appendLine("- $model: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost)}")
+            appendLine("- $model: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost, group.hasRetrospectiveRates, group.missingRateModels)}")
         }
 
         appendLine("By operation:")
         summary.byOperation.forEach { (operation, group) ->
-            appendLine("- $operation: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost)}")
+            appendLine("- $operation: calls=${group.calls}, failed=${group.failedCalls}, input=${group.totalKnownInputTokens}, output=${group.totalKnownOutputTokens}, cost=${formatCosts(group.totalCostByCurrency, group.hasPartialOrUndeterminedCost, group.hasRetrospectiveRates, group.missingRateModels)}")
         }
 
         appendLine("By execution:")
         summary.byExecution.forEach { (key, execution) ->
-            appendLine("- app=${key.application} workUnit=${key.workUnitId}: calls=${execution.calls}, metrics=${execution.metrics}, audits=${execution.audits}, cost=${formatCosts(execution.totalCostByCurrency, execution.hasPartialOrUndeterminedCost)}")
+            appendLine("- app=${key.application} workUnit=${key.workUnitId}: calls=${execution.calls}, metrics=${execution.metrics}, audits=${execution.audits}, cost=${formatCosts(execution.totalCostByCurrency, execution.hasPartialOrUndeterminedCost, execution.hasRetrospectiveRates, execution.missingRateModels)}")
         }
 
         val metricByName = summary.metrics.groupBy { it.metricName ?: "unknown-metric" }
@@ -291,16 +307,21 @@ fun formatUsageSummary(summary: AiUsageSummary): String {
     }
 }
 
-private fun formatCosts(costByCurrency: Map<String, BigDecimal>, partial: Boolean): String {
-    val known = if (costByCurrency.isEmpty()) {
-        "not determinable"
-    } else {
+private fun formatCosts(
+    costByCurrency: Map<String, BigDecimal>,
+    partial: Boolean,
+    retrospective: Boolean,
+    missingRateModels: Set<String>,
+): String {
+    val known = if (costByCurrency.isEmpty()) "not determinable" else
         costByCurrency.entries.joinToString(", ") { (currency, amount) ->
             "${amount.setScale(6, RoundingMode.HALF_UP).toPlainString()} $currency"
         }
-    }
-
-    return if (partial) "$known (partial)" else known
+    val completeness = if (partial) "$known (partial)" else known
+    val source = if (retrospective) " (includes retrospective estimates)" else ""
+    val missing = if (missingRateModels.isEmpty()) "" else
+        "; missing rate for ${missingRateModels.sorted().joinToString(", ")}; configure AI_APPS_PRICING_FILE"
+    return completeness + source + missing
 }
 
 private fun renderAuditSummary(summary: AiUsageSummary): String {
