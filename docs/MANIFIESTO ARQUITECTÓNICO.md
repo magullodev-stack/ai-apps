@@ -1,6 +1,6 @@
 # Manifiesto arquitectónico de AI-APPS
 
-AI-APPS construye aplicaciones centradas en la actividad humana. Los sistemas gobiernan la realidad de cada actividad y las capacidades, incluidas las de IA, participan según las necesidades de la experiencia.
+AI-APPS construye aplicaciones móviles centradas en la actividad humana. Los sistemas gobiernan la realidad de cada actividad y las capacidades, incluidas las de IA, participan según las necesidades de la experiencia.
 
 ---
 
@@ -18,6 +18,8 @@ Una nueva aplicación utiliza las capacidades y sistemas existentes; no recibe c
 
 La jerarquía física puede expresar pertenencia lógica real cuando exista. Los sistemas no necesitan ocupar todos el mismo nivel.
 
+Las herramientas autónomas y transversales del proyecto se alojan en `tools/`.
+
 ## Dependencias
 
 `systems/` puede depender de `core/`.
@@ -31,6 +33,8 @@ Los sistemas pueden coexistir sin conocerse entre sí.
 Los detalles de proveedores externos permanecen fuera de las reglas de dominio.
 
 `apps/` realiza las conexiones concretas entre efectos y capacidades.
+
+Las herramientas pueden observar las ejecuciones de los sistemas y aplicaciones, pero no gobiernan sus actividades ni redefinen sus reglas.
 
 ## Crecimiento
 

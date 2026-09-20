@@ -5,7 +5,7 @@
 
 | Herramienta | Finalidad | Ubicación | Documentación |
 | --- | --- | --- | --- |
-| Monitor de consumo y auditorías | Analizar el histórico de preparación y el estado, consumo total, llamadas y auditorías de cada partida de Quiz10. | `core/ai/` | `core/ai/README.md` |
+| MONITOR | Observar y analizar el estado, consumo, costes, rendimiento y auditorías de las ejecuciones de los sistemas y aplicaciones de AI-APPS. | `tools/monitor/` | `tools/monitor/README.md` |
 
 ## Mantenimiento
 
