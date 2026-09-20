@@ -19,4 +19,4 @@ Al incorporar una herramienta, añade al catálogo su nombre, finalidad, ubicaci
 
 
 HACER COMMIT
-git add -A && git commit -m "Descripción del cambio" && git push origin dev
+git add -A && (git diff --cached --quiet || git commit -m "Descripción del cambio") && git pull --ff-only origin dev && git push origin dev && git fetch origin && git status -sb
