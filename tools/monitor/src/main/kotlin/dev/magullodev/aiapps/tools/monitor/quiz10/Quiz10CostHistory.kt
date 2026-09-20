@@ -1,4 +1,9 @@
-package dev.magullodev.aiapps.core.ai
+package dev.magullodev.aiapps.tools.monitor.quiz10
+
+import dev.magullodev.aiapps.core.ai.AiUsageRecord
+import dev.magullodev.aiapps.tools.monitor.AiCostDeterminability
+import dev.magullodev.aiapps.tools.monitor.AiUsageCostEstimate
+import dev.magullodev.aiapps.tools.monitor.estimateCallCost
 
 import java.math.BigDecimal
 import java.math.RoundingMode

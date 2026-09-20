@@ -5,11 +5,8 @@ import dev.magullodev.aiapps.core.ai.AiTransportFailureKind
 import dev.magullodev.aiapps.core.ai.AiUsageCallEvent
 import dev.magullodev.aiapps.core.ai.AiUsageCallResult
 import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
-import dev.magullodev.aiapps.core.ai.AiUsageFilter
 import dev.magullodev.aiapps.core.ai.AiUsageMonitor
 import dev.magullodev.aiapps.core.ai.AiUsageOperation
-import dev.magullodev.aiapps.core.ai.AiUsageQueryService
-import dev.magullodev.aiapps.core.ai.AiUsageRecordRepository
 import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.ModelRate
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -425,21 +422,15 @@ class Quiz10WebServerTest {
             assertContains(replay.body(), "Pregunta 1/10")
         }
 
-        val summary = AiUsageQueryService(AiUsageRecordRepository(usageFile)).summarize(
-            AiUsageFilter(application = "quiz10-web"),
-        )
-        val workUnits = (summary.calls + summary.metrics).mapNotNull { it.workUnitId }.toSet()
-
+        val lines = Files.readAllLines(usageFile)
+        val workUnits = lines.mapNotNull { Regex("\"workUnitId\":\"([^\"]+)\"").find(it)?.groupValues?.get(1) }.toSet()
         assertEquals(0, turnCalls.get())
-        assertEquals(2, summary.byOperation["coverage"]?.calls)
-        assertEquals(null, summary.byOperation["luna"])
-        assertEquals(2, summary.metrics.count { it.metricName == "quiz10_preparation" })
+        assertEquals(2, lines.count { it.contains("\"operation\":\"coverage\"") })
+        assertEquals(0, lines.count { it.contains("\"operation\":\"luna\"") })
+        assertEquals(2, lines.count { it.contains("\"metricName\":\"quiz10_preparation\"") })
         assertEquals(2, workUnits.size)
-        val history = AiUsageQueryService(AiUsageRecordRepository(usageFile)).quiz10History()
-        assertEquals(1, history.tests.count { it.status == dev.magullodev.aiapps.core.ai.Quiz10GameStatus.COMPLETED })
-        assertEquals(1, history.tests.count { it.status == dev.magullodev.aiapps.core.ai.Quiz10GameStatus.IN_PROGRESS })
-        assertEquals(1, history.tests.sumOf { test -> test.metrics.count { it.metricName == "quiz10_game_completed" } })
-        assertEquals(1, history.tests.single { it.status == dev.magullodev.aiapps.core.ai.Quiz10GameStatus.COMPLETED }.totalCalls)
+        assertEquals(1, lines.count { it.contains("quiz10_game_completed") })
+        assertEquals(2, lines.count { it.contains("quiz10_game_started") })
     }
 
     @Test
@@ -487,13 +478,10 @@ class Quiz10WebServerTest {
             }
         }
 
-        val summary = AiUsageQueryService(AiUsageRecordRepository(usageFile)).summarize(
-            AiUsageFilter(application = "quiz10-web"),
-        )
-
+        val lines = Files.readAllLines(usageFile)
         assertEquals(0, turnCalls.get())
-        assertTrue((summary.byOperation["coverage"]?.calls ?: 0) >= 1)
-        assertEquals(null, summary.byOperation["luna"])
+        assertTrue(lines.any { it.contains("\"operation\":\"coverage\"") })
+        assertTrue(lines.none { it.contains("\"operation\":\"luna\"") })
     }
 
     @Test
@@ -511,13 +499,13 @@ class Quiz10WebServerTest {
         withServer(prepare, usageMonitor = monitor) { baseUrl, _, _ ->
             assertEquals(500, postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection)).statusCode())
         }
-        val game = AiUsageQueryService(AiUsageRecordRepository(file)).quiz10History().tests.single()
-        assertEquals(dev.magullodev.aiapps.core.ai.Quiz10GameStatus.FAILED, game.status)
-        assertEquals(1, game.totalCalls)
-        assertEquals(1, game.audits.size)
-        assertEquals("2", game.totalCost.amount?.stripTrailingZeros()?.toPlainString())
-        assertTrue(game.metrics.any { it.metricName == "quiz10_game_started" })
-        assertTrue(game.metrics.any { it.metricName == "quiz10_game_preparation_failed" })
+        val lines = Files.readAllLines(file)
+        val workUnits = lines.mapNotNull { Regex("\"workUnitId\":\"([^\"]+)\"").find(it)?.groupValues?.get(1) }.toSet()
+        assertEquals(1, workUnits.size)
+        assertEquals(1, lines.count { it.contains("\"type\":\"ai_call\"") })
+        assertEquals(1, lines.count { it.contains("\"type\":\"audit\"") })
+        assertTrue(lines.any { it.contains("quiz10_game_started") })
+        assertTrue(lines.any { it.contains("quiz10_game_preparation_failed") })
     }
 
     @Test
@@ -541,15 +529,14 @@ class Quiz10WebServerTest {
         withServer(prepare, turn, monitor) { baseUrl, _, _ ->
             assertEquals(500, postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection)).statusCode())
         }
-        val game = AiUsageQueryService(AiUsageRecordRepository(file)).quiz10History().tests.single()
-        assertEquals(dev.magullodev.aiapps.core.ai.Quiz10GameStatus.FAILED, game.status)
-        assertEquals(2, game.totalCalls)
-        assertEquals("2", game.cost.amount?.stripTrailingZeros()?.toPlainString())
-        assertEquals("3", game.developmentCost.amount?.stripTrailingZeros()?.toPlainString())
-        assertEquals("5", game.totalCost.amount?.stripTrailingZeros()?.toPlainString())
-        assertEquals(1, game.rejectedRows)
-        assertTrue(game.metrics.any { it.metricName == "quiz10_game_prepared" })
-        assertTrue(game.metrics.any { it.metricName == "quiz10_preparation" })
+        val lines = Files.readAllLines(file)
+        val workUnits = lines.mapNotNull { Regex("\"workUnitId\":\"([^\"]+)\"").find(it)?.groupValues?.get(1) }.toSet()
+        assertEquals(1, workUnits.size)
+        assertEquals(1, lines.count { it.contains("\"operation\":\"coverage\"") })
+        assertEquals(1, lines.count { it.contains("\"operation\":\"luna\"") })
+        assertTrue(lines.any { it.contains("quiz10_game_prepared") })
+        assertTrue(lines.any { it.contains("quiz10_preparation") && it.contains("\"invalidated_positions\":1") })
+        assertTrue(lines.any { it.contains("quiz10_game_execution_failed") })
     }
 
     private fun <T> withServer(

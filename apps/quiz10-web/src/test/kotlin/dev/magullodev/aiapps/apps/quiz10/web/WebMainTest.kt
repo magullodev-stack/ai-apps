@@ -4,9 +4,6 @@ import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiUsageContext
 import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
-import dev.magullodev.aiapps.core.ai.AiUsageFilter
-import dev.magullodev.aiapps.core.ai.AiUsageQueryService
-import dev.magullodev.aiapps.core.ai.AiUsageRecordRepository
 import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.contracts.Outcome
@@ -187,95 +184,12 @@ class WebMainTest {
         }
 
         assertIs<Outcome.Failure<QuizPreparationError>>(result)
-        val summary = AiUsageQueryService(AiUsageRecordRepository(usageFile)).summarize(
-            AiUsageFilter(workUnitId = "wu-fail"),
-        )
-        assertEquals(2, summary.audits.size)
-        assertTrue(summary.audits.all { it.auditPosition == null })
-        assertTrue(summary.audits.all { it.auditResult == "rejected" })
-        assertTrue(summary.audits.mapNotNull { it.auditReason }.contains("Grupo inconsistente"))
-        assertTrue(summary.audits.mapNotNull { it.auditReason }.contains("Sin progresión de dificultad"))
-    }
-
-    @Test
-    fun usageMonitorOutputCanBeScopedByWorkUnitWithAudits() {
-        val usageFile = usageFile()
-        val monitor = FileAiUsageMonitor(usageFile = usageFile, ratesByModel = emptyMap())
-
-        monitor.recordAudit(
-            dev.magullodev.aiapps.core.ai.AiUsageAuditEvent(
-                application = "quiz10-web",
-                workUnitId = "wu-1",
-                audit = "quiz10_question_review",
-                phase = "initial_review",
-                position = 3,
-                result = dev.magullodev.aiapps.core.ai.AiUsageAuditResult.REJECTED,
-                reason = "Distractores repetidos",
-            ),
-        )
-        monitor.recordAudit(
-            dev.magullodev.aiapps.core.ai.AiUsageAuditEvent(
-                application = "quiz10-web",
-                workUnitId = "wu-2",
-                audit = "quiz10_route_validation",
-                phase = "route_validation",
-                result = dev.magullodev.aiapps.core.ai.AiUsageAuditResult.REJECTED,
-                reason = "Cobertura desbalanceada",
-            ),
-        )
-
-        val rendered = runUsageMonitor(
-            args = arrayOf("--usage-monitor", "--app=quiz10-web", "--work-unit=wu-2"),
-            env = mapOf("AI_APPS_USAGE_FILE" to usageFile.toString()),
-        )
-
-        assertContains(rendered, "workUnit=wu-2")
-        assertContains(rendered, "Cobertura desbalanceada")
-        assertContains(rendered, "Latest test #")
-        assertContains(rendered, "status=UNKNOWN")
-    }
-
-    @Test
-    fun monitorDefaultsToHistoricalReportAndKeepsLegacyAllView() {
-        val file = usageFile()
-        val monitor = FileAiUsageMonitor(file, mapOf("terra" to dev.magullodev.aiapps.core.ai.ModelRate("USD", "1".toBigDecimal(), "1".toBigDecimal())))
-        monitor.recordCall(dev.magullodev.aiapps.core.ai.AiUsageCallEvent("quiz10-web",
-            dev.magullodev.aiapps.core.ai.AiUsageOperation.COVERAGE, "terra", 3,
-            dev.magullodev.aiapps.core.ai.AiUsageCallResult.SUCCESS, "test-1", 10, 5, 15, true))
-        val env = mapOf("AI_APPS_USAGE_FILE" to file.toString())
-        val historical = runUsageMonitor(arrayOf("--usage-monitor", "--window=25"), env)
-        assertContains(historical, "Rolling average: last 25 tests")
-        assertContains(historical, "Latest test #1 test-1")
-        assertContains(historical, "coverage terra")
-        val all = runUsageMonitor(arrayOf("--usage-monitor", "--all"), env)
-        assertContains(all, "AI usage monitor")
-    }
-
-    @Test
-    fun monitorShowsLiveClosedFailedAndLegacyGamesFromOneUsageFile() {
-        val file = usageFile()
-        val monitor = FileAiUsageMonitor(file, mapOf("terra" to dev.magullodev.aiapps.core.ai.ModelRate("USD", "1000000".toBigDecimal(), "0".toBigDecimal())))
-        listOf("legacy", "live", "closed", "failed").forEach { id ->
-            if (id != "legacy") monitor.recordMetric(dev.magullodev.aiapps.core.ai.AiUsageMetricEvent(
-                "quiz10-web", "quiz10_game_started", emptyMap(), id))
-            monitor.recordCall(dev.magullodev.aiapps.core.ai.AiUsageCallEvent("quiz10-web",
-                dev.magullodev.aiapps.core.ai.AiUsageOperation.COVERAGE, "terra", 1,
-                dev.magullodev.aiapps.core.ai.AiUsageCallResult.SUCCESS, id, 2, 0, 2, true))
-            if (id == "closed") monitor.recordMetric(dev.magullodev.aiapps.core.ai.AiUsageMetricEvent(
-                "quiz10-web", "quiz10_game_completed", emptyMap(), id))
-            if (id == "failed") monitor.recordMetric(dev.magullodev.aiapps.core.ai.AiUsageMetricEvent(
-                "quiz10-web", "quiz10_game_execution_failed", emptyMap(), id))
-        }
-        val rendered = runUsageMonitor(arrayOf("--usage-monitor"), mapOf("AI_APPS_USAGE_FILE" to file.toString()))
-        assertContains(rendered, "legacy")
-        assertContains(rendered, "status=UNKNOWN")
-        assertContains(rendered, "status=IN_PROGRESS")
-        assertContains(rendered, "status=COMPLETED")
-        assertContains(rendered, "status=FAILED")
-        assertContains(rendered, "Preparation total:")
-        assertContains(rendered, "Development total:")
-        assertContains(rendered, "Game total:")
-        assertContains(rendered, "Rolling cost chart")
+        val audits = Files.readAllLines(usageFile).filter { it.contains("\"type\":\"audit\"") }
+        assertEquals(2, audits.size)
+        assertTrue(audits.all { it.contains("\"workUnitId\":\"wu-fail\"") })
+        assertTrue(audits.all { it.contains("\"auditResult\":\"rejected\"") })
+        assertTrue(audits.any { it.contains("Grupo inconsistente") })
+        assertTrue(audits.any { it.contains("Sin progresión de dificultad") })
     }
 
     private fun usageFile(): Path {

@@ -27,3 +27,8 @@ tasks.test {
 application {
     mainClass.set("dev.magullodev.aiapps.apps.quiz10.web.WebMainKt")
 }
+
+// Share the root usage file with MONITOR for Gradle launches.
+tasks.named<JavaExec>("run") {
+    workingDir = rootProject.projectDir
+}

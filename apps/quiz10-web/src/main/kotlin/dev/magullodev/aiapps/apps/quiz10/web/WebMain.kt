@@ -5,16 +5,10 @@ import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiUsageAuditEvent
 import dev.magullodev.aiapps.core.ai.AiUsageAuditResult
 import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
-import dev.magullodev.aiapps.core.ai.AiUsageFilter
 import dev.magullodev.aiapps.core.ai.AiUsageMonitor
-import dev.magullodev.aiapps.core.ai.AiUsageQueryService
-import dev.magullodev.aiapps.core.ai.AiUsageRecordRepository
 import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
-import dev.magullodev.aiapps.core.ai.formatUsageSummary
-import dev.magullodev.aiapps.core.ai.formatQuiz10History
-import dev.magullodev.aiapps.core.ai.formatQuiz10Game
 import dev.magullodev.aiapps.core.ai.loadModelRates
 import dev.magullodev.aiapps.core.ai.resolveUsageFile
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
@@ -38,11 +32,6 @@ import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    if (args.contains("--usage-monitor")) {
-        runUsageMonitor(args)
-        return
-    }
-
     val config = when (val result = EnvironmentConfig.load()) {
         is Outcome.Success -> result.value
         is Outcome.Failure -> fail("CONFIGURATION_ERROR: ${result.error}")
@@ -78,50 +67,6 @@ fun main(args: Array<String>) {
 
     Runtime.getRuntime().addShutdownHook(Thread { server.close() })
     CountDownLatch(1).await()
-}
-
-internal fun runUsageMonitor(args: Array<String>, env: Map<String, String> = System.getenv()): String {
-    val usageFile = resolveUsageFile(env)
-    val query = AiUsageQueryService(AiUsageRecordRepository(usageFile))
-    val filter = parseUsageFilterArgs(args)
-    val window = args.firstOrNull { it.startsWith("--window=") }?.substringAfter("=")?.toIntOrNull() ?: 50
-    val rendered = when {
-        args.contains("--all") -> formatUsageSummary(query.summarize(filter))
-        filter.workUnitId != null -> {
-            val summary = formatUsageSummary(query.summarize(filter))
-            val game = if ((filter.application == null || filter.application == "quiz10-web") &&
-                filter.model == null && filter.operation == null)
-                query.quiz10History(window).tests.firstOrNull { it.workUnitId == filter.workUnitId } else null
-            if (game == null) summary else summary + "\n" + formatQuiz10Game(game)
-        }
-        filter.application != null || filter.model != null || filter.operation != null -> formatUsageSummary(query.summarize(filter))
-        else -> formatQuiz10History(query.quiz10History(window))
-    }
-    println(rendered)
-    return rendered
-}
-
-private fun parseUsageFilterArgs(args: Array<String>): AiUsageFilter {
-    var app: String? = null
-    var model: String? = null
-    var operation: String? = null
-    var workUnit: String? = null
-
-    args.forEach { arg ->
-        when {
-            arg.startsWith("--app=") -> app = arg.substringAfter("--app=")
-            arg.startsWith("--model=") -> model = arg.substringAfter("--model=")
-            arg.startsWith("--operation=") -> operation = arg.substringAfter("--operation=")
-            arg.startsWith("--work-unit=") -> workUnit = arg.substringAfter("--work-unit=")
-        }
-    }
-
-    return AiUsageFilter(
-        application = app?.trim()?.ifEmpty { null },
-        model = model?.trim()?.ifEmpty { null },
-        operation = operation?.trim()?.ifEmpty { null },
-        workUnitId = workUnit?.trim()?.ifEmpty { null },
-    )
 }
 
 internal fun resolveWebPort(env: Map<String, String> = System.getenv()): Int {
