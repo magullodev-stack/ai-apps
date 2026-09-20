@@ -1,5 +1,4 @@
-
-Lectura del árbol: AI-APPS comparte una arquitectura común, pero cada aplicación crece con su propia estructura, según las experiencias y responsabilidades que necesita.
+Lectura del árbol: AI-APPS comparte una arquitectura común, pero cada aplicación móvil crece con su propia estructura, según las experiencias y responsabilidades que necesita.
 
 ai-apps/
 ├── AGENTS.md                          # Guía de trabajo para agentes.
@@ -9,7 +8,6 @@ ai-apps/
 │   ├── config/                        # Configuración técnica.
 │   ├── network/                       # Comunicación por red.
 │   ├── ai/                            # Ejecución técnica de operaciones mediante modelos de IA.
-│   │   └── README.md                  # Documentación técnica del monitor de consumo y auditorías.
 │   ├── realtime/                      # Transporte de mensajes y actualizaciones en vivo. [FUTURO]
 │   └── persistence/                   # Almacenamiento y recuperación técnica.
 │
@@ -51,8 +49,8 @@ ai-apps/
 │       ├── recipes/                   # Recetas, cantidades y adaptaciones. [FUTURO]
 │       └── cooking/                   # Elaboración en curso y progreso. [FUTURO]
 │
-├── ui/                                # Experiencias visibles e interacción humana.
-│   ├── quiz10-web/                    # Interfaz de la suite Quiz10.
+├── ui/                                # Presentación e interacción de las aplicaciones móviles.
+│   ├── quiz10/                        # Interfaz móvil de la suite Quiz10.
 │   │   ├── home/                      # Entrada a las experiencias.
 │   │   ├── rooms/                     # Descubrimiento y experiencia dentro de las salas.
 │   │   ├── duels/                     # Experiencia de enfrentamiento 1 vs. 1.
@@ -60,12 +58,16 @@ ai-apps/
 │   │   ├── study/                     # Experiencia de aprendizaje y repaso.
 │   │   └── shared/                    # Presentación reutilizable cuando realmente corresponda.
 │   │
-│   └── cuina-web/                     # Navegación y experiencia de cocina. [FUTURO]
+│   └── cuina/                         # Interfaz móvil de la experiencia culinaria. [FUTURO]
 │
-├── apps/                              # Composición ejecutable de sistemas, UI y capacidades.
-│   ├── quiz10/                        # Composición actual de Quiz10.
-│   ├── quiz10-web/                    # Composición web de la suite Quiz10.
-│   └── cuina-web/                     # Composición ejecutable de Cuina. [FUTURO]
+├── apps/                              # Composición ejecutable de las aplicaciones móviles.
+│   ├── quiz10/                        # Composición móvil de la suite Quiz10.
+│   └── cuina/                         # Composición móvil de Cuina. [FUTURO]
+│
+├── tools/                             # Herramientas autónomas y transversales de AI-APPS.
+│   └── monitor/                       # Observación, análisis e informes de consumo, costes,
+│       │                              # rendimiento y auditorías de las ejecuciones de AI-APPS.
+│       └── README.md                  # Documentación de la herramienta MONITOR.
 │
 ├── docs/
 │   ├── MANIFIESTO ARQUITECTÓNICO.md   # Arquitectura global.
