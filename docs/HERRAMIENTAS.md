@@ -20,3 +20,8 @@ Al incorporar una herramienta, añade al catálogo su nombre, finalidad, ubicaci
 
 HACER COMMIT
 git add -A && (git diff --cached --quiet || git commit -m "Descripción del cambio") && git pull --ff-only origin dev && git push origin dev && git fetch origin && git status -sb
+
+---
+
+ABRIR MONIT-AI
+AI_APPS_PRICING_FILE="$PWD/.ai-apps/pricing.json" ./gradlew -q :tools:monit-ai:run
