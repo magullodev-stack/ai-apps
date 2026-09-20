@@ -12,7 +12,7 @@ AI usage instrumentation and append-only recording remain in `core/ai`.
 From the repository root:
 
 ```bash
-./gradlew -q :tools:monitor:run
+./gradlew -q :tools:monit-ai:run
 ```
 
 The default view displays a cost chart and a compact execution table for the currently integrated game history.
@@ -24,7 +24,7 @@ The current default chart is a game-history view, not a cross-application chart.
 ### Rolling averages
 
 ```bash
-./gradlew -q :tools:monitor:run --args="--window=50"
+./gradlew -q :tools:monit-ai:run --args="--window=50"
 ```
 
 Supported windows are 10, 25, 50 (default), and 100 closed games.
@@ -46,19 +46,19 @@ An unavailable or indeterminable cost is not plotted as a measured value.
 
 ```bash
 # Global usage report
-./gradlew -q :tools:monitor:run --args="--all"
+./gradlew -q :tools:monit-ai:run --args="--all"
 
 # Usage for a specific application
-./gradlew -q :tools:monitor:run --args="--app=<application-id>"
+./gradlew -q :tools:monit-ai:run --args="--app=<application-id>"
 
 # Usage for a specific execution
-./gradlew -q :tools:monitor:run --args="--app=<application-id> --work-unit=<id>"
+./gradlew -q :tools:monit-ai:run --args="--app=<application-id> --work-unit=<id>"
 
 # Usage for a specific model
-./gradlew -q :tools:monitor:run --args="--model=<model-id>"
+./gradlew -q :tools:monit-ai:run --args="--model=<model-id>"
 
 # Usage for a specific operation
-./gradlew -q :tools:monitor:run --args="--operation=<operation-id>"
+./gradlew -q :tools:monit-ai:run --args="--operation=<operation-id>"
 ```
 
 `--all` displays the technical usage report, including breakdowns by application, model, operation, and execution.
@@ -93,7 +93,7 @@ To select a specific usage file, set `AI_APPS_USAGE_FILE`:
 
 ```bash
 AI_APPS_USAGE_FILE="/path/to/ai-usage.jsonl" \
-./gradlew -q :tools:monitor:run --args="--all"
+./gradlew -q :tools:monit-ai:run --args="--all"
 ```
 
 Selecting an explicit file overrides automatic file discovery.
@@ -110,7 +110,7 @@ If a call has no recorded rate, an explicit pricing file may provide a retrospec
 
 ```bash
 AI_APPS_PRICING_FILE="$PWD/.ai-apps/pricing.json" \
-./gradlew -q :tools:monitor:run
+./gradlew -q :tools:monit-ai:run --args="--window=50"
 ```
 
 Retrospectively estimated costs are identified as such. They are not presented as rates recorded at the time of the original call.

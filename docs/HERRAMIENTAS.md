@@ -5,7 +5,7 @@
 
 | Herramienta | Finalidad | Ubicación | Documentación |
 | --- | --- | --- | --- |
-| MONITOR | Observar y analizar el estado, consumo, costes, rendimiento y auditorías de las ejecuciones de los sistemas y aplicaciones de AI-APPS. | `tools/monitor/` | `tools/monitor/README.md` |
+| MONIT-AI | Observar y analizar el estado, consumo, costes, rendimiento y auditorías de las ejecuciones de los sistemas y aplicaciones de AI-APPS. | `tools/monit-ai/` | `tools/monit-ai/README.md` |
 
 ## Mantenimiento
 

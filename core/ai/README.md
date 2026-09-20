@@ -76,6 +76,6 @@ Notes:
 
 ## Analysis and reports
 
-MONITOR is the standalone tool in [`tools/monitor/README.md`](../../tools/monitor/README.md). It reads these technical records and produces the global and Quiz10 reports. The `core/ai` module only records technical events and does not depend on MONITOR.
+MONIT-AI is the standalone tool in [`tools/monit-ai/README.md`](../../tools/monit-ai/README.md). It reads these technical records and produces the global and Quiz10 reports. The `core/ai` module only records technical events and does not depend on MONIT-AI.
 
-Gradle launches Quiz10 Web from the repository root, so its default usage file is the path above. Older files under an application module remain readable by MONITOR without copying them.
+Gradle launches Quiz10 Web from the repository root, so its default usage file is the path above. Older files under an application module remain readable by MONIT-AI without copying them.
