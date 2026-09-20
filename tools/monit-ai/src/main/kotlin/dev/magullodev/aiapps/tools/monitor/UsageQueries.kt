@@ -111,7 +111,16 @@ class AiUsageQueryService(
     private val repository: AiUsageRecordRepository,
     private val ratesByModel: Map<String, ModelRate> = emptyMap(),
 ) {
-    fun quiz10History(window: Int = 50): Quiz10History = buildQuiz10History(repository.readAll(), window, ratesByModel)
+    fun quiz10History(
+        window: Int = 50,
+        hiddenWorkUnits: Set<String> = emptySet(),
+    ): Quiz10History = buildQuiz10History(
+        repository.readAll().filterNot {
+            it.application == "quiz10-web" && it.workUnitId != null && it.workUnitId in hiddenWorkUnits
+        },
+        window,
+        ratesByModel,
+    )
 
     fun summarize(filter: AiUsageFilter = AiUsageFilter()): AiUsageSummary {
         val all = repository.readAll()
