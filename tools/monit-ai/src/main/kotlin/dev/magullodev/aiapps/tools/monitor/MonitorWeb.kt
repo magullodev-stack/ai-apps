@@ -102,10 +102,10 @@ internal fun renderMonitorPage(history: Quiz10History): String = buildString {
 private fun StringBuilder.appendExecution(game: Quiz10Test, expanded: Boolean) {
     append("<div class=\"execution-row\"><details class=\"execution\"${if (expanded) " open" else ""}><summary><span class=\"summary-line\"><span>Partida #${game.position} · ${game.startedAt.substring(8, 10)}.${game.startedAt.substring(5, 7)}.${game.startedAt.substring(0, 4)}</span><span class=\"summary-cost\">COSTE TOTAL <strong>${costText(game.totalCost)}</strong></span></span></summary>")
     append("<div class=\"scroll\"><table><thead><tr>")
-    listOf("MODELO", "TOKENS ENTRADA", "TOKENS SALIDA", "COSTE ENTRADA", "COSTE SALIDA", "COSTE TOTAL")
+    listOf("LLAMADA", "OPERACIÓN", "MODELO", "TOKENS ENTRADA", "TOKENS SALIDA", "COSTE ENTRADA", "COSTE SALIDA", "COSTE TOTAL")
         .forEach { append("<th scope=\"col\">$it</th>") }
     append("</tr></thead><tbody>")
-    game.allCalls.groupBy { it.model ?: "Modelo desconocido" }.forEach { (model, calls) -> appendModelRow(game, model, calls) }
+    game.allCalls.forEachIndexed { index, call -> appendCallRow(game, index + 1, call) }
     append("</tbody></table></div></details>")
     append("<form class=\"remove\" method=\"post\" action=\"/remove\"")
     append(" onsubmit=\"return confirm('¿Borrar esta actividad de MONIT-AI? Los registros originales se conservarán.')\">")
@@ -113,13 +113,13 @@ private fun StringBuilder.appendExecution(game: Quiz10Test, expanded: Boolean) {
     append("<button type=\"submit\">Borrar</button></form></div>")
 }
 
-private fun StringBuilder.appendModelRow(game: Quiz10Test, model: String, calls: List<AiUsageRecord>) {
-    val costs = calls.map { estimateCallCosts(it, game.ratesByModel) }
-    val input = aggregateCost(costs.map { it.input })
-    val output = aggregateCost(costs.map { it.output })
-    val combined = aggregateCost(costs.map { it.total })
-    append("<tr><td>${escape(model)}</td><td>${tokens(calls.map { it.inputTokens })}</td><td>${tokens(calls.map { it.outputTokens })}</td>")
-    append("<td>${costText(input)}</td><td>${costText(output)}</td><td>${costText(combined)}</td></tr>")
+private fun StringBuilder.appendCallRow(game: Quiz10Test, number: Int, call: AiUsageRecord) {
+    val costs = estimateCallCosts(call, game.ratesByModel)
+    val model = call.model ?: "Modelo desconocido"
+    val operation = call.operation ?: "Desconocida"
+    append("<tr><td>${number}</td><td>${escape(operation)}</td><td>${escape(model)}</td>")
+    append("<td>${tokens(listOf(call.inputTokens))}</td><td>${tokens(listOf(call.outputTokens))}</td>")
+    append("<td>${costText(costs.input)}</td><td>${costText(costs.output)}</td><td>${costText(costs.total)}</td></tr>")
 }
 
 private fun tokens(values: List<Long?>): String = when {
