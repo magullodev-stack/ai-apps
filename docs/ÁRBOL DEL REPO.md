@@ -27,7 +27,7 @@ ai-apps/
 │       └── quiz10/                    # Sistema de juego y aprendizaje Quiz10.
 │           │
 │           ├── modes/                 # Modalidades y sus reglas específicas.
-│           │   ├── random-test/       # Partidas inmediatas y aleatorias.
+│           │   ├── random/       # Partidas inmediatas y aleatorias.
 │           │   ├── duels/             # Enfrentamientos entre jugadores.
 │           │   ├── study/             # Actividades de aprendizaje y repaso.
 │           │   └── rooms/             # Salas y actividades sociales.
