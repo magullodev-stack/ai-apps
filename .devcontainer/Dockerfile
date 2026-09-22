@@ -29,3 +29,31 @@ USER vscode
 
 RUN flutter --version \
     && dart --version
+
+# Android SDK para compilar aplicaciones Flutter.
+USER root
+
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV PATH="${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/cmdline-tools/latest/bin:${PATH}"
+
+RUN set -eu; \
+    mkdir -p "${ANDROID_HOME}/cmdline-tools"; \
+    curl -fL --retry 3 \
+        https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+        -o /tmp/android-cmdline-tools.zip; \
+    unzip -q /tmp/android-cmdline-tools.zip -d "${ANDROID_HOME}/cmdline-tools"; \
+    mv "${ANDROID_HOME}/cmdline-tools/cmdline-tools" \
+        "${ANDROID_HOME}/cmdline-tools/latest"; \
+    rm /tmp/android-cmdline-tools.zip; \
+    yes | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses >/dev/null; \
+    sdkmanager --sdk_root="${ANDROID_HOME}" \
+        "platform-tools" \
+        "platforms;android-36" \
+        "build-tools;36.0.0"; \
+    chown -R vscode:vscode "${ANDROID_HOME}"
+
+USER vscode
+
+RUN flutter config --android-sdk "$ANDROID_HOME" \
+    && test -x "$ANDROID_HOME/platform-tools/adb"
