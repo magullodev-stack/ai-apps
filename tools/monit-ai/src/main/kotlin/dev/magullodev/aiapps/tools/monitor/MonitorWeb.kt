@@ -102,7 +102,7 @@ internal fun renderMonitorPage(history: Quiz10History): String = buildString {
 private fun StringBuilder.appendExecution(game: Quiz10Test, expanded: Boolean) {
     append("<div class=\"execution-row\"><details class=\"execution\"${if (expanded) " open" else ""}><summary><span class=\"summary-line\"><span>Partida #${game.position} · ${game.startedAt.substring(8, 10)}.${game.startedAt.substring(5, 7)}.${game.startedAt.substring(0, 4)}</span><span class=\"summary-cost\">COSTE TOTAL <strong>${costText(game.totalCost)}</strong></span></span></summary>")
     append("<div class=\"scroll\"><table><thead><tr>")
-    listOf("LLAMADA", "OPERACIÓN", "MODELO", "TOKENS ENTRADA", "TOKENS SALIDA", "COSTE ENTRADA", "COSTE SALIDA", "COSTE TOTAL")
+    listOf("LLAMADA", "OPERACIÓN", "MODELO", "RESULTADO", "ERROR", "TOKENS ENTRADA", "TOKENS SALIDA", "COSTE ENTRADA", "COSTE SALIDA", "COSTE TOTAL")
         .forEach { append("<th scope=\"col\">$it</th>") }
     append("</tr></thead><tbody>")
     game.allCalls.forEachIndexed { index, call -> appendCallRow(game, index + 1, call) }
@@ -117,7 +117,10 @@ private fun StringBuilder.appendCallRow(game: Quiz10Test, number: Int, call: AiU
     val costs = estimateCallCosts(call, game.ratesByModel)
     val model = call.model ?: "Modelo desconocido"
     val operation = call.operation ?: "Desconocida"
+    val result = call.result ?: "Desconocido"
+    val error = call.errorCode ?: "—"
     append("<tr><td>${number}</td><td>${escape(operation)}</td><td>${escape(model)}</td>")
+    append("<td>${escape(result)}</td><td>${escape(error)}</td>")
     append("<td>${tokens(listOf(call.inputTokens))}</td><td>${tokens(listOf(call.outputTokens))}</td>")
     append("<td>${costText(costs.input)}</td><td>${costText(costs.output)}</td><td>${costText(costs.total)}</td></tr>")
 }
