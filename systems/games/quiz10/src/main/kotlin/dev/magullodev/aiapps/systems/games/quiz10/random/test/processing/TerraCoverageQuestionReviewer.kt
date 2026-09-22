@@ -7,7 +7,7 @@ import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
-import dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test.validacionYPreguntasPrompt
+import dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test.terraCoverageRouteValidationPrompt
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -21,7 +21,7 @@ class TerraCoverageQuestionReviewer(
     fun review(route: CoverageRoute): Outcome<CoverageQuestionReview, CoverageQuestionReviewError> {
         val request = StructuredGenerationRequest(
             profile = AiProfile.TERRA,
-            input = validacionYPreguntasPrompt(route),
+            input = terraCoverageRouteValidationPrompt("", route),
             schemaName = "quiz10_coverage_question_review",
             schemaJson = schema,
             operation = AiUsageOperation.REVIEW,
@@ -74,13 +74,14 @@ class TerraCoverageQuestionReviewer(
                     seenQuestions = seenQuestions,
                 )
             } else {
-                localValidationForDeclaredInvalid(
+                localValidationForReplacement(
                     issue = issue,
                     question = question,
                     answer = answer,
                     distractor1 = distractor1,
                     distractor2 = distractor2,
                     distractor3 = distractor3,
+                    seenQuestions = seenQuestions,
                 )
             }
 
@@ -147,23 +148,29 @@ class TerraCoverageQuestionReviewer(
         )
     }
 
-    private fun localValidationForDeclaredInvalid(
+    private fun localValidationForReplacement(
         issue: String,
         question: String,
         answer: String,
         distractor1: String,
         distractor2: String,
         distractor3: String,
+        seenQuestions: MutableSet<String>,
     ): CoverageQuestionReviewPosition {
-        val issueText = issue.trim()
-        val hasUnexpectedContent = listOf(question, answer, distractor1, distractor2, distractor3)
-            .any { it.trim().isNotEmpty() }
-
-        return when {
-            issueText.isEmpty() -> CoverageQuestionReviewPosition.Invalid("Fila inválida sin incidencia informada")
-            hasUnexpectedContent -> CoverageQuestionReviewPosition.Invalid("Fila inválida con contenido utilizable en campos no permitidos")
-            else -> CoverageQuestionReviewPosition.Invalid(issueText)
-        }
+        if (issue.isBlank()) return CoverageQuestionReviewPosition.Invalid("Sustitución sin incidencia")
+        val normalizedQuestion = normalize(question)
+        val normalizedAnswer = normalize(answer)
+        val distractors = listOf(distractor1, distractor2, distractor3)
+        val normalizedDistractors = distractors.map(::normalize)
+        if (normalizedQuestion.isEmpty() || normalizedAnswer.isEmpty() ||
+            normalizedDistractors.any { it.isEmpty() } ||
+            normalizedDistractors.toSet().size != 3 ||
+            normalizedAnswer in normalizedDistractors ||
+            !seenQuestions.add(normalizedQuestion)
+        ) return CoverageQuestionReviewPosition.Invalid("Pregunta de sustitución incompleta, repetida o inconsistente")
+        return CoverageQuestionReviewPosition.Replaced(
+            issue.trim(), question.trim(), answer.trim(), distractors.map { it.trim() }
+        )
     }
 
     private fun normalize(text: String): String = text.trim().lowercase()
@@ -237,6 +244,13 @@ sealed interface CoverageQuestionReviewPosition {
             require(distractors.all { it.isNotBlank() }) { "Distractors must not be blank" }
         }
     }
+
+    data class Replaced(
+        val issue: String,
+        val question: String,
+        val answer: String,
+        val distractors: List<String>,
+    ) : CoverageQuestionReviewPosition
 
     data class Invalid(
         val issue: String,
