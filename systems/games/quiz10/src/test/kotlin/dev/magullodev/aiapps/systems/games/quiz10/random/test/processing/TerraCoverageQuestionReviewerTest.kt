@@ -119,6 +119,47 @@ class TerraCoverageQuestionReviewerTest {
     }
 
     @Test
+    fun acceptsReplacementWithNewAnswerInTheSameResponse() {
+        val rows = List(10) { validRow(it) }.toMutableList()
+        rows[3] = JsonObject(rows[3] + mapOf(
+            "valid" to JsonPrimitive(false),
+            "issue" to JsonPrimitive("Respuesta original incorrecta"),
+            "answer" to JsonPrimitive("Replacement answer"),
+        ))
+        val reviewer = TerraCoverageQuestionReviewer {
+            assertContains(it.input, "conserva literalmente la respuesta original")
+            assertContains(it.input, "valid=false")
+            Outcome.Success(StructuredGeneration(response(rows), null))
+        }
+        val review = assertIs<Outcome.Success<CoverageQuestionReview>>(reviewer.review(route())).value
+        val replacement = assertIs<CoverageQuestionReviewPosition.Replaced>(review.positions[3])
+        assertEquals("Replacement answer", replacement.answer)
+        assertEquals("Respuesta original incorrecta", replacement.issue)
+        assertEquals(10, review.positions.size)
+    }
+
+    @Test
+    fun rejectsMalformedOrDuplicateReplacementsLocally() {
+        for (changes in listOf(
+            mapOf("issue" to JsonPrimitive("")),
+            mapOf("question" to JsonPrimitive("Question 0")),
+            mapOf("distractor1" to JsonPrimitive("Answer 3")),
+            mapOf("distractor1" to JsonPrimitive("")),
+            mapOf("distractor1" to JsonPrimitive("Distractor 3B")),
+        )) {
+            val rows = List(10) { validRow(it) }.toMutableList()
+            rows[3] = JsonObject(rows[3] + mapOf(
+                "valid" to JsonPrimitive(false), "issue" to JsonPrimitive("Invalid original"),
+            ) + changes)
+            val reviewer = TerraCoverageQuestionReviewer {
+                Outcome.Success(StructuredGeneration(response(rows), null))
+            }
+            val review = assertIs<Outcome.Success<CoverageQuestionReview>>(reviewer.review(route())).value
+            assertIs<CoverageQuestionReviewPosition.Invalid>(review.positions[3])
+        }
+    }
+
+    @Test
     fun acceptsTenValidRows() {
         val reviewer = TerraCoverageQuestionReviewer {
             Outcome.Success(StructuredGeneration(response(List(10) { validRow(it) }), null))

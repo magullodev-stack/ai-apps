@@ -14,8 +14,8 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuiz
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuizPreparationMetrics
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuizQuestion

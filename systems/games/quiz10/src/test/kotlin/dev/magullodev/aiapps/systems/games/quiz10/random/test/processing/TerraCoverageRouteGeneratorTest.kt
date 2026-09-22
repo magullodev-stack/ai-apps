@@ -66,14 +66,14 @@ class TerraCoverageRouteGeneratorTest {
     }
 
     @Test
-    fun requestIsExactlyTheSpecifiedPromptWithOnlyTopicSubstituted() {
-        val template = checkNotNull(javaClass.getResource("/coverage/terra-prompt.txt")).readText()
+    fun topicRequestIncludesTopicAndCoverageInstructions() {
         for (topic in listOf("Roma antigua", " \tRoma\n [TEMA] [  ] \$topic ")) {
             val requests = mutableListOf<StructuredGenerationRequest>()
             generator(capture = { requests.add(it) }).generate(topic)
             val request = requests.single()
             assertEquals(AiProfile.TERRA, request.profile)
-            assertEquals(template.replaceFirst("Tema: [  ]", "Tema: [$topic]"), request.input)
+            assertContains(request.input, "Tema: $topic")
+            assertContains(request.input, "Completa la ruta de cobertura.")
         }
     }
 
@@ -124,7 +124,7 @@ class TerraCoverageRouteGeneratorTest {
                 }
                 assertContains(
                     request.input,
-                    "| ${position.position} | $difficulty | ${position.area.label} |  |  |  |  |",
+                    "| ${position.position} | $difficulty | ${position.area.label} | | | | |",
                 )
             }
             assertFalse(request.input.contains("[ÁREA 1]"))

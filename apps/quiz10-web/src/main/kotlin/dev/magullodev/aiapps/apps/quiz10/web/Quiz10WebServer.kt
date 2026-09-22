@@ -12,9 +12,9 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlanner
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewError
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompletionError
@@ -647,9 +647,6 @@ class Quiz10WebServer(
     private fun describeCoverageQuestionCompletionError(error: CoverageQuestionCompletionError): String = when (error) {
         is CoverageQuestionCompletionError.InputMismatch ->
             "CoverageQuestionCompletionError.InputMismatch(detail=${error.detail})"
-
-        is CoverageQuestionCompletionError.ReplacementGenerationFailed ->
-            "CoverageQuestionCompletionError.ReplacementGenerationFailed(cause=${error.cause})"
 
         is CoverageQuestionCompletionError.ExhaustedReplacementAttempts ->
             "CoverageQuestionCompletionError.ExhaustedReplacementAttempts(pendingPositions=${error.pendingPositions})"

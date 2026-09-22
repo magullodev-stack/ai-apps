@@ -15,12 +15,11 @@ import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewPosition
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageQuestionReviewer
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteGenerator
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraCoverageRouteValidator
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.TerraReplacementQuestionGenerator
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewPosition
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.TerraCoverageQuestionReviewer
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.TerraCoverageRouteGenerator
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.TerraCoverageRouteValidator
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionPresenter
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionAuditListener
 import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompleter
@@ -88,7 +87,6 @@ internal fun createQuizPreparer(
     val coverageGenerator = TerraCoverageRouteGenerator(generateStructured)
     val coverageValidator = TerraCoverageRouteValidator(generateStructured)
     val reviewer = TerraCoverageQuestionReviewer(generateStructured)
-    val replacementGenerator = TerraReplacementQuestionGenerator(generateStructured)
 
     val validateWithAudit: (String, dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute) -> Outcome<Unit, CoverageRouteValidationError> = { topic, route ->
         val result = coverageValidator.validate(topic, route)
@@ -112,11 +110,16 @@ internal fun createQuizPreparer(
         result
     }
 
-    val reviewWithAudit: (dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute) -> Outcome<dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReview, dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewError> = { route ->
+    val reviewWithAudit: (dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute) -> Outcome<dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReview, dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewError> = { route ->
         val result = reviewer.review(route)
         if (result is Outcome.Success) {
             result.value.positions.forEachIndexed { index, reviewed ->
-                if (reviewed is CoverageQuestionReviewPosition.Invalid) {
+                val issue = when (reviewed) {
+                    is CoverageQuestionReviewPosition.Invalid -> reviewed.issue
+                    is CoverageQuestionReviewPosition.Replaced -> reviewed.issue
+                    is CoverageQuestionReviewPosition.Valid -> null
+                }
+                if (issue != null) {
                     usageMonitor.recordAudit(
                         AiUsageAuditEvent(
                             application = currentUsageApplication(),
@@ -126,7 +129,7 @@ internal fun createQuizPreparer(
                             position = index + 1,
                             attempt = null,
                             result = AiUsageAuditResult.REJECTED,
-                            reason = reviewed.issue,
+                            reason = issue,
                         ),
                     )
                 }
@@ -136,7 +139,6 @@ internal fun createQuizPreparer(
     }
 
     val completer = CoverageQuestionCompleter(
-        generateReplacements = replacementGenerator::generate,
         auditListener = object : CoverageQuestionAuditListener {
             override fun onInitialReviewRejected(position: Int, issue: String) {
                 // Initial review rejections are recorded in reviewWithAudit to preserve original issues.

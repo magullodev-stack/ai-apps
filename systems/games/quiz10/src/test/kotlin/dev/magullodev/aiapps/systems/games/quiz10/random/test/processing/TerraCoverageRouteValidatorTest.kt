@@ -56,11 +56,11 @@ class TerraCoverageRouteValidatorTest {
         val request = generation.requests.single()
         assertEquals(AiProfile.TERRA, request.profile)
         assertEquals("quiz10_coverage_route_validation", request.schemaName)
-        assertContains(request.input, "Tema solicitado: [Historia de Roma]")
-        assertContains(request.input, "1. Fácil · Area 0 · Group 0 · Referent 0 · Knowledge 0 · Answer 0")
-        assertContains(request.input, "5. Moderado · Area 4 · Group 4 · Referent 4 · Knowledge 4 · Answer 4")
-        assertContains(request.input, "8. Difícil · Area 7 · Group 7 · Referent 7 · Knowledge 7 · Answer 7")
-        assertContains(request.input, "10. Muy difícil · Area 9 · Group 9 · Referent 9 · Knowledge 9 · Answer 9")
+        assertContains(request.input, "Tema: Historia de Roma")
+        assertContains(request.input, "| 1 | Fácil | Area 0 | Group 0 | Referent 0 | Knowledge 0 | Answer 0 |")
+        assertContains(request.input, "| 5 | Moderado | Area 4 | Group 4 | Referent 4 | Knowledge 4 | Answer 4 |")
+        assertContains(request.input, "| 8 | Difícil | Area 7 | Group 7 | Referent 7 | Knowledge 7 | Answer 7 |")
+        assertContains(request.input, "| 10 | Muy difícil | Area 9 | Group 9 | Referent 9 | Knowledge 9 | Answer 9 |")
     }
 
     @Test
