@@ -1,9 +1,9 @@
-package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
+package dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test
 
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 
-internal fun terraCoverageQuestionPrompt(route: CoverageRoute): String {
+internal fun validacionYPreguntasPrompt(route: CoverageRoute): String {
     val routeRows = route.items.mapIndexed { index, item ->
         "| ${index + 1} | ${difficultyLabel(item.difficulty)} | ${item.area} | ${item.group} | ${item.referent} | ${item.knowledge} | ${item.answer} |"
     }.joinToString("\n")

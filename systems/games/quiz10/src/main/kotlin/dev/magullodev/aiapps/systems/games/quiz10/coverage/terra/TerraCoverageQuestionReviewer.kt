@@ -7,6 +7,7 @@ import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
+import dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test.validacionYPreguntasPrompt
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -20,7 +21,7 @@ class TerraCoverageQuestionReviewer(
     fun review(route: CoverageRoute): Outcome<CoverageQuestionReview, CoverageQuestionReviewError> {
         val request = StructuredGenerationRequest(
             profile = AiProfile.TERRA,
-            input = terraCoverageQuestionPrompt(route),
+            input = validacionYPreguntasPrompt(route),
             schemaName = "quiz10_coverage_question_review",
             schemaJson = schema,
             operation = AiUsageOperation.REVIEW,
