@@ -1,6 +1,6 @@
 # Manifiesto arquitectónico de AI-APPS
 
-AI-APPS construye aplicaciones móviles centradas en la actividad humana. Los sistemas gobiernan la realidad de cada actividad y las capacidades, incluidas las de IA, participan según las necesidades de la experiencia.
+AI-APPS construye aplicaciones móviles interactivas centradas en la actividad humana. Cada aplicación desarrolla su propia experiencia, realidad, estado y reglas. Los sistemas gobiernan las actividades, las capacidades resuelven necesidades funcionales y la inteligencia artificial puede intervenir en cualquier tarea que lo requiera.
 
 ---
 
@@ -14,25 +14,31 @@ AI-APPS mantiene una única raíz modular compartida.
 
 Los sistemas y aplicaciones crecen dentro de esa raíz.
 
-Una nueva aplicación utiliza las capacidades y sistemas existentes; no recibe copias de ellos.
+Una nueva aplicación reutiliza los componentes existentes cuando sus responsabilidades corresponden; no recibe copias de ellos.
 
-La jerarquía física puede expresar pertenencia lógica real cuando exista. Los sistemas no necesitan ocupar todos el mismo nivel.
+La jerarquía física puede expresar pertenencia lógica real cuando exista. Los sistemas no necesitan ocupar todos el mismo nivel ni compartir la misma estructura interna.
 
 Las herramientas autónomas y transversales del proyecto se alojan en `tools/`.
 
 ## Dependencias
 
-`systems/` puede depender de `core/`.
+`core/` proporciona fundamentos técnicos compartidos y no depende de los sistemas, capacidades ni aplicaciones concretas.
 
-`core/` no depende de `systems/`.
+`ai/` puede depender de `core/`, pero no conoce las reglas particulares de los sistemas ni de las aplicaciones.
 
-`systems/` no depende de implementaciones concretas de `ui/`.
+`systems/` puede depender de `core/` y define los contratos de sus necesidades funcionales sin depender de sus implementaciones concretas.
+
+`capabilities/` puede depender de los contratos de los sistemas cuyas necesidades satisface y utilizar `ai/` u otros mecanismos cuando corresponda.
+
+Los sistemas no dependen de implementaciones concretas de `ui/`, proveedores de IA ni capacidades funcionales.
 
 Los sistemas pueden coexistir sin conocerse entre sí.
 
-Los detalles de proveedores externos permanecen fuera de las reglas de dominio.
+Los modelos, prompts y procedimientos de IA pueden incorporarse, combinarse, sustituirse o retirarse sin imponer cambios innecesarios a las reglas de las actividades.
 
-`apps/` realiza las conexiones concretas entre efectos y capacidades.
+Ninguna operación está obligada a atravesar `capabilities/` ni a utilizar inteligencia artificial cuando no lo necesita.
+
+`apps/` realiza las conexiones concretas entre sistemas, capacidades, interfaces e implementaciones técnicas.
 
 Las herramientas pueden observar las ejecuciones de los sistemas y aplicaciones, pero no gobiernan sus actividades ni redefinen sus reglas.
 

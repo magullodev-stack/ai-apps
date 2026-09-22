@@ -1,34 +1,35 @@
 # IA.md — Inteligencia artificial de AI-APPS
 
-## Perfiles
+## Modelos
 
-| Perfil | Responsabilidad |
-| --- | --- |
-| Terra | Razonamiento, elaboración de conocimiento, generación estructurada y revisión de resultados. |
-| Luna | Interacción conversacional dentro de las experiencias que la requieren. |
+AI-APPS puede utilizar cualquier modelo de inteligencia artificial para cualquier tarea que lo requiera.
 
-Los perfiles identifican funciones de IA, no modelos comerciales fijos. Cada aplicación configura qué modelo ejecuta cada perfil.
+Un mismo modelo puede realizar distintas funciones y una tarea puede utilizar uno o varios modelos.
 
-## Ontología operacional
+Los modelos no tienen responsabilidades arquitectónicas permanentes. Su selección y configuración pueden cambiar sin alterar las reglas de las aplicaciones.
 
-Los sistemas proporcionan a la IA una representación explícita de la actividad:
+## Contexto
 
-| Elemento | Significado |
-| --- | --- |
-| Entidad | Elemento de la actividad sobre el que se puede operar. |
-| Propiedad | Atributo de una entidad. |
-| Relación | Vínculo entre entidades. |
-| Estado | Situación actual de la actividad. |
-| Regla | Condición que determina la validez de una acción o resultado. |
-| Operación | Trabajo que debe ejecutarse sobre la actividad. |
-| Resultado | Salida de una operación. |
+Cada sistema mantiene la realidad, el estado y las reglas de su actividad.
 
-Cada sistema concreta su propia ontología. La IA recibe el contexto y los contratos necesarios para ejecutar la operación solicitada.
+Las operaciones de IA reciben el contexto necesario para realizar su tarea, junto con las instrucciones y los requisitos del resultado esperado.
+
+Cada aplicación determina qué información necesita proporcionar y cómo utilizar los resultados obtenidos.
+
+La IA no sustituye al sistema en el gobierno de la actividad.
 
 ## Ejecución
 
-Una operación de IA especifica su perfil, entrada, resultado esperado y criterios de aceptación.
+La inteligencia artificial puede incorporarse en cualquier punto de una experiencia cuando resulte necesaria.
 
-Terra produce o revisa resultados conforme a esos contratos. Luna genera intervenciones conversacionales a partir del contexto de la experiencia.
+Cada tarea puede disponer de sus propios prompts, modelos y procedimientos de ejecución.
 
-La aplicación conecta cada operación con el modelo configurado. El sistema determina cómo se incorpora su resultado a la actividad.
+Una tarea puede resolverse mediante una o varias operaciones de IA, combinar distintos modelos o prescindir de ellos.
+
+Los prompts y los procedimientos específicos pertenecen al componente responsable de la tarea.
+
+El subsistema `ai/` proporciona los mecanismos técnicos de ejecución sin conocer las reglas particulares de las aplicaciones.
+
+Los modelos, prompts y procedimientos pueden incorporarse, sustituirse, combinarse o retirarse sin imponer cambios innecesarios al funcionamiento de las actividades.
+
+La aplicación conecta los componentes necesarios y el sistema determina cómo se incorporan los resultados a su realidad.
