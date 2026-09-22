@@ -1,7 +1,7 @@
 package dev.magullodev.aiapps.tools.monitor
 
 import com.sun.net.httpserver.HttpServer
-import dev.magullodev.aiapps.core.ai.AiUsageRecord
+import dev.magullodev.aiapps.ai.AiUsageRecord
 import dev.magullodev.aiapps.tools.monitor.quiz10.Quiz10History
 import dev.magullodev.aiapps.tools.monitor.quiz10.Quiz10GameStatus
 import dev.magullodev.aiapps.tools.monitor.quiz10.Quiz10Test

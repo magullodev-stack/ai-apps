@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":core:ai"))
+    implementation(project(":ai"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     testImplementation(kotlin("test"))
 }

@@ -1,7 +1,7 @@
 package dev.magullodev.aiapps.tools.monitor.quiz10
 
-import dev.magullodev.aiapps.core.ai.AiUsageRecord
-import dev.magullodev.aiapps.core.ai.ModelRate
+import dev.magullodev.aiapps.ai.AiUsageRecord
+import dev.magullodev.aiapps.ai.ModelRate
 import dev.magullodev.aiapps.tools.monitor.AiCostDeterminability
 import dev.magullodev.aiapps.tools.monitor.AiCostRateSource
 import dev.magullodev.aiapps.tools.monitor.AiUsageCostEstimate

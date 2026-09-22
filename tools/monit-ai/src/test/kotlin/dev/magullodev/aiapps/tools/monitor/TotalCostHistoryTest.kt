@@ -1,8 +1,8 @@
 package dev.magullodev.aiapps.tools.monitor
 
-import dev.magullodev.aiapps.core.ai.AiUsageRateSnapshot
-import dev.magullodev.aiapps.core.ai.AiUsageRecord
-import dev.magullodev.aiapps.core.ai.ModelRate
+import dev.magullodev.aiapps.ai.AiUsageRateSnapshot
+import dev.magullodev.aiapps.ai.AiUsageRecord
+import dev.magullodev.aiapps.ai.ModelRate
 import dev.magullodev.aiapps.tools.monitor.quiz10.Quiz10GameStatus
 import dev.magullodev.aiapps.tools.monitor.quiz10.buildQuiz10History
 import java.math.BigDecimal

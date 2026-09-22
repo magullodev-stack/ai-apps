@@ -1,27 +1,13 @@
-
 # HERRAMIENTAS.md — AI-APPS
 
 ## Catálogo
 
-| Herramienta | Finalidad | Ubicación | Documentación |
+| Herramienta | Finalidad | Ubicación | Estado |
 | --- | --- | --- | --- |
-| MONIT-AI | Observar y analizar el estado, consumo, costes, rendimiento y auditorías de las ejecuciones de los sistemas y aplicaciones de AI-APPS. | `tools/monit-ai/` | `tools/monit-ai/README.md` |
+| MONIT-AI | Observación, consumo, costes y auditorías de las ejecuciones de IA. | `tools/monit-ai/` | Código conservado. Pendiente de adaptación y reintegración en la compilación activa. |
 
 ## Mantenimiento
 
-Al incorporar una herramienta, añade al catálogo su nombre, finalidad, ubicación y documentación. Sus instrucciones técnicas se mantienen en su documento específico.
+Las herramientas se incorporan a la compilación activa cuando su implementación y sus pruebas están integradas.
 
-
-
-
----
-
-
-
-HACER COMMIT
-git add -A && (git diff --cached --quiet || git commit -m "Descripción del cambio") && git pull --ff-only origin dev && git push origin dev && git fetch origin && git status -sb
-
----
-
-ABRIR MONIT-AI
-AI_APPS_PRICING_FILE="$PWD/.ai-apps/pricing.json" ./gradlew -q :tools:monit-ai:run
+Las instrucciones técnicas de cada herramienta se mantienen en su documentación específica.

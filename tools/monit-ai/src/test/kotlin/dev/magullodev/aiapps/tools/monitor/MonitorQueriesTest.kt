@@ -1,6 +1,6 @@
 package dev.magullodev.aiapps.tools.monitor
 
-import dev.magullodev.aiapps.core.ai.*
+import dev.magullodev.aiapps.ai.*
 import dev.magullodev.aiapps.tools.monitor.quiz10.*
 
 import dev.magullodev.aiapps.core.config.AiModelsConfig

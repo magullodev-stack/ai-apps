@@ -1,11 +1,11 @@
 package dev.magullodev.aiapps.tools.monitor
 
-import dev.magullodev.aiapps.core.ai.AiUsageCallEvent
-import dev.magullodev.aiapps.core.ai.AiUsageCallResult
-import dev.magullodev.aiapps.core.ai.AiUsageMetricEvent
-import dev.magullodev.aiapps.core.ai.AiUsageOperation
-import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
-import dev.magullodev.aiapps.core.ai.ModelRate
+import dev.magullodev.aiapps.ai.AiUsageCallEvent
+import dev.magullodev.aiapps.ai.AiUsageCallResult
+import dev.magullodev.aiapps.ai.AiUsageMetricEvent
+import dev.magullodev.aiapps.ai.AiUsageOperation
+import dev.magullodev.aiapps.ai.FileAiUsageMonitor
+import dev.magullodev.aiapps.ai.ModelRate
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest

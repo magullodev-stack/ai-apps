@@ -2,6 +2,8 @@
 
 Lectura del árbol: AI-APPS es una plataforma para construir aplicaciones móviles interactivas con inteligencia artificial. Cada aplicación desarrolla su propia experiencia, realidad, estado y reglas. Los sistemas gobiernan las actividades, las capacidades resuelven necesidades funcionales y el subsistema de IA permite utilizar cualquier modelo para cualquier tarea que lo requiera. Cada aplicación crece con su propia estructura, según las experiencias y responsabilidades que necesita.
 
+Estado: las carpetas preparadas con `.gitkeep` todavía no contienen una implementación. El código técnico existente de IA se conserva en `ai/src/`. MONIT-AI conserva temporalmente su código fuera de la compilación activa.
+
 ai-apps/
 │
 ├── AGENTS.md                          # Guía de trabajo para agentes.

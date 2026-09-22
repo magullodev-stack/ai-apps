@@ -1,3 +1,5 @@
+> Estado: código conservado durante la reconstrucción de AI-APPS. MONIT-AI todavía no está integrado en la compilación activa. Sus instrucciones de ejecución volverán a ser aplicables cuando se adapte y verifique la herramienta.
+
 
 # MONIT-AI
 

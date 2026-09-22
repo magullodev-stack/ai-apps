@@ -1,6 +1,6 @@
 package dev.magullodev.aiapps.tools.monitor
 
-import dev.magullodev.aiapps.core.ai.loadModelRates
+import dev.magullodev.aiapps.ai.loadModelRates
 import java.nio.file.Files
 import java.nio.file.Path
 
