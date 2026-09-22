@@ -2,13 +2,15 @@ package dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test
 
 internal object TerraCoverageRouteValidationPrompt {
     const val TEXT = """
-Valida cada fila de la ruta de cobertura y genera una pregunta por cada fila válida.
+Valida cada fila de la ruta de cobertura y genera una pregunta para cada una de las diez posiciones.
 
 Comprueba que el conocimiento corresponda al área, grupo y referente indicados, y que la respuesta sea correcta, precisa e inequívoca.
 
-Formula una pregunta que evalúe exactamente ese conocimiento y genera tres distractores plausibles, distintos e incorrectos. Entre las cuatro opciones debe haber una única respuesta correcta.
+Si la fila es válida, formula una pregunta que evalúe exactamente ese conocimiento y genera tres distractores plausibles, distintos e incorrectos. Entre las cuatro opciones debe haber una única respuesta correcta.
 
-Si una fila no permite generar una pregunta válida, márcala como inválida e indica brevemente el motivo.
+Si una fila no permite generar una pregunta válida, selecciona otro conocimiento de la misma área y dificultad, genera una pregunta válida con su respuesta y tres distractores plausibles, distintos e incorrectos, e indica brevemente el motivo de la sustitución en «Incidencia».
+
+Marca «Sí» en «Válida» cuando se conserve el conocimiento original y «No» cuando haya sido necesario sustituirlo. Completa las diez posiciones sin dejar preguntas pendientes.
 
 ## RUTA DE COBERTURA
 
