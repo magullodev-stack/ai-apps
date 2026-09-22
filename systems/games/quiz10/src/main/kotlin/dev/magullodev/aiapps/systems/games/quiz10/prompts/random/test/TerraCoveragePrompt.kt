@@ -1,4 +1,4 @@
-package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
+package dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test
 
 internal object TerraCoveragePrompt {
     const val TEXT = """
@@ -28,3 +28,14 @@ Selecciona conocimientos verificables cuya dificultad corresponda a la asignada.
 | 10 | Muy difícil | [ÁREA 10] | | | | |
 """
 }
+
+internal fun terraCoveragePrompt(
+    plan: dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan,
+): String {
+    return plan.positions.foldIndexed(TerraCoveragePrompt.TEXT) { index, text, position ->
+        text.replace("[ÁREA ${index + 1}]", position.area.label)
+    }
+}
+
+internal fun terraCoveragePrompt(topic: String): String =
+    TerraCoveragePrompt.TEXT + "\n\nTema: " + topic

@@ -1,4 +1,6 @@
-package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
+package dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.ReplacementQuestionPosition
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.AcceptedCoverageQuestion
 
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 

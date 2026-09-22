@@ -1,4 +1,5 @@
-package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
+package dev.magullodev.aiapps.systems.games.quiz10.random.test.processing
+import dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test.terraCoverageRouteValidationPrompt
 
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiProfile

@@ -1,4 +1,4 @@
-package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
+package dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test
 
 internal object TerraCoverageRouteValidationPrompt {
     const val TEXT = """
@@ -20,4 +20,17 @@ Si una fila no permite generar una pregunta válida, márcala como inválida e i
 |---|---|---|---|---|---|---|---|
 | [N.º] | | | | | | | |
 """
+}
+
+internal fun terraCoverageRouteValidationPrompt(
+    topic: String,
+    route: dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute,
+): String {
+    val rows = route.items.mapIndexed { index, item ->
+        "| ${index + 1} | ${item.difficulty} | ${item.area} | ${item.group} | ${item.referent} | ${item.knowledge} | ${item.answer} |"
+    }.joinToString("\n")
+
+    return TerraCoverageRouteValidationPrompt.TEXT
+        .replace("[RUTA GENERADA POR TERRA 1]", rows)
+        .plus("\n\nTema: $topic")
 }

@@ -6,13 +6,13 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePosition
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.AcceptedCoverageQuestion
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReview
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewPosition
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.ReplacementQuestionBatch
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.ReplacementQuestionGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.ReplacementQuestionOutcome
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.ReplacementQuestionPosition
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.AcceptedCoverageQuestion
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReview
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewPosition
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.ReplacementQuestionBatch
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.ReplacementQuestionGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.ReplacementQuestionOutcome
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.ReplacementQuestionPosition
 import java.util.Collections
 
 class CoverageQuestionCompleter(

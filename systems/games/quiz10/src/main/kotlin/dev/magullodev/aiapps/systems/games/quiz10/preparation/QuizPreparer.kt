@@ -3,10 +3,10 @@ package dev.magullodev.aiapps.systems.games.quiz10.preparation
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReview
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageQuestionReviewError
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.terra.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReview
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteValidationError
 
 class QuizPreparer(
     private val generateCoverageRoute: (String) -> Outcome<CoverageRoute, CoverageRouteGenerationError>,
