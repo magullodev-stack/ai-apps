@@ -4,10 +4,10 @@ import dev.magullodev.aiapps.core.ai.*
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlanner
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuiz
-import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10Flow
-import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10FlowState
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.StandardCoveragePlanner
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuiz
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.Quiz10Flow
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.Quiz10FlowState
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -47,7 +47,7 @@ class RandomTestPreparationTest {
                     else -> error("Unexpected third AI call")
                 }, null))
             }
-            Quiz10WebServer(preparer::prepare, { _, _ -> error("Prebuilt quiz must not call Luna") },
+            Quiz10WebServer(preparer::prepare,
                 host = "127.0.0.1", port = 0).use { server ->
                 val base = "http://127.0.0.1:${server.start()}"
                 val client = HttpClient.newHttpClient()
@@ -104,7 +104,7 @@ class RandomTestPreparationTest {
             preparer.prepare(StandardCoveragePlanner().random())
         ).value
         assertEquals(10, prepared.questions!!.size)
-        val flow = Quiz10Flow(prepared) { _, _ -> error("Unexpected additional AI call") }
+        val flow = Quiz10Flow(prepared)
         var state: Quiz10FlowState = assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start()).value
         for (number in 1..10) {
             assertEquals(number, assertIs<Quiz10FlowState.Question>(state).questionNumber)

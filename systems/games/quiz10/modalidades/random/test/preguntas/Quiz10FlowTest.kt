@@ -1,13 +1,11 @@
 package dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas
 
-import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuiz
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.luna.QuizTurnGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.QuizQuestion
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuizQuestion
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -31,84 +29,50 @@ class Quiz10FlowTest {
         )
     })
 
-    private fun preparedQuiz() = PreparedQuiz(topic = "IA", route = route())
-
-    private fun generatedQuestion(item: CoverageRouteItem, correctOptionIndex: Int): QuizQuestion {
-        val options = mutableListOf("Option A ${item.referent}", "Option B ${item.referent}", "Option C ${item.referent}")
-        val feedback = mutableListOf("F A ${item.referent}", "F B ${item.referent}", "F C ${item.referent}")
-        options.add(correctOptionIndex, item.answer)
-        feedback.add(correctOptionIndex, "Correct ${item.knowledge}")
-        return QuizQuestion(
-            text = "Question ${item.referent}",
-            options = options,
-            feedbackByOption = feedback,
-            correctOptionIndex = correctOptionIndex,
-        )
-    }
+    private fun preparedQuiz() = PreparedQuiz(
+        topic = "IA",
+        route = route(),
+        questions = List(10) { index ->
+            PreparedQuizQuestion("Question $index", "Answer $index", listOf("A$index", "B$index", "C$index"))
+        },
+    )
 
     @Test
-    fun startGeneratesOnlyQuestionOneFromFirstCoverageItem() {
-        val calls = mutableListOf<Pair<CoverageRouteItem, Int>>()
-        val route = route()
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            calls += item to index
-            Outcome.Success(generatedQuestion(item, index))
-        }
-
+    fun startPresentsFirstPreparedQuestion() {
+        val flow = Quiz10Flow(preparedQuiz())
         val started = assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start()).value
-
         assertEquals("IA", started.topic)
         assertEquals(1, started.questionNumber)
         assertEquals(10, started.totalQuestions)
         assertEquals(0, started.answeredQuestions)
         assertEquals(0, started.correctAnswers)
+        assertEquals("Question 0", started.question.text)
         assertEquals(PreparedQuiz.correctOptionSequence[0], started.question.correctOptionIndex)
-        assertEquals(1, calls.size)
-        assertEquals(route.items[0], calls[0].first)
-        assertEquals(PreparedQuiz.correctOptionSequence[0], calls[0].second)
     }
 
     @Test
-    fun answerThenAdvanceGeneratesOnlyNextQuestionTurn() {
-        val calls = mutableListOf<Pair<CoverageRouteItem, Int>>()
-        val route = route()
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            calls += item to index
-            Outcome.Success(generatedQuestion(item, index))
-        }
+    fun answerThenAdvancePresentsNextPreparedQuestion() {
+        val flow = Quiz10Flow(preparedQuiz())
         val started = assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start()).value
         val answered = flow.answer(started.question.correctOptionIndex)
-
         assertEquals(1, answered.answeredQuestions)
         assertEquals(1, answered.correctAnswers)
         assertTrue(answered.isCorrect)
-        assertEquals(1, calls.size)
-
-        val advanced = assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value
-        assertIs<Quiz10FlowState.Question>(advanced)
+        val advanced = assertIs<Quiz10FlowState.Question>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
         assertEquals(2, advanced.questionNumber)
-        assertEquals(2, calls.size)
-        assertEquals(route.items[1], calls[1].first)
-        assertEquals(PreparedQuiz.correctOptionSequence[1], calls[1].second)
+        assertEquals("Question 1", advanced.question.text)
+        assertEquals(PreparedQuiz.correctOptionSequence[1], advanced.question.correctOptionIndex)
     }
 
     @Test
-    fun afterNQuestionsShownThereAreExactlyNTurnGenerationsAndNoFutureRows() {
-        val calls = mutableListOf<Pair<CoverageRouteItem, Int>>()
-        val route = route()
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            calls += item to index
-            Outcome.Success(generatedQuestion(item, index))
-        }
-
+    fun preparedQuestionsRemainInOrder() {
+        val flow = Quiz10Flow(preparedQuiz())
         var current = assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start()).value
-        for (shownQuestions in 1..6) {
-            assertEquals(shownQuestions, current.questionNumber)
-            assertEquals(shownQuestions, calls.size)
-            assertEquals(route.items[shownQuestions - 1], calls.last().first)
-            assertEquals(PreparedQuiz.correctOptionSequence[shownQuestions - 1], calls.last().second)
-
-            if (shownQuestions < 6) {
+        for (number in 1..6) {
+            assertEquals(number, current.questionNumber)
+            assertEquals("Question ${number - 1}", current.question.text)
+            assertEquals("History", current.area)
+            if (number < 6) {
                 flow.answer(current.question.correctOptionIndex)
                 current = assertIs<Quiz10FlowState.Question>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
             }
@@ -116,23 +80,15 @@ class Quiz10FlowTest {
     }
 
     @Test
-    fun generatedQuestionsKeepCanonicalAnswerAndDeterministicCorrectOptionSequence() {
-        val route = route()
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            Outcome.Success(generatedQuestion(item, index))
-        }
-
+    fun preparedQuestionsKeepCanonicalAnswerAndDeterministicCorrectOptionSequence() {
+        val flow = Quiz10Flow(preparedQuiz())
         var state = assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start()).value
-        for (questionNumber in 1..10) {
-            val expectedIndex = PreparedQuiz.correctOptionSequence[questionNumber - 1]
-            val expectedAnswer = route.items[questionNumber - 1].answer
+        for (number in 1..10) {
+            val expectedIndex = PreparedQuiz.correctOptionSequence[number - 1]
             assertEquals(expectedIndex, state.question.correctOptionIndex)
-            assertEquals(expectedAnswer, state.question.options[expectedIndex])
-
-            val selectedOptionIndex = (state.question.correctOptionIndex + 1) % 4
-            flow.answer(selectedOptionIndex)
-
-            if (questionNumber < 10) {
+            assertEquals("Answer ${number - 1}", state.question.options[expectedIndex])
+            flow.answer((expectedIndex + 1) % 4)
+            if (number < 10) {
                 state = assertIs<Quiz10FlowState.Question>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
             } else {
                 val finished = assertIs<Quiz10FlowState.Finished>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
@@ -143,177 +99,87 @@ class Quiz10FlowTest {
 
     @Test
     fun eachAnswerCreatesRecordWithExpectedQuestionAreaQuestionAndSelection() {
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            Outcome.Success(generatedQuestion(item, index))
-        }
+        val flow = Quiz10Flow(preparedQuiz())
         val started = assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start()).value
-        val selectedOptionIndex = (started.question.correctOptionIndex + 1) % 4
-
-        flow.answer(selectedOptionIndex)
-
-        val answeredState = assertIs<Quiz10FlowState.Answered>(flow.state)
-        assertEquals(1, answeredState.questionNumber)
-        assertEquals(selectedOptionIndex, answeredState.selectedOptionIndex)
-
+        val selected = (started.question.correctOptionIndex + 1) % 4
+        flow.answer(selected)
+        val answered = assertIs<Quiz10FlowState.Answered>(flow.state)
+        assertEquals(1, answered.questionNumber)
+        assertEquals(selected, answered.selectedOptionIndex)
         repeat(9) {
             assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
-            val current = assertIs<Quiz10FlowState.Question>(flow.state)
-            flow.answer(current.question.correctOptionIndex)
+            flow.answer(assertIs<Quiz10FlowState.Question>(flow.state).question.correctOptionIndex)
         }
-        val finished = assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value
-        val result = assertIs<Quiz10FlowState.Finished>(finished)
-        val firstRecord = result.answers.first()
-
-        assertEquals(1, firstRecord.questionNumber)
-        assertEquals(started.area, firstRecord.area)
-        assertEquals(started.question, firstRecord.question)
-        assertEquals(selectedOptionIndex, firstRecord.selectedOptionIndex)
+        val finished = assertIs<Quiz10FlowState.Finished>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
+        val record = finished.answers.first()
+        assertEquals(1, record.questionNumber)
+        assertEquals(started.area, record.area)
+        assertEquals(started.question, record.question)
+        assertEquals(selected, record.selectedOptionIndex)
+        assertEquals(started.question.options[selected], record.selectedAnswer)
+        assertEquals(started.question.options[started.question.correctOptionIndex], record.correctAnswer)
     }
 
     @Test
-    fun tenthAnswerEndsGameWithoutEleventhTurnGeneration() {
-        var generationCalls = 0
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            generationCalls += 1
-            Outcome.Success(generatedQuestion(item, index))
-        }
+    fun tenthAnswerEndsGameWithoutAnEleventhQuestion() {
+        val flow = Quiz10Flow(preparedQuiz())
         assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start())
         repeat(9) {
-            val state = assertIs<Quiz10FlowState.Question>(flow.state)
-            flow.answer(state.question.correctOptionIndex)
+            flow.answer(assertIs<Quiz10FlowState.Question>(flow.state).question.correctOptionIndex)
             assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
         }
-
-        val finalQuestion = assertIs<Quiz10FlowState.Question>(flow.state)
-        val answered = flow.answer(finalQuestion.question.correctOptionIndex)
-        assertTrue(answered.isLastQuestion)
-
-        val finished = assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value
-        assertIs<Quiz10FlowState.Finished>(finished)
+        val last = assertIs<Quiz10FlowState.Question>(flow.state)
+        assertTrue(flow.answer(last.question.correctOptionIndex).isLastQuestion)
+        val finished = assertIs<Quiz10FlowState.Finished>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
         assertEquals(10, finished.totalQuestions)
         assertEquals(10, finished.correctAnswers)
-        assertEquals(10, finished.answers.size)
         assertEquals((1..10).toList(), finished.answers.map { it.questionNumber })
         assertTrue(finished.failedAnswers.isEmpty())
-        assertEquals(10, generationCalls)
+        assertFailsWith<IllegalStateException> { flow.advance() }
     }
 
     @Test
-    fun startFailureKeepsQuestionNumberOne() {
-        val flow = Quiz10Flow(preparedQuiz()) { _, _ ->
-            Outcome.Failure(QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure))
-        }
-
+    fun missingPreparedQuestionsFailWithoutGeneratingATurn() {
+        val flow = Quiz10Flow(PreparedQuiz(topic = "IA", route = route()))
         val error = assertIs<Outcome.Failure<Quiz10FlowTransitionError>>(flow.start()).error
-        val turnError = assertIs<Quiz10FlowTransitionError.TurnGenerationFailed>(error)
-        assertEquals(1, turnError.questionNumber)
-        assertEquals(
-            QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure),
-            turnError.cause,
-        )
+        assertEquals(Quiz10FlowTransitionError.MissingPreparedQuestion(1), error)
     }
 
     @Test
-    fun advanceFailureKeepsQuestionNumberOfFailedTurn() {
-        var generationCalls = 0
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            generationCalls += 1
-            if (generationCalls == 4) {
-                Outcome.Failure(QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure))
-            } else {
-                Outcome.Success(generatedQuestion(item, index))
-            }
+    fun incompleteQuestionsAreRejectedBeforePlaying() {
+        assertFailsWith<IllegalArgumentException> {
+            PreparedQuiz(topic = "IA", route = route(), questions = preparedQuiz().questions!!.take(3))
         }
-
-        assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start())
-        repeat(3) {
-            val state = assertIs<Quiz10FlowState.Question>(flow.state)
-            flow.answer(state.question.correctOptionIndex)
-            if (it < 2) {
-                assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
-            }
-        }
-
-        val error = assertIs<Outcome.Failure<Quiz10FlowTransitionError>>(flow.advance()).error
-        val turnError = assertIs<Quiz10FlowTransitionError.TurnGenerationFailed>(error)
-        assertEquals(4, turnError.questionNumber)
-        assertEquals(
-            QuizTurnGenerationError.GenerationFailed(AiError.TransportFailure),
-            turnError.cause,
-        )
     }
 
     @Test
     fun failedAnswersContainOnlyWrongAnswers() {
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            Outcome.Success(generatedQuestion(item, index))
-        }
+        val flow = Quiz10Flow(preparedQuiz())
         assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start())
-
-        for (questionNumber in 1..10) {
+        for (number in 1..10) {
             val state = assertIs<Quiz10FlowState.Question>(flow.state)
-            val isEven = questionNumber % 2 == 0
-            val selected = if (isEven) state.question.correctOptionIndex else (state.question.correctOptionIndex + 1) % 4
-            flow.answer(selected)
-            if (questionNumber < 10) {
-                assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
-            }
+            val correct = state.question.correctOptionIndex
+            flow.answer(if (number % 2 == 0) correct else (correct + 1) % 4)
+            if (number < 10) assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
         }
-
-        val finished = assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value
-        val result = assertIs<Quiz10FlowState.Finished>(finished)
-
-        assertEquals(10, result.answers.size)
-        assertEquals(5, result.failedAnswers.size)
-        assertTrue(result.failedAnswers.all { !it.isCorrect })
-        assertEquals(listOf(1, 3, 5, 7, 9), result.failedAnswers.map { it.questionNumber })
-    }
-
-    @Test
-    fun finishedAnswersExposeDerivedSelectedAndCorrectTexts() {
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            Outcome.Success(generatedQuestion(item, index))
-        }
-        val started = assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start()).value
-        val selectedOptionIndex = (started.question.correctOptionIndex + 1) % 4
-
-        flow.answer(selectedOptionIndex)
-        repeat(9) {
-            assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
-            val state = assertIs<Quiz10FlowState.Question>(flow.state)
-            flow.answer(state.question.correctOptionIndex)
-        }
-
-        val finished = assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value
-        val firstFailed = assertIs<Quiz10FlowState.Finished>(finished).failedAnswers.first()
-
-        assertEquals(started.question.options[selectedOptionIndex], firstFailed.selectedAnswer)
-        assertEquals(started.question.options[started.question.correctOptionIndex], firstFailed.correctAnswer)
+        val finished = assertIs<Quiz10FlowState.Finished>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
+        assertEquals(10, finished.answers.size)
+        assertEquals(listOf(1, 3, 5, 7, 9), finished.failedAnswers.map { it.questionNumber })
+        assertTrue(finished.failedAnswers.all { !it.isCorrect })
     }
 
     @Test
     fun finishedHistorySnapshotsCannotBeMutated() {
-        val flow = Quiz10Flow(preparedQuiz()) { item, index ->
-            Outcome.Success(generatedQuestion(item, index))
-        }
+        val flow = Quiz10Flow(preparedQuiz())
         assertIs<Outcome.Success<Quiz10FlowState.Question>>(flow.start())
-
-        repeat(10) { questionIndex ->
-            val state = assertIs<Quiz10FlowState.Question>(flow.state)
-            flow.answer(if (questionIndex == 0) (state.question.correctOptionIndex + 1) % 4 else state.question.correctOptionIndex)
-            if (questionIndex < 9) {
-                assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
-            }
+        repeat(10) { index ->
+            val correct = assertIs<Quiz10FlowState.Question>(flow.state).question.correctOptionIndex
+            flow.answer(if (index == 0) (correct + 1) % 4 else correct)
+            if (index < 9) assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance())
         }
-
         val finished = assertIs<Quiz10FlowState.Finished>(assertIs<Outcome.Success<Quiz10FlowState>>(flow.advance()).value)
-
-        assertFailsWith<UnsupportedOperationException> {
-            (finished.answers as MutableList).clear()
-        }
-        assertFailsWith<UnsupportedOperationException> {
-            (finished.failedAnswers as MutableList).clear()
-        }
+        assertFailsWith<UnsupportedOperationException> { (finished.answers as MutableList).clear() }
+        assertFailsWith<UnsupportedOperationException> { (finished.failedAnswers as MutableList).clear() }
         assertEquals(10, finished.answers.size)
         assertEquals(1, finished.failedAnswers.size)
     }

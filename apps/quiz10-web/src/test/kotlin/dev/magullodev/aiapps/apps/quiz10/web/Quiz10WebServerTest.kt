@@ -10,18 +10,18 @@ import dev.magullodev.aiapps.core.ai.AiUsageOperation
 import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.ModelRate
 import dev.magullodev.aiapps.core.contracts.Outcome
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteValidationError
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuiz
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuizPreparationMetrics
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuizQuestion
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparationError
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.QuizTurnGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.question.QuizQuestion
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageDifficulty
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRoute
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRouteItem
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.StandardCoveragePlan
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuiz
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuizPreparationMetrics
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuizQuestion
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.QuizPreparationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.luna.QuizTurnGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.QuizQuestion
 import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.net.http.HttpClient
@@ -400,12 +400,6 @@ class Quiz10WebServerTest {
             )
         }
 
-        val turnCalls = AtomicInteger(0)
-        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { _, _ ->
-            turnCalls.incrementAndGet()
-            Outcome.Failure(QuizTurnGenerationError.InvalidGeneratedTurn)
-        }
-
         withServer(prepare = prepare, turn = turn, usageMonitor = monitor) { baseUrl, _, _ ->
             val start = postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection))
             val sessionId = extractSessionId(start.body())
@@ -443,12 +437,6 @@ class Quiz10WebServerTest {
                 "model-luna" to ModelRate("USD", "0.30".toBigDecimal(), "1.20".toBigDecimal()),
             ),
         )
-
-        val turnCalls = AtomicInteger(0)
-        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { _, _ ->
-            turnCalls.incrementAndGet()
-            Outcome.Failure(QuizTurnGenerationError.InvalidGeneratedTurn)
-        }
 
         val prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError> = {
             val context = AiUsageContextHolder.current()
@@ -520,12 +508,6 @@ class Quiz10WebServerTest {
             Outcome.Success(PreparedQuiz(quiz.topic, quiz.route,
                 preparationMetrics = PreparedQuizPreparationMetrics(1, 1, 0, 0)))
         }
-        val turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { _, _ ->
-            val id = AiUsageContextHolder.current()?.workUnitId
-            monitor.recordCall(AiUsageCallEvent("quiz10-web", AiUsageOperation.LUNA, "model", 1,
-                AiUsageCallResult.ERROR, id, 3, 0, 3, true))
-            Outcome.Failure(QuizTurnGenerationError.InvalidGeneratedTurn)
-        }
         withServer(prepare, turn, monitor) { baseUrl, _, _ ->
             assertEquals(500, postForm("$baseUrl/games", mapOf("name" to "Ada", "selection" to defaultSelection)).statusCode())
         }
@@ -541,22 +523,16 @@ class Quiz10WebServerTest {
 
     private fun <T> withServer(
         prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
-        turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = turnSuccess(),
         usageMonitor: AiUsageMonitor = AiUsageMonitor.NOOP,
-        block: (
-            baseUrl: String,
-            prepare: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
-            turn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
-        ) -> T,
+        block: (baseUrl: String) -> T,
     ): T {
         Quiz10WebServer(
             prepareQuiz = prepare,
-            generateTurn = turn,
             usageMonitor = usageMonitor,
             port = 0,
         ).use { server ->
             val port = server.start()
-            return block("http://127.0.0.1:$port", prepare, turn)
+            return block("http://127.0.0.1:$port")
         }
     }
 
@@ -575,32 +551,6 @@ class Quiz10WebServerTest {
         return if (labels.size == 1) labels.single() else "Aleatorio"
     }
 
-    private fun turnSuccess(
-        onCall: (CoverageRouteItem, Int) -> Unit = { _, _ -> },
-    ): (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> = { item, correctIndex ->
-        onCall(item, correctIndex)
-        val options = mutableListOf(
-            "Option A ${item.referent}",
-            "Option B ${item.referent}",
-            "Option C ${item.referent}",
-        )
-        val feedback = mutableListOf(
-            "FA ${item.referent}",
-            "FB ${item.referent}",
-            "FC ${item.referent}",
-        )
-        options.add(correctIndex, item.answer)
-        feedback.add(correctIndex, "Correct ${item.knowledge}")
-        Outcome.Success(
-            QuizQuestion(
-                text = "Question ${item.referent}",
-                options = options,
-                feedbackByOption = feedback,
-                correctOptionIndex = correctIndex,
-            ),
-        )
-    }
-
     private fun prepared(topic: String): PreparedQuiz {
         val route = CoverageRoute.of(List(10) { index ->
             CoverageRouteItem(
@@ -617,7 +567,10 @@ class Quiz10WebServerTest {
                 answer = "Ans",
             )
         })
-        return PreparedQuiz(topic = topic, route = route)
+        return PreparedQuiz(topic = topic, route = route, questions = route.items.map { item ->
+            PreparedQuizQuestion("Question ${item.referent}", item.answer,
+                listOf("Option A ${item.referent}", "Option B ${item.referent}", "Option C ${item.referent}"))
+        })
     }
 
     private fun preparedWithQuestions(topic: String): PreparedQuiz {

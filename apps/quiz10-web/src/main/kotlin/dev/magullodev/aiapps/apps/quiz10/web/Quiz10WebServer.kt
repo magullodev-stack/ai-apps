@@ -8,24 +8,21 @@ import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
 import dev.magullodev.aiapps.core.ai.AiUsageMetricEvent
 import dev.magullodev.aiapps.core.ai.AiUsageMonitor
 import dev.magullodev.aiapps.core.contracts.Outcome
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlanner
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewError
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.Quiz10Area
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.StandardCoveragePlan
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.StandardCoveragePlanner
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageQuestionReviewError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageRouteGenerationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageRouteValidationError
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationOption
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompletionError
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuiz
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparationError
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.QuizTurnGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.question.QuizQuestion
-import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10FlowTransitionError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageQuestionCompletionError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuiz
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.QuizPreparationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.Quiz10FlowTransitionError
 import dev.magullodev.aiapps.systems.games.quiz10.progress.PlayerProgress
-import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10Flow
-import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10FlowState
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.Quiz10Flow
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.Quiz10FlowState
 import dev.magullodev.aiapps.ui.quiz10.web.Quiz10WebRenderer
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
@@ -36,7 +33,6 @@ import java.util.concurrent.Executors
 
 class Quiz10WebServer(
     private val prepareQuiz: (StandardCoveragePlan) -> Outcome<PreparedQuiz, QuizPreparationError>,
-    private val generateTurn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
     private val usageMonitor: AiUsageMonitor = AiUsageMonitor.NOOP,
     private val renderer: Quiz10WebRenderer = Quiz10WebRenderer(),
     private val planner: StandardCoveragePlanner = StandardCoveragePlanner(),
@@ -145,7 +141,7 @@ class Quiz10WebServer(
 
         recordPreparationCompleted(workUnitId, prepared)
 
-        val flow = Quiz10Flow(prepared, generateTurn)
+        val flow = Quiz10Flow(prepared)
         val question = withAiUsageContext(workUnitId) {
             when (val result = flow.start()) {
                 is Outcome.Success -> result.value
@@ -296,7 +292,7 @@ class Quiz10WebServer(
                         }
                     }
                     recordPreparationCompleted(nextWorkUnitId, prepared)
-                    val flow = Quiz10Flow(prepared, generateTurn)
+                    val flow = Quiz10Flow(prepared)
                     val question = withAiUsageContext(nextWorkUnitId) {
                         when (val result = flow.start()) {
                             is Outcome.Success -> result.value
@@ -360,7 +356,7 @@ class Quiz10WebServer(
                         }
                     }
                     recordPreparationCompleted(nextWorkUnitId, prepared)
-                    val flow = Quiz10Flow(prepared, generateTurn)
+                    val flow = Quiz10Flow(prepared)
                     val question = withAiUsageContext(nextWorkUnitId) {
                         when (val result = flow.start()) {
                             is Outcome.Success -> result.value
@@ -449,7 +445,7 @@ class Quiz10WebServer(
                 }
             }
             recordPreparationCompleted(nextWorkUnitId, prepared)
-            val flow = Quiz10Flow(prepared, generateTurn)
+            val flow = Quiz10Flow(prepared)
             val question = withAiUsageContext(nextWorkUnitId) {
                 when (val result = flow.start()) {
                     is Outcome.Success -> result.value
@@ -539,17 +535,7 @@ class Quiz10WebServer(
     }
 
     private fun logTurnFailure(error: Quiz10FlowTransitionError) {
-        val questionNumber = when (error) {
-            is Quiz10FlowTransitionError.TurnGenerationFailed -> error.questionNumber
-        }
-        val cause = when (error) {
-            is Quiz10FlowTransitionError.TurnGenerationFailed -> when (val turnCause = error.cause) {
-                is QuizTurnGenerationError.GenerationFailed -> describeAiErrorForLog(turnCause.cause)
-                else -> describeTurnGenerationError(turnCause)
-            }
-        }
-        val questionSuffix = questionNumber?.let { " question=$it" } ?: ""
-        System.err.println("quiz10-web stage=turn${questionSuffix} error=${describeTurnTransitionError(error)} cause=${cause}")
+        System.err.println("quiz10-web stage=turn error=$error")
     }
 
     private fun preparationErrorMessage(error: QuizPreparationError): String = when (error) {
@@ -596,12 +582,8 @@ class Quiz10WebServer(
     }
 
     private fun turnErrorMessage(error: Quiz10FlowTransitionError): String = when (error) {
-        is Quiz10FlowTransitionError.TurnGenerationFailed -> when (val cause = error.cause) {
-            is QuizTurnGenerationError.InvalidCoverageRouteItem -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeTurnGenerationError(cause)})"
-            is QuizTurnGenerationError.InvalidCorrectOptionIndex -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeTurnGenerationError(cause)})"
-            is QuizTurnGenerationError.GenerationFailed -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeAiError(cause.cause)})"
-            is QuizTurnGenerationError.InvalidGeneratedTurn -> "No se pudo generar la pregunta ${error.questionNumber}: TurnGenerationFailed(${describeTurnGenerationError(cause)})"
-        }
+        is Quiz10FlowTransitionError.MissingPreparedQuestion ->
+            "No se ha preparado la pregunta ${error.questionNumber}: MissingPreparedQuestion"
     }
 
     private fun describePreparationError(error: QuizPreparationError): String = when (error) {
@@ -612,10 +594,6 @@ class Quiz10WebServer(
         is QuizPreparationError.CoverageQuestionCompletionFailed -> "QuizPreparationError.CoverageQuestionCompletionFailed"
         is QuizPreparationError.StandardPreparationNotConfigured -> "QuizPreparationError.StandardPreparationNotConfigured"
         is QuizPreparationError.InvalidCoverageRouteSize -> "QuizPreparationError.InvalidCoverageRouteSize"
-    }
-
-    private fun describeTurnTransitionError(error: Quiz10FlowTransitionError): String = when (error) {
-        is Quiz10FlowTransitionError.TurnGenerationFailed -> "Quiz10FlowTransitionError.TurnGenerationFailed"
     }
 
     private fun describeCoverageGenerationError(error: CoverageRouteGenerationError, includeAiDetail: Boolean): String = when (error) {
@@ -673,13 +651,6 @@ class Quiz10WebServer(
     private fun topicForSelection(selection: SelectionMode): String = when (selection) {
         SelectionMode.Random -> "Aleatorio"
         is SelectionMode.Area -> selection.area.label
-    }
-
-    private fun describeTurnGenerationError(error: QuizTurnGenerationError): String = when (error) {
-        is QuizTurnGenerationError.InvalidCoverageRouteItem -> "QuizTurnGenerationError.InvalidCoverageRouteItem"
-        is QuizTurnGenerationError.InvalidCorrectOptionIndex -> "QuizTurnGenerationError.InvalidCorrectOptionIndex"
-        is QuizTurnGenerationError.GenerationFailed -> "QuizTurnGenerationError.GenerationFailed"
-        is QuizTurnGenerationError.InvalidGeneratedTurn -> "QuizTurnGenerationError.InvalidGeneratedTurn"
     }
 
     private fun describeAiError(error: AiError): String = when (error) {

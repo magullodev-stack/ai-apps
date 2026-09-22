@@ -14,19 +14,15 @@ import dev.magullodev.aiapps.core.ai.resolveUsageFile
 import dev.magullodev.aiapps.core.config.EnvironmentConfig
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.core.network.UrlConnectionHttpTransport
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewPosition
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageRouteValidationError
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.TerraCoverageQuestionReviewer
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.TerraCoverageRouteGenerator
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.TerraCoverageRouteValidator
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageQuestionReviewPosition
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageRouteValidationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.TerraCoverageQuestionReviewer
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.TerraCoverageRouteGenerator
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.TerraCoverageRouteValidator
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionPresenter
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionAuditListener
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.CoverageQuestionCompleter
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparer
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.LunaQuizTurnGenerator
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.luna.QuizTurnGenerationError
-import dev.magullodev.aiapps.systems.games.quiz10.question.QuizQuestion
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageQuestionAuditListener
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageQuestionCompleter
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.QuizPreparer
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
@@ -44,11 +40,6 @@ fun main(args: Array<String>) {
     } catch (error: IllegalArgumentException) {
         fail(error.message ?: "CONFIGURATION_ERROR")
     }
-    val turnGenerator = try {
-        createTurnGenerator(client::generate)
-    } catch (error: IllegalArgumentException) {
-        fail(error.message ?: "CONFIGURATION_ERROR")
-    }
     val port = try {
         resolveWebPort()
     } catch (error: IllegalArgumentException) {
@@ -57,7 +48,6 @@ fun main(args: Array<String>) {
 
     val server = Quiz10WebServer(
         prepareQuiz = preparer::prepare,
-        generateTurn = turnGenerator,
         usageMonitor = usageMonitor,
         port = port,
     )
@@ -88,7 +78,7 @@ internal fun createQuizPreparer(
     val coverageValidator = TerraCoverageRouteValidator(generateStructured)
     val reviewer = TerraCoverageQuestionReviewer(generateStructured)
 
-    val validateWithAudit: (String, dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute) -> Outcome<Unit, CoverageRouteValidationError> = { topic, route ->
+    val validateWithAudit: (String, dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRoute) -> Outcome<Unit, CoverageRouteValidationError> = { topic, route ->
         val result = coverageValidator.validate(topic, route)
         val error = (result as? Outcome.Failure)?.error
         if (error is CoverageRouteValidationError.RouteRejected) {
@@ -110,7 +100,7 @@ internal fun createQuizPreparer(
         result
     }
 
-    val reviewWithAudit: (dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute) -> Outcome<dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReview, dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewError> = { route ->
+    val reviewWithAudit: (dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRoute) -> Outcome<dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageQuestionReview, dev.magullodev.aiapps.systems.games.quiz10.random.test.procesamiento.CoverageQuestionReviewError> = { route ->
         val result = reviewer.review(route)
         if (result is Outcome.Success) {
             result.value.positions.forEachIndexed { index, reviewed ->
@@ -173,13 +163,6 @@ internal fun createQuizPreparer(
 private fun currentUsageApplication(): String = AiUsageContextHolder.current()?.application ?: QUIZ10_APPLICATION
 
 private fun currentWorkUnitId(): String? = AiUsageContextHolder.current()?.workUnitId
-
-internal fun createTurnGenerator(
-    generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,
-): (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError> {
-    val turnGenerator = LunaQuizTurnGenerator(generateStructured)
-    return turnGenerator::generate
-}
 
 internal fun createInteractionPresenter(
     generateStructured: (StructuredGenerationRequest) -> Outcome<StructuredGeneration, AiError>,

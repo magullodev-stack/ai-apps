@@ -7,11 +7,11 @@ import dev.magullodev.aiapps.core.ai.AiUsageContextHolder
 import dev.magullodev.aiapps.core.ai.FileAiUsageMonitor
 import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.contracts.Outcome
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageDifficulty
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionContext
 import dev.magullodev.aiapps.systems.games.quiz10.interaction.Quiz10InteractionEvent
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.QuizPreparationError
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.QuizPreparationError
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertFailsWith
@@ -71,44 +71,6 @@ class WebMainTest {
         assertEquals(1, coverageCalls)
         assertEquals(1, validationCalls)
         assertEquals(listOf(AiProfile.TERRA, AiProfile.TERRA), requestedProfiles)
-    }
-
-    @Test
-    fun createTurnGeneratorUsesGlobalLunaProfile() {
-        val requestedProfiles = mutableListOf<AiProfile>()
-        val generator = createTurnGenerator { request ->
-            requestedProfiles += request.profile
-            Outcome.Success(
-                StructuredGeneration(
-                    """
-                        {
-                          "question":"Q",
-                          "correctExplanation":"CE",
-                          "distractors":[
-                            {"text":"D1","explanation":"E1"},
-                            {"text":"D2","explanation":"E2"},
-                            {"text":"D3","explanation":"E3"}
-                          ]
-                        }
-                    """.trimIndent(),
-                    null,
-                ),
-            )
-        }
-
-        generator(
-            CoverageRouteItem(
-                difficulty = CoverageDifficulty.EASY,
-                area = "A",
-                group = "G",
-                referent = "R",
-                knowledge = "K",
-                answer = "ANS",
-            ),
-            0,
-        )
-
-        assertEquals(listOf(AiProfile.LUNA), requestedProfiles)
     }
 
     @Test

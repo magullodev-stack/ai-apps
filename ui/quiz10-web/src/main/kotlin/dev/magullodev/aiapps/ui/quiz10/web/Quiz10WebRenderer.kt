@@ -1,11 +1,11 @@
 package dev.magullodev.aiapps.ui.quiz10.web
 
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.Quiz10Area
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationOption
 import dev.magullodev.aiapps.systems.games.quiz10.progress.PlayerProgress
-import dev.magullodev.aiapps.systems.games.quiz10.result.QuizAnswerRecord
-import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10FlowState
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.QuizAnswerRecord
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.Quiz10FlowState
 
 class Quiz10WebRenderer {
     companion object {

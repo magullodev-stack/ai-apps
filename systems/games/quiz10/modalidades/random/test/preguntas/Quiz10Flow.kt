@@ -1,17 +1,14 @@
 package dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas
 
 import dev.magullodev.aiapps.core.contracts.Outcome
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuiz
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuizQuestion
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.luna.QuizTurnGenerationError
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.QuizQuestion
 import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.QuizAnswerRecord
 import java.util.Collections
 
 class Quiz10Flow(
     private val preparedQuiz: PreparedQuiz,
-    private val generateTurn: (CoverageRouteItem, Int) -> Outcome<QuizQuestion, QuizTurnGenerationError>,
 ) {
     private var session: QuizSession? = null
     private var currentState: Quiz10FlowState? = null
@@ -28,14 +25,7 @@ class Quiz10Flow(
         val questionNumber = newSession.currentQuestionNumber ?: error("Prepared quiz unexpectedly has no current question")
         val question = when (val resolved = resolveQuestion(questionNumber)) {
             is Outcome.Success -> resolved.value
-            is Outcome.Failure -> {
-                return Outcome.Failure(
-                    Quiz10FlowTransitionError.TurnGenerationFailed(
-                        questionNumber = questionNumber,
-                        cause = resolved.error,
-                    ),
-                )
-            }
+            is Outcome.Failure -> return Outcome.Failure(resolved.error)
         }
         val current = Quiz10FlowState.Question(
             topic = preparedQuiz.topic,
@@ -104,14 +94,7 @@ class Quiz10Flow(
             ?: throw IllegalStateException("Quiz session has no pending question")
         val nextQuestion = when (val resolved = resolveQuestion(nextQuestionNumber)) {
             is Outcome.Success -> resolved.value
-            is Outcome.Failure -> {
-                return Outcome.Failure(
-                    Quiz10FlowTransitionError.TurnGenerationFailed(
-                        questionNumber = nextQuestionNumber,
-                        cause = resolved.error,
-                    ),
-                )
-            }
+            is Outcome.Failure -> return Outcome.Failure(resolved.error)
         }
         val nextState = Quiz10FlowState.Question(
             topic = answeredState.topic,
@@ -126,15 +109,10 @@ class Quiz10Flow(
         return Outcome.Success(nextState)
     }
 
-    private fun resolveQuestion(questionNumber: Int): Outcome<QuizQuestion, QuizTurnGenerationError> {
-        val prebuilt = preparedQuiz.questions
-        if (prebuilt != null) {
-            return Outcome.Success(toQuizQuestion(prebuilt[questionNumber - 1], questionNumber))
-        }
-
-        val item = preparedQuiz.route.items[questionNumber - 1]
-        val correctOptionIndex = PreparedQuiz.correctOptionSequence[questionNumber - 1]
-        return generateTurn(item, correctOptionIndex)
+    private fun resolveQuestion(questionNumber: Int): Outcome<QuizQuestion, Quiz10FlowTransitionError> {
+        val question = preparedQuiz.questions?.getOrNull(questionNumber - 1)
+            ?: return Outcome.Failure(Quiz10FlowTransitionError.MissingPreparedQuestion(questionNumber))
+        return Outcome.Success(toQuizQuestion(question, questionNumber))
     }
 
     private fun toQuizQuestion(prepared: PreparedQuizQuestion, questionNumber: Int): QuizQuestion {
@@ -153,10 +131,7 @@ class Quiz10Flow(
 }
 
 sealed interface Quiz10FlowTransitionError {
-    data class TurnGenerationFailed(
-        val questionNumber: Int,
-        val cause: QuizTurnGenerationError,
-    ) : Quiz10FlowTransitionError
+    data class MissingPreparedQuestion(val questionNumber: Int) : Quiz10FlowTransitionError
 }
 
 sealed interface Quiz10FlowState {

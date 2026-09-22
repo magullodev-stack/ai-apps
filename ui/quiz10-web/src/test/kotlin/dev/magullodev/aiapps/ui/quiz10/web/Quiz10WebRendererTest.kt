@@ -1,14 +1,14 @@
 package dev.magullodev.aiapps.ui.quiz10.web
 
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRouteItem
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageDifficulty
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRoute
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.CoverageRouteItem
 import dev.magullodev.aiapps.systems.games.quiz10.navigation.Quiz10NavigationMenu
-import dev.magullodev.aiapps.systems.games.quiz10.preparation.PreparedQuiz
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preparación.PreparedQuiz
 import dev.magullodev.aiapps.systems.games.quiz10.progress.PlayerProgress
-import dev.magullodev.aiapps.systems.games.quiz10.question.QuizQuestion
-import dev.magullodev.aiapps.systems.games.quiz10.result.QuizAnswerRecord
-import dev.magullodev.aiapps.systems.games.quiz10.session.Quiz10FlowState
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.QuizQuestion
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.QuizAnswerRecord
+import dev.magullodev.aiapps.systems.games.quiz10.random.test.preguntas.Quiz10FlowState
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
