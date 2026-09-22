@@ -1,53 +1,23 @@
 package dev.magullodev.aiapps.systems.games.quiz10.coverage.terra
 
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
-import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
+internal object TerraCoverageRouteValidationPrompt {
+    const val TEXT = """
+Valida cada fila de la ruta de cobertura y genera una pregunta por cada fila válida.
 
-internal fun terraCoverageRouteValidationPrompt(topic: String, route: CoverageRoute): String {
-    val routeLines = route.items.mapIndexed { index, item ->
-        "${index + 1}. ${difficultyLabel(item.difficulty)} · ${item.area} · ${item.group} · ${item.referent} · ${item.knowledge} · ${item.answer}"
-    }.joinToString("\n")
+Comprueba que el conocimiento corresponda al área, grupo y referente indicados, y que la respuesta sea correcta, precisa e inequívoca.
 
-    return """
-        Tema solicitado: [$topic]
+Formula una pregunta que evalúe exactamente ese conocimiento y genera tres distractores plausibles, distintos e incorrectos. Entre las cuatro opciones debe haber una única respuesta correcta.
 
-        Vas a revisar críticamente una RUTA DE COBERTURA ya generada. No debes regenerar ni reescribir la ruta.
-        Evalúa el tema completo y las relaciones entre las diez posiciones de forma global.
+Si una fila no permite generar una pregunta válida, márcala como inválida e indica brevemente el motivo.
 
-        Contrato canónico por posición:
-        - dificultad
-        - área
-        - grupo
-        - referente
-        - conocimiento
-        - respuesta
+## RUTA DE COBERTURA
 
-        Ruta recibida (10 posiciones):
-        $routeLines
+[RUTA GENERADA POR TERRA 1]
 
-        Criterios obligatorios de revisión:
-        1) Las áreas y grupos representan divisiones coherentes del tema, con niveles de abstracción apropiados y sin solapamientos sustanciales injustificados.
-        2) Los dominios conceptuales identificados son autónomos cuando la clasificación utilizada así lo exige.
-        3) Cada referente pertenece al grupo y área correspondientes.
-        4) Cada conocimiento pertenece al tema solicitado y al referente seleccionado.
-        5) Cada respuesta es correcta, precisa y coherente con el conocimiento que pretende evaluarse.
-        6) La dificultad asignada en cada posición corresponde razonablemente al conocimiento necesario para identificar la respuesta.
-        7) La ruta presenta diversidad suficiente y evita repeticiones conceptuales innecesarias.
-        8) La ruta no contiene elementos absurdos, anacrónicos, contradictorios o ajenos al tema.
-        9) La ruta respeta la estructura y las restricciones existentes de la ruta de cobertura.
+## RESULTADO
 
-        Debes devolver solo JSON válido que siga exactamente el esquema estructurado proporcionado.
-        Tu salida es una evaluación crítica de esta ruta concreta; no generes una ruta alternativa.
-
-        Reglas del resultado:
-        - Si la ruta es admisible: approved=true e issues=[]
-        - Si la ruta no es admisible: approved=false y issues con al menos una incidencia concreta
-    """.trimIndent()
-}
-
-private fun difficultyLabel(difficulty: CoverageDifficulty): String = when (difficulty) {
-    CoverageDifficulty.EASY -> "Fácil"
-    CoverageDifficulty.MODERATE -> "Moderado"
-    CoverageDifficulty.HARD -> "Difícil"
-    CoverageDifficulty.VERY_HARD -> "Muy difícil"
+| N.º | Válida | Incidencia | Pregunta | Respuesta | Distractor 1 | Distractor 2 | Distractor 3 |
+|---|---|---|---|---|---|---|---|
+| [N.º] | | | | | | | |
+"""
 }
