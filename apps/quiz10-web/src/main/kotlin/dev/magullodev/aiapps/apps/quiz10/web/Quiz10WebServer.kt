@@ -587,7 +587,7 @@ class Quiz10WebServer(
             "No se pudo validar por fila la cobertura: ${describeCoverageQuestionReviewError(error.cause, includeAiDetail = false)}"
 
         is QuizPreparationError.CoverageQuestionCompletionFailed ->
-            "No se pudo completar la cobertura con reemplazos: ${describeCoverageQuestionCompletionError(error.cause)}"
+            "No se pudieron completar las diez preguntas: ${describeCoverageQuestionCompletionError(error.cause)}"
 
         is QuizPreparationError.StandardPreparationNotConfigured ->
             "La preparación estándar no está configurada"
@@ -648,8 +648,8 @@ class Quiz10WebServer(
         is CoverageQuestionCompletionError.InputMismatch ->
             "CoverageQuestionCompletionError.InputMismatch(detail=${error.detail})"
 
-        is CoverageQuestionCompletionError.ExhaustedReplacementAttempts ->
-            "CoverageQuestionCompletionError.ExhaustedReplacementAttempts(pendingPositions=${error.pendingPositions})"
+        is CoverageQuestionCompletionError.UnresolvedPositions ->
+            "CoverageQuestionCompletionError.UnresolvedPositions(positions=${error.positions})"
     }
 
     private fun parseSelectionMode(selectionRaw: String): SelectionMode? {

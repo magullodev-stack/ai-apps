@@ -58,7 +58,7 @@ class CoverageQuestionCompleter(
                 is CoverageQuestionReviewPosition.Invalid -> {
                     auditListener.onInitialReviewRejected(position.position, reviewed.issue)
                     return Outcome.Failure(
-                        CoverageQuestionCompletionError.ExhaustedReplacementAttempts(
+                        CoverageQuestionCompletionError.UnresolvedPositions(
                             listOf(position.position)
                         )
                     )
@@ -145,5 +145,5 @@ data class CompletedCoverageQuestion(
 
 sealed interface CoverageQuestionCompletionError {
     data class InputMismatch(val detail: String) : CoverageQuestionCompletionError
-    data class ExhaustedReplacementAttempts(val pendingPositions: List<Int>) : CoverageQuestionCompletionError
+    data class UnresolvedPositions(val positions: List<Int>) : CoverageQuestionCompletionError
 }
