@@ -1,5 +1,5 @@
-package dev.magullodev.aiapps.systems.games.quiz10.random.test.processing
-import dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test.terraCoveragePrompt
+package dev.magullodev.aiapps.systems.games.quiz10.random.processing
+import dev.magullodev.aiapps.systems.games.quiz10.random.prompts.terraCoveragePrompt
 
 import dev.magullodev.aiapps.core.ai.AiProfile
 import dev.magullodev.aiapps.core.ai.AiUsageOperation

@@ -5,8 +5,8 @@ import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.Quiz10Area
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.StandardCoveragePlan
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReview
-import dev.magullodev.aiapps.systems.games.quiz10.random.test.processing.CoverageQuestionReviewPosition
+import dev.magullodev.aiapps.systems.games.quiz10.random.processing.CoverageQuestionReview
+import dev.magullodev.aiapps.systems.games.quiz10.random.processing.CoverageQuestionReviewPosition
 import java.util.Collections
 
 class CoverageQuestionCompleter(

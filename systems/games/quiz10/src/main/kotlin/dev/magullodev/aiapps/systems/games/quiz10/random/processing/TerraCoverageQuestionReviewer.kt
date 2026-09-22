@@ -1,4 +1,4 @@
-package dev.magullodev.aiapps.systems.games.quiz10.random.test.processing
+package dev.magullodev.aiapps.systems.games.quiz10.random.processing
 
 import dev.magullodev.aiapps.core.ai.AiError
 import dev.magullodev.aiapps.core.ai.AiProfile
@@ -7,7 +7,7 @@ import dev.magullodev.aiapps.core.ai.StructuredGeneration
 import dev.magullodev.aiapps.core.ai.StructuredGenerationRequest
 import dev.magullodev.aiapps.core.contracts.Outcome
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
-import dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test.terraCoverageRouteValidationPrompt
+import dev.magullodev.aiapps.systems.games.quiz10.random.prompts.terraCoverageRouteValidationPrompt
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

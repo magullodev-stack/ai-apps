@@ -1,4 +1,4 @@
-package dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test
+package dev.magullodev.aiapps.systems.games.quiz10.random.prompts
 
 internal object TerraCoveragePrompt {
     const val TEXT = """

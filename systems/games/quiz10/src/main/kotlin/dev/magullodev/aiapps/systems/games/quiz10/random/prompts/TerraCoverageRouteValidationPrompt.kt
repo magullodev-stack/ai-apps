@@ -1,4 +1,4 @@
-package dev.magullodev.aiapps.systems.games.quiz10.prompts.random.test
+package dev.magullodev.aiapps.systems.games.quiz10.random.prompts
 
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageDifficulty
 import dev.magullodev.aiapps.systems.games.quiz10.coverage.CoverageRoute
