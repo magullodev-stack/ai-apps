@@ -33,3 +33,9 @@ El subsistema `ai/` proporciona los mecanismos técnicos de ejecución sin conoc
 Los modelos, prompts y procedimientos pueden incorporarse, sustituirse, combinarse o retirarse sin imponer cambios innecesarios al funcionamiento de las actividades.
 
 La aplicación conecta los componentes necesarios y el sistema determina cómo se incorporan los resultados a su realidad.
+
+## Implementación recuperada
+
+`ai/` contiene el cliente JVM de OpenAI Responses, su transporte, la configuración y el registro técnico de consumo. Cada solicitud puede seleccionar su modelo; los antiguos perfiles LUNA, MINI y TERRA se conservan únicamente como compatibilidad. El alcance actual del cliente es la generación JSON estructurada.
+
+`ai/flutter_client` permite a los juegos móviles solicitar generaciones a un servidor AI-APPS. El puente local `AiHttpServer` sirve para desarrollo; la clave de OpenAI permanece en el proceso servidor. Consulta [`ai/README.md`](../ai/README.md) para los pasos de ejecución y sus límites.

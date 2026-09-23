@@ -1,0 +1,5 @@
+name: ai_apps_ai
+description: Cliente móvil para las operaciones de IA de AI-APPS.
+version: 0.1.0
+environment:
+  sdk: '>=3.3.0 <4.0.0'

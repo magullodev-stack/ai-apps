@@ -1,0 +1,6 @@
+package dev.magullodev.aiapps.core.config
+
+sealed interface ConfigError {
+    data class MissingOrEmpty(val variable: String) : ConfigError
+    data class InvalidValue(val variable: String, val value: String) : ConfigError
+}

@@ -9,7 +9,7 @@
 
 ## Código archivado
 
-La rama local `backup/base-antes-limpieza-20260923-194634`, en el commit `40410a19600fbfb67e06a32a2f1ba2779dc9eb99`, conserva MONIT-AI, `ai/src/`, los módulos Kotlin/JVM de `core/`, sus pruebas y la configuración Gradle anterior.
+El cliente de IA, sus dependencias y sus pruebas se han recuperado en `ai/`. La rama local `backup/base-antes-limpieza-20260923-194634`, en el commit `40410a19600fbfb67e06a32a2f1ba2779dc9eb99`, conserva MONIT-AI, `ai/src/`, los módulos Kotlin/JVM de `core/`, sus pruebas y la configuración Gradle anterior.
 
 Para consultar las instrucciones históricas desde PowerShell:
 

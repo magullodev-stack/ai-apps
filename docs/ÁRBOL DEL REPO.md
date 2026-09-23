@@ -16,7 +16,7 @@ ai-apps/
 │
 ├── apps/                     # Aplicaciones construidas sobre AI-APPS.
 │
-├── ai/                       # Subsistema técnico transversal de IA.
+├── ai/                       # Subsistema técnico transversal de IA y cliente móvil.
 │
 ├── shared/                   # Base común de las aplicaciones móviles.
 │   └── ui/                   # Identidad visual, interfaz y componentes comunes.
@@ -48,6 +48,8 @@ Su organización interna se establece conforme a las necesidades de cada experie
 Contiene el subsistema técnico transversal de inteligencia artificial.
 
 Proporciona los mecanismos comunes necesarios para ejecutar operaciones de IA mediante los modelos y procedimientos que correspondan.
+
+Incluye los mecanismos JVM recuperados bajo `ai/core/`, un puente HTTP local y el cliente reutilizable `ai/flutter_client/`.
 
 Su organización interna responde a los mecanismos técnicos efectivamente implementados.
 
