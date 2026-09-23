@@ -8,52 +8,6 @@ Este manifiesto establece las invariantes estructurales del repositorio. La onto
 
 ---
 
-## Raíz compartida
-
-AI-APPS mantiene una única raíz modular compartida, organizada en cinco troncales:
-
-### `apps/` — Aplicaciones
-
-Contiene las aplicaciones móviles de AI-APPS.
-
-Cada aplicación integra sus sistemas, capacidades particulares, interfaces y composición ejecutable.
-
-Cada aplicación desarrolla su propia estructura interna según las experiencias y responsabilidades que necesita.
-
-### `ai/` — Inteligencia artificial
-
-Contiene el subsistema técnico transversal de inteligencia artificial.
-
-Proporciona los mecanismos de ejecución, integración con modelos y proveedores, configuración técnica y observabilidad, sin conocer las reglas particulares de las aplicaciones.
-
-Los prompts y procedimientos específicos de cada tarea pertenecen al componente responsable de esa tarea.
-
-### `shared/` — Componentes compartidos
-
-Contiene los fundamentos técnicos, componentes visuales, sistemas y capacidades que tienen una responsabilidad compartida.
-
-Cada componente mantiene su propia responsabilidad y puede ser utilizado por las aplicaciones que lo necesiten.
-
-Las implementaciones compartidas se reutilizan sin duplicarse en cada aplicación.
-
-### `tools/` — Herramientas
-
-Contiene las herramientas autónomas y transversales de AI-APPS.
-
-Proporcionan funciones de desarrollo, análisis, observación y operación de la plataforma.
-
-Las herramientas pueden observar las ejecuciones de las aplicaciones y sus sistemas, pero no gobiernan sus actividades ni redefinen sus reglas.
-
-### `docs/` — Documentación
-
-Contiene la documentación que define y describe AI-APPS.
-
-Incluye la ontología operacional, el manifiesto arquitectónico, el funcionamiento de la inteligencia artificial, la organización del repositorio y las decisiones técnicas de la plataforma.
-
-Cada documento mantiene su responsabilidad como fuente de verdad.
-
----
-
 ## Dependencias
 
 Los sistemas gobiernan sus actividades y definen los contratos de sus necesidades funcionales sin depender de implementaciones concretas.
