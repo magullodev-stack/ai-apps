@@ -1,5 +1,6 @@
 .gradle/
 build/
+.dart_tool/
 .idea/
 .vscode/*
 !.vscode/tasks.json
