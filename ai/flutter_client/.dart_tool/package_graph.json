@@ -1,0 +1,14 @@
+{
+  "roots": [
+    "ai_apps_ai"
+  ],
+  "packages": [
+    {
+      "name": "ai_apps_ai",
+      "version": "0.1.0",
+      "dependencies": [],
+      "devDependencies": []
+    }
+  ],
+  "configVersion": 1
+}
