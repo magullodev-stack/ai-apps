@@ -1,22 +1,6 @@
-﻿{
+{
     "version":  "2.0.0",
     "tasks":  [
-                  {
-                      "label":  "Iniciar MONIT-AI",
-                      "type":  "shell",
-                      "command":  "AI_APPS_PRICING_FILE=\"$PWD/.ai-apps/pricing.json\" ./gradlew -q :tools:monit-ai:run",
-                      "options":  {
-                                      "cwd":  "${workspaceFolder}"
-                                  },
-                      "isBackground":  true,
-                      "problemMatcher":  [
-
-                                         ],
-                      "presentation":  {
-                                           "reveal":  "never",
-                                           "panel":  "dedicated"
-                                       }
-                  },
                   {
                       "label":  "AI-APPS: ejecutar aplicacion Android",
                       "type":  "shell",
