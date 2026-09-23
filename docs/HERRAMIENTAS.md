@@ -17,4 +17,4 @@ Las instrucciones técnicas de cada herramienta se mantienen en su documentació
 
 COMMIT 
 
-cd /workspaces/ai-apps && git add -A && for f in .vscode/tasks.json .vscode/launch.json scripts/start-quiz10.sh; do if [ -f "$f" ]; then git add -f "$f"; fi; done && git diff --cached --check && git commit -m "chore: actualizar AI-APPS" && git push origin dev
+git add -A; git diff --cached --check; if ($LASTEXITCODE -eq 0) { git commit -m "chore: actualizar AI-APPS"; if ($LASTEXITCODE -eq 0) { git push origin dev } }

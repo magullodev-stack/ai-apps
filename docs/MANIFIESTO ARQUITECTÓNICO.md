@@ -1,53 +1,87 @@
 # Manifiesto arquitectónico de AI-APPS
 
-AI-APPS construye aplicaciones móviles interactivas centradas en la actividad humana. Cada aplicación desarrolla su propia experiencia, realidad, estado y reglas. Los sistemas gobiernan las actividades, las capacidades resuelven necesidades funcionales y la inteligencia artificial puede intervenir en cualquier tarea que lo requiera.
+AI-APPS es una plataforma para construir aplicaciones móviles interactivas de creación, descubrimiento y aprendizaje.
+
+Cada aplicación desarrolla su propia experiencia, realidad, estado y reglas. Los sistemas gobiernan las actividades, las capacidades resuelven necesidades funcionales y la inteligencia artificial puede intervenir en cualquier tarea que lo requiera.
+
+Este manifiesto establece las invariantes estructurales del repositorio. La ontología operacional y el funcionamiento de la inteligencia artificial se definen en sus documentos correspondientes.
 
 ---
 
-Este manifiesto fija las invariantes estructurales del repositorio al crecer.
-
-La definición de AI-APPS, sus responsabilidades arquitectónicas y su ontología operacional están establecidas en el contexto del proyecto.
-
 ## Raíz compartida
 
-AI-APPS mantiene una única raíz modular compartida.
+AI-APPS mantiene una única raíz modular compartida, organizada en cinco troncales:
 
-Los sistemas y aplicaciones crecen dentro de esa raíz.
+### `apps/` — Aplicaciones
 
-Una nueva aplicación reutiliza los componentes existentes cuando sus responsabilidades corresponden; no recibe copias de ellos.
+Contiene las aplicaciones móviles de AI-APPS.
 
-La jerarquía física puede expresar pertenencia lógica real cuando exista. Los sistemas no necesitan ocupar todos el mismo nivel ni compartir la misma estructura interna.
+Cada aplicación integra sus sistemas, capacidades particulares, interfaces y composición ejecutable.
 
-Las herramientas autónomas y transversales del proyecto se alojan en `tools/`.
+Cada aplicación desarrolla su propia estructura interna según las experiencias y responsabilidades que necesita.
+
+### `ai/` — Inteligencia artificial
+
+Contiene el subsistema técnico transversal de inteligencia artificial.
+
+Proporciona los mecanismos de ejecución, integración con modelos y proveedores, configuración técnica y observabilidad, sin conocer las reglas particulares de las aplicaciones.
+
+Los prompts y procedimientos específicos de cada tarea pertenecen al componente responsable de esa tarea.
+
+### `shared/` — Componentes compartidos
+
+Contiene los fundamentos técnicos, componentes visuales, sistemas y capacidades que tienen una responsabilidad compartida.
+
+Cada componente mantiene su propia responsabilidad y puede ser utilizado por las aplicaciones que lo necesiten.
+
+Las implementaciones compartidas se reutilizan sin duplicarse en cada aplicación.
+
+### `tools/` — Herramientas
+
+Contiene las herramientas autónomas y transversales de AI-APPS.
+
+Proporcionan funciones de desarrollo, análisis, observación y operación de la plataforma.
+
+Las herramientas pueden observar las ejecuciones de las aplicaciones y sus sistemas, pero no gobiernan sus actividades ni redefinen sus reglas.
+
+### `docs/` — Documentación
+
+Contiene la documentación que define y describe AI-APPS.
+
+Incluye la ontología operacional, el manifiesto arquitectónico, el funcionamiento de la inteligencia artificial, la organización del repositorio y las decisiones técnicas de la plataforma.
+
+Cada documento mantiene su responsabilidad como fuente de verdad.
+
+---
 
 ## Dependencias
 
-`core/` proporciona fundamentos técnicos compartidos y no depende de los sistemas, capacidades ni aplicaciones concretas.
+Los sistemas gobiernan sus actividades y definen los contratos de sus necesidades funcionales sin depender de implementaciones concretas.
 
-`ai/` puede depender de `core/`, pero no conoce las reglas particulares de los sistemas ni de las aplicaciones.
+Las capacidades satisfacen esas necesidades mediante los mecanismos que correspondan.
 
-`systems/` puede depender de `core/` y define los contratos de sus necesidades funcionales sin depender de sus implementaciones concretas.
+Las interfaces representan la realidad de las actividades y permiten interactuar con ella sin asumir el gobierno de sus reglas.
 
-`capabilities/` puede depender de los contratos de los sistemas cuyas necesidades satisface y utilizar `ai/` u otros mecanismos cuando corresponda.
+Las aplicaciones conectan los sistemas, capacidades, interfaces e implementaciones técnicas que necesitan.
 
-Los sistemas no dependen de implementaciones concretas de `ui/`, proveedores de IA ni capacidades funcionales.
+Los componentes compartidos mantienen sus responsabilidades y contratos independientemente de las aplicaciones que los utilizan.
 
 Los sistemas pueden coexistir sin conocerse entre sí.
 
-Los modelos, prompts y procedimientos de IA pueden incorporarse, combinarse, sustituirse o retirarse sin imponer cambios innecesarios a las reglas de las actividades.
+Ninguna operación está obligada a utilizar una capacidad externa ni inteligencia artificial cuando no lo necesita.
 
-Ninguna operación está obligada a atravesar `capabilities/` ni a utilizar inteligencia artificial cuando no lo necesita.
+---
 
-`apps/` realiza las conexiones concretas entre sistemas, capacidades, interfaces e implementaciones técnicas.
+## Construcción y crecimiento
 
-Las herramientas pueden observar las ejecuciones de los sistemas y aplicaciones, pero no gobiernan sus actividades ni redefinen sus reglas.
+AI-APPS crece mediante experiencias y verticales funcionales completas.
 
-## Crecimiento
+Cada nueva aplicación incorpora sus responsabilidades particulares y reutiliza las implementaciones compartidas cuando corresponda.
 
 Las abstracciones compartidas se extraen cuando existe una necesidad real de reutilización.
 
-La estructura física refleja responsabilidades existentes, no productos hipotéticos.
-
-El árbol evoluciona mediante verticales funcionales.
-
 Una responsabilidad existente se amplía o se extrae antes de duplicarse en otro lugar.
+
+La estructura física expresa responsabilidades y pertenencias reales, sin imponer una organización interna uniforme a todas las aplicaciones.
+
+La plataforma evoluciona conforme aparecen nuevas necesidades, sin anticipar componentes, funcionalidades ni productos hipotéticos.
