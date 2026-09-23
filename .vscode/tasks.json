@@ -1,25 +1,26 @@
 {
-    "version":  "2.0.0",
-    "tasks":  [
-                  {
-                      "label":  "AI-APPS: ejecutar aplicacion Android",
-                      "type":  "shell",
-                      "command":  "powershell.exe",
-                      "args":  [
-                                   "-NoProfile",
-                                   "-ExecutionPolicy",
-                                   "Bypass",
-                                   "-File",
-                                   "${workspaceFolder}\\scripts\\run-android.ps1"
-                               ],
-                      "problemMatcher":  [
-
-                                         ],
-                      "presentation":  {
-                                           "reveal":  "always",
-                                           "panel":  "dedicated",
-                                           "focus":  true
-                                       }
-                  }
-              ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "AI-APPS: ejecutar aplicacion Android",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\scripts\\run-android.ps1"
+      ],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    }
+  ]
 }
