@@ -1,37 +1,41 @@
-{
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Iniciar MONIT-AI",
-      "type": "shell",
-      "command": "AI_APPS_PRICING_FILE=\"$PWD/.ai-apps/pricing.json\" ./gradlew -q :tools:monit-ai:run",
-      "options": {
-        "cwd": "/workspaces/ai-apps"
-      },
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "never",
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "Quiz10: ejecutar en Android",
-      "type": "shell",
-      "command": "bash scripts/start-quiz10.sh",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "runOptions": {
-        "runOn": "folderOpen"
-      },
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "focus": false
-      }
-    }
-  ]
+﻿{
+    "version":  "2.0.0",
+    "tasks":  [
+                  {
+                      "label":  "Iniciar MONIT-AI",
+                      "type":  "shell",
+                      "command":  "AI_APPS_PRICING_FILE=\"$PWD/.ai-apps/pricing.json\" ./gradlew -q :tools:monit-ai:run",
+                      "options":  {
+                                      "cwd":  "${workspaceFolder}"
+                                  },
+                      "isBackground":  true,
+                      "problemMatcher":  [
+
+                                         ],
+                      "presentation":  {
+                                           "reveal":  "never",
+                                           "panel":  "dedicated"
+                                       }
+                  },
+                  {
+                      "label":  "AI-APPS: ejecutar aplicacion Android",
+                      "type":  "shell",
+                      "command":  "powershell.exe",
+                      "args":  [
+                                   "-NoProfile",
+                                   "-ExecutionPolicy",
+                                   "Bypass",
+                                   "-File",
+                                   "${workspaceFolder}\\scripts\\run-android.ps1"
+                               ],
+                      "problemMatcher":  [
+
+                                         ],
+                      "presentation":  {
+                                           "reveal":  "always",
+                                           "panel":  "dedicated",
+                                           "focus":  true
+                                       }
+                  }
+              ]
 }
