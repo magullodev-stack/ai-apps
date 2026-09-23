@@ -1,7 +1,8 @@
 .gradle/
 build/
 .idea/
-.vscode/
+.vscode/*
+!.vscode/tasks.json
 *.iml
 .DS_Store
 Thumbs.db

@@ -12,9 +12,6 @@
         "-File",
         "${workspaceFolder}\\scripts\\run-android.ps1"
       ],
-      "runOptions": {
-        "runOn": "folderOpen"
-      },
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
