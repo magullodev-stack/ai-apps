@@ -34,8 +34,8 @@ Los modelos, prompts y procedimientos pueden incorporarse, sustituirse, combinar
 
 La aplicación conecta los componentes necesarios y el sistema determina cómo se incorporan los resultados a su realidad.
 
-## Implementación recuperada
+## Implementación activa
 
-`ai/` contiene el cliente JVM de OpenAI Responses, su transporte, la configuración y el registro técnico de consumo. Cada solicitud puede seleccionar su modelo; los antiguos perfiles LUNA, MINI y TERRA se conservan únicamente como compatibilidad. El alcance actual del cliente es la generación JSON estructurada.
+`ai/dart_service` ejecuta las solicitudes de generación JSON estructurada mediante OpenAI Responses con las bibliotecas estándar de Dart, incluido en Flutter. Recibe el modelo, el prompt y el esquema de cada consumidor. Mantiene la clave del proveedor en el proceso servidor y ofrece diagnósticos saneados y uso de tokens.
 
-`ai/flutter_client` permite a los juegos móviles solicitar generaciones a un servidor AI-APPS. El puente local `AiHttpServer` sirve para desarrollo; la clave de OpenAI permanece en el proceso servidor. Consulta [`ai/README.md`](../ai/README.md) para los pasos de ejecución y sus límites.
+`ai/flutter_client` permite a los juegos móviles utilizar el servicio mediante HTTP local autenticado. `scripts/run-android.ps1` inicia la conexión de desarrollo, gestiona el token local y ejecuta Quiz10 en el emulador. Consulta [`ai/README.md`](../ai/README.md) para el contrato, las pruebas y los límites de desarrollo.

@@ -8,6 +8,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  ai_apps_service:
+    dependency: "direct dev"
+    description:
+      path: "../../ai/dart_service"
+      relative: true
+    source: path
+    version: "0.1.0"
   async:
     dependency: transitive
     description:

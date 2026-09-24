@@ -22,8 +22,6 @@ Map<String, Object?> quizSchema() => {
   'properties': {
     'preguntas': {
       'type': 'array',
-      'minItems': 10,
-      'maxItems': 10,
       'items': {
         'type': 'object',
         'additionalProperties': false,

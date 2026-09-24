@@ -1,0 +1,9 @@
+name: ai_apps_service
+description: Servicio local de generación estructurada de AI-APPS.
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

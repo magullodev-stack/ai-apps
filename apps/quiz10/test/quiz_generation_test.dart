@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
+import 'package:ai_apps_service/ai_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quiz10/quiz.dart';
 import 'package:quiz10/quiz_generation.dart';
@@ -10,6 +11,66 @@ import 'package:quiz10/quiz_generation.dart';
 import 'fixtures.dart';
 
 void main() {
+  for (final valid in [true, false]) {
+    test(
+      'Quiz10 -> servicio Dart -> Responses simulado (válido: $valid)',
+      () async {
+        final plan = selectQuizAreas(Random(12));
+        final provider = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+        addTearDown(() => provider.close(force: true));
+        final service = AiService(
+          apiKey: 'test-provider-key',
+          token: 'test-local-token',
+          provider: Uri.parse('http://127.0.0.1:${provider.port}/v1/responses'),
+          log: (_) {},
+        );
+        final server = await service.start();
+        addTearDown(service.close);
+        final client = AiAppsClient(
+          endpoint: Uri.parse('http://127.0.0.1:${server.port}'),
+          authorization: 'test-local-token',
+        );
+        addTearDown(client.close);
+        final served = provider.first.then((request) async {
+          final sent = jsonDecode(await utf8.decoder.bind(request).join());
+          expect(sent['model'], 'gpt-4.1-mini');
+          expect(sent['text']['format']['schema'], quizSchema());
+          expect(sent['input'], quizPrompt(plan));
+          final rows = fixtureRows(plan);
+          if (!valid) rows.removeLast();
+          request.response.write(
+            jsonEncode({
+              'status': 'completed',
+              'output': [
+                {
+                  'content': [
+                    {
+                      'type': 'output_text',
+                      'text': jsonEncode({'preguntas': rows}),
+                    },
+                  ],
+                },
+              ],
+            }),
+          );
+          await request.response.close();
+        });
+        final generator = AiQuizGenerator(
+          client: client,
+          model: 'gpt-4.1-mini',
+        );
+        if (valid) {
+          final game = QuizGame(await generator.generate(plan));
+          expect(game.questions, hasLength(10));
+          expect(game.questionNumber, 1);
+        } else {
+          await expectLater(generator.generate(plan), throwsFormatException);
+        }
+        await served;
+      },
+    );
+  }
+
   test(
     'envía prompt y esquema por el cliente compartido y valida la respuesta',
     () async {
@@ -64,8 +125,8 @@ void main() {
         expect(schema['additionalProperties'], false);
         expect(schema['required'], ['preguntas']);
         final rows = schema['properties']['preguntas'] as Map;
-        expect(rows['minItems'], 10);
-        expect(rows['maxItems'], 10);
+        expect(rows, isNot(contains('minItems')));
+        expect(rows, isNot(contains('maxItems')));
         expect(rows['items']['required'], quizFields);
         expect(rows['items']['additionalProperties'], false);
         expect((rows['items']['properties'] as Map).keys, quizFields);

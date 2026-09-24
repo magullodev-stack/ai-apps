@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "AI-APPS: ejecutar aplicacion Android",
+      "label": "AI-APPS: ejecutar Quiz10 con IA",
       "type": "shell",
       "command": "powershell.exe",
       "args": [
@@ -14,9 +14,6 @@
       ],
       "problemMatcher": [],
       "isBackground": true,
-      "runOptions": {
-        "runOn": "folderOpen"
-      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",

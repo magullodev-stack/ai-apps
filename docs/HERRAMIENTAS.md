@@ -1,72 +1,30 @@
 # HERRAMIENTAS.md — AI-APPS
 
-## Catálogo
+## Catálogo activo
 
-| Herramienta | Finalidad | Ubicación | Estado |
+| Herramienta | Finalidad | Ubicación | Instrucciones |
 | --- | --- | --- | --- |
-| Ejecución Android | Ejecutar manualmente la prueba Flutter desde Windows. | [`scripts/run-android.ps1`](../scripts/run-android.ps1) | Activa. Instrucciones en [`apps/quiz10/README.md`](../apps/quiz10/README.md). |
+| Quiz10 con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar Quiz10; verificar una generación real con `-VerifyOnly`; detener el servicio con `-StopService`. | [`scripts/run-android.ps1`](../scripts/run-android.ps1) | [`apps/quiz10/README.md`](../apps/quiz10/README.md) y [`ai/README.md`](../ai/README.md). |
 
-| MONIT-AI | Observación, consumo, costes y auditorías de las ejecuciones de IA. | `tools/monit-ai/` en la rama de respaldo indicada abajo. | Archivada; retirada de la base activa. |
+La tarea manual de VS Code **AI-APPS: ejecutar Quiz10 con IA** utiliza este mismo script. Por defecto trabaja con `emulator-5554` y `gpt-4.1-mini`.
 
----
+## Publicación solicitada por el usuario
 
-COMMIT
+Desde la raíz, después de las verificaciones:
 
+```powershell
 $ErrorActionPreference = 'Stop'
-
-cd C:\Users\Miquelet\repos\ai-apps
-
-if ((git branch --show-current) -ne 'dev') {
-    throw "La rama activa no es dev"
-}
-
-# Corregir los saltos de línea del README
-$path = 'apps/quiz10/README.md'
-$fullPath = Join-Path (Get-Location).Path $path
-
-$content = [System.IO.File]::ReadAllText($fullPath)
-
-$content = $content.Replace("`r`n", "`n").Replace("`r", "`n")
-$content = $content.TrimEnd("`n") + "`n"
-
-[System.IO.File]::WriteAllText(
-    $fullPath,
-    $content,
-    [System.Text.UTF8Encoding]::new($false)
-)
-
-# Preparar todas las modificaciones locales
+if ((git branch --show-current) -ne 'dev') { throw 'La rama activa no es dev' }
 git add -A
-if ($LASTEXITCODE -ne 0) { throw "Falló git add" }
-
-# Comprobar los cambios
+if ($LASTEXITCODE -ne 0) { throw 'Falló git add' }
 git diff --cached --check
-if ($LASTEXITCODE -ne 0) {
-    throw "Quedan errores en los cambios. Revisa los mensajes anteriores."
-}
-
-# Crear el commit
-git diff --cached --quiet
-
-if ($LASTEXITCODE -eq 1) {
-    git commit -m "sync"
-    if ($LASTEXITCODE -ne 0) { throw "Falló el commit" }
-}
-elseif ($LASTEXITCODE -ne 0) {
-    throw "Falló git diff"
-}
-
-# Sincronizar con GitHub
+if ($LASTEXITCODE -ne 0) { throw 'Hay errores en los cambios' }
+git commit -m 'Descripción del cambio'
+if ($LASTEXITCODE -ne 0) { throw 'Falló el commit' }
 git pull --rebase origin dev
-if ($LASTEXITCODE -ne 0) { throw "Falló el pull" }
-
-# Publicar
+if ($LASTEXITCODE -ne 0) { throw 'Falló el pull; no se hizo push' }
 git push origin dev
-if ($LASTEXITCODE -ne 0) { throw "Falló el push" }
-
-# Confirmar el resultado
-Write-Host "`nCOMMIT PUBLICADO:"
+if ($LASTEXITCODE -ne 0) { throw 'Falló el push' }
 git rev-parse HEAD
-
-Write-Host "`nESTADO FINAL:"
-git status -sb
+git status --short --branch
+```

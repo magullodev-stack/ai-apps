@@ -21,7 +21,7 @@ ai-apps/
 ├── shared/                   # Base común de las aplicaciones móviles.
 │   └── ui/                   # Identidad visual, interfaz y componentes comunes.
 │
-├── tools/                    # Herramientas autónomas de AI-APPS.
+├── scripts/                  # Procedimiento de desarrollo y ejecución local.
 │
 └── docs/
     ├── MANIFIESTO ARQUITECTÓNICO.md
@@ -49,7 +49,7 @@ Contiene el subsistema técnico transversal de inteligencia artificial.
 
 Proporciona los mecanismos comunes necesarios para ejecutar operaciones de IA mediante los modelos y procedimientos que correspondan.
 
-Incluye los mecanismos JVM recuperados bajo `ai/core/`, un puente HTTP local y el cliente reutilizable `ai/flutter_client/`.
+Incluye el servicio local Dart `ai/dart_service/` y el cliente reutilizable `ai/flutter_client/`. Los prompts, esquemas y validadores particulares permanecen en cada aplicación. El proyecto Android de cada aplicación conserva su propia configuración de compilación.
 
 Su organización interna responde a los mecanismos técnicos efectivamente implementados.
 
