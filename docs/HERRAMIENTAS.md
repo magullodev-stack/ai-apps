@@ -12,4 +12,22 @@
 
 COMMIT
 
-git add -A; git diff --cached --check; if ($LASTEXITCODE -eq 0) { git commit -m "chore: actualizar AI-APPS"; if ($LASTEXITCODE -eq 0) { git push origin dev } }
+git add -A
+if ($LASTEXITCODE -ne 0) { throw "Falló git add" }
+
+git diff --cached --check
+if ($LASTEXITCODE -ne 0) { throw "Hay errores en los cambios" }
+
+git diff --cached --quiet
+if ($LASTEXITCODE -eq 1) {
+    git commit -m "sync"
+    if ($LASTEXITCODE -ne 0) { throw "Falló el commit" }
+} elseif ($LASTEXITCODE -ne 0) {
+    throw "Falló git diff"
+}
+
+git pull --rebase origin dev
+if ($LASTEXITCODE -ne 0) { throw "Falló el pull; no se hizo push" }
+
+git push origin dev
+if ($LASTEXITCODE -ne 0) { throw "Falló el push" }
