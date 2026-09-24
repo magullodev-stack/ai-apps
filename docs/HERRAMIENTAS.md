@@ -12,24 +12,6 @@
 
 COMMIT
 
-git add -A
-if ($LASTEXITCODE -ne 0) { throw "Falló git add" }
-
-git diff --cached --check
-if ($LASTEXITCODE -ne 0) { throw "Hay errores en los cambios" }
-
-git diff --cached --quiet
-if ($LASTEXITCODE -eq 1) {
-    git commit -m "sync"
-    if ($LASTEXITCODE -ne 0) { throw "Falló el commit" }
-} elseif ($LASTEXITCODE -ne 0) {
-    throw "Falló git diff"
-}
-
-git pull --rebase origin dev
-if ($LASTEXITCODE -ne 0) { throw "Falló el pull; no se hizo push" }
-
-git push origin dev
 $ErrorActionPreference = 'Stop'
 
 cd C:\Users\Miquelet\repos\ai-apps
@@ -38,16 +20,32 @@ if ((git branch --show-current) -ne 'dev') {
     throw "La rama activa no es dev"
 }
 
-# Comprobar y preparar los cambios locales
-git status -sb
+# Corregir los saltos de línea del README
+$path = 'apps/quiz10/README.md'
+$fullPath = Join-Path (Get-Location).Path $path
 
+$content = [System.IO.File]::ReadAllText($fullPath)
+
+$content = $content.Replace("`r`n", "`n").Replace("`r", "`n")
+$content = $content.TrimEnd("`n") + "`n"
+
+[System.IO.File]::WriteAllText(
+    $fullPath,
+    $content,
+    [System.Text.UTF8Encoding]::new($false)
+)
+
+# Preparar todas las modificaciones locales
 git add -A
 if ($LASTEXITCODE -ne 0) { throw "Falló git add" }
 
+# Comprobar los cambios
 git diff --cached --check
-if ($LASTEXITCODE -ne 0) { throw "Hay errores en los cambios" }
+if ($LASTEXITCODE -ne 0) {
+    throw "Quedan errores en los cambios. Revisa los mensajes anteriores."
+}
 
-# Crear un commit si existen cambios pendientes
+# Crear el commit
 git diff --cached --quiet
 
 if ($LASTEXITCODE -eq 1) {
@@ -58,11 +56,11 @@ elseif ($LASTEXITCODE -ne 0) {
     throw "Falló git diff"
 }
 
-# Sincronizar con GitHub conservando los commits locales
+# Sincronizar con GitHub
 git pull --rebase origin dev
-if ($LASTEXITCODE -ne 0) { throw "Falló el pull; no se hizo push" }
+if ($LASTEXITCODE -ne 0) { throw "Falló el pull" }
 
-# Publicar los cambios
+# Publicar
 git push origin dev
 if ($LASTEXITCODE -ne 0) { throw "Falló el push" }
 
