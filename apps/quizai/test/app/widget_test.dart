@@ -27,6 +27,47 @@ class FakeGenerator implements QuizGenerator {
 }
 
 void main() {
+  testWidgets(
+    'La navegacion inferior muestra una capsula activa de media barra',
+    (tester) async {
+      await tester.pumpWidget(const QuizAIApp());
+
+      final bar = find.byKey(const Key('quizai-bottom-nav'));
+      final active = find.byKey(const Key('quizai-nav-active'));
+
+      expect(bar, findsOneWidget);
+      expect(active, findsOneWidget);
+
+      final barWidth = tester.getSize(bar).width;
+      final activeSize = tester.getSize(active);
+
+      expect(activeSize.width, greaterThan(barWidth * 0.4));
+      expect(activeSize.height, greaterThan(60));
+
+      expect(
+        find.descendant(of: active, matching: find.text('Modalidades')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('quizai-nav-perfil')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: active, matching: find.text('Perfil')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('quizai-nav-modalidades')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: active, matching: find.text('Modalidades')),
+        findsOneWidget,
+      );
+
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('QuizAI aplica su identidad tipográfica común', (tester) async {
     await tester.pumpWidget(const QuizAIApp());
 
@@ -40,7 +81,7 @@ void main() {
 
     // El logotipo y la navegación continúan disponibles.
     expect(find.byType(Image), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
   });
 
   testWidgets(
@@ -91,14 +132,19 @@ void main() {
     'Perfil sustituye el contenido y Modalidades restaura las entradas',
     (tester) async {
       await tester.pumpWidget(const QuizAIApp());
-      final initialBarPosition = tester.getTopLeft(find.byType(NavigationBar));
+      final initialBarPosition = tester.getTopLeft(
+        find.byKey(const Key('quizai-bottom-nav')),
+      );
       await tester.tap(find.byIcon(Icons.person_outline));
       await tester.pumpAndSettle();
       expect(find.text('🎲 Quiz10'), findsNothing);
       expect(find.text('Perfil'), findsNWidgets(2));
       expect(find.text('Todavía no disponible.'), findsOneWidget);
       expect(find.text('QuizAI'), findsOneWidget);
-      expect(tester.getTopLeft(find.byType(NavigationBar)), initialBarPosition);
+      expect(
+        tester.getTopLeft(find.byKey(const Key('quizai-bottom-nav'))),
+        initialBarPosition,
+      );
       await tester.tap(find.byIcon(Icons.grid_view_outlined));
       await tester.pumpAndSettle();
       expect(find.text('🎲 Quiz10'), findsOneWidget);
@@ -120,15 +166,16 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Configuración'), findsOneWidget);
         expect(find.text('Todavía no disponible.'), findsOneWidget);
-        expect(find.byType(NavigationBar), findsNothing);
+        expect(find.byKey(const Key('quizai-bottom-nav')), findsNothing);
         await tester.pageBack();
         await tester.pumpAndSettle();
         expect(find.text('QuizAI'), findsOneWidget);
         expect(
-          tester
-              .widget<NavigationBar>(find.byType(NavigationBar))
-              .selectedIndex,
-          profile ? 1 : 0,
+          find.descendant(
+            of: find.byKey(const Key('quizai-nav-active')),
+            matching: find.text(profile ? 'Perfil' : 'Modalidades'),
+          ),
+          findsOneWidget,
         );
       }
     },
@@ -148,7 +195,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('QuizAI'), findsOneWidget);
       expect(find.text('No disponible'), findsNWidgets(3));
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
       expect(generator.calls, 1);
     },
   );

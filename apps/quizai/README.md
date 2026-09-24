@@ -30,6 +30,16 @@ La familia tipográfica y los estilos generales se configuran en
 utilizan el tema común, conservando sus responsabilidades particulares.
 
 La navegación inferior utiliza explícitamente la misma familia.
+
+La barra inferior de QuizAI utiliza una cápsula morada con dos pestañas
+de igual anchura. La pestaña seleccionada ocupa su mitad mediante una
+superficie clara, mientras que la pestaña inactiva conserva el fondo
+morado. Los colores pertenecen a `lib/app/app_theme.dart` y el componente
+de navegación pertenece a `lib/app/app_shell.dart`.
+
+La navegación mantiene las pestañas Modalidades y Perfil, conserva la
+selección al volver desde Configuración y permanece fija durante el
+desplazamiento de la pantalla principal.
 Los estilos particulares existentes siguen utilizando sus tamaños
 y pesos hasta que se complete el rediseño de cada pantalla.
 

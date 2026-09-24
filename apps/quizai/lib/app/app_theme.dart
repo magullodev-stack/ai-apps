@@ -16,6 +16,26 @@ abstract final class QuizPalette {
 
   static const ink = Color(0xFF21163B);
 
+  // Identidad visual de la navegación inferior de QuizAI.
+  static const navSurfaceStart = Color(0xFF7049CF);
+  static const navSurfaceEnd = Color(0xFF4B2C9C);
+  static const navBorder = Color(0xFF9974E9);
+
+  static const navActiveText = Color(0xFF5126BB);
+  static const navInactiveText = Color(0xFFE9DEFF);
+
+  static const navBackgroundGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [navSurfaceStart, navSurfaceEnd],
+  );
+
+  static const navActiveGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFFBEFFF), Color(0xFFE9CEFF)],
+  );
+
   static const salaStart = Color(0xFFFFEBA0);
   static const salaEnd = Color(0xFFFFBA4C);
 

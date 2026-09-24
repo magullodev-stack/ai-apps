@@ -109,68 +109,147 @@ class _AppShellState extends State<AppShell> {
       ),
 
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
         decoration: const BoxDecoration(color: QuizPalette.backgroundDark),
         child: SafeArea(
           top: false,
           child: Container(
+            key: const Key('quizai-bottom-nav'),
+            height: 84,
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFF5836B5),
-              borderRadius: BorderRadius.circular(40),
-              border: Border.all(color: Colors.white.withAlpha(65)),
+              gradient: QuizPalette.navBackgroundGradient,
+              borderRadius: BorderRadius.circular(48),
+              border: Border.all(color: QuizPalette.navBorder, width: 1.3),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(35),
+                  color: Colors.black.withAlpha(55),
+                  blurRadius: 20,
+                  offset: const Offset(0, 7),
+                ),
+                BoxShadow(
+                  color: QuizPalette.primaryLight.withAlpha(45),
                   blurRadius: 18,
-                  offset: const Offset(0, 5),
+                  spreadRadius: 1,
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(40),
-              child: NavigationBarTheme(
-                data: NavigationBarThemeData(
-                  labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
-                    (states) => TextStyle(
-                      fontFamily: QuizTypography.family,
-                      color: states.contains(WidgetState.selected)
-                          ? QuizPalette.background
-                          : Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _QuizNavItem(
+                    key: const Key('quizai-nav-modalidades'),
+                    label: 'Modalidades',
+                    icon: Icons.grid_view_outlined,
+                    selectedIcon: Icons.grid_view_rounded,
+                    selected: _selectedTab == 0,
+                    onTap: () {
+                      if (_selectedTab != 0) {
+                        setState(() => _selectedTab = 0);
+                      }
+                    },
                   ),
                 ),
-                child: NavigationBar(
-                  height: 72,
-                  backgroundColor: Colors.transparent,
-                  indicatorColor: const Color(0xFFF0E2FF),
-                  surfaceTintColor: Colors.transparent,
-                  selectedIndex: _selectedTab,
-
-                  onDestinationSelected: (index) {
-                    setState(() => _selectedTab = index);
-                  },
-
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.grid_view_outlined, color: Colors.white),
-                      selectedIcon: Icon(
-                        Icons.grid_view_rounded,
-                        color: QuizPalette.background,
-                      ),
-                      label: 'Modalidades',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.person_outline, color: Colors.white),
-                      selectedIcon: Icon(
-                        Icons.person,
-                        color: QuizPalette.background,
-                      ),
-                      label: 'Perfil',
-                    ),
-                  ],
+                Expanded(
+                  child: _QuizNavItem(
+                    key: const Key('quizai-nav-perfil'),
+                    label: 'Perfil',
+                    icon: Icons.person_outline,
+                    selectedIcon: Icons.person,
+                    selected: _selectedTab == 1,
+                    onTap: () {
+                      if (_selectedTab != 1) {
+                        setState(() => _selectedTab = 1);
+                      }
+                    },
+                  ),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pestaña visual de la navegación principal de QuizAI.
+///
+/// El indicador activo ocupa toda la mitad disponible de la barra,
+/// en lugar de utilizar el indicador compacto de Material NavigationBar.
+class _QuizNavItem extends StatelessWidget {
+  const _QuizNavItem({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.selectedIcon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final IconData selectedIcon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected
+        ? QuizPalette.navActiveText
+        : QuizPalette.navInactiveText;
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(44),
+          child: AnimatedContainer(
+            key: selected ? const Key('quizai-nav-active') : null,
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              gradient: selected ? QuizPalette.navActiveGradient : null,
+              borderRadius: BorderRadius.circular(44),
+              border: selected
+                  ? Border.all(color: Colors.white, width: 1.5)
+                  : null,
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: Colors.white.withAlpha(70),
+                        blurRadius: 12,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    selected ? selectedIcon : icon,
+                    color: foreground,
+                    size: 27,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: QuizTypography.family,
+                      color: foreground,
+                      fontSize: selected ? 16 : 15,
+                      fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+                      height: 1.1,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
