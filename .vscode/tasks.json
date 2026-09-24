@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "AI-APPS: ejecutar Quiz10 con IA",
+      "label": "AI-APPS: ejecutar QuizAI con IA",
       "type": "shell",
       "command": "powershell.exe",
       "args": [

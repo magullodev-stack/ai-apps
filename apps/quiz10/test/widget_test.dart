@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quiz10/main.dart';
+import 'package:quiz10/app.dart';
 import 'package:quiz10/quiz.dart';
 import 'package:quiz10/quiz_generation.dart';
 
@@ -27,15 +27,116 @@ class FakeGenerator implements QuizGenerator {
 }
 
 void main() {
+  testWidgets(
+    'QuizAI muestra cuatro modalidades ordenadas sin generar preguntas',
+    (tester) async {
+      final generator = FakeGenerator();
+      await tester.pumpWidget(QuizAIApp(generator: generator));
+      expect(
+        tester.widget<MaterialApp>(find.byType(MaterialApp)).title,
+        'QuizAI',
+      );
+      expect(find.text('QuizAI'), findsOneWidget);
+      expect(find.text('Quiz10'), findsNothing);
+      final titles = ['🎲 Quiz10', '🏆 Sala', '⚔️ 1vs1', '📚 Estudio'];
+      var previousY = 0.0;
+      for (final title in titles) {
+        final entry = find.text(title);
+        expect(entry.hitTestable(), findsOneWidget);
+        final y = tester.getTopLeft(entry).dy;
+        expect(y, greaterThan(previousY));
+        previousY = y;
+      }
+      expect(find.text('No disponible'), findsNWidgets(3));
+      for (final title in titles.skip(1)) {
+        final tile = tester.widget<ListTile>(
+          find.ancestor(of: find.text(title), matching: find.byType(ListTile)),
+        );
+        expect(tile.enabled, false);
+        await tester.tap(find.text(title));
+        await tester.pumpAndSettle();
+        expect(find.text('QuizAI'), findsOneWidget);
+      }
+      expect(generator.calls, 0);
+    },
+  );
+
+  testWidgets(
+    'Perfil sustituye el contenido y Modalidades restaura las entradas',
+    (tester) async {
+      await tester.pumpWidget(const QuizAIApp());
+      final initialBarPosition = tester.getTopLeft(find.byType(NavigationBar));
+      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.pumpAndSettle();
+      expect(find.text('🎲 Quiz10'), findsNothing);
+      expect(find.text('Perfil'), findsNWidgets(2));
+      expect(find.text('Todavía no disponible.'), findsOneWidget);
+      expect(find.text('QuizAI'), findsOneWidget);
+      expect(tester.getTopLeft(find.byType(NavigationBar)), initialBarPosition);
+      await tester.tap(find.byIcon(Icons.grid_view_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('🎲 Quiz10'), findsOneWidget);
+      expect(find.text('Todavía no disponible.'), findsNothing);
+      expect(find.text('No disponible'), findsNWidgets(3));
+    },
+  );
+
+  testWidgets(
+    'Configuración abre y vuelve conservando la pestaña seleccionada',
+    (tester) async {
+      await tester.pumpWidget(const QuizAIApp());
+      for (final profile in [false, true]) {
+        if (profile) {
+          await tester.tap(find.byIcon(Icons.person_outline));
+          await tester.pumpAndSettle();
+        }
+        await tester.tap(find.byTooltip('Configuración'));
+        await tester.pumpAndSettle();
+        expect(find.text('Configuración'), findsOneWidget);
+        expect(find.text('Todavía no disponible.'), findsOneWidget);
+        expect(find.byType(NavigationBar), findsNothing);
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        expect(find.text('QuizAI'), findsOneWidget);
+        expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          profile ? 1 : 0,
+        );
+      }
+    },
+  );
+
+  testWidgets(
+    'Quiz10 abre directamente la partida y permite volver a Modalidades',
+    (tester) async {
+      final generator = FakeGenerator();
+      await tester.pumpWidget(QuizAIApp(generator: generator));
+      await tester.tap(find.text('🎲 Quiz10'));
+      await tester.pumpAndSettle();
+      expect(generator.calls, 1);
+      expect(find.text('Pregunta 1 de 10'), findsOneWidget);
+      expect(find.text('🎲 Quiz10'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.text('QuizAI'), findsOneWidget);
+      expect(find.text('No disponible'), findsNWidgets(3));
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(generator.calls, 1);
+    },
+  );
+
   testWidgets('carga única, diez respuestas, resultado y otra partida', (
     tester,
   ) async {
     final generator = FakeGenerator()
       ..pending = Completer<List<QuizQuestion>>();
-    await tester.pumpWidget(Quiz10App(generator: generator));
+    await tester.pumpWidget(QuizAIApp(generator: generator));
     expect(generator.calls, 0);
-    await tester.tap(find.text('🎲 Jugar'));
+    await tester.tap(find.text('🎲 Quiz10'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Generando tus diez preguntas…'), findsOneWidget);
     expect(find.byType(FilledButton), findsNothing);
     expect(generator.calls, 1);
@@ -92,8 +193,8 @@ void main() {
       'error recuperable ($failure) no inicia partida y permite reintentar',
       (tester) async {
         final generator = FakeGenerator()..failure = failure;
-        await tester.pumpWidget(Quiz10App(generator: generator));
-        await tester.tap(find.text('🎲 Jugar'));
+        await tester.pumpWidget(QuizAIApp(generator: generator));
+        await tester.tap(find.text('🎲 Quiz10'));
         await tester.pumpAndSettle();
         expect(find.byType(OutlinedButton), findsNothing);
         expect(find.text('Pregunta 1 de 10'), findsNothing);
@@ -122,13 +223,17 @@ void main() {
     (tester) async {
       final generator = FakeGenerator()
         ..pending = Completer<List<QuizQuestion>>();
-      await tester.pumpWidget(Quiz10App(generator: generator));
-      await tester.tap(find.text('🎲 Jugar'));
+      await tester.pumpWidget(QuizAIApp(generator: generator));
+      await tester.tap(find.text('🎲 Quiz10'));
       await tester.pump();
-      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(generator.calls, 1);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       generator.pending!.complete(fixtureQuestions(selectQuizAreas(Random(1))));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      expect(find.text('QuizAI'), findsOneWidget);
     },
   );
 }

@@ -1,8 +1,16 @@
-# Quiz10 Modalidad Estándar 🎲
+# QuizAI
 
-Juego de diez preguntas de cultura general generadas mediante IA.
+Aplicación con la modalidad estándar 🎲 Quiz10: diez preguntas de cultura general generadas mediante IA.
 
 En la modalidad 🎲 se eligen diez áreas distintas y las preguntas siguen esta progresión: cuatro fáciles, tres moderadas, dos difíciles y una muy difícil. Cada pregunta tiene cuatro opciones; cada acierto suma un punto. Al finalizar se muestra el resultado sobre diez.
+
+## Navegación
+
+La cabecera muestra **QuizAI** y el acceso a **Configuración**. La barra inferior fija alterna entre **Modalidades** y **Perfil**. Modalidades muestra directamente, en este orden, **🎲 Quiz10**, **🏆 Sala**, **⚔️ 1vs1** y **📚 Estudio**. Solo Quiz10 está disponible: al pulsarlo comienza la generación de la partida existente; la flecha de regreso vuelve a la pantalla principal. Salir de la modalidad descarta su partida en memoria.
+
+Perfil y Configuración muestran únicamente un estado provisional, sin funciones ni datos de usuario. Desde Configuración se puede volver a la pestaña de origen.
+
+`lib/app.dart` contiene la identidad y navegación de QuizAI. `lib/quiz_page.dart` contiene la interfaz particular de Quiz10; `lib/quiz.dart` y `lib/quiz_generation.dart` mantienen sus reglas, validación y generación. Se conservan la ruta `apps/quiz10`, el paquete Flutter y el identificador Android: el cambio de nombre es visible, sin renombrar los conceptos internos de la modalidad.
 
 ## Ejecutar con IA
 
@@ -12,7 +20,7 @@ Con `emulator-5554` iniciado, desde la raíz del repositorio en PowerShell:
 .\scripts\run-android.ps1
 ```
 
-El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y pasa automáticamente la configuración de desarrollo con `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. La tarea manual de VS Code **AI-APPS: ejecutar Quiz10 con IA** usa este mismo procedimiento.
+El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** usa este mismo procedimiento. Cambiar de pestaña o abrir Configuración no llama al modelo; pulsar 🎲 Quiz10 sí solicita una generación.
 
 La generación usa el Dart incluido en Flutter. El proyecto Android conserva su compilación independiente. El prompt y las reglas siguen en Quiz10; el esquema no envía `minItems` ni `maxItems` y el validador sigue exigiendo diez preguntas.
 
@@ -29,7 +37,7 @@ flutter build apk --debug
 git diff --check
 ```
 
-Las pruebas automatizadas del generador, validador, partida y conexión al servicio utilizan un proveedor simulado. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
+Las pruebas automatizadas cubren también la identidad, el orden y disponibilidad de las modalidades, el cambio de pestañas, Configuración y el regreso desde Quiz10. Las pruebas del generador, validador, partida y conexión al servicio utilizan un proveedor simulado. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
 
 Para una generación real explícita, desde la raíz:
 
