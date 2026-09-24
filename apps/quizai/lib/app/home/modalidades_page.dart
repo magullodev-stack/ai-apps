@@ -20,77 +20,86 @@ class ModalidadesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const baseHeroHeight = 202.0;
-        const baseCardHeight = 88.0;
-        const baseGap = 8.0;
+        const baseTopReserve = 56.0;
+        const baseHeroHeight = 190.0;
+        const baseCardHeight = 90.0;
+        const baseGap = 10.0;
+        const outerVerticalPadding = 10.0;
 
-        const verticalPadding = 16.0;
+        const baseTotalHeight =
+            baseTopReserve +
+            baseHeroHeight +
+            (baseCardHeight * 3) +
+            (baseGap * 4);
 
-        const totalBaseHeight =
-            baseHeroHeight + (baseCardHeight * 3) + (baseGap * 3);
-
-        final availableHeight = constraints.maxHeight - verticalPadding;
-
-        // Mantener Quiz10 proporcionalmente más grande.
-        // En pantallas pequeñas se reduce todo el conjunto.
-        // Si la pantalla es demasiado baja, se conserva un
-        // tamaño mínimo legible y el desplazamiento queda
-        // disponible únicamente como alternativa.
-        final scale = (availableHeight / totalBaseHeight)
-            .clamp(0.84, 1.0)
+        final availableHeight =
+            constraints.maxHeight - (outerVerticalPadding * 2);
+        final scale = (availableHeight / baseTotalHeight)
+            .clamp(0.92, 1.08)
             .toDouble();
 
+        final topReserve = baseTopReserve * scale;
         final heroHeight = baseHeroHeight * scale;
         final cardHeight = baseCardHeight * scale;
         final gap = baseGap * scale;
+
+        final minimumHeight = baseTotalHeight * 0.92;
+        final needsScroll = availableHeight < minimumHeight;
+
+        Widget content = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              key: const Key('quizai-top-reserved-space'),
+              height: topReserve,
+            ),
+            _Quiz10Hero(height: heroHeight, onTap: () => _openQuiz10(context)),
+            SizedBox(height: gap),
+            ModalidadCard(
+              id: 'sala',
+              title: 'Sala',
+              subtitle: 'Juega con amigos',
+              imagePath: 'assets/modalidades/sala.png',
+              height: cardHeight,
+            ),
+            SizedBox(height: gap),
+            ModalidadCard(
+              id: '1vs1',
+              title: '1vs1',
+              subtitle: 'Reta a otro jugador',
+              imagePath: 'assets/modalidades/1vs1.png',
+              height: cardHeight,
+            ),
+            SizedBox(height: gap),
+            ModalidadCard(
+              id: 'estudio',
+              title: 'Estudio',
+              subtitle: 'Aprende a tu ritmo',
+              imagePath: 'assets/modalidades/estudio.png',
+              height: cardHeight,
+            ),
+          ],
+        );
+
+        final body = needsScroll
+            ? SingleChildScrollView(
+                key: const Key('quizai-home-scroll'),
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                child: content,
+              )
+            : Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                child: SizedBox(
+                  height: constraints.maxHeight - (outerVerticalPadding * 2),
+                  child: content,
+                ),
+              );
 
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
-            child: SingleChildScrollView(
-              key: const Key('quizai-home-scroll'),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Quiz10Hero(
-                    height: heroHeight,
-                    onTap: () => _openQuiz10(context),
-                  ),
-
-                  SizedBox(height: gap),
-
-                  ModalidadCard(
-                    id: 'sala',
-                    title: 'Sala',
-                    subtitle: 'Juega con amigos',
-                    imagePath: 'assets/modalidades/sala.png',
-                    height: cardHeight,
-                  ),
-
-                  SizedBox(height: gap),
-
-                  ModalidadCard(
-                    id: '1vs1',
-                    title: '1vs1',
-                    subtitle: 'Reta a otro jugador',
-                    imagePath: 'assets/modalidades/1vs1.png',
-                    height: cardHeight,
-                  ),
-
-                  SizedBox(height: gap),
-
-                  ModalidadCard(
-                    id: 'estudio',
-                    title: 'Estudio',
-                    subtitle: 'Aprende a tu ritmo',
-                    imagePath: 'assets/modalidades/estudio.png',
-                    height: cardHeight,
-                  ),
-                ],
-              ),
-            ),
+            child: body,
           ),
         );
       },
@@ -98,11 +107,6 @@ class ModalidadesPage extends StatelessWidget {
   }
 }
 
-/// Tarjeta protagonista.
-///
-/// El fondo es el PNG rojo de Quiz10.
-/// El texto y el botón siguen siendo componentes Flutter.
-/// Toda la tarjeta conserva el acceso a la partida existente.
 class _Quiz10Hero extends StatelessWidget {
   const _Quiz10Hero({required this.height, required this.onTap});
 
@@ -115,18 +119,18 @@ class _Quiz10Hero extends StatelessWidget {
       key: const Key('quizai-hero'),
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withAlpha(235), width: 2.5),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withAlpha(235), width: 2.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(45),
+            color: Colors.black.withAlpha(44),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(23),
+        borderRadius: BorderRadius.circular(25),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -141,74 +145,44 @@ class _Quiz10Hero extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   excludeFromSemantics: true,
                 ),
-
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8D123B).withAlpha(200),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'Disponible',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
+                      const SizedBox(height: 2),
                       const Text(
                         'Quiz10',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 32,
+                          fontSize: 39,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: -1,
-                          height: 1.05,
+                          letterSpacing: -1.2,
+                          height: 0.94,
                           shadows: [
-                            Shadow(color: Color(0x55000000), blurRadius: 5),
+                            Shadow(color: Color(0x66000000), blurRadius: 8),
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 4),
-
-                      const Text(
-                        '10 preguntas,\nun gran reto',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          height: 1.15,
-                          shadows: [
-                            Shadow(color: Color(0x55000000), blurRadius: 5),
-                          ],
-                        ),
-                      ),
-
                       const Spacer(),
-
                       Container(
-                        height: 40,
-                        width: 154,
-                        padding: const EdgeInsets.only(left: 13, right: 4),
+                        height: 42,
+                        width: 162,
+                        padding: const EdgeInsets.only(left: 14, right: 4),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(18),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Text(
@@ -217,18 +191,19 @@ class _Quiz10Hero extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: QuizPalette.background,
-                                  fontSize: 14,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ),
+                            SizedBox(width: 8),
                             CircleAvatar(
                               radius: 16,
                               backgroundColor: QuizPalette.primary,
                               child: Icon(
                                 Icons.chevron_right_rounded,
                                 color: Colors.white,
-                                size: 25,
+                                size: 24,
                               ),
                             ),
                           ],

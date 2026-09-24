@@ -111,7 +111,18 @@ void main() {
         expect(entry.hitTestable(), findsOneWidget);
       }
 
-      expect(find.text('No disponible'), findsNWidgets(3));
+      for (final id in ['sala', '1vs1', 'estudio']) {
+        final card = find.byKey(Key('quizai-card-$id'));
+
+        expect(card, findsOneWidget);
+
+        final inkWell = find.descendant(
+          of: card,
+          matching: find.byType(InkWell),
+        );
+
+        expect(tester.widget<InkWell>(inkWell).onTap, isNull);
+      }
       for (final title in titles.skip(1)) {
         final card = find.ancestor(
           of: find.text(title),
@@ -149,7 +160,18 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Quiz10'), findsOneWidget);
       expect(find.text('Todavía no disponible.'), findsNothing);
-      expect(find.text('No disponible'), findsNWidgets(3));
+      for (final id in ['sala', '1vs1', 'estudio']) {
+        final card = find.byKey(Key('quizai-card-$id'));
+
+        expect(card, findsOneWidget);
+
+        final inkWell = find.descendant(
+          of: card,
+          matching: find.byType(InkWell),
+        );
+
+        expect(tester.widget<InkWell>(inkWell).onTap, isNull);
+      }
     },
   );
 
@@ -194,7 +216,18 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.text('QuizAI'), findsOneWidget);
-      expect(find.text('No disponible'), findsNWidgets(3));
+      for (final id in ['sala', '1vs1', 'estudio']) {
+        final card = find.byKey(Key('quizai-card-$id'));
+
+        expect(card, findsOneWidget);
+
+        final inkWell = find.descendant(
+          of: card,
+          matching: find.byType(InkWell),
+        );
+
+        expect(tester.widget<InkWell>(inkWell).onTap, isNull);
+      }
       expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
       expect(generator.calls, 1);
     },

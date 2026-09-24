@@ -27,27 +27,26 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: QuizPalette.backgroundDark,
-
       appBar: AppBar(
-        toolbarHeight: 88,
+        toolbarHeight: 92,
+        titleSpacing: 14,
         centerTitle: false,
         backgroundColor: QuizPalette.backgroundLight,
         elevation: 0,
         scrolledUnderElevation: 0,
-
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(10),
               child: Image.asset(
                 'assets/branding/quizai_logo.png',
-                width: 44,
-                height: 44,
+                width: 38,
+                height: 38,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             const Flexible(
               child: Text(
                 'QuizAI',
@@ -55,23 +54,23 @@ class _AppShellState extends State<AppShell> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 43,
+                  fontSize: 47,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -2,
+                  letterSpacing: -2.2,
+                  height: 0.95,
                 ),
               ),
             ),
           ],
         ),
-
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 18),
+            padding: const EdgeInsets.only(right: 16),
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withAlpha(35),
-                border: Border.all(color: Colors.white.withAlpha(55)),
+                color: Colors.white.withAlpha(28),
+                border: Border.all(color: Colors.white.withAlpha(52)),
               ),
               child: IconButton(
                 tooltip: 'Configuración',
@@ -86,7 +85,6 @@ class _AppShellState extends State<AppShell> {
           ),
         ],
       ),
-
       body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: QuizPalette.backgroundGradient,
@@ -107,7 +105,6 @@ class _AppShellState extends State<AppShell> {
                 ),
         ),
       ),
-
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
         decoration: const BoxDecoration(color: QuizPalette.backgroundDark),
@@ -173,10 +170,6 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
-/// Pestaña visual de la navegación principal de QuizAI.
-///
-/// El indicador activo ocupa toda la mitad disponible de la barra,
-/// en lugar de utilizar el indicador compacto de Material NavigationBar.
 class _QuizNavItem extends StatelessWidget {
   const _QuizNavItem({
     super.key,

@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../app_theme.dart';
-
-/// Tarjeta de una modalidad secundaria de QuizAI.
-///
-/// La imagen es decorativa. El título, el subtítulo y el estado
-/// de disponibilidad son componentes reales de Flutter.
 class ModalidadCard extends StatelessWidget {
   const ModalidadCard({
     super.key,
@@ -30,18 +24,18 @@ class ModalidadCard extends StatelessWidget {
       key: Key('quizai-card-$id'),
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(23),
-        border: Border.all(color: Colors.white.withAlpha(210), width: 2),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withAlpha(205), width: 1.8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(35),
+            color: Colors.black.withAlpha(32),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(22),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -56,45 +50,41 @@ class ModalidadCard extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   excludeFromSemantics: true,
                 ),
-
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 92, 4),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 118, 8),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: QuizPalette.ink,
-                          fontSize: 21,
+                          color: Colors.white,
+                          fontSize: 27,
                           fontWeight: FontWeight.w900,
-                          height: 1.05,
+                          height: 0.98,
+                          shadows: [
+                            Shadow(color: Color(0x66000000), blurRadius: 8),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 4),
                       Text(
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: QuizPalette.ink,
-                          fontSize: 12,
+                          color: Color(0xFFF3F0FF),
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
+                          height: 1.05,
+                          shadows: [
+                            Shadow(color: Color(0x66000000), blurRadius: 6),
+                          ],
                         ),
                       ),
-                      if (onTap == null)
-                        const Text(
-                          'No disponible',
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: Color(0xFF604F72),
-                            fontSize: 10,
-                          ),
-                        ),
                     ],
                   ),
                 ),
