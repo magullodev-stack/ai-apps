@@ -13,16 +13,29 @@ La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** utiliza este mism
 ## COMMIT
 
 $ErrorActionPreference = 'Stop'
-if ((git branch --show-current) -ne 'dev') { throw 'La rama activa no es dev' }
+cd C:\Users\Miquelet\repos\ai-apps
+
+if ((git branch --show-current) -ne 'dev') {
+    throw 'La rama activa no es dev.'
+}
+
 git add -A
-if ($LASTEXITCODE -ne 0) { throw 'Falló git add' }
+if ($LASTEXITCODE -ne 0) { throw 'Falló git add.' }
+
 git diff --cached --check
-if ($LASTEXITCODE -ne 0) { throw 'Hay errores en los cambios' }
-git commit -m 'Descripción del cambio'
-if ($LASTEXITCODE -ne 0) { throw 'Falló el commit' }
+if ($LASTEXITCODE -ne 0) { throw 'Hay errores en los cambios.' }
+
+git diff --cached --quiet
+if ($LASTEXITCODE -eq 1) {
+    git commit -m "Actualizar AI-APPS"
+    if ($LASTEXITCODE -ne 0) { throw 'Falló el commit.' }
+}
+
 git pull --rebase origin dev
-if ($LASTEXITCODE -ne 0) { throw 'Falló el pull; no se hizo push' }
+if ($LASTEXITCODE -ne 0) { throw 'Falló el pull; no se hizo push.' }
+
 git push origin dev
-if ($LASTEXITCODE -ne 0) { throw 'Falló el push' }
+if ($LASTEXITCODE -ne 0) { throw 'Falló el push.' }
+
 git rev-parse HEAD
 git status --short --branch

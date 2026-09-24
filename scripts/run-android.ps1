@@ -132,10 +132,109 @@ try {
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $receipt
         } else {
             if (-not (Test-Path -LiteralPath $adb)) { throw 'No se encuentra ADB.' }
-            $state = & $adb -s $Device get-state
-            if ($LASTEXITCODE -ne 0 -or $state.Trim() -ne 'device') {
-                throw "Inicia $Device manualmente antes de ejecutar este procedimiento."
+            # Preferir el dispositivo solicitado; si no existe, utilizar
+            # el único emulador conectado. Si no hay ninguno, iniciar
+            # el AVD instalado y esperar a que Android termine de arrancar.
+            function Get-ConnectedEmulators {
+                @(
+                    & $adb devices |
+                        Where-Object { $_ -match '^emulator-\d+\s+device\s*$' } |
+                        ForEach-Object { ($_ -split '\s+')[0] }
+                )
             }
+
+            $connected = @(Get-ConnectedEmulators)
+
+            if ($Device -notin $connected) {
+                if ($connected.Count -eq 1) {
+                    $Device = $connected[0]
+                    Write-Host "Emulador conectado: $Device"
+                }
+                elseif ($connected.Count -gt 1) {
+                    throw "Hay varios emuladores conectados. Indica el dispositivo con -Device."
+                }
+                else {
+                    $emulator = Join-Path $sdk 'emulator\emulator.exe'
+
+                    if (-not (Test-Path -LiteralPath $emulator)) {
+                        throw "No se encuentra el emulador Android en $emulator"
+                    }
+
+                    $avds = @(
+                        & $emulator -list-avds |
+                            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+                    )
+
+                    if ($avds.Count -ne 1) {
+                        throw "No hay un emulador único para iniciar. Emuladores instalados: $($avds -join ', ')"
+                    }
+
+                    Write-Host "Iniciando emulador Android: $($avds[0])"
+
+                    $emulatorProcess = Start-Process `
+                        -FilePath $emulator `
+                        -ArgumentList @('-avd', $avds[0]) `
+                        -PassThru
+
+                    $found = $false
+
+                    for ($attempt = 0; $attempt -lt 90; $attempt++) {
+                        Start-Sleep -Seconds 2
+                        $connected = @(Get-ConnectedEmulators)
+
+                        if ($Device -in $connected) {
+                            $found = $true
+                            break
+                        }
+
+                        if ($connected.Count -eq 1) {
+                            $Device = $connected[0]
+                            $found = $true
+                            break
+                        }
+
+                        if ($connected.Count -gt 1) {
+                            throw 'Hay varios emuladores conectados; no se puede seleccionar uno de forma segura.'
+                        }
+
+                        if ($emulatorProcess.HasExited) {
+                            throw 'El emulador se cerró durante el arranque.'
+                        }
+                    }
+
+                    if (-not $found) {
+                        throw 'El emulador no apareció en ADB durante los 180 segundos de espera.'
+                    }
+
+                    Write-Host "Emulador detectado: $Device"
+                }
+            }
+
+            # Estar conectado a ADB no significa que Android haya
+            # terminado de arrancar. Esperar a sys.boot_completed.
+            $booted = $false
+
+            for ($attempt = 0; $attempt -lt 90; $attempt++) {
+                $state = (& $adb -s $Device get-state 2>$null | Out-String).Trim()
+
+                if ($state -eq 'device') {
+                    $boot = (& $adb -s $Device shell getprop sys.boot_completed 2>$null |
+                        Out-String).Trim()
+
+                    if ($boot -eq '1') {
+                        $booted = $true
+                        break
+                    }
+                }
+
+                Start-Sleep -Seconds 2
+            }
+
+            if (-not $booted) {
+                throw "Android no terminó de arrancar en $Device durante los 180 segundos de espera."
+            }
+
+            Write-Host "Android preparado: $Device"
             $port = ([Uri]$session.endpoint).Port
             & $adb -s $Device reverse tcp:8787 "tcp:$port"
             if ($LASTEXITCODE -ne 0) { throw 'No se pudo establecer adb reverse.' }
