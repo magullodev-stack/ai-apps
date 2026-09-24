@@ -4,7 +4,7 @@
 
 | Herramienta | Finalidad | Ubicación | Instrucciones |
 | --- | --- | --- | --- |
-| QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; verificar una generación real de la modalidad Quiz10 con `-VerifyOnly`; detener el servicio con `-StopService`. | [`scripts/run-android.ps1`](../scripts/run-android.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
+| QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; verificar una generación real de la modalidad Quiz10 con `-VerifyOnly`; detener el servicio con `-StopService`. | [`apps/quizai/run.ps1`](../apps/quizai/run.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
 
 La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** utiliza este mismo script. Por defecto trabaja con `emulator-5554` y `gpt-4.1-mini`.
 
@@ -39,11 +39,19 @@ los documentos y el teléfono mediante sus pestañas.
 Para consultar los diagnósticos del arranque, abrir el panel Output de
 VS Code y seleccionar `AI-APPS Android`.
 
-El emulador es una herramienta compartida: ninguna aplicación se ejecuta
-automáticamente. Cada juego conserva su propio procedimiento de ejecución.
+El emulador es una herramienta compartida. Después de prepararlo, la
+integración ejecuta el juego seleccionado en `.ai-apps/active-game.txt`.
+Si el archivo contiene `none`, no ejecuta ningún juego. Cada aplicación
+conserva su propio lanzador `apps/<juego>/run.ps1`.
+
+El selector es local y no se publica en Git. Cambiarlo permite elegir
+qué aplicación se ejecutará la próxima vez que se abra AI-APPS.
 
 La tarea existente `AI-APPS: ejecutar QuizAI con IA` sigue siendo manual
 y reutiliza Android cuando ya está conectado.
+
+---
+
 ## COMMIT
 
 $ErrorActionPreference = 'Stop'

@@ -39,7 +39,7 @@ Perfil y Configuración muestran únicamente un estado provisional, sin funcione
 Con `emulator-5554` iniciado, desde la raíz del repositorio en PowerShell:
 
 ```powershell
-.\scripts\run-android.ps1
+.\apps\quizai\run.ps1
 ```
 
 El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** usa este mismo procedimiento. Cambiar de pestaña o abrir Configuración no llama al modelo; pulsar 🎲 Quiz10 sí solicita una generación.
@@ -64,7 +64,19 @@ Las pruebas automatizadas cubren también la identidad, el orden y disponibilida
 Para una generación real explícita, desde la raíz:
 
 ```powershell
-.\scripts\run-android.ps1 -VerifyOnly
+.\apps\quizai\run.ps1 -VerifyOnly
 ```
 
 La comprobación usa `gpt-4.1-mini` y solo tiene éxito si el validador de Quiz10 acepta diez preguntas. No modifica la sesión Android. El resultado sin contenido ni credenciales queda en `.ai-apps/quizai-verification.json`.
+
+### Apertura automática desde AI-APPS
+
+AI-APPS prepara el emulador compartido al abrir VS Code. Si
+`.ai-apps/active-game.txt` contiene `quizai`, también ejecuta
+`apps/quizai/run.ps1` automáticamente en la terminal integrada.
+
+El lanzador de QuizAI conserva la preparación del servicio Dart de IA.
+Si necesita una clave OpenAI, la solicita en la terminal.
+
+Para trabajar sin abrir ningún juego, establecer `none` como juego
+activo. El archivo de selección es local y no se publica en Git.

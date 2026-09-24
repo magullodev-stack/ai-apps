@@ -5,7 +5,7 @@ param(
     [switch]$StopService
 )
 $ErrorActionPreference = 'Stop'
-$repo = Split-Path $PSScriptRoot -Parent
+$repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
 $flutter = if ($flutterCommand) { $flutterCommand.Source } else {
     Join-Path $env:USERPROFILE 'development\flutter\bin\flutter.bat'

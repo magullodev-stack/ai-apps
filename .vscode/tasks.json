@@ -10,7 +10,7 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}\\scripts\\run-android.ps1"
+        "${workspaceFolder}\\apps\\quizai\\run.ps1"
       ],
       "problemMatcher": [],
       "isBackground": true,

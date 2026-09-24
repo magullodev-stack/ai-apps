@@ -138,6 +138,110 @@ async function configureEmbeddedView(folder) {
 // ARRANQUE DEL ENTORNO
 // ------------------------------------------------------------
 
+async function launchSelectedGame(folder) {
+  const root = folder.uri.fsPath;
+  const selectionFile = path.join(
+    root,
+    '.ai-apps',
+    'active-game.txt'
+  );
+
+  if (!fs.existsSync(selectionFile)) {
+    output.appendLine('No hay juego activo seleccionado.');
+    return;
+  }
+
+  const game = fs.readFileSync(selectionFile, 'utf8')
+    .trim()
+    .toLowerCase();
+
+  // "none" permite abrir AI-APPS sin ejecutar ningún juego.
+
+  if (!game || game === 'none') {
+    output.appendLine('AI-APPS abierto sin juego activo.');
+    return;
+  }
+
+  // El selector contiene nombres de carpetas, nunca rutas
+  // ni comandos introducidos por el usuario.
+
+  if (!/^[a-z][a-z0-9_-]*$/.test(game)) {
+    throw new Error(
+      'Nombre de juego no válido en .ai-apps/active-game.txt'
+    );
+  }
+
+  const script = path.join(
+    root,
+    'apps',
+    game,
+    'run.ps1'
+  );
+
+  if (!fs.existsSync(script)) {
+    throw new Error(
+      'El juego "' + game + '" no tiene lanzador: ' + script
+    );
+  }
+
+  const alreadyRunning = vscode.tasks.taskExecutions.some(
+    execution =>
+      (
+        execution.task.definition.type === 'aiAppsGame' &&
+        execution.task.definition.game === game
+      ) ||
+      (
+        game === 'quizai' &&
+        execution.task.name ===
+          'AI-APPS: ejecutar QuizAI con IA'
+      )
+  );
+
+  if (alreadyRunning) {
+    output.appendLine(
+      'Ya existe una tarea activa para ' + game + '.'
+    );
+    return;
+  }
+
+  const task = new vscode.Task(
+    {
+      type: 'aiAppsGame',
+      game: game
+    },
+    folder,
+    'AI-APPS: ejecutar ' + game,
+    'AI-APPS',
+    new vscode.ProcessExecution(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        script
+      ],
+      {
+        cwd: root
+      }
+    )
+  );
+
+  task.isBackground = true;
+
+  task.presentationOptions = {
+    reveal: vscode.TaskRevealKind.Always,
+    panel: vscode.TaskPanelKind.Dedicated,
+    focus: false
+  };
+
+  output.appendLine(
+    'Ejecutando juego activo: ' + game
+  );
+
+  await vscode.tasks.executeTask(task);
+}
+
 async function startEnvironment(folder) {
   output.appendLine('Preparando Android para AI-APPS...');
 
@@ -175,6 +279,7 @@ async function startEnvironment(folder) {
     output.appendLine(
       'El visor integrado ya está abierto.'
     );
+    await launchSelectedGame(folder);
     return;
   }
 
@@ -192,6 +297,8 @@ async function startEnvironment(folder) {
   output.appendLine(
     'Visor integrado solicitado a EmbeDroid.'
   );
+
+  await launchSelectedGame(folder);
 }
 
 // ------------------------------------------------------------
