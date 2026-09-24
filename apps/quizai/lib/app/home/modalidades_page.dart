@@ -20,45 +20,45 @@ class ModalidadesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Objetivo visual:
-        // - más aire entre cabecera y Quiz10
-        // - Quiz10 más protagonista (250 dp)
-        // - resto de tarjetas compactas pero legibles
-        // - todo visible en la pantalla principal sin cortar Estudio
-
-        const desiredTopReserve = 54.0;
+        const minTopReserve = 22.0;
         const desiredHeroHeight = 250.0;
         const desiredCardHeight = 78.0;
         const desiredGap = 8.0;
-        const desiredOuterPadding = 8.0;
+        const outerPadding = 6.0;
 
-        const desiredTotalHeight =
-            desiredTopReserve +
+        const baseContentHeight =
+            minTopReserve +
             desiredHeroHeight +
             (desiredCardHeight * 3) +
-            (desiredGap * 3) +
-            (desiredOuterPadding * 2);
+            (desiredGap * 3);
 
-        final viewportHeight = constraints.maxHeight;
-        final scale = (viewportHeight / desiredTotalHeight)
-            .clamp(0.94, 1.0)
+        final viewportHeight = constraints.maxHeight - (outerPadding * 2);
+        final scale = (viewportHeight / baseContentHeight)
+            .clamp(0.90, 1.0)
             .toDouble();
 
-        final topReserve = desiredTopReserve * scale;
         final heroHeight = desiredHeroHeight * scale;
         final cardHeight = desiredCardHeight * scale;
         final gap = desiredGap * scale;
-        final outerPadding = desiredOuterPadding * scale;
 
-        final needsScroll = viewportHeight < (desiredTotalHeight * 0.94);
+        final scaledContentHeight =
+            minTopReserve + heroHeight + (cardHeight * 3) + (gap * 3);
 
-        final content = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              key: const Key('quizai-top-reserved-space'),
-              height: topReserve,
+        final needsScroll = scaledContentHeight > viewportHeight;
+
+        Widget buildCardsColumn({required bool pinToBottom}) {
+          final children = <Widget>[
+            const SizedBox(
+              key: Key('quizai-top-reserved-space'),
+              height: minTopReserve,
             ),
+          ];
+
+          if (pinToBottom) {
+            children.add(const Spacer());
+          }
+
+          children.addAll([
             _Quiz10Hero(height: heroHeight, onTap: () => _openQuiz10(context)),
             SizedBox(height: gap),
             ModalidadCard(
@@ -84,30 +84,35 @@ class ModalidadesPage extends StatelessWidget {
               imagePath: 'assets/modalidades/estudio.png',
               height: cardHeight,
             ),
-          ],
-        );
+          ]);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          );
+        }
 
         final body = needsScroll
             ? SingleChildScrollView(
                 key: const Key('quizai-home-scroll'),
-                padding: EdgeInsets.fromLTRB(
+                padding: const EdgeInsets.fromLTRB(
                   14,
                   outerPadding,
                   14,
                   outerPadding,
                 ),
-                child: content,
+                child: buildCardsColumn(pinToBottom: false),
               )
             : Padding(
-                padding: EdgeInsets.fromLTRB(
+                padding: const EdgeInsets.fromLTRB(
                   14,
                   outerPadding,
                   14,
                   outerPadding,
                 ),
                 child: SizedBox(
-                  height: viewportHeight - (outerPadding * 2),
-                  child: content,
+                  height: viewportHeight,
+                  child: buildCardsColumn(pinToBottom: true),
                 ),
               );
 
@@ -139,7 +144,7 @@ class _Quiz10Hero extends StatelessWidget {
         border: Border.all(color: Colors.white.withAlpha(235), width: 2.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(42),
+            color: Colors.black.withAlpha(40),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -161,90 +166,76 @@ class _Quiz10Hero extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   excludeFromSemantics: true,
                 ),
-                IgnorePointer(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color(0xB3000000),
-                          Color(0x66000000),
-                          Color(0x14000000),
-                          Color(0x00000000),
-                        ],
-                        stops: [0.0, 0.34, 0.58, 0.82],
-                      ),
-                    ),
-                  ),
-                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 140, 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 94, 14),
+                  child: Stack(
                     children: [
-                      const Spacer(flex: 5),
-                      const Text(
-                        'Quiz10',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 44,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1.1,
-                          height: 0.95,
-                          shadows: [
-                            Shadow(
-                              color: Color(0xD0000000),
-                              offset: Offset(0, 2),
-                              blurRadius: 5,
-                            ),
-                            Shadow(color: Color(0x8A000000), blurRadius: 12),
-                          ],
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Quiz10',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 44,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.0,
+                            height: 0.95,
+                            shadows: [
+                              Shadow(
+                                color: Color(0xB3000000),
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                              Shadow(color: Color(0x66000000), blurRadius: 10),
+                            ],
+                          ),
                         ),
                       ),
-                      const Spacer(flex: 6),
-                      Container(
-                        height: 48,
-                        width: 178,
-                        padding: const EdgeInsets.only(left: 15, right: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(27),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(18),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Jugar ahora',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: QuizPalette.background,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w900,
+                      Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Container(
+                          height: 48,
+                          width: 178,
+                          padding: const EdgeInsets.only(left: 15, right: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(27),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(18),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Jugar ahora',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: QuizPalette.background,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8),
-                            CircleAvatar(
-                              radius: 17,
-                              backgroundColor: QuizPalette.primary,
-                              child: Icon(
-                                Icons.chevron_right_rounded,
-                                color: Colors.white,
-                                size: 25,
+                              SizedBox(width: 8),
+                              CircleAvatar(
+                                radius: 17,
+                                backgroundColor: QuizPalette.primary,
+                                child: Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.white,
+                                  size: 25,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
