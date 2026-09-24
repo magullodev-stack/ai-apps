@@ -1,4 +1,4 @@
-# Quiz10 🎲
+# Quiz10 Modalidad Estándar 🎲
 
 Juego de diez preguntas de cultura general generadas mediante IA.
 

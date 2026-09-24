@@ -8,11 +8,10 @@
 
 La tarea manual de VS Code **AI-APPS: ejecutar Quiz10 con IA** utiliza este mismo script. Por defecto trabaja con `emulator-5554` y `gpt-4.1-mini`.
 
-## Publicación solicitada por el usuario
+---
 
-Desde la raíz, después de las verificaciones:
+## COMMIT
 
-```powershell
 $ErrorActionPreference = 'Stop'
 if ((git branch --show-current) -ne 'dev') { throw 'La rama activa no es dev' }
 git add -A
@@ -27,4 +26,3 @@ git push origin dev
 if ($LASTEXITCODE -ne 0) { throw 'Falló el push' }
 git rev-parse HEAD
 git status --short --branch
-```
