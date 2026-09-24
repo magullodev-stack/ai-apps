@@ -25,10 +25,10 @@ class ModalidadCard extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(205), width: 1.8),
+        border: Border.all(color: Colors.white.withAlpha(212), width: 1.9),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(32),
+            color: Colors.black.withAlpha(34),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -50,42 +50,81 @@ class ModalidadCard extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   excludeFromSemantics: true,
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 100, 8),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          height: 0.98,
-                          shadows: [
-                            Shadow(color: Color(0x66000000), blurRadius: 8),
-                          ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 8, 104, 8),
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 184),
+                      padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withAlpha(26),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withAlpha(44),
+                          width: 1.0,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(20),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFFF3F0FF),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          height: 1.05,
-                          shadows: [
-                            Shadow(color: Color(0x66000000), blurRadius: 6),
-                          ],
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 33,
+                              fontWeight: FontWeight.w900,
+                              height: 0.98,
+                              letterSpacing: -0.8,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xAA000000),
+                                  offset: Offset(0, 2),
+                                  blurRadius: 5,
+                                ),
+                                Shadow(
+                                  color: Color(0x66000000),
+                                  blurRadius: 12,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              height: 1.05,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xAA000000),
+                                  offset: Offset(0, 1),
+                                  blurRadius: 4,
+                                ),
+                                Shadow(
+                                  color: Color(0x66000000),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ],

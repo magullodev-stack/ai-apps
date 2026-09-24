@@ -20,38 +20,41 @@ class ModalidadesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Dimensiones mínimas y máximas de la portada.
-        // Se utiliza el espacio disponible sin cortar tarjetas.
+        // Objetivo visual:
+        // - reservar un hueco superior para futuras estadísticas
+        // - Quiz10 con altura objetivo de 250 dp
+        // - las demás tarjetas algo más compactas pero legibles
+        // - si el dispositivo no llega, reducir ligeramente todo
+        //   antes de permitir scroll.
 
-        const minTotalHeight = 478.0;
-        const maxTotalHeight = 624.0;
+        const desiredTopReserve = 20.0;
+        const desiredHeroHeight = 250.0;
+        const desiredCardHeight = 86.0;
+        const desiredGap = 8.0;
+        const desiredOuterPadding = 8.0;
+
+        const desiredTotalHeight =
+            desiredTopReserve +
+            desiredHeroHeight +
+            (desiredCardHeight * 3) +
+            (desiredGap * 3) +
+            (desiredOuterPadding * 2);
 
         final viewportHeight = constraints.maxHeight;
 
-        final fit =
-            ((viewportHeight - minTotalHeight) /
-                    (maxTotalHeight - minTotalHeight))
-                .clamp(0.0, 1.0)
-                .toDouble();
+        final scale = (viewportHeight / desiredTotalHeight)
+            .clamp(0.95, 1.0)
+            .toDouble();
 
-        // Espacio reservado para futuras funciones del usuario.
-        final topReserve = 10.0 + (40.0 * fit);
+        final topReserve = desiredTopReserve * scale;
+        final heroHeight = desiredHeroHeight * scale;
+        final cardHeight = desiredCardHeight * scale;
+        final gap = desiredGap * scale;
+        final outerPadding = desiredOuterPadding * scale;
 
-        // Quiz10 mantiene mayor protagonismo.
-        final heroHeight = 162.0 + (32.0 * fit);
+        final needsScroll = viewportHeight < (desiredTotalHeight * 0.95);
 
-        // Sala, 1vs1 y Estudio tienen el mismo tamaño.
-        final cardHeight = 90.0 + (18.0 * fit);
-
-        final gap = 6.0 + (4.0 * fit);
-
-        final outerVerticalPadding = 6.0 + (2.0 * fit);
-
-        // Solo permitir desplazamiento cuando la altura
-        // física disponible sea insuficiente para los mínimos.
-        final needsScroll = viewportHeight < minTotalHeight;
-
-        Widget content = Column(
+        final content = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
@@ -91,21 +94,21 @@ class ModalidadesPage extends StatelessWidget {
                 key: const Key('quizai-home-scroll'),
                 padding: EdgeInsets.fromLTRB(
                   14,
-                  outerVerticalPadding,
+                  outerPadding,
                   14,
-                  outerVerticalPadding,
+                  outerPadding,
                 ),
                 child: content,
               )
             : Padding(
                 padding: EdgeInsets.fromLTRB(
                   14,
-                  outerVerticalPadding,
+                  outerPadding,
                   14,
-                  outerVerticalPadding,
+                  outerPadding,
                 ),
                 child: SizedBox(
-                  height: constraints.maxHeight - (outerVerticalPadding * 2),
+                  height: viewportHeight - (outerPadding * 2),
                   child: content,
                 ),
               );
@@ -161,34 +164,57 @@ class _Quiz10Hero extends StatelessWidget {
                   excludeFromSemantics: true,
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                  padding: const EdgeInsets.fromLTRB(14, 16, 12, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Quiz10',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 45,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1.2,
-                          height: 0.94,
-                          shadows: [
-                            Shadow(color: Color(0x66000000), blurRadius: 8),
+                      Container(
+                        constraints: const BoxConstraints(maxWidth: 182),
+                        padding: const EdgeInsets.fromLTRB(12, 8, 14, 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(18),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withAlpha(46),
+                            width: 1.1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(20),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
                           ],
+                        ),
+                        child: const Text(
+                          'Quiz10',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 52,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.3,
+                            height: 0.92,
+                            shadows: [
+                              Shadow(
+                                color: Color(0xAA000000),
+                                offset: Offset(0, 2),
+                                blurRadius: 6,
+                              ),
+                              Shadow(color: Color(0x66000000), blurRadius: 14),
+                            ],
+                          ),
                         ),
                       ),
                       const Spacer(),
                       Container(
-                        height: 46,
-                        width: 176,
-                        padding: const EdgeInsets.only(left: 14, right: 4),
+                        height: 48,
+                        width: 182,
+                        padding: const EdgeInsets.only(left: 15, right: 5),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(27),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withAlpha(18),
@@ -206,19 +232,19 @@ class _Quiz10Hero extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: QuizPalette.background,
-                                  fontSize: 17,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ),
                             SizedBox(width: 8),
                             CircleAvatar(
-                              radius: 16,
+                              radius: 17,
                               backgroundColor: QuizPalette.primary,
                               child: Icon(
                                 Icons.chevron_right_rounded,
                                 color: Colors.white,
-                                size: 24,
+                                size: 25,
                               ),
                             ),
                           ],
