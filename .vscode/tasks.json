@@ -13,6 +13,10 @@
         "${workspaceFolder}\\scripts\\run-android.ps1"
       ],
       "problemMatcher": [],
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
