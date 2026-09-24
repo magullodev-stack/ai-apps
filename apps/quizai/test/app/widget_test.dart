@@ -27,6 +27,22 @@ class FakeGenerator implements QuizGenerator {
 }
 
 void main() {
+  testWidgets('QuizAI aplica su identidad tipográfica común', (tester) async {
+    await tester.pumpWidget(const QuizAIApp());
+
+    final context = tester.element(find.text('QuizAI'));
+    final theme = Theme.of(context);
+
+    expect(theme.textTheme.bodyMedium?.fontFamily, 'Nunito');
+    expect(theme.textTheme.titleLarge?.fontFamily, 'Nunito');
+    expect(theme.textTheme.titleLarge?.fontWeight, FontWeight.w800);
+    expect(theme.textTheme.labelLarge?.fontWeight, FontWeight.w800);
+
+    // El logotipo y la navegación continúan disponibles.
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
+  });
+
   testWidgets(
     'QuizAI muestra cuatro modalidades ordenadas sin generar preguntas',
     (tester) async {

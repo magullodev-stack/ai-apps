@@ -132,6 +132,7 @@ class _AppShellState extends State<AppShell> {
                 data: NavigationBarThemeData(
                   labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
                     (states) => TextStyle(
+                      fontFamily: QuizTypography.family,
                       color: states.contains(WidgetState.selected)
                           ? QuizPalette.background
                           : Colors.white,

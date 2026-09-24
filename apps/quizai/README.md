@@ -19,6 +19,20 @@ existan los sistemas responsables de proporcionar sus datos reales.
 La cabecera incorpora el logotipo propio de QuizAI, registrado como
 recurso gráfico de la aplicación en `assets/branding/`.
 
+La tipografía Nunito forma parte de la identidad visual de QuizAI.
+
+La fuente variable se incorpora localmente en `assets/fonts/` y se
+registra en `pubspec.yaml`. Se utiliza bajo la SIL Open Font License,
+cuya copia se conserva en `assets/fonts/OFL.txt`.
+
+La familia tipográfica y los estilos generales se configuran en
+`lib/app/app_theme.dart`. Las pantallas de la aplicación y sus modalidades
+utilizan el tema común, conservando sus responsabilidades particulares.
+
+La navegación inferior utiliza explícitamente la misma familia.
+Los estilos particulares existentes siguen utilizando sus tamaños
+y pesos hasta que se complete el rediseño de cada pantalla.
+
 La interfaz está preparada para incorporar ilustraciones propias de QuizAI.
 Su ausencia no impide utilizar la navegación ni iniciar Quiz10.
 

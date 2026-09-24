@@ -38,7 +38,23 @@ abstract final class QuizPalette {
   );
 }
 
+/// Jerarquía tipográfica propia de QuizAI.
+///
+/// La familia se registra localmente en pubspec.yaml.
+/// Los estilos se comparten entre la aplicación y sus modalidades.
+abstract final class QuizTypography {
+  static const family = 'Nunito';
+}
+
 final ThemeData quizAITheme = ThemeData(
   useMaterial3: true,
+  fontFamily: QuizTypography.family,
   colorScheme: ColorScheme.fromSeed(seedColor: QuizPalette.primary),
+  textTheme: const TextTheme(
+    headlineSmall: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+    titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+    bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+  ),
 );

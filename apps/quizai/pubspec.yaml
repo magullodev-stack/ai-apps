@@ -63,6 +63,12 @@ flutter:
 
   assets:
     - assets/branding/quizai_logo.png
+    - assets/fonts/OFL.txt
+
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Variable.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
