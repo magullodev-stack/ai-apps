@@ -4,7 +4,7 @@
 
 | Herramienta | Finalidad | Ubicación | Instrucciones |
 | --- | --- | --- | --- |
-| QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; verificar una generación real de la modalidad Quiz10 con `-VerifyOnly`; detener el servicio con `-StopService`. | [`scripts/run-android.ps1`](../scripts/run-android.ps1) | [`apps/quiz10/README.md`](../apps/quiz10/README.md) y [`ai/README.md`](../ai/README.md). |
+| QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; verificar una generación real de la modalidad Quiz10 con `-VerifyOnly`; detener el servicio con `-StopService`. | [`scripts/run-android.ps1`](../scripts/run-android.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
 
 La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** utiliza este mismo script. Por defecto trabaja con `emulator-5554` y `gpt-4.1-mini`.
 

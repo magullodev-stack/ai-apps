@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$Device = 'emulator-5554',
     [string]$Model = 'gpt-4.1-mini',
     [switch]$VerifyOnly,
@@ -115,7 +115,7 @@ foreach ($name in @('AI_APPS_AI_API_KEY','OPENAI_API_KEY','AI_APPS_GAME_TOKEN','
 }
 try {
     Remove-Item Env:AI_APPS_AI_API_KEY, Env:OPENAI_API_KEY, Env:ADB_SERVER_SOCKET -ErrorAction SilentlyContinue
-    Push-Location (Join-Path $repo 'apps\quiz10')
+    Push-Location (Join-Path $repo 'apps\quizai')
     try {
         & $flutter pub get
         if ($LASTEXITCODE -ne 0) { throw 'Falló flutter pub get.' }

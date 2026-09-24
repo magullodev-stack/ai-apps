@@ -4,9 +4,9 @@ import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quiz10/app.dart';
-import 'package:quiz10/quiz.dart';
-import 'package:quiz10/quiz_generation.dart';
+import 'package:quizai/app.dart';
+import 'package:quizai/quiz.dart';
+import 'package:quizai/quiz_generation.dart';
 
 import 'fixtures.dart';
 

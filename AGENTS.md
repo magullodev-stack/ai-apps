@@ -32,6 +32,6 @@ Cuando se incorpore o modifique una herramienta, actualiza su entrada en el cat�
 - Rama única del proyecto: `dev`.
 - Remoto: `magullodev-stack/ai-apps`.
 
-La prueba técnica móvil actual es `apps/quiz10/`, un proyecto Flutter independiente. Consulta sus instrucciones operativas en `apps/quiz10/README.md`. Su conservación es temporal; no desarrolles funcionalidades particulares de Quiz10 como parte de la base común.
+La prueba técnica móvil actual es `apps/quizai/`, un proyecto Flutter independiente. Consulta sus instrucciones operativas en `apps/quizai/README.md`. Su conservación es temporal; no desarrolles funcionalidades particulares de Quiz10 como parte de la base común.
 
 La ejecución de Android es manual. Las llamadas reales a modelos y las pruebas que puedan interrumpir sesiones activas se coordinan con el usuario.

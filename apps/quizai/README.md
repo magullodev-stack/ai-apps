@@ -10,7 +10,7 @@ La cabecera muestra **QuizAI** y el acceso a **Configuración**. La barra inferi
 
 Perfil y Configuración muestran únicamente un estado provisional, sin funciones ni datos de usuario. Desde Configuración se puede volver a la pestaña de origen.
 
-`lib/app.dart` contiene la identidad y navegación de QuizAI. `lib/quiz_page.dart` contiene la interfaz particular de Quiz10; `lib/quiz.dart` y `lib/quiz_generation.dart` mantienen sus reglas, validación y generación. Se conservan la ruta `apps/quiz10`, el paquete Flutter y el identificador Android: el cambio de nombre es visible, sin renombrar los conceptos internos de la modalidad.
+`lib/app.dart` contiene la identidad y navegación de QuizAI. `lib/quiz_page.dart` contiene la interfaz particular de Quiz10; `lib/quiz.dart` y `lib/quiz_generation.dart` mantienen sus reglas, validación y generación. Se conservan la ruta `apps/quizai`, el paquete Flutter y el identificador Android: el cambio de nombre es visible, sin renombrar los conceptos internos de la modalidad.
 
 ## Ejecutar con IA
 
@@ -28,7 +28,7 @@ Consulta [`ai/README.md`](../../ai/README.md) para las variables, diagnósticos,
 
 ## Comprobaciones
 
-Desde `apps/quiz10`:
+Desde `apps/quizai`:
 
 ```powershell
 flutter analyze
@@ -45,4 +45,4 @@ Para una generación real explícita, desde la raíz:
 .\scripts\run-android.ps1 -VerifyOnly
 ```
 
-La comprobación usa `gpt-4.1-mini` y solo tiene éxito si el validador de Quiz10 acepta diez preguntas. No modifica la sesión Android. El resultado sin contenido ni credenciales queda en `.ai-apps/quiz10-verification.json`.
+La comprobación usa `gpt-4.1-mini` y solo tiene éxito si el validador de Quiz10 acepta diez preguntas. No modifica la sesión Android. El resultado sin contenido ni credenciales queda en `.ai-apps/quizai-verification.json`.

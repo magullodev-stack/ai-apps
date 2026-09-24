@@ -12,7 +12,7 @@ Desde PowerShell, en la raíz del repositorio:
 .\scripts\run-android.ps1
 ```
 
-Este único procedimiento inicia o reutiliza el servicio Dart, configura `adb reverse` y ejecuta Quiz10 en `emulator-5554` con `gpt-4.1-mini`. El emulador debe estar iniciado. Consulta [`apps/quiz10/README.md`](../apps/quiz10/README.md) para las instrucciones completas.
+Este único procedimiento inicia o reutiliza el servicio Dart, configura `adb reverse` y ejecuta Quiz10 en `emulator-5554` con `gpt-4.1-mini`. El emulador debe estar iniciado. Consulta [`apps/quizai/README.md`](../apps/quizai/README.md) para las instrucciones completas.
 
 El script busca `AI_APPS_AI_API_KEY` y `OPENAI_API_KEY` en el entorno del proceso, usuario y máquina, en ese orden. Si faltan, solicita la clave mediante `Read-Host -AsSecureString`. No la muestra ni la guarda en archivos; solo el proceso Dart la recibe. El script elimina esas variables del entorno heredado por Flutter y nunca las incluye en los parámetros del APK.
 
@@ -56,4 +56,4 @@ Set-Location 'C:\Users\Miquelet\repos\ai-apps'
 .\scripts\run-android.ps1 -VerifyOnly
 ```
 
-Genera preguntas con `gpt-4.1-mini` mediante el servicio activo y utiliza el generador, validador y constructor de partida reales de Quiz10. Solo devuelve éxito si acepta diez preguntas. Guarda un comprobante sin contenido ni credenciales en `.ai-apps/quiz10-verification.json`. Si falla, consulta el diagnóstico del proveedor en el registro. Esta comprobación no inicia ni modifica una sesión Android.
+Genera preguntas con `gpt-4.1-mini` mediante el servicio activo y utiliza el generador, validador y constructor de partida reales de Quiz10. Solo devuelve éxito si acepta diez preguntas. Guarda un comprobante sin contenido ni credenciales en `.ai-apps/quizai-verification.json`. Si falla, consulta el diagnóstico del proveedor en el registro. Esta comprobación no inicia ni modifica una sesión Android.

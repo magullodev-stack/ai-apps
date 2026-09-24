@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
-import 'package:quiz10/quiz.dart';
-import 'package:quiz10/quiz_generation.dart';
+import 'package:quizai/quiz.dart';
+import 'package:quizai/quiz_generation.dart';
 
 /// Explicit live check. Never included in flutter test.
 Future<void> main() async {
