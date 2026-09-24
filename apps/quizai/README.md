@@ -16,6 +16,9 @@ partida existente. Sala, 1vs1 y Estudio mantienen su estado no disponible.
 Los indicadores de puntos, racha y ranking muestran un guion hasta que
 existan los sistemas responsables de proporcionar sus datos reales.
 
+La cabecera incorpora el logotipo propio de QuizAI, registrado como
+recurso gráfico de la aplicación en `assets/branding/`.
+
 La interfaz está preparada para incorporar ilustraciones propias de QuizAI.
 Su ausencia no impide utilizar la navegación ni iniciar Quiz10.
 

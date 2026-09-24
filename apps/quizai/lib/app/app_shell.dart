@@ -35,14 +35,33 @@ class _AppShellState extends State<AppShell> {
         elevation: 0,
         scrolledUnderElevation: 0,
 
-        title: const Text(
-          'QuizAI',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 43,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -2,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: Image.asset(
+                'assets/branding/quizai_logo.png',
+                width: 44,
+                height: 44,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Flexible(
+              child: Text(
+                'QuizAI',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 43,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -2,
+                ),
+              ),
+            ),
+          ],
         ),
 
         actions: [
