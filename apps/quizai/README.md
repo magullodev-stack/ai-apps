@@ -13,7 +13,7 @@ redondeados, sombras y navegación inferior integrada.
 Quiz10 es la modalidad protagonista y conserva su acceso directo a la
 partida existente. Sala, 1vs1 y Estudio mantienen su estado no disponible.
 
-Los indicadores de puntos, racha y ranking muestran un guion hasta que
+Los indicadores de puntos, racha y ranking mostrarán sus datos cuando
 existan los sistemas responsables de proporcionar sus datos reales.
 
 La cabecera incorpora el logotipo propio de QuizAI, registrado como
@@ -43,8 +43,8 @@ desplazamiento de la pantalla principal.
 Los estilos particulares existentes siguen utilizando sus tamaños
 y pesos hasta que se complete el rediseño de cada pantalla.
 
-La interfaz está preparada para incorporar ilustraciones propias de QuizAI.
-Su ausencia no impide utilizar la navegación ni iniciar Quiz10.
+La pantalla principal utiliza cuatro PNG propios en assets/modalidades/.
+Los textos y las acciones permanecen implementados en Flutter.
 
 Los colores pertenecen a `lib/app/app_theme.dart`. La estructura general
 y la navegación pertenecen a `lib/app/app_shell.dart`. Las tarjetas y la
