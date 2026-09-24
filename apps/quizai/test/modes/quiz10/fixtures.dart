@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:quizai/quiz.dart';
+import 'package:quizai/modes/quiz10/quiz.dart';
 
 List<Map<String, Object?>> fixtureRows(List<QuizSlot> plan) => [
   for (var i = 0; i < plan.length; i++)

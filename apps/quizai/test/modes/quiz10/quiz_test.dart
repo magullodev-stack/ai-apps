@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizai/quiz.dart';
+import 'package:quizai/modes/quiz10/quiz.dart';
 
 import 'fixtures.dart';
 

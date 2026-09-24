@@ -10,7 +10,7 @@ La cabecera muestra **QuizAI** y el acceso a **Configuración**. La barra inferi
 
 Perfil y Configuración muestran únicamente un estado provisional, sin funciones ni datos de usuario. Desde Configuración se puede volver a la pestaña de origen.
 
-`lib/app.dart` contiene la identidad y navegación de QuizAI. `lib/quiz_page.dart` contiene la interfaz particular de Quiz10; `lib/quiz.dart` y `lib/quiz_generation.dart` mantienen sus reglas, validación y generación. Se conservan la ruta `apps/quizai`, el paquete Flutter y el identificador Android: el cambio de nombre es visible, sin renombrar los conceptos internos de la modalidad.
+`lib/main.dart` arranca QuizAI. `lib/app/` contiene la identidad, el tema, la navegación general y las pantallas Modalidades, Perfil y Configuración. `lib/modes/quiz10/` contiene exclusivamente la pantalla, el estado, las reglas, la validación y la generación mediante IA de la modalidad 🎲 Quiz10. Las pruebas se organizan en `test/app/` y `test/modes/quiz10/`. Las otras tres modalidades todavía no tienen implementación propia.
 
 ## Ejecutar con IA
 

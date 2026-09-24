@@ -5,8 +5,8 @@ import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:ai_apps_service/ai_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizai/quiz.dart';
-import 'package:quizai/quiz_generation.dart';
+import 'package:quizai/modes/quiz10/quiz.dart';
+import 'package:quizai/modes/quiz10/quiz_generation.dart';
 
 import 'fixtures.dart';
 

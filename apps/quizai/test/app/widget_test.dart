@@ -4,11 +4,11 @@ import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizai/app.dart';
-import 'package:quizai/quiz.dart';
-import 'package:quizai/quiz_generation.dart';
+import 'package:quizai/app/app.dart';
+import 'package:quizai/modes/quiz10/quiz.dart';
+import 'package:quizai/modes/quiz10/quiz_generation.dart';
 
-import 'fixtures.dart';
+import '../modes/quiz10/fixtures.dart';
 
 class FakeGenerator implements QuizGenerator {
   int calls = 0;
