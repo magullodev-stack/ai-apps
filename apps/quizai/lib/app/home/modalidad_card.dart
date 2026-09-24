@@ -51,7 +51,7 @@ class ModalidadCard extends StatelessWidget {
                   excludeFromSemantics: true,
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 118, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 100, 8),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +62,7 @@ class ModalidadCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 27,
+                          fontSize: 32,
                           fontWeight: FontWeight.w900,
                           height: 0.98,
                           shadows: [
@@ -77,7 +77,7 @@ class ModalidadCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFFF3F0FF),
-                          fontSize: 14,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           height: 1.05,
                           shadows: [

@@ -20,31 +20,36 @@ class ModalidadesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const baseTopReserve = 56.0;
-        const baseHeroHeight = 190.0;
-        const baseCardHeight = 90.0;
-        const baseGap = 10.0;
-        const outerVerticalPadding = 10.0;
+        // Dimensiones mínimas y máximas de la portada.
+        // Se utiliza el espacio disponible sin cortar tarjetas.
 
-        const baseTotalHeight =
-            baseTopReserve +
-            baseHeroHeight +
-            (baseCardHeight * 3) +
-            (baseGap * 4);
+        const minTotalHeight = 478.0;
+        const maxTotalHeight = 624.0;
 
-        final availableHeight =
-            constraints.maxHeight - (outerVerticalPadding * 2);
-        final scale = (availableHeight / baseTotalHeight)
-            .clamp(0.92, 1.08)
-            .toDouble();
+        final viewportHeight = constraints.maxHeight;
 
-        final topReserve = baseTopReserve * scale;
-        final heroHeight = baseHeroHeight * scale;
-        final cardHeight = baseCardHeight * scale;
-        final gap = baseGap * scale;
+        final fit =
+            ((viewportHeight - minTotalHeight) /
+                    (maxTotalHeight - minTotalHeight))
+                .clamp(0.0, 1.0)
+                .toDouble();
 
-        final minimumHeight = baseTotalHeight * 0.92;
-        final needsScroll = availableHeight < minimumHeight;
+        // Espacio reservado para futuras funciones del usuario.
+        final topReserve = 10.0 + (40.0 * fit);
+
+        // Quiz10 mantiene mayor protagonismo.
+        final heroHeight = 162.0 + (32.0 * fit);
+
+        // Sala, 1vs1 y Estudio tienen el mismo tamaño.
+        final cardHeight = 90.0 + (18.0 * fit);
+
+        final gap = 6.0 + (4.0 * fit);
+
+        final outerVerticalPadding = 6.0 + (2.0 * fit);
+
+        // Solo permitir desplazamiento cuando la altura
+        // física disponible sea insuficiente para los mínimos.
+        final needsScroll = viewportHeight < minTotalHeight;
 
         Widget content = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,11 +89,21 @@ class ModalidadesPage extends StatelessWidget {
         final body = needsScroll
             ? SingleChildScrollView(
                 key: const Key('quizai-home-scroll'),
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                padding: EdgeInsets.fromLTRB(
+                  14,
+                  outerVerticalPadding,
+                  14,
+                  outerVerticalPadding,
+                ),
                 child: content,
               )
             : Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                padding: EdgeInsets.fromLTRB(
+                  14,
+                  outerVerticalPadding,
+                  14,
+                  outerVerticalPadding,
+                ),
                 child: SizedBox(
                   height: constraints.maxHeight - (outerVerticalPadding * 2),
                   child: content,
@@ -157,7 +172,7 @@ class _Quiz10Hero extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 39,
+                          fontSize: 45,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -1.2,
                           height: 0.94,
@@ -168,8 +183,8 @@ class _Quiz10Hero extends StatelessWidget {
                       ),
                       const Spacer(),
                       Container(
-                        height: 42,
-                        width: 162,
+                        height: 46,
+                        width: 176,
                         padding: const EdgeInsets.only(left: 14, right: 4),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -191,7 +206,7 @@ class _Quiz10Hero extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: QuizPalette.background,
-                                  fontSize: 15,
+                                  fontSize: 17,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
