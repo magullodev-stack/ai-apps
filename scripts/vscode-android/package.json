@@ -1,0 +1,24 @@
+{
+  "name": "ai-apps-android",
+  "displayName": "AI-APPS Android",
+  "description": "Prepara el emulador Android compartido de AI-APPS y abre su visor integrado.",
+  "version": "0.0.1",
+  "publisher": "magullodev",
+  "private": true,
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionDependencies": [
+    "utpalbarman.embedroid"
+  ],
+  "main": "./extension.js"
+}

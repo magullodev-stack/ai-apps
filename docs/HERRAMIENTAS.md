@@ -10,6 +10,40 @@ La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** utiliza este mism
 
 ---
 
+
+## Emulador Android compartido
+
+`scripts/start-android.ps1` prepara el dispositivo Android de AI-APPS.
+
+El procedimiento reutiliza un emulador conectado o inicia el AVD
+Medium_Phone sin ventana externa. Espera a que Android termine de
+arrancar y devuelve el identificador del dispositivo preparado.
+
+No ejecuta ninguna aplicación ni inicia servicios de inteligencia
+artificial.
+
+`scripts/vscode-android/` contiene la integración local de VS Code.
+
+Al abrir el repositorio AI-APPS, esta integración ejecuta el procedimiento
+compartido y utiliza el comando público `embedroid.openEmbedded` para
+mostrar Android dentro de una pestaña del editor.
+
+La extensión EmbeDroid debe estar instalada.
+
+La integración local se instala en el directorio de extensiones de VS Code.
+Su código fuente permanece en el repositorio.
+
+El visor utiliza el grupo de editores activo, permitiendo alternar entre
+los documentos y el teléfono mediante sus pestañas.
+
+Para consultar los diagnósticos del arranque, abrir el panel Output de
+VS Code y seleccionar `AI-APPS Android`.
+
+El emulador es una herramienta compartida: ninguna aplicación se ejecuta
+automáticamente. Cada juego conserva su propio procedimiento de ejecución.
+
+La tarea existente `AI-APPS: ejecutar QuizAI con IA` sigue siendo manual
+y reutiliza Android cuando ya está conectado.
 ## COMMIT
 
 $ErrorActionPreference = 'Stop'
