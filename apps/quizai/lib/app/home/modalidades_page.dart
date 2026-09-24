@@ -21,15 +21,14 @@ class ModalidadesPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Objetivo visual:
-        // - reservar un hueco superior para futuras estadísticas
-        // - Quiz10 con altura objetivo de 250 dp
-        // - las demás tarjetas algo más compactas pero legibles
-        // - si el dispositivo no llega, reducir ligeramente todo
-        //   antes de permitir scroll.
+        // - más aire entre cabecera y Quiz10
+        // - Quiz10 más protagonista (250 dp)
+        // - resto de tarjetas compactas pero legibles
+        // - todo visible en la pantalla principal sin cortar Estudio
 
-        const desiredTopReserve = 20.0;
+        const desiredTopReserve = 54.0;
         const desiredHeroHeight = 250.0;
-        const desiredCardHeight = 86.0;
+        const desiredCardHeight = 78.0;
         const desiredGap = 8.0;
         const desiredOuterPadding = 8.0;
 
@@ -41,9 +40,8 @@ class ModalidadesPage extends StatelessWidget {
             (desiredOuterPadding * 2);
 
         final viewportHeight = constraints.maxHeight;
-
         final scale = (viewportHeight / desiredTotalHeight)
-            .clamp(0.95, 1.0)
+            .clamp(0.94, 1.0)
             .toDouble();
 
         final topReserve = desiredTopReserve * scale;
@@ -52,7 +50,7 @@ class ModalidadesPage extends StatelessWidget {
         final gap = desiredGap * scale;
         final outerPadding = desiredOuterPadding * scale;
 
-        final needsScroll = viewportHeight < (desiredTotalHeight * 0.95);
+        final needsScroll = viewportHeight < (desiredTotalHeight * 0.94);
 
         final content = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -141,7 +139,7 @@ class _Quiz10Hero extends StatelessWidget {
         border: Border.all(color: Colors.white.withAlpha(235), width: 2.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(44),
+            color: Colors.black.withAlpha(42),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -163,54 +161,53 @@ class _Quiz10Hero extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   excludeFromSemantics: true,
                 ),
+                IgnorePointer(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color(0xB3000000),
+                          Color(0x66000000),
+                          Color(0x14000000),
+                          Color(0x00000000),
+                        ],
+                        stops: [0.0, 0.34, 0.58, 0.82],
+                      ),
+                    ),
+                  ),
+                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 16, 12, 14),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 140, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        constraints: const BoxConstraints(maxWidth: 182),
-                        padding: const EdgeInsets.fromLTRB(12, 8, 14, 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(18),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withAlpha(46),
-                            width: 1.1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(20),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                      const Spacer(flex: 5),
+                      const Text(
+                        'Quiz10',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 44,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.1,
+                          height: 0.95,
+                          shadows: [
+                            Shadow(
+                              color: Color(0xD0000000),
+                              offset: Offset(0, 2),
+                              blurRadius: 5,
                             ),
+                            Shadow(color: Color(0x8A000000), blurRadius: 12),
                           ],
                         ),
-                        child: const Text(
-                          'Quiz10',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 52,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1.3,
-                            height: 0.92,
-                            shadows: [
-                              Shadow(
-                                color: Color(0xAA000000),
-                                offset: Offset(0, 2),
-                                blurRadius: 6,
-                              ),
-                              Shadow(color: Color(0x66000000), blurRadius: 14),
-                            ],
-                          ),
-                        ),
                       ),
-                      const Spacer(),
+                      const Spacer(flex: 6),
                       Container(
                         height: 48,
-                        width: 182,
+                        width: 178,
                         padding: const EdgeInsets.only(left: 15, right: 5),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -232,7 +229,7 @@ class _Quiz10Hero extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: QuizPalette.background,
-                                  fontSize: 18,
+                                  fontSize: 17,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
