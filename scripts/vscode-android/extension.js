@@ -242,6 +242,140 @@ async function launchSelectedGame(folder) {
   await vscode.tasks.executeTask(task);
 }
 
+function getSelectedGame(folder) {
+  const selectionFile = path.join(
+    folder.uri.fsPath,
+    '.ai-apps',
+    'active-game.txt'
+  );
+
+  if (!fs.existsSync(selectionFile)) {
+    return null;
+  }
+
+  const game = fs.readFileSync(selectionFile, 'utf8')
+    .trim()
+    .toLowerCase();
+
+  return game && game !== 'none' ? game : null;
+}
+
+function getAndroidPackage(folder, game) {
+  const androidDirectory = path.join(
+    folder.uri.fsPath,
+    'apps',
+    game,
+    'android',
+    'app'
+  );
+
+  for (const name of ['build.gradle.kts', 'build.gradle']) {
+    const gradlePath = path.join(androidDirectory, name);
+
+    if (!fs.existsSync(gradlePath)) {
+      continue;
+    }
+
+    const gradle = fs.readFileSync(gradlePath, 'utf8');
+    const match = gradle.match(
+      /\bapplicationId\s*=?\s*["']([a-zA-Z0-9_.]+)["']/
+    );
+
+    if (match) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
+async function waitForGameReady(folder, serial, game) {
+  const packageId = getAndroidPackage(folder, game);
+
+  if (!packageId) {
+    output.appendLine(
+      'No se encontró el identificador Android de ' +
+      game + '. Se abrirá el visor sin esperar.'
+    );
+    return;
+  }
+
+  const sdk =
+    process.env.ANDROID_HOME ||
+    process.env.ANDROID_SDK_ROOT ||
+    path.join(
+      process.env.LOCALAPPDATA || '',
+      'Android',
+      'Sdk'
+    );
+
+  const adb = path.join(sdk, 'platform-tools', 'adb.exe');
+
+  if (!fs.existsSync(adb)) {
+    output.appendLine(
+      'No se encontró ADB para comprobar el inicio del juego.'
+    );
+    return;
+  }
+
+  output.appendLine(
+    'Esperando a que aparezca ' + game + ' en Android...'
+  );
+
+  // El arranque de Flutter puede tardar bastante más que
+  // el arranque del propio emulador. Esperar hasta 4 minutos.
+
+  for (let attempt = 0; attempt < 120; attempt++) {
+    const activity = await new Promise(resolve => {
+      childProcess.execFile(
+        adb,
+        [
+          '-s',
+          serial,
+          'shell',
+          'dumpsys',
+          'activity',
+          'activities'
+        ],
+        {
+          windowsHide: true,
+          timeout: 5000,
+          maxBuffer: 1024 * 1024
+        },
+        (error, stdout) => {
+          resolve(error ? '' : stdout || '');
+        }
+      );
+    });
+
+    // Detectar el juego como actividad visible de Android.
+
+    const visible = activity
+      .split(/\r?\n/)
+      .some(line =>
+        /topResumedActivity|mResumedActivity|ResumedActivity/.test(line) &&
+        line.includes(packageId + '/')
+      );
+
+    if (visible) {
+      output.appendLine(
+        'Juego visible en Android: ' + game
+      );
+
+      // Dar un pequeño margen a Flutter para dibujar su UI.
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
+  output.appendLine(
+    'El juego no apareció durante la espera. ' +
+    'Se abrirá EmbeDroid para permitir revisar Android.'
+  );
+}
 async function startEnvironment(folder) {
   output.appendLine('Preparando Android para AI-APPS...');
 
@@ -272,6 +406,16 @@ async function startEnvironment(folder) {
 
   await embedroid.activate();
 
+  // Iniciar primero el juego seleccionado. No abrir todavía
+  // la pestaña de EmbeDroid.
+
+  const activeGame = getSelectedGame(folder);
+
+  if (activeGame) {
+    await launchSelectedGame(folder);
+    await waitForGameReady(folder, serial, activeGame);
+  }
+
   // Si VS Code ha restaurado la pestaña integrada,
   // no abrir una segunda copia.
 
@@ -279,7 +423,6 @@ async function startEnvironment(folder) {
     output.appendLine(
       'El visor integrado ya está abierto.'
     );
-    await launchSelectedGame(folder);
     return;
   }
 
@@ -297,8 +440,6 @@ async function startEnvironment(folder) {
   output.appendLine(
     'Visor integrado solicitado a EmbeDroid.'
   );
-
-  await launchSelectedGame(folder);
 }
 
 // ------------------------------------------------------------
