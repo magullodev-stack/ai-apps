@@ -1,121 +1,211 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+import 'quiz.dart';
+import 'quiz_generation.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+void main() => runApp(const Quiz10App());
 
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class Quiz10App extends StatelessWidget {
+  const Quiz10App({super.key, this.generator});
+  final QuizGenerator? generator;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  Widget build(BuildContext context) => MaterialApp(
+    title: 'Quiz10',
+    theme: ThemeData(
+      colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    ),
+    home: QuizPage(generator: generator),
+  );
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class QuizPage extends StatefulWidget {
+  const QuizPage({super.key, this.generator});
+  final QuizGenerator? generator;
 
   @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+  State<QuizPage> createState() => _QuizPageState();
+}
+
+class _QuizPageState extends State<QuizPage> {
+  final _random = Random();
+  AiAppsClient? _client;
+  late final QuizGenerator _generator;
+  QuizGame? _game;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.generator case final generator?) {
+      _generator = generator;
+    } else {
+      _client = AiAppsClient(
+        endpoint: Uri.parse(
+          const String.fromEnvironment(
+            'AI_APPS_AI_URL',
+            defaultValue: 'http://127.0.0.1:8787',
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        authorization: const String.fromEnvironment('AI_APPS_GAME_TOKEN'),
+      );
+      _generator = AiQuizGenerator(
+        client: _client!,
+        model: const String.fromEnvironment('AI_APPS_AI_MODEL'),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _client?.close();
+    super.dispose();
+  }
+
+  Future<void> _start() async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+      _game = null;
+    });
+    try {
+      final questions = await _generator.generate(selectQuizAreas(_random));
+      if (!mounted) return;
+      setState(() => _game = QuizGame(questions));
+    } on FormatException {
+      _showError(
+        'Las preguntas recibidas no son válidas. Pulsa 🎲 para generar otras.',
+      );
+    } on StateError {
+      _showError(
+        'No se ha configurado la generación de preguntas. Consulta las instrucciones de ejecución de Quiz10.',
+      );
+    } on TimeoutException {
+      _showError(
+        'La generación ha tardado demasiado. Pulsa 🎲 para volver a intentarlo.',
+      );
+    } catch (_) {
+      _showError(
+        'No se han podido generar las preguntas. Pulsa 🎲 para volver a intentarlo.',
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) setState(() => _error = message);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final game = _game;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Quiz10')),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_loading) ...[
+                    const Center(child: CircularProgressIndicator()),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Generando tus diez preguntas…',
+                      textAlign: TextAlign.center,
+                    ),
+                  ] else if (game == null || game.finished) ...[
+                    Text(
+                      game == null
+                          ? 'Diez áreas. Diez preguntas.'
+                          : 'Partida completada',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      game == null
+                          ? 'Pon a prueba tu cultura general, de fácil a muy difícil.'
+                          : 'Resultado: ${game.score} / 10 aciertos',
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
+                      Text(_error!),
+                    ],
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: _start,
+                      child: Text(
+                        game == null ? '🎲 Jugar' : '🎲 Otra partida',
+                      ),
+                    ),
+                  ] else ...[
+                    Text('Pregunta ${game.questionNumber} de 10'),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: game.progress,
+                      semanticsLabel:
+                          'Preguntas respondidas: ${game.answeredCount} de 10',
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Aciertos: ${game.score}'),
+                    const SizedBox(height: 24),
+                    Text(
+                      '${game.current.slot.area} · ${game.current.slot.difficulty}',
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      game.current.text,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    for (var i = 0; i < game.current.options.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: OutlinedButton(
+                          key: ValueKey('option-$i'),
+                          onPressed: game.answered
+                              ? null
+                              : () => setState(() => game.answer(i)),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${game.selectedIndex == i ? '● ' : ''}${game.current.options[i]}',
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (game.answered) ...[
+                      Text(
+                        game.isCorrect
+                            ? '¡Correcto!'
+                            : 'Respuesta correcta: ${game.current.correct}',
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () => setState(game.next),
+                        child: Text(
+                          game.questionNumber == 10
+                              ? 'Ver resultado'
+                              : 'Siguiente',
+                        ),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
