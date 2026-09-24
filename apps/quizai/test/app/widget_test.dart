@@ -39,20 +39,30 @@ void main() {
       expect(find.text('QuizAI'), findsOneWidget);
       expect(find.text('Quiz10'), findsNothing);
       final titles = ['🎲 Quiz10', '🏆 Sala', '⚔️ 1vs1', '📚 Estudio'];
-      var previousY = 0.0;
+      final positions = titles
+          .map((title) => tester.getTopLeft(find.text(title)).dy)
+          .toList();
+
+      for (var i = 1; i < positions.length; i++) {
+        expect(positions[i], greaterThan(positions[i - 1]));
+      }
+
       for (final title in titles) {
         final entry = find.text(title);
+        expect(entry, findsOneWidget);
+        await tester.ensureVisible(entry);
+        await tester.pumpAndSettle();
         expect(entry.hitTestable(), findsOneWidget);
-        final y = tester.getTopLeft(entry).dy;
-        expect(y, greaterThan(previousY));
-        previousY = y;
       }
+
       expect(find.text('No disponible'), findsNWidgets(3));
       for (final title in titles.skip(1)) {
         final tile = tester.widget<ListTile>(
           find.ancestor(of: find.text(title), matching: find.byType(ListTile)),
         );
         expect(tile.enabled, false);
+        await tester.ensureVisible(find.text(title));
+        await tester.pumpAndSettle();
         await tester.tap(find.text(title));
         await tester.pumpAndSettle();
         expect(find.text('QuizAI'), findsOneWidget);

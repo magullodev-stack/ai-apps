@@ -4,6 +4,28 @@ Aplicación con la modalidad estándar 🎲 Quiz10: diez preguntas de cultura ge
 
 En la modalidad 🎲 se eligen diez áreas distintas y las preguntas siguen esta progresión: cuatro fáciles, tres moderadas, dos difíciles y una muy difícil. Cada pregunta tiene cuatro opciones; cada acierto suma un punto. Al finalizar se muestra el resultado sobre diez.
 
+## Identidad visual de QuizAI
+
+La pantalla principal utiliza una identidad propia de videojuego móvil:
+fondo morado degradado, cabecera destacada, tarjetas de colores, bordes
+redondeados, sombras y navegación inferior integrada.
+
+Quiz10 es la modalidad protagonista y conserva su acceso directo a la
+partida existente. Sala, 1vs1 y Estudio mantienen su estado no disponible.
+
+Los indicadores de puntos, racha y ranking muestran un guion hasta que
+existan los sistemas responsables de proporcionar sus datos reales.
+
+La interfaz está preparada para incorporar ilustraciones propias de QuizAI.
+Su ausencia no impide utilizar la navegación ni iniciar Quiz10.
+
+Los colores pertenecen a `lib/app/app_theme.dart`. La estructura general
+y la navegación pertenecen a `lib/app/app_shell.dart`. Las tarjetas y la
+pantalla de modalidades pertenecen a `lib/app/home/`.
+
+El diseño se adapta al ancho disponible y permite desplazamiento vertical
+cuando la altura del dispositivo no permite mostrar todas las modalidades.
+
 ## Navegación
 
 La cabecera muestra **QuizAI** y el acceso a **Configuración**. La barra inferior fija alterna entre **Modalidades** y **Perfil**. Modalidades muestra directamente, en este orden, **🎲 Quiz10**, **🏆 Sala**, **⚔️ 1vs1** y **📚 Estudio**. Solo Quiz10 está disponible: al pulsarlo comienza la generación de la partida existente; la flecha de regreso vuelve a la pantalla principal. Salir de la modalidad descarta su partida en memoria.
