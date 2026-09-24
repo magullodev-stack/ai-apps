@@ -80,7 +80,7 @@ void main() {
     expect(theme.textTheme.labelLarge?.fontWeight, FontWeight.w800);
 
     // El logotipo y la navegación continúan disponibles.
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(Image), findsNWidgets(5));
     expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
   });
 
@@ -94,8 +94,7 @@ void main() {
         'QuizAI',
       );
       expect(find.text('QuizAI'), findsOneWidget);
-      expect(find.text('Quiz10'), findsNothing);
-      final titles = ['🎲 Quiz10', '🏆 Sala', '⚔️ 1vs1', '📚 Estudio'];
+      final titles = ['Quiz10', 'Sala', '1vs1', 'Estudio'];
       final positions = titles
           .map((title) => tester.getTopLeft(find.text(title)).dy)
           .toList();
@@ -114,10 +113,11 @@ void main() {
 
       expect(find.text('No disponible'), findsNWidgets(3));
       for (final title in titles.skip(1)) {
-        final tile = tester.widget<ListTile>(
-          find.ancestor(of: find.text(title), matching: find.byType(ListTile)),
+        final card = find.ancestor(
+          of: find.text(title),
+          matching: find.byType(InkWell),
         );
-        expect(tile.enabled, false);
+        expect(tester.widget<InkWell>(card.first).onTap, isNull);
         await tester.ensureVisible(find.text(title));
         await tester.pumpAndSettle();
         await tester.tap(find.text(title));
@@ -137,7 +137,7 @@ void main() {
       );
       await tester.tap(find.byIcon(Icons.person_outline));
       await tester.pumpAndSettle();
-      expect(find.text('🎲 Quiz10'), findsNothing);
+      expect(find.text('Quiz10'), findsNothing);
       expect(find.text('Perfil'), findsNWidgets(2));
       expect(find.text('Todavía no disponible.'), findsOneWidget);
       expect(find.text('QuizAI'), findsOneWidget);
@@ -147,7 +147,7 @@ void main() {
       );
       await tester.tap(find.byIcon(Icons.grid_view_outlined));
       await tester.pumpAndSettle();
-      expect(find.text('🎲 Quiz10'), findsOneWidget);
+      expect(find.text('Quiz10'), findsOneWidget);
       expect(find.text('Todavía no disponible.'), findsNothing);
       expect(find.text('No disponible'), findsNWidgets(3));
     },
@@ -186,7 +186,7 @@ void main() {
     (tester) async {
       final generator = FakeGenerator();
       await tester.pumpWidget(QuizAIApp(generator: generator));
-      await tester.tap(find.text('🎲 Quiz10'));
+      await tester.tap(find.text('Quiz10'));
       await tester.pumpAndSettle();
       expect(generator.calls, 1);
       expect(find.text('Pregunta 1 de 10'), findsOneWidget);
@@ -207,7 +207,7 @@ void main() {
       ..pending = Completer<List<QuizQuestion>>();
     await tester.pumpWidget(QuizAIApp(generator: generator));
     expect(generator.calls, 0);
-    await tester.tap(find.text('🎲 Quiz10'));
+    await tester.tap(find.text('Quiz10'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Generando tus diez preguntas…'), findsOneWidget);
@@ -267,7 +267,7 @@ void main() {
       (tester) async {
         final generator = FakeGenerator()..failure = failure;
         await tester.pumpWidget(QuizAIApp(generator: generator));
-        await tester.tap(find.text('🎲 Quiz10'));
+        await tester.tap(find.text('Quiz10'));
         await tester.pumpAndSettle();
         expect(find.byType(OutlinedButton), findsNothing);
         expect(find.text('Pregunta 1 de 10'), findsNothing);
@@ -297,7 +297,7 @@ void main() {
       final generator = FakeGenerator()
         ..pending = Completer<List<QuizQuestion>>();
       await tester.pumpWidget(QuizAIApp(generator: generator));
-      await tester.tap(find.text('🎲 Quiz10'));
+      await tester.tap(find.text('Quiz10'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(generator.calls, 1);
@@ -309,4 +309,47 @@ void main() {
       expect(find.text('QuizAI'), findsOneWidget);
     },
   );
+  testWidgets('Las cuatro tarjetas caben completas en la pantalla principal', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(329, 752);
+    tester.view.devicePixelRatio = 1;
+
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const QuizAIApp());
+    await tester.pumpAndSettle();
+
+    final hero = find.byKey(const Key('quizai-hero'));
+    final sala = find.byKey(const Key('quizai-card-sala'));
+    final versus = find.byKey(const Key('quizai-card-1vs1'));
+    final estudio = find.byKey(const Key('quizai-card-estudio'));
+    final nav = find.byKey(const Key('quizai-bottom-nav'));
+
+    expect(hero, findsOneWidget);
+    expect(sala, findsOneWidget);
+    expect(versus, findsOneWidget);
+    expect(estudio, findsOneWidget);
+
+    expect(
+      tester.getSize(hero).height,
+      greaterThan(tester.getSize(sala).height),
+    );
+
+    expect(tester.getSize(sala).height, tester.getSize(versus).height);
+
+    expect(tester.getSize(versus).height, tester.getSize(estudio).height);
+
+    expect(
+      tester.getBottomRight(estudio).dy,
+      lessThanOrEqualTo(tester.getTopLeft(nav).dy),
+    );
+
+    for (final id in ['quiz10', 'sala', '1vs1', 'estudio']) {
+      expect(find.byKey(Key('quizai-image-$id')), findsOneWidget);
+    }
+
+    expect(tester.takeException(), isNull);
+  });
 }

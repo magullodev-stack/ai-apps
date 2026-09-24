@@ -18,292 +18,217 @@ class ModalidadesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 640),
-        child: SingleChildScrollView(
-          key: const Key('quizai-home-scroll'),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _StatisticsRow(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const baseHeroHeight = 202.0;
+        const baseCardHeight = 88.0;
+        const baseGap = 8.0;
 
-              const SizedBox(height: 16),
+        const verticalPadding = 16.0;
 
-              _Quiz10Hero(onTap: () => _openQuiz10(context)),
+        const totalBaseHeight =
+            baseHeroHeight + (baseCardHeight * 3) + (baseGap * 3);
 
-              const SizedBox(height: 16),
+        final availableHeight = constraints.maxHeight - verticalPadding;
 
-              const ModalidadCard(
-                title: '🏆 Sala',
-                subtitle: 'Juega con amigos',
-                icon: Icons.groups_rounded,
-                colors: [QuizPalette.salaStart, QuizPalette.salaEnd],
-              ),
+        // Mantener Quiz10 proporcionalmente más grande.
+        // En pantallas pequeñas se reduce todo el conjunto.
+        // Si la pantalla es demasiado baja, se conserva un
+        // tamaño mínimo legible y el desplazamiento queda
+        // disponible únicamente como alternativa.
+        final scale = (availableHeight / totalBaseHeight)
+            .clamp(0.84, 1.0)
+            .toDouble();
 
-              const ModalidadCard(
-                title: '⚔️ 1vs1',
-                subtitle: 'Reta a otro jugador',
-                icon: Icons.bolt_rounded,
-                colors: [QuizPalette.versusStart, QuizPalette.versusEnd],
-              ),
+        final heroHeight = baseHeroHeight * scale;
+        final cardHeight = baseCardHeight * scale;
+        final gap = baseGap * scale;
 
-              const ModalidadCard(
-                title: '📚 Estudio',
-                subtitle: 'Aprende a tu ritmo',
-                icon: Icons.school_rounded,
-                colors: [QuizPalette.estudioStart, QuizPalette.estudioEnd],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ------------------------------------------------------------
-// ESTADÍSTICAS
-// ------------------------------------------------------------
-
-/// Los indicadores permanecen sin datos hasta que exista
-/// un sistema de estadísticas reales del jugador.
-class _StatisticsRow extends StatelessWidget {
-  const _StatisticsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(
-          child: _StatisticCard(label: 'Puntos', icon: Icons.diamond_outlined),
-        ),
-        SizedBox(width: 8),
-        Expanded(
-          child: _StatisticCard(
-            label: 'Racha',
-            icon: Icons.local_fire_department_outlined,
-          ),
-        ),
-        SizedBox(width: 8),
-        Expanded(
-          child: _StatisticCard(
-            label: 'Ranking',
-            icon: Icons.emoji_events_outlined,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatisticCard extends StatelessWidget {
-  const _StatisticCard({required this.label, required this.icon});
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(28),
-        borderRadius: BorderRadius.circular(23),
-        border: Border.all(color: Colors.white.withAlpha(65)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: const Color(0xFFFFD76C), size: 25),
-          const SizedBox(width: 5),
-
-          Flexible(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '—',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              key: const Key('quizai-home-scroll'),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Quiz10Hero(
+                    height: heroHeight,
+                    onTap: () => _openQuiz10(context),
                   ),
-                ),
 
-                const SizedBox(height: 4),
+                  SizedBox(height: gap),
 
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: QuizPalette.foregroundMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  ModalidadCard(
+                    id: 'sala',
+                    title: 'Sala',
+                    subtitle: 'Juega con amigos',
+                    imagePath: 'assets/modalidades/sala.png',
+                    height: cardHeight,
                   ),
-                ),
-              ],
+
+                  SizedBox(height: gap),
+
+                  ModalidadCard(
+                    id: '1vs1',
+                    title: '1vs1',
+                    subtitle: 'Reta a otro jugador',
+                    imagePath: 'assets/modalidades/1vs1.png',
+                    height: cardHeight,
+                  ),
+
+                  SizedBox(height: gap),
+
+                  ModalidadCard(
+                    id: 'estudio',
+                    title: 'Estudio',
+                    subtitle: 'Aprende a tu ritmo',
+                    imagePath: 'assets/modalidades/estudio.png',
+                    height: cardHeight,
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// ------------------------------------------------------------
-// TARJETA PROTAGONISTA DE QUIZ10
-// ------------------------------------------------------------
-
+/// Tarjeta protagonista.
+///
+/// El fondo es el PNG rojo de Quiz10.
+/// El texto y el botón siguen siendo componentes Flutter.
+/// Toda la tarjeta conserva el acceso a la partida existente.
 class _Quiz10Hero extends StatelessWidget {
-  const _Quiz10Hero({required this.onTap});
+  const _Quiz10Hero({required this.height, required this.onTap});
 
+  final double height;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       key: const Key('quizai-hero'),
-
+      height: height,
       decoration: BoxDecoration(
-        gradient: QuizPalette.heroGradient,
-
-        borderRadius: BorderRadius.circular(30),
-
-        border: Border.all(color: Colors.white.withAlpha(235), width: 3),
-
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: Colors.white.withAlpha(235), width: 2.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB889FF).withAlpha(110),
-            blurRadius: 18,
-            spreadRadius: 1,
-          ),
-          BoxShadow(
             color: Colors.black.withAlpha(45),
-            blurRadius: 15,
-            offset: const Offset(0, 7),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(27),
-
+        borderRadius: BorderRadius.circular(23),
         child: Material(
           color: Colors.transparent,
-
           child: InkWell(
             onTap: onTap,
-
             child: Stack(
+              fit: StackFit.expand,
               children: [
-                const Positioned(
-                  right: -15,
-                  top: 30,
-                  child: Icon(
-                    Icons.help_outline_rounded,
-                    size: 175,
-                    color: Color(0x335F24CC),
-                  ),
+                Image.asset(
+                  'assets/modalidades/quiz10.png',
+                  key: const Key('quizai-image-quiz10'),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerRight,
+                  excludeFromSemantics: true,
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.all(20),
-
+                  padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 8,
+                          horizontal: 9,
+                          vertical: 4,
                         ),
-
                         decoration: BoxDecoration(
-                          color: const Color(0xFF382078),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.white.withAlpha(70)),
+                          color: const Color(0xFF8D123B).withAlpha(200),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-
                         child: const Text(
-                          '✨ Modalidad disponible',
+                          'Disponible',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
 
                       const Text(
-                        '🎲 Quiz10',
+                        'Quiz10',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 43,
+                          fontSize: 32,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: -1.5,
-                          height: 1.1,
+                          letterSpacing: -1,
+                          height: 1.05,
+                          shadows: [
+                            Shadow(color: Color(0x55000000), blurRadius: 5),
+                          ],
                         ),
                       ),
 
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
 
                       const Text(
-                        '10 preguntas, un gran reto',
+                        '10 preguntas,\nun gran reto',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                          shadows: [
+                            Shadow(color: Color(0x55000000), blurRadius: 5),
+                          ],
                         ),
                       ),
 
-                      const SizedBox(height: 30),
+                      const Spacer(),
 
                       Container(
-                        height: 56,
-
+                        height: 40,
+                        width: 154,
+                        padding: const EdgeInsets.only(left: 13, right: 4),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(32),
+                          borderRadius: BorderRadius.circular(25),
                         ),
-
-                        padding: const EdgeInsets.only(left: 22, right: 5),
-
-                        child: Row(
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'Jugar ahora',
-                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: QuizPalette.background,
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ),
-
-                            Container(
-                              width: 46,
-                              height: 46,
-
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: QuizPalette.primary,
-                              ),
-
-                              child: const Icon(
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: QuizPalette.primary,
+                              child: Icon(
                                 Icons.chevron_right_rounded,
                                 color: Colors.white,
-                                size: 32,
+                                size: 25,
                               ),
                             ),
                           ],

@@ -63,6 +63,7 @@ flutter:
 
   assets:
     - assets/branding/quizai_logo.png
+    - assets/modalidades/
     - assets/fonts/OFL.txt
 
   fonts:
