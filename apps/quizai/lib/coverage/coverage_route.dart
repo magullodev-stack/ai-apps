@@ -125,4 +125,4 @@ String coverageRouteDebugText(CoverageRoute route) => [
     '${row.distractors[0].symbol}, '
     '${row.distractors[1].symbol}, '
     '${row.distractors[2].symbol}]',
-].join('\\n');
+].join('\n');
