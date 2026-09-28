@@ -23,12 +23,13 @@ final class AlgorithmicSemanticCatalogGenerator
       'ordering':
           'Menor distancia al contexto; más relaciones contextuales distintas; '
           'QID ascendente.',
-      'limits': {'topics': 40, 'rowsPerAnchor': 4000},
+      'limits': {'topics': 40, 'rowsPerChunk': 500, 'chunksPerAnchor': 4},
       'grouping':
           'Tipos (P31) y ocupaciones (P106); primero grupos viables menores; '
           'se descartan grupos con solapamiento >= 65% del grupo menor.',
       'anchors': <Map<String, dynamic>>[],
       'invalidIdentifierRows': 0,
+      'failedChunks': 0,
       'groups': <Map<String, dynamic>>[],
       'selected': <Map<String, dynamic>>[],
     };
@@ -102,32 +103,46 @@ SELECT DISTINCT ?topic ?topicLabel ?subject ?subjectLabel WHERE {
       log?.call('Recuperando relaciones: ${anchor.label} (${anchor.id}).');
       // Each item must carry a contextual edge, independently of its class.
       // Types/occupations define facets, not arbitrary chunks of 20 items.
-      final rows = await source.query('''
+      // Retrieve bounded chunks instead of one expensive global join.
+      // A failed chunk does not discard data from other relations.
+      const relationPairs = <String>[
+        'P361 P1269', 'P2348 P921',
+        'P101 P17', 'P27 P495',
+      ];
+      final rows = <Map<String, dynamic>>[];
+      var failedChunks = 0;
+      for (final pair in relationPairs) {
+        final values = pair.split(' ').map((p) => 'wdt:$p').join(' ');
+        log?.call('  Consultando relaciones $pair de ${anchor.label}...');
+        try {
+          final chunk = await source.query('''
 SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
-  VALUES ?relation { wdt:P361 wdt:P1269 wdt:P2348 wdt:P921
-                     wdt:P101 wdt:P17 wdt:P27 wdt:P495 }
+  VALUES ?relation { $values }
   ?item ?relation wd:${anchor.id} .
   VALUES ?kind { wdt:P31 wdt:P106 }
   ?item ?kind ?group .
   FILTER(?item != wd:$root)
   FILTER(?group != wd:Q5)
   SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
-} LIMIT 4001
+} LIMIT 501
 ''');
+          rows.addAll(chunk.take(500));
+        } on Exception catch (error) {
+          failedChunks++;
+          log?.call('  Consulta $pair omitida: $error');
+        }
+      }
       (report['anchors'] as List).add({
         'id': anchor.id,
         'label': anchor.label,
         'distance': anchor.distance,
-        'rows': math.min(rows.length, 4000),
-        'truncated': rows.length > 4000,
+        'rows': rows.length,
+        'failedChunks': failedChunks,
       });
-      if (rows.length > 4000) {
-        log?.call(
-          'Límite de 4000 filas alcanzado para ${anchor.label}; '
-          'la selección utiliza una muestra acotada.',
-        );
-      }
-      for (final row in rows.take(4000)) {
+      report['failedChunks'] =
+          (report['failedChunks'] as int? ?? 0) + failedChunks;
+      log?.call('  ${anchor.label}: ${rows.length} filas recuperadas.');
+      for (final row in rows) {
         // Wikidata can return non-item subjects or malformed identifiers.
         // Skip those individual bindings instead of aborting the catalog.
         final itemId = _value(row, 'item').split('/').last;
