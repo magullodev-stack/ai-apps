@@ -6,7 +6,7 @@ param(
     [string]$FactualModel = 'gpt-5.6-terra',
     [switch]$VerifyOnly,
     [switch]$Pivots,
-    [string]$PivotModel = 'gpt-5.6-terra',
+    [string]$PivotModel = 'gpt-5.6-luna',
     [switch]$StopService
 )
 $ErrorActionPreference = 'Stop'
