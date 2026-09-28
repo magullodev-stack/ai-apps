@@ -213,7 +213,7 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
         namedCandidates.length - spanishLabels.length;
 
     final selectedGroups = <_Group>[];
-    final usedAxes = <String>{};
+    final selectedAxisFields = <Set<String>>[];
     final pivotNames = <String>{};
     final pivots = <Map<String, dynamic>>[];
     final partialAxes = report['partialAxes'] as List;
@@ -284,13 +284,13 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
           return cmp != 0 ? cmp : a.property.compareTo(b.property);
         });
 
-      // No suffix with the pivot name. An axis already selected by another
-      // pivot does not become "distinct" merely because its suffix changes.
+      // No pivot suffix. Axes are unique inside each pivot, while an axis
+      // may recur in a different thematic field with different evidence.
       final chosen = <_SemanticAxis>[];
       final localNames = <String>{};
       for (final axis in ranked) {
         final name = _normalize(axis.name);
-        if (usedAxes.contains(name) || !localNames.add(name)) continue;
+        if (!localNames.add(name)) continue;
         chosen.add(axis);
         if (chosen.length == 20) break;
       }
@@ -302,10 +302,18 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
         'availableAfterDeduplication': chosen.length,
       });
       if (chosen.isEmpty) continue;
+      final field = chosen.map((axis) => _normalize(axis.name)).toSet();
+      if (selectedAxisFields.any((existing) =>
+          existing.intersection(field).length /
+              math.min(existing.length, field.length) >=
+          0.85)) {
+        // A near-identical field is not another local exploration pivot.
+        continue;
+      }
 
       selectedGroups.add(group);
+      selectedAxisFields.add(field);
       pivotNames.add(_normalize(pivotName));
-      usedAxes.addAll(chosen.map((axis) => _normalize(axis.name)));
       observedAxes += chosen.length;
       partialAxes.add({
         'name': pivotName,
