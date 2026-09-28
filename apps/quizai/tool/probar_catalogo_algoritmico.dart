@@ -45,9 +45,13 @@ Future<void> main() async {
       .writeAsString('${encoder.convert(report)}\n');
   final pivots =
       data?['pivots'] as List? ??
+      report['partialAxes'] as List? ??
       (report['partialCatalog'] as Map?)?['pivots'] as List? ??
       [];
-  final lines = <String>['CATÁLOGO: $context', ''];
+  final title = catalog == null
+      ? 'EJES PARCIALES (CATÁLOGO NO VALIDADO): $context'
+      : 'CATÁLOGO: $context';
+  final lines = <String>[title, ''];
   for (var i = 0; i < pivots.length; i++) {
     final pivot = pivots[i] as Map;
     lines.add('P${(i + 1).toString().padLeft(2, '0')} — ${pivot['name']}');
