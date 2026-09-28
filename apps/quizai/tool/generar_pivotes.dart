@@ -128,6 +128,10 @@ P^*=
 \right]
 \]
 
+\[
+\forall P_i:\quad \operatorname{Palabras}(P_i)\leq 3
+\]
+
 Devuelve exclusivamente los diez nombres de los pivotes en el orden seleccionado.
 CONTEXTO [C]: ''' + context;
 
