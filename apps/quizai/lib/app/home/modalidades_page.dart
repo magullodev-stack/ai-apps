@@ -4,6 +4,7 @@ import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/quiz_generation.dart';
 import '../../modes/quiz10/quiz_page.dart';
 import '../app_theme.dart';
+import '../generation_dependencies.dart';
 import 'modalidad_card.dart';
 
 class ModalidadesPage extends StatelessWidget {
@@ -15,6 +16,22 @@ class ModalidadesPage extends StatelessWidget {
     Navigator.of(context).push<void>(
       MaterialPageRoute(builder: (_) => QuizPage(generator: generator)),
     );
+  }
+
+  Future<void> _openEstudio(BuildContext context) async {
+    final dependencies = QuizAiGenerationDependencies();
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => EstudioPage(
+            generator: dependencies.catalogGenerator,
+            questionGenerator: dependencies.questionGenerator,
+          ),
+        ),
+      );
+    } finally {
+      dependencies.close();
+    }
   }
 
   @override
@@ -84,9 +101,7 @@ class ModalidadesPage extends StatelessWidget {
               subtitle: 'Aprende a tu ritmo',
               imagePath: 'assets/modalidades/estudio.png',
               height: cardHeight,
-              onTap: () => Navigator.of(context).push<void>(
-                MaterialPageRoute(builder: (_) => const EstudioPage()),
-              ),
+              onTap: () => _openEstudio(context),
             ),
           ]);
 

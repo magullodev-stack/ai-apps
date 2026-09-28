@@ -1,24 +1,23 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:flutter/material.dart';
 
 import '../../coverage/coverage_route.dart';
-import '../../semantic_catalog/ai_semantic_catalog_generator.dart';
+
 import '../../semantic_catalog/semantic_catalog.dart';
 import 'estudio_generation.dart';
 
 class EstudioPage extends StatefulWidget {
   const EstudioPage({
     super.key,
-    this.generator,
-    this.questionGenerator,
+    required this.generator,
+    required this.questionGenerator,
     this.random,
   });
 
-  final SemanticCatalogGenerator? generator;
-  final EstudioQuestionGenerator? questionGenerator;
+  final SemanticCatalogGenerator generator;
+  final EstudioQuestionGenerator questionGenerator;
   final Random? random;
 
   @override
@@ -30,7 +29,7 @@ class _EstudioPageState extends State<EstudioPage> {
   late final SemanticCatalogGenerator _generator;
   late final EstudioQuestionGenerator _questionGenerator;
   late final Random _random;
-  AiAppsClient? _client;
+
   List<EstudioQuestion>? _questions;
   List<List<String>> _options = [];
   int _index = 0;
@@ -44,44 +43,14 @@ class _EstudioPageState extends State<EstudioPage> {
   void initState() {
     super.initState();
     _random = widget.random ?? Random();
-    if (widget.generator == null || widget.questionGenerator == null) {
-      _client = AiAppsClient(
-        endpoint: Uri.parse(
-          const String.fromEnvironment(
-            'AI_APPS_AI_URL',
-            defaultValue: 'http://127.0.0.1:8787',
-          ),
-        ),
-        authorization: const String.fromEnvironment('AI_APPS_GAME_TOKEN'),
-      );
-    }
-    _generator =
-        widget.generator ??
-        AiSemanticCatalogGenerator(
-          client: _client!,
-          model: const String.fromEnvironment(
-            'AI_APPS_CATALOG_MODEL',
-            defaultValue: 'gpt-5.6-luna',
-          ),
-        );
-    _questionGenerator =
-        widget.questionGenerator ??
-        AiEstudioQuestionGenerator(
-          client: _client!,
-          model: const String.fromEnvironment(
-            'AI_APPS_TERRA_MODEL',
-            defaultValue: String.fromEnvironment(
-              'AI_APPS_FACTUAL_MODEL',
-              defaultValue: 'gpt-5.6-terra',
-            ),
-          ),
-        );
+    _generator = widget.generator;
+    _questionGenerator = widget.questionGenerator;
   }
 
   @override
   void dispose() {
     _contextController.dispose();
-    _client?.close();
+
     super.dispose();
   }
 
