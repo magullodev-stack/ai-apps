@@ -50,7 +50,7 @@ Future<void> main() async {
       }
       final overlap = words.where((w) => text.contains(w)).length;
       candidate.score += overlap * 3;
-      if (RegExp(r'\d{3,}|\\([^)]*\\)').hasMatch(candidate.name)) {
+      if (RegExp(r'\d{3,}|\([^)]*\)').hasMatch(candidate.name)) {
         candidate.score -= 25;
       }
       if (candidate.name.length > 65) candidate.score -= 25;
@@ -127,7 +127,7 @@ String _norm(String s) => s
 bool _irrelevant(String s) {
   final text = _norm(s);
   if (text.length < 4 || text.length > 90) return true;
-  if (RegExp(r'^\\d|^anexo:|^categoría:|^archivo:').hasMatch(text)) return true;
+  if (RegExp(r'^\d|^anexo:|^categoría:|^archivo:').hasMatch(text)) return true;
   return const {
     'referencias',
     'bibliografía',
@@ -219,8 +219,8 @@ Future<List<String>> _links(HttpClient client, String title) async {
     for (final row in rows)
       if (row is Map &&
           row['ns'] == 0 &&
-          row['exists'] != null &&
-          row['*'] is String)
-        row['*'] as String,
+          (row['exists'] == true || row['exists'] == '') &&
+          (row['title'] is String || row['*'] is String))
+        (row['title'] ?? row['*']) as String,
   ];
 }
