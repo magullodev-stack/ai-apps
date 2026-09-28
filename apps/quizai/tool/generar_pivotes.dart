@@ -66,6 +66,110 @@ Future<void> main(List<String> args) async {
     for (var i = 0; i < pivots.length; i++) {
       stdout.writeln('P' + (i + 1).toString().padLeft(2, '0') + ' ' + pivots[i].toString());
     }
+    final usage = result.usage;
+    final inputTokens = usage?['inputTokens'];
+    final outputTokens = usage?['outputTokens'];
+    stdout.writeln('Tokens de entrada: ${inputTokens is int ? inputTokens : 'no disponibles'}');
+    stdout.writeln('Tokens de salida: ${outputTokens is int ? outputTokens : 'no disponibles'}');
+    final inputRate = double.tryParse(
+      Platform.environment['AI_APPS_INPUT_USD_PER_MILLION'] ?? '',
+    );
+    final outputRate = double.tryParse(
+      Platform.environment['AI_APPS_OUTPUT_USD_PER_MILLION'] ?? '',
+    );
+    if (inputTokens is int &&
+        outputTokens is int &&
+        inputRate != null &&
+        outputRate != null &&
+        inputRate >= 0 &&
+        outputRate >= 0) {
+      final price = (inputTokens * inputRate + outputTokens * outputRate) / 1000000;
+      stdout.writeln('Precio estimado: \
+  } catch (error) {
+    stderr.writeln('ERROR: ' + error.toString());
+    exitCode = 1;
+  } finally {
+    client.close();
+  }
+}
+
+String _prompt(String context) => r'''# PROMPT — Generador de Pivotes
+
+Dado un CONTEXTO [C], genera un conjunto ordenado de 10 PIVOTES de exploración:
+
+\[
+P(C)=\{P_1,\ldots,P_{10}\}
+\]
+
+Cada pivote debe satisfacer:
+
+\[
+\begin{aligned}
+&\operatorname{Relevancia}(P_i,C)>0\\
+&\operatorname{Profundidad}(P_i,C)\geq 20\\
+&\operatorname{Especificidad}(P_i,C)>0
+\end{aligned}
+\]
+
+Sujeto a:
+
+\[
+\forall i\neq j:
+\quad P_i\neq P_j
+\quad\land\quad
+\operatorname{Solapamiento}(P_i,P_j)\approx 0
+\]
+
+\[
+P_i\notin
+\{
+\text{entidades},
+\text{nombres propios},
+\text{ejemplos},
+\text{tipos},
+\text{componentes},
+\text{datos particulares}
+\}
+\]
+
+La selección debe maximizar:
+
+\[
+P^*=
+\underset{|P|=10}{\arg\max}
+\left[
+\operatorname{Cobertura}(P,C)
++
+\operatorname{Diversidad}(P)
++
+\operatorname{Profundidad}(P,C)
+\right]
+\]
+
+\[
+\forall P_i:\quad \operatorname{Palabras}(P_i)\leq 3
+\]
+
+Devuelve exclusivamente los diez nombres de los pivotes en el orden seleccionado.
+CONTEXTO [C]: ''' + context;
+
+Map<String, Object?> _schema() => {
+  'type': 'object',
+  'additionalProperties': false,
+  'required': ['context', 'pivots'],
+  'properties': {
+    'context': {'type': 'string'},
+    'pivots': {
+      'type': 'array',
+      'items': {'type': 'string'},
+    },
+  },
+};
+ + price.toStringAsFixed(6) + ' USD');
+    } else {
+      stdout.writeln('Precio: no disponible (faltan tarifas verificadas para ' +
+          model + ').');
+    }
     stdout.writeln('Tiempo: ' + watch.elapsedMilliseconds.toString() + ' ms');
   } catch (error) {
     stderr.writeln('ERROR: ' + error.toString());
