@@ -8,7 +8,7 @@ Future<void> main() async {
   stdout.write('Contexto: ');
   final context = stdin.readLineSync(encoding: utf8) ?? '';
   final timer = Stopwatch()..start();
-  final generator = AlgorithmicSemanticCatalogGenerator(log: stdout.writeln);
+  final generator = AlgorithmicSemanticCatalogGenerator();
   SemanticCatalog? catalog;
   String? problem;
   try {
@@ -47,16 +47,24 @@ Future<void> main() async {
       data?['pivots'] as List? ??
       (report['partialCatalog'] as Map?)?['pivots'] as List? ??
       [];
+  final lines = <String>['CATÁLOGO: $context', ''];
   for (var i = 0; i < pivots.length; i++) {
     final pivot = pivots[i] as Map;
-    stdout.writeln('\nP${(i + 1).toString().padLeft(2, '0')} ${pivot['name']}');
+    lines.add('P${(i + 1).toString().padLeft(2, '0')} — ${pivot['name']}');
     final attractors = pivot['attractors'] as List;
     for (var j = 0; j < attractors.length; j++) {
-      stdout.writeln(
-        '  A${(j + 1).toString().padLeft(2, '0')}: ${attractors[j]}',
+      lines.add(
+        '    A${(j + 1).toString().padLeft(2, '0')} — ${attractors[j]}',
       );
     }
+    lines.add('');
   }
+  final readable = lines.join('\\n');
+  stdout.write(readable);
+  final readableOutput = File(
+    '${root.path}/.ai-apps/catalogo_algoritmico.salida.txt',
+  );
+  await readableOutput.writeAsString(readable, encoding: utf8);
   stdout.writeln(
     '\nTiempo total de generación: ${(timer.elapsedMilliseconds / 1000).toStringAsFixed(3)} s',
   );
@@ -69,5 +77,6 @@ Future<void> main() async {
         ? 'Catálogo validado con SemanticCatalog.'
         : 'ERROR: $problem',
   );
-  stdout.writeln('Resultado: ${output.path}');
+  stdout.writeln('Resultado JSON: ${output.path}');
+  stdout.writeln('Lista ordenada: ${readableOutput.path}');
 }
