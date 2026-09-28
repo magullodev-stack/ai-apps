@@ -22,7 +22,7 @@ final class AlgorithmicSemanticCatalogGenerator
       'status': 'incomplete',
       'ordering':
           'Menor distancia al contexto; más relaciones contextuales distintas; '
-          'más sitelinks (desempate de notoriedad); QID ascendente.',
+          'QID ascendente.',
       'limits': {'topics': 40, 'rowsPerAnchor': 4000},
       'grouping':
           'Tipos (P31) y ocupaciones (P106); primero grupos viables menores; '
@@ -62,6 +62,7 @@ final class AlgorithmicSemanticCatalogGenerator
 
     // Descend only: no parent-class expansion into unrelated subject areas.
     // P1269 links a history/aspect to its actual subject, e.g. a civilization.
+    log?.call('Recuperando ámbitos del contexto...');
     final topics = await source.query('''
 SELECT DISTINCT ?topic ?topicLabel ?subject ?subjectLabel WHERE {
   wd:$root (^wdt:P279|^wdt:P361|^wdt:P1269)? ?topic .
@@ -101,7 +102,7 @@ SELECT DISTINCT ?topic ?topicLabel ?subject ?subjectLabel WHERE {
       // Each item must carry a contextual edge, independently of its class.
       // Types/occupations define facets, not arbitrary chunks of 20 items.
       final rows = await source.query('''
-SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind ?links WHERE {
+SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
   VALUES ?relation { wdt:P361 wdt:P1269 wdt:P2348 wdt:P921
                      wdt:P101 wdt:P17 wdt:P27 wdt:P495 }
   ?item ?relation wd:${anchor.id} .
@@ -109,9 +110,8 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind ?links WHERE
   ?item ?kind ?group .
   FILTER(?item != wd:$root)
   FILTER(?group != wd:Q5)
-  OPTIONAL { ?item wikibase:sitelinks ?links }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
-} ORDER BY DESC(?links) ?item ?group ?relation LIMIT 4001
+} LIMIT 4001
 ''');
       (report['anchors'] as List).add({
         'id': anchor.id,
@@ -123,7 +123,7 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind ?links WHERE
       if (rows.length > 4000) {
         log?.call(
           'Límite de 4000 filas alcanzado para ${anchor.label}; '
-          'la selección utiliza una muestra ordenada por sitelinks.',
+          'la selección utiliza una muestra acotada.',
         );
       }
       for (final row in rows.take(4000)) {
