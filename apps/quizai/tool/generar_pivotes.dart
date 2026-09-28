@@ -154,7 +154,6 @@ Cada pivote debe satisfacer:
 \[
 \begin{aligned}
 &\operatorname{Relevancia}(P_i,C)>0\\
-&\operatorname{Profundidad}(P_i,C)\geq 20\\
 &\operatorname{Especificidad}(P_i,C)>0
 \end{aligned}
 \]
