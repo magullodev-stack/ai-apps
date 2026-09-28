@@ -71,18 +71,9 @@ Future<void> main(List<String> args) async {
     final outputTokens = usage?['outputTokens'];
     stdout.writeln('Tokens de entrada: ${inputTokens is int ? inputTokens : 'no disponibles'}');
     stdout.writeln('Tokens de salida: ${outputTokens is int ? outputTokens : 'no disponibles'}');
-    // Tarifas USD por millón de tokens, facilitadas para GPT-5.6 Terra.
-    // Los demás modelos pueden configurarse mediante variables de entorno.
-    final inputRate = model.toLowerCase() == 'gpt-5.6-terra'
-        ? 2.0
-        : double.tryParse(
-            Platform.environment['AI_APPS_INPUT_USD_PER_MILLION'] ?? '',
-          );
-    final outputRate = model.toLowerCase() == 'gpt-5.6-terra'
-        ? 12.0
-        : double.tryParse(
-            Platform.environment['AI_APPS_OUTPUT_USD_PER_MILLION'] ?? '',
-          );
+    final rates = _modelRates[model.toLowerCase()];
+    final inputRate = rates?.inputUsdPerMillion;
+    final outputRate = rates?.outputUsdPerMillion;
     if (inputTokens is int &&
         outputTokens is int &&
         inputRate != null &&
@@ -103,6 +94,15 @@ Future<void> main(List<String> args) async {
     client.close();
   }
 }
+
+// Tarifas USD por millón de tokens facilitadas por el usuario.
+// Añadir nuevos modelos aquí cuando se conozcan sus tarifas.
+typedef _ModelRates = ({double inputUsdPerMillion, double outputUsdPerMillion});
+
+const Map<String, _ModelRates> _modelRates = {
+  'gpt-5.6-terra': (inputUsdPerMillion: 2.0, outputUsdPerMillion: 12.0),
+  'gpt-5.6-luna': (inputUsdPerMillion: 0.20, outputUsdPerMillion: 1.20),
+};
 
 String _prompt(String context) => r'''# PROMPT — Generador de Pivotes
 
