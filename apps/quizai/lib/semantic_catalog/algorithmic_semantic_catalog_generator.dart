@@ -28,6 +28,7 @@ final class AlgorithmicSemanticCatalogGenerator
           'Tipos (P31) y ocupaciones (P106); primero grupos viables menores; '
           'se descartan grupos con solapamiento >= 65% del grupo menor.',
       'anchors': <Map<String, dynamic>>[],
+      'invalidIdentifierRows': 0,
       'groups': <Map<String, dynamic>>[],
       'selected': <Map<String, dynamic>>[],
     };
@@ -127,7 +128,16 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
         );
       }
       for (final row in rows.take(4000)) {
-        final id = _id(row, 'item'), groupId = _id(row, 'group');
+        // Wikidata can return non-item subjects or malformed identifiers.
+        // Skip those individual bindings instead of aborting the catalog.
+        final itemId = _value(row, 'item').split('/').last;
+        final groupIdValue = _value(row, 'group').split('/').last;
+        if (!_isQid(itemId) || !_isQid(groupIdValue)) {
+          report['invalidIdentifierRows'] =
+              (report['invalidIdentifierRows'] as int? ?? 0) + 1;
+          continue;
+        }
+        final id = itemId, groupId = groupIdValue;
         final label = _value(row, 'itemLabel');
         final groupLabel = _value(row, 'groupLabel');
         if (!_hasLabel(label, id) || !_hasLabel(groupLabel, groupId)) continue;
@@ -279,6 +289,14 @@ String _value(Map<String, dynamic> row, String key) =>
     (row[key] as Map?)?['value'] as String? ?? '';
 String _id(Map<String, dynamic> row, String key) =>
     _qid(_value(row, key).split('/').last);
+bool _isQid(String value) => RegExp(r'^Q[1-9][0-9]*
+  if (!RegExp(r'^Q[1-9][0-9]*$').hasMatch(value)) {
+    throw const FormatException('QID de Wikidata inválido.');
+  }
+  return value;
+}
+).hasMatch(value);
+
 String _qid(String value) {
   if (!RegExp(r'^Q[1-9][0-9]*$').hasMatch(value)) {
     throw const FormatException('QID de Wikidata inválido.');
