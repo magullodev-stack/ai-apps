@@ -229,14 +229,22 @@ Map<String, Object?> _schema() => {
 };
 
 
-String _terraPrompt(String route) => '''Genera exactamente 10 registros factuales, uno por cada fila de la Ruta de Cobertura, conservando su orden.
-Respeta literalmente el pivote, la dimensión factual, su definición, el rol interrogativo y su definición, y la competitividad de cada distractor.
-No existe atractor en esta prueba. SOPORTE significa FUENTES.
-Genera los hechos a partir de tu conocimiento interno, sin consultar fuentes, herramientas ni recursos externos. Identifica para cada hecho una fuente concreta (obra, publicación, documento, registro o estudio). La referencia es propuesta desde memoria y no está verificada externamente.
-Cada HECHO debe contener una única afirmación factual que satisfaga simultáneamente el pivote y la dimensión.
-Formula una PREGUNTA de 5 a 20 palabras, construida con los elementos factuales discriminativos de FUENTES y HECHO; el elemento interrogado debe corresponder al rol asignado, sin revelar la respuesta.
-La RESPUESTA debe tener entre 1 y 8 palabras.
-## Distractores
+String _terraPrompt(String route) => '''Genera exactamente 10 registros, uno por cada fila de la Ruta de Cobertura, conservando su orden.
+Cada registro debe respetar el pivote, la dimensión factual y su definición, el rol interrogativo y su definición, y la competitividad asignada a cada distractor.
+
+Devuelve los diez registros en el campo "records" como texto Markdown, con este formato:
+
+## [n] — [Pxx Nombre del pivote] · [Ixx/Mxx/Exx Nombre de la dimensión] · [Jx Nombre del rol] · [D1, D2, D3]
+
+- **FUENTES:** [Identifica una fuente concreta para el HECHO, como una obra, publicación, documento, registro o estudio. Genera desde el conocimiento interno, sin consultar fuentes, herramientas ni recursos externos. La referencia no está verificada externamente.]
+- **HECHO:** [Una única afirmación factual que satisfaga simultáneamente el pivote y la dimensión.]
+- **PREGUNTA:** [Formula en 5-20 palabras una pregunta construida con los elementos factuales discriminativos del HECHO, cuyo elemento interrogado corresponda al rol asignado, sin revelar la respuesta.]
+- **RESPUESTA:** [Responde en 1-8 palabras.]
+
+### DISTRACTORES
+1. **[D1]:** ...
+2. **[D2]:** ...
+3. **[D3]:** ...
 
 La competitividad indica la proximidad de cada distractor respecto de la respuesta correcta dada la pregunta formulada:
 
@@ -244,30 +252,7 @@ La competitividad indica la proximidad de cada distractor respecto de la respues
 - **+:** próximo pero incorrecto por una diferencia relevante.
 - **++:** comparte categoría, contexto y relación principal; la pregunta exige identificar la diferencia específica y decisiva que lo hace incorrecto.
 
----
-
-Cada distractor debe ser incorrecto por su contenido factual nuclear, no por un modificador, restricción, cuantificador, negación, condición o circunstancia añadido para fabricar su incorrección.
-Devuelve los diez registros en el campo "records" como texto Markdown, con este formato para cada uno:
-
-## [n]
-
-### CONFIGURACIÓN FACTUAL
-- **PIVOTE:** [Pxx Nombre]
-- **DIMENSIÓN:** [Ixx/Mxx/Exx Nombre (Definición dimensional literal)]
-
-### BASE FACTUAL
-- **FUENTES:** [Referencia concreta propuesta desde conocimiento interno, no verificada]
-- **HECHO:** [Una única afirmación factual]
-
-### CONFIGURACIÓN INTERROGATIVA
-- **ROL INTERROGATIVO:** [Jx Nombre (Definición del rol literal)]
-- **PREGUNTA:** [5-20 palabras]
-- **RESPUESTA:** [1-8 palabras]
-
-### DISTRACTORES
-1. **[símbolo D1]:** [distractor]
-2. **[símbolo D2]:** [distractor]
-3. **[símbolo D3]:** [distractor]
+Cada distractor debe ser incorrecto por su contenido factual nuclear, no porque se le añada un modificador, restricción, cuantificador, negación, condición o circunstancia que fabrique su incorrección.
 
 RUTA DE COBERTURA:
 $route''';
