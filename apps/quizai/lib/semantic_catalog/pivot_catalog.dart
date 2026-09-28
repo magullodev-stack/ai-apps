@@ -73,11 +73,15 @@ final class AiPivotCatalogGenerator implements PivotCatalogGenerator {
       schemaName: 'quizai_pivots',
       schema: pivotSchema(),
     ).timeout(const Duration(seconds: 90));
-    final catalog = PivotCatalog.fromJson(jsonDecode(result.text));
-    if (catalog.context != context) {
-      throw const FormatException('El catálogo ha alterado el contexto.');
+    final data = jsonDecode(result.text);
+    if (data is! Map<String, dynamic>) {
+      throw const FormatException('Respuesta de pivotes inválida.');
     }
-    return catalog;
+    // La fuente de verdad del contexto es la entrada del usuario.
+    return PivotCatalog.fromJson({
+      'context': context,
+      'pivots': data['pivots'],
+    });
   }
 }
 
