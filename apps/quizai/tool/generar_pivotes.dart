@@ -85,6 +85,14 @@ Future<void> main(List<String> args) async {
     final outputTokens = usage?['outputTokens'];
     stdout.writeln('Tokens de entrada: ${inputTokens is int ? inputTokens : 'no disponibles'}');
     stdout.writeln('Tokens de salida: ${outputTokens is int ? outputTokens : 'no disponibles'}');
+    final reasoningTokens = usage?['reasoningTokens'];
+    final cachedInputTokens = usage?['cachedInputTokens'];
+    final visibleOutputTokens = outputTokens is int && reasoningTokens is int
+        ? outputTokens - reasoningTokens
+        : null;
+    stdout.writeln('  Razonamiento interno: ${reasoningTokens is int ? reasoningTokens : 'no disponibles'}');
+    stdout.writeln('  Salida sin razonamiento: ${visibleOutputTokens != null && visibleOutputTokens >= 0 ? visibleOutputTokens : 'no disponible'}');
+    stdout.writeln('Tokens de entrada en caché: ${cachedInputTokens is int ? cachedInputTokens : 'no disponibles'}');
     final rates = _modelRates[model.toLowerCase()];
     final inputRate = rates?.inputUsdPerMillion;
     final outputRate = rates?.outputUsdPerMillion;
@@ -96,6 +104,14 @@ Future<void> main(List<String> args) async {
         outputRate >= 0) {
       final price = (inputTokens * inputRate + outputTokens * outputRate) / 1000000;
       stdout.writeln('Precio estimado (USD): ' + price.toStringAsFixed(6));
+      stdout.writeln('  Coste entrada (USD): ' + (inputTokens * inputRate / 1000000).toStringAsFixed(6));
+      if (reasoningTokens is int && visibleOutputTokens != null && visibleOutputTokens >= 0) {
+        stdout.writeln('  Coste razonamiento (USD): ' + (reasoningTokens * outputRate / 1000000).toStringAsFixed(6));
+        stdout.writeln('  Coste salida sin razonamiento (USD): ' + (visibleOutputTokens * outputRate / 1000000).toStringAsFixed(6));
+      }
+      if (cachedInputTokens is int && cachedInputTokens > 0) {
+        stdout.writeln('Aviso: el coste de entrada usa la tarifa general; no descuenta posibles tarifas de caché.');
+      }
     } else {
       stdout.writeln('Precio: no disponible (faltan tarifas verificadas para ' +
           model + ').');
