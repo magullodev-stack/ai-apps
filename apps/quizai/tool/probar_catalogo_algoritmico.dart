@@ -59,7 +59,7 @@ Future<void> main() async {
     }
     lines.add('');
   }
-  final readable = lines.join('\\n');
+  final readable = lines.join('\n');
   stdout.write(readable);
   final readableOutput = File(
     '${root.path}/.ai-apps/catalogo_algoritmico.salida.txt',
