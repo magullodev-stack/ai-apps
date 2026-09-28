@@ -151,18 +151,6 @@ Sujeto a:
 \operatorname{Solapamiento}(P_i,P_j)\approx 0
 \]
 
-\[
-P_i\notin
-\{
-\text{entidades},
-\text{nombres propios},
-\text{ejemplos},
-\text{tipos},
-\text{componentes},
-\text{datos particulares}
-\}
-\]
-
 La selección debe maximizar:
 
 \[
