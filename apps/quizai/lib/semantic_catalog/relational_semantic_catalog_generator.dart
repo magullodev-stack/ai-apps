@@ -198,23 +198,7 @@ String _qid(String id) {
 }
 String _propertyId(Map<String, dynamic> row, String name) {
   final id = _label(row, name).split('/').last;
-  if (!RegExp(r'^P[1-9][0-9]*
-    _qid(_label(row, name).split('/').last);
-
-final class _Topic {
-  const _Topic(this.id, this.name);
-  final String id;
-  final String name;
-}
-
-final class _Axis {
-  _Axis(this.name);
-  final String name;
-  final entities = <String>{};
-  final properties = <String>{};
-  final types = <String>{};
-}
-).hasMatch(id)) {
+  if (!RegExp(r'^P[1-9][0-9]*$').hasMatch(id)) {
     throw const FormatException('PID inválido.');
   }
   return id;
