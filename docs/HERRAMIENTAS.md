@@ -81,3 +81,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Falló el push.' }
 
 git rev-parse HEAD
 git status --short --branch
+
+---
+
+# COMMIT DESDE GIT A VS-CODE (GPT)
+
+git pull --ff-only origin dev
+git log -1 --oneline
