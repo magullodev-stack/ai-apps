@@ -8,7 +8,7 @@ Future<void> main() async {
   stdout.write('Contexto: ');
   final context = stdin.readLineSync(encoding: utf8) ?? '';
   final timer = Stopwatch()..start();
-  final generator = AlgorithmicSemanticCatalogGenerator();
+  final generator = AlgorithmicSemanticCatalogGenerator(log: (message) => stderr.writeln('[Wikidata] $message'));
   SemanticCatalog? catalog;
   String? problem;
   try {
