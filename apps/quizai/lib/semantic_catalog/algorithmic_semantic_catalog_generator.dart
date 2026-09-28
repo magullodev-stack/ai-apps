@@ -21,17 +21,16 @@ final class AlgorithmicSemanticCatalogGenerator
       'context': context,
       'status': 'incomplete',
       'ordering':
-          'Menor distancia al contexto; más relaciones contextuales distintas; '
-          'QID ascendente.',
+          'Afinidad local eje-pivote-contexto por evidencia y distancia de los conceptos; propiedad como desempate.',
       'limits': {'topics': 40, 'rowsPerChunk': 500, 'chunksPerAnchor': 4},
       'grouping':
-          'Tipos (P31) y ocupaciones (P106); primero grupos viables menores; '
-          'se descartan grupos con solapamiento >= 65% del grupo menor.',
+          'Núcleos contextuales tipados por P31; ejes inferidos de predicados documentados sobre sus miembros.',
       'anchors': <Map<String, dynamic>>[],
       'invalidIdentifierRows': 0,
       'failedChunks': 0,
       'groups': <Map<String, dynamic>>[],
       'selected': <Map<String, dynamic>>[],
+      'partialAxes': <Map<String, dynamic>>[],
     };
     if (context.trim().isEmpty) {
       throw ArgumentError('El contexto está vacío.');
@@ -119,7 +118,8 @@ SELECT DISTINCT ?topic ?topicLabel ?subject ?subjectLabel WHERE {
 SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
   VALUES ?relation { $values }
   ?item ?relation wd:${anchor.id} .
-  VALUES ?kind { wdt:P31 wdt:P106 }
+  ?item wdt:P31 ?group .
+  BIND(wdt:P31 AS ?kind)
   ?item ?kind ?group .
   FILTER(?item != wd:$root)
   FILTER(?group != wd:Q5)
@@ -175,77 +175,145 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
     }
     report['candidateCount'] = concepts.length;
 
-    // Prefer specific (smaller) viable facets; reject near-identical facets by
-    // overlap relative to the smaller facet. Global QID AND normalized-label uniqueness is stricter
-    // than SemanticCatalog's per-pivot validation. Greedy selection is bounded
-    // and may fail even when a larger graph could admit a complete catalog.
-    final viable = groups.values.where((g) => g.members.length >= 20).toList()
+    // A class is only an index into a local thematic neighborhood.
+    // The attractors are not class members: they are predicates actually
+    // documented on concepts belonging to that neighborhood.
+    final viable = groups.values.where((g) => g.members.length >= 10).toList()
       ..sort((a, b) {
-        final size = a.members.length.compareTo(b.members.length);
-        return size != 0 ? size : a.id.compareTo(b.id);
+        final count = b.members.length.compareTo(a.members.length);
+        return count != 0 ? count : a.id.compareTo(b.id);
       });
+
     report['groups'] = [
-      for (final g
-          in (groups.values.toList()
-            ..sort((a, b) => b.members.length.compareTo(a.members.length))))
-        {'id': g.id, 'label': g.label, 'candidates': g.members.length},
+      for (final group in viable)
+        {'id': group.id, 'name': group.label, 'members': group.members.length},
     ];
     final selectedGroups = <_Group>[];
-    final usedIds = <String>{}, usedNames = <String>{}, pivotNames = <String>{};
+    final usedAxes = <String>{};
+    final pivotNames = <String>{};
     final pivots = <Map<String, dynamic>>[];
-    for (final group in viable) {
-      if (pivotNames.contains(_normalize(group.label))) continue;
+    final diagnostics = <Map<String, dynamic>>[];
+    var totalAxes = 0;
+
+    // Bounded factual exploration: one batch of source statements per
+    // candidate neighborhood. Never use entity names as attractor labels.
+    for (final group in viable.take(24)) {
+      if (!pivotNames.add(_normalize(group.label))) continue;
       if (selectedGroups.any((other) {
         final a = group.members.keys.toSet(), b = other.members.keys.toSet();
         return a.intersection(b).length / math.min(a.length, b.length) >= 0.65;
       })) {
         continue;
       }
+
       final members = group.members.values.toList()..sort(_compareConcepts);
-      final chosen = <_Concept>[];
-      final localNames = <String>{};
-      for (final item in members) {
-        if (usedIds.contains(item.id) ||
-            usedNames.contains(_normalize(item.label))) {
-          continue;
+      final sampled = members.take(30).toList();
+      log?.call('Analizando ejes: ${group.label} (${sampled.length} conceptos).');
+      Map<String, dynamic> facts;
+      try {
+        facts = await source.claims(sampled.map((e) => e.id).toList());
+      } on Exception catch (error) {
+        log?.call('  Sin hechos para ${group.label}: $error');
+        diagnostics.add({'pivot': group.label, 'error': '$error'});
+        continue;
+      }
+
+      final axes = <String, _SemanticAxis>{};
+      for (final concept in sampled) {
+        final entity = facts[concept.id];
+        if (entity is! Map) continue;
+        final claims = entity['claims'];
+        if (claims is! Map) continue;
+        for (final entry in claims.entries) {
+          final property = entry.key.toString();
+          final stem = _semanticPredicates[property];
+          if (stem == null || entry.value is! List) continue;
+          // Evidence is a verified statement on a node locally connected to
+          // the context, not a guessed axis from a fixed checklist.
+          final statements = entry.value as List;
+          final evidenced = statements.any((statement) =>
+              statement is Map &&
+              statement['rank'] != 'deprecated' &&
+              statement['mainsnak'] is Map &&
+              (statement['mainsnak'] as Map)['snaktype'] == 'value');
+          if (!evidenced) continue;
+          final axis = axes.putIfAbsent(
+            property,
+            () => _SemanticAxis(
+              property,
+              '$stem · ${group.label}',
+            ),
+          );
+          if (axis.evidence.add(concept.id)) {
+            axis.proximity +=
+                1.0 / (1 + concept.distance) +
+                0.10 * concept.evidence.length;
+          }
         }
-        if (!localNames.add(_normalize(item.label))) continue;
-        chosen.add(item);
+      }
+
+      final ranked = axes.values.toList()
+        ..sort((a, b) {
+          var cmp = b.proximity.compareTo(a.proximity);
+          if (cmp != 0) return cmp;
+          cmp = b.evidence.length.compareTo(a.evidence.length);
+          return cmp != 0 ? cmp : a.property.compareTo(b.property);
+        });
+
+      final chosen = <_SemanticAxis>[];
+      for (final axis in ranked) {
+        if (usedAxes.contains(_normalize(axis.name))) continue;
+        chosen.add(axis);
         if (chosen.length == 20) break;
       }
+      diagnostics.add({
+        'pivot': group.label,
+        'memberCount': group.members.length,
+        'sampledNodes': sampled.length,
+        'candidateAxes': ranked.length,
+        'selectedAxes': chosen.length,
+      });
+      // Preserve a human-readable partial result for the CLI. An incomplete
+      // catalog is never returned as a valid SemanticCatalog.
+      if (chosen.isNotEmpty) {
+        (report['partialAxes'] as List).add({
+          'name': group.label,
+          'attractors': [for (final axis in chosen) axis.name],
+        });
+      }
       if (chosen.length != 20) continue;
+
       selectedGroups.add(group);
-      pivotNames.add(_normalize(group.label));
-      usedIds.addAll(chosen.map((c) => c.id));
-      usedNames.addAll(chosen.map((c) => _normalize(c.label)));
+      usedAxes.addAll(chosen.map((axis) => _normalize(axis.name)));
       pivots.add({
         'name': group.label,
-        'attractors': [for (final c in chosen) c.label],
+        'attractors': [for (final axis in chosen) axis.name],
       });
+      totalAxes += chosen.length;
       (report['selected'] as List).add({
-        'id': group.id,
         'name': group.label,
-        'membershipProperties': group.kinds.toList()..sort(),
+        'id': group.id,
         'attractors': [
-          for (final c in chosen)
+          for (final axis in chosen)
             {
-              'id': c.id,
-              'name': c.label,
-              'distance': c.distance,
-              'contextEdges': c.evidence.toList()..sort(),
-              'sitelinks': c.links,
+              'name': axis.name,
+              'predicate': axis.property,
+              'contextualProximity': axis.proximity,
+              'evidenceQids': axis.evidence.toList()..sort(),
             },
         ],
       });
+      log?.call('  Pivote completo: ${group.label} (20 ejes).');
       if (pivots.length == 10) break;
     }
+    report['diagnostics'] = diagnostics;
     report['partialCatalog'] = {'context': context, 'pivots': pivots};
     report['validPivots'] = pivots.length;
-    report['validAttractors'] = usedIds.length;
+    report['validAttractors'] = totalAxes;
     if (pivots.length != 10) {
       throw CatalogUnavailable(
         'Cobertura insuficiente: ${pivots.length}/10 pivotes completos y '
-        '${usedIds.length}/200 atractores distintos; ${concepts.length} conceptos '
+        '${totalAxes}/200 atractores distintos; ${concepts.length} conceptos '
         'recuperados. No se completan posiciones artificialmente.',
       );
     }
@@ -262,6 +330,136 @@ final class CatalogUnavailable implements Exception {
   @override
   String toString() => message;
 }
+
+final class _SemanticAxis {
+  _SemanticAxis(this.property, this.name);
+
+  final String property;
+  final String name;
+  final evidence = <String>{};
+  double proximity = 0;
+}
+
+/// Relations are semantic *evidence types*, not the 44 factual dimensions.
+/// Each visible axis needs at least one non-deprecated Wikidata statement.
+const _semanticPredicates = <String, String>{
+  'P17': 'Ámbito político-territorial',
+  'P19': 'Origen geográfico',
+  'P20': 'Lugar de finalización biográfica',
+  'P21': 'Distribución por género',
+  'P22': 'Relaciones de ascendencia paterna',
+  'P25': 'Relaciones de ascendencia materna',
+  'P26': 'Vínculos conyugales',
+  'P27': 'Régimen de ciudadanía',
+  'P30': 'Alcance continental',
+  'P36': 'Centralidad administrativa',
+  'P39': 'Ejercicio de cargos',
+  'P40': 'Relaciones de descendencia',
+  'P47': 'Configuración de fronteras',
+  'P50': 'Autoría y transmisión escrita',
+  'P54': 'Adscripción colectiva',
+  'P69': 'Formación y aprendizaje',
+  'P101': 'Ámbitos de actividad',
+  'P102': 'Adscripción política',
+  'P103': 'Transmisión lingüística',
+  'P106': 'Especialización de funciones',
+  'P108': 'Relaciones de trabajo',
+  'P110': 'Producción ilustrativa',
+  'P112': 'Procesos fundacionales',
+  'P123': 'Publicación y difusión',
+  'P127': 'Relaciones de propiedad',
+  'P131': 'Dependencia territorial',
+  'P136': 'Formas y géneros culturales',
+  'P137': 'Modos de operación',
+  'P138': 'Origen de las denominaciones',
+  'P140': 'Prácticas religiosas',
+  'P141': 'Integración administrativa',
+  'P150': 'Subdivisiones territoriales',
+  'P155': 'Antecedentes y sucesiones',
+  'P156': 'Continuidad y transformación',
+  'P159': 'Centros de coordinación',
+  'P161': 'Interpretación y representación',
+  'P162': 'Producción y organización',
+  'P166': 'Reconocimiento y distinciones',
+  'P170': 'Creación y autoría material',
+  'P176': 'Manufactura y producción',
+  'P178': 'Desarrollo técnico',
+  'P180': 'Representaciones simbólicas',
+  'P186': 'Materiales y recursos',
+  'P195': 'Conservación y colecciones',
+  'P206': 'Relaciones hidrográficas',
+  'P209': 'Liderazgo institucional',
+  'P241': 'Servicio y adscripción militar',
+  'P264': 'Edición y distribución',
+  'P276': 'Localización espacial',
+  'P279': 'Jerarquía conceptual',
+  'P286': 'Uso de tecnologías',
+  'P287': 'Diseño y desarrollo',
+  'P289': 'Medios de navegación',
+  'P355': 'Articulación organizativa',
+  'P361': 'Relaciones entre partes y conjuntos',
+  'P366': 'Usos y funciones',
+  'P371': 'Institucionalización y funcionamiento',
+  'P407': 'Lenguas de transmisión',
+  'P449': 'Medios de difusión',
+  'P463': 'Participación en organizaciones',
+  'P466': 'Ocupación y utilización',
+  'P495': 'Procedencia cultural y territorial',
+  'P496': 'Identificación científica',
+  'P509': 'Causas de mortalidad',
+  'P527': 'Composición y componentes',
+  'P551': 'Residencia y asentamientos',
+  'P569': 'Cronología biográfica inicial',
+  'P570': 'Cronología biográfica final',
+  'P571': 'Formación y aparición',
+  'P576': 'Desaparición y disolución',
+  'P580': 'Inicio de periodos y procesos',
+  'P582': 'Finalización de periodos y procesos',
+  'P585': 'Datación de acontecimientos',
+  'P607': 'Participación en conflictos',
+  'P625': 'Distribución geográfica',
+  'P637': 'Producción e inspiración',
+  'P641': 'Prácticas deportivas',
+  'P674': 'Representación de personajes',
+  'P676': 'Composición musical',
+  'P706': 'Situación geomorfológica',
+  'P710': 'Agentes participantes',
+  'P734': 'Organización familiar',
+  'P737': 'Influencias y precedentes',
+  'P740': 'Lugares de formación',
+  'P749': 'Organización jerárquica',
+  'P793': 'Acontecimientos significativos',
+  'P800': 'Producción destacada',
+  'P807': 'Resultados de conflictos',
+  'P828': 'Relaciones causales',
+  'P840': 'Ambientación y representación',
+  'P915': 'Escenarios espaciales',
+  'P921': 'Temas y ámbitos de estudio',
+  'P937': 'Ámbitos laborales',
+  'P941': 'Factores inspiradores',
+  'P971': 'Entidades de agrupación',
+  'P1001': 'Ámbito jurisdiccional',
+  'P1037': 'Funciones de dirección',
+  'P1056': 'Resultados de producción',
+  'P1196': 'Circunstancias de fallecimiento',
+  'P1269': 'Dimensiones históricas y temáticas',
+  'P1317': 'Estamentos e instituciones',
+  'P1344': 'Participación en eventos',
+  'P1412': 'Diversidad lingüística',
+  'P1435': 'Protección patrimonial',
+  'P1448': 'Denominaciones oficiales',
+  'P1532': 'Territorios de influencia',
+  'P1542': 'Relaciones causales posteriores',
+  'P1875': 'Representaciones artísticas',
+  'P2348': 'Vinculación con épocas',
+  'P2541': 'Zona de actuación',
+  'P2579': 'Ámbitos de investigación',
+  'P2770': 'Procedencia de la herencia',
+  'P2868': 'Funciones del sujeto',
+  'P3018': 'Términos de vigencia',
+  'P3612': 'Organización de grupos',
+  'P5274': 'Configuración jerárquica',
+};
 
 final class _Anchor {
   const _Anchor(this.id, this.label, this.distance);
