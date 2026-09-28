@@ -60,7 +60,12 @@ final class WikidataCatalogSource {
           }
           final body = await utf8.decoder.bind(response).join();
           return jsonDecode(body) as Map<String, dynamic>;
-        })().timeout(const Duration(seconds: 65));
+        })().timeout(
+          const Duration(seconds: 20),
+          onTimeout: () => throw TimeoutException(
+            'Wikidata no respondió en 20 s: ${uri.host}${uri.path}',
+          ),
+        );
         return result;
       } on HttpException catch (error) {
         if (attempt >= 1 ||
