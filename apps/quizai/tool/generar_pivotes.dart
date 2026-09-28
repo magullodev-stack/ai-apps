@@ -181,7 +181,8 @@ P^*=
 \forall P_i:\quad \operatorname{Palabras}(P_i)\leq 3
 \]
 
-Ninguna palabra puede repetirse entre los diez pivotes ni aparecer en el contexto.
+Ninguna palabra ajena al contexto puede repetirse entre los diez pivotes.
+Las palabras del contexto pueden reutilizarse libremente para delimitar ámbitos de estudio.
 Considera equivalentes las variantes de una misma palabra,
 incluidos cambios de género, número y derivados de una misma raíz.
 Si un nombre incumple estas condiciones, sustitúyelo antes de responder.
