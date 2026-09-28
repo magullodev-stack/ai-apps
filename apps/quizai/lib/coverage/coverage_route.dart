@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import '../semantic_catalog/semantic_catalog.dart';
+import '../semantic_catalog/pivot_catalog.dart';
 import 'factual_dimensions.dart';
 import 'interrogative_roles.dart';
 
@@ -18,15 +18,13 @@ final class CoverageRow {
   CoverageRow._({
     required this.number,
     required this.pivot,
-    required this.attractor,
     required this.dimension,
     required this.role,
     required List<DistractorCompetitiveness> distractors,
   }) : distractors = List.unmodifiable(distractors);
 
   final int number;
-  final SemanticPivot pivot;
-  final SemanticAttractor attractor;
+  final PivotItem pivot;
   final FactualDimension dimension;
   final InterrogativeRole role;
 
@@ -44,7 +42,7 @@ final class CoverageRoute {
 
 /// Compiles an already validated catalog without AI or mutation of its lists.
 /// Dimensions and roles are drawn independently with replacement for each row.
-CoverageRoute compileCoverageRoute(SemanticCatalog catalog, Random random) {
+CoverageRoute compileCoverageRoute(PivotCatalog catalog, Random random) {
   final pivots = [...catalog.pivots]..shuffle(random);
   final rows = <CoverageRow>[];
   for (var i = 0; i < pivots.length; i++) {
@@ -53,7 +51,6 @@ CoverageRoute compileCoverageRoute(SemanticCatalog catalog, Random random) {
       CoverageRow._(
         number: i + 1,
         pivot: pivot,
-        attractor: pivot.attractors[2 * i + random.nextInt(2)],
         dimension: factualDimensions[random.nextInt(factualDimensions.length)],
         role: interrogativeRoles[random.nextInt(interrogativeRoles.length)],
         distractors: _competitiveness[i],
