@@ -1,8 +1,7 @@
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 import '../modes/estudio/estudio_generation.dart';
-import '../semantic_catalog/ai_semantic_catalog_generator.dart';
-import '../semantic_catalog/semantic_catalog.dart';
+import '../semantic_catalog/pivot_catalog.dart';
 
 final class QuizAiGenerationDependencies {
   QuizAiGenerationDependencies()
@@ -18,7 +17,7 @@ final class QuizAiGenerationDependencies {
 
   final AiAppsClient _client;
 
-  SemanticCatalogGenerator get catalogGenerator => AiSemanticCatalogGenerator(
+  PivotCatalogGenerator get catalogGenerator => AiPivotCatalogGenerator(
     client: _client,
     model: const String.fromEnvironment(
       'AI_APPS_CATALOG_MODEL',
