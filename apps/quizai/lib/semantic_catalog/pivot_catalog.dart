@@ -52,8 +52,6 @@ void validatePivotVocabulary(String context, List<dynamic> pivots) {
     for (var i = 0; i < from.length; i++) {
       normalized = normalized.replaceAll(from[i], to[i]);
     }
-    // Familia léxica frecuente del nombre de la disciplina.
-    if (normalized.startsWith('histori')) return 'histori';
     return normalized;
   }
 
@@ -129,6 +127,11 @@ Dado un CONTEXTO [C], genera un conjunto ordenado de 10 PIVOTES de exploración:
 P(C)=\{P_1,\ldots,P_{10}\}
 \]
 
+Cada pivote debe constituir un objeto de estudio consultable:
+debe permitir establecer hechos sobre sí mismo,
+sobre cómo es considerado desde fuera
+y sobre su intervención en otras realidades.
+
 Cada pivote debe satisfacer:
 
 \[
@@ -179,8 +182,8 @@ P^*=
 \]
 
 Ninguna palabra puede repetirse entre los diez pivotes ni aparecer en el contexto.
-Compara sin distinguir mayúsculas, tildes ni variantes de la familia «historia/histórico/histórica».
-Evita reutilizar raíces léxicas mediante cambios de género o número.
+Considera equivalentes las variantes de una misma palabra,
+incluidos cambios de género, número y derivados de una misma raíz.
 Si un nombre incumple estas condiciones, sustitúyelo antes de responder.
 
 Devuelve exclusivamente los diez nombres de los pivotes en el orden seleccionado.
