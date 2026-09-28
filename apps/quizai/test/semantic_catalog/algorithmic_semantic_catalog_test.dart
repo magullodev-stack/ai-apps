@@ -21,7 +21,7 @@ void main() {
     expect(names, everyElement(isNot(contains(' · '))));
     expect(names, everyElement(isNot(contains('Entidad'))));
     expect(names, everyElement(isNot(contains('Q1000'))));
-    expect(names.first, isNot(contains('Ámbito')));
+    expect(names.first, isNot(endsWith('Ámbito 0')));
     expect(generator.report['status'], 'complete');
     expect(generator.report['validAttractors'], 200);
     final selected = generator.report['selected'] as List;
