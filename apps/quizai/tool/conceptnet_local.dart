@@ -78,7 +78,7 @@ Future<void> main(List<String> args) async {
       final segments = p[1].split('/');
       if (segments.length < 4) continue;
       hits.add((
-        label: Uri.decodeComponent(segments[3]).replaceAll('_', ' '),
+        label: _safeDecode(segments[3]).replaceAll('_', ' '),
         relation: p[2].substring(3),
         weight: double.tryParse(p[3]) ?? 0,
         direction: p[4],
@@ -114,4 +114,14 @@ void _write(List<IOSink> sinks, String a, String b, String rel,
     double weight, String direction) {
   sinks[_hash(a)].writeln(
       a + '\t' + b + '\t' + rel + '\t' + weight.toString() + '\t' + direction);
+}
+
+String _safeDecode(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  } on ArgumentError {
+    return value;
+  }
 }
