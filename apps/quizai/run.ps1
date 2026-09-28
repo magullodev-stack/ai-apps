@@ -8,6 +8,7 @@ param(
     [switch]$Pivots,
     [switch]$Ruta,
     [switch]$Terra,
+    [switch]$Sol,
     [string]$PivotModel = 'gpt-5.6-luna',
     [switch]$StopService
 )
@@ -119,8 +120,8 @@ if ($Pivots) {
     Push-Location (Join-Path $repo 'apps\\quizai')
     try {
         $pivotArgs = @('run', 'tool/generar_pivotes.dart', $PivotModel)
-        if ($Ruta -or $Terra) { $pivotArgs += '--ruta' }
-        if ($Terra) { $pivotArgs += '--terra' }
+        if ($Ruta -or $Terra -or $Sol) { $pivotArgs += '--ruta' }
+        if ($Terra -or $Sol) { $pivotArgs += '--sol' }
         & $dart @pivotArgs
         if ($LASTEXITCODE -ne 0) { throw 'Falló la generación de pivotes.' }
     } finally { Pop-Location }
