@@ -102,6 +102,7 @@ typedef _ModelRates = ({double inputUsdPerMillion, double outputUsdPerMillion});
 const Map<String, _ModelRates> _modelRates = {
   'gpt-5.6-terra': (inputUsdPerMillion: 2.0, outputUsdPerMillion: 12.0),
   'gpt-5.6-luna': (inputUsdPerMillion: 0.20, outputUsdPerMillion: 1.20),
+  'gpt-5.4-mini': (inputUsdPerMillion: 0.75, outputUsdPerMillion: 4.50),
 };
 
 String _prompt(String context) => r'''# PROMPT — Generador de Pivotes
