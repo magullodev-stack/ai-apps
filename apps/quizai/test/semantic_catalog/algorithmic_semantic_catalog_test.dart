@@ -17,10 +17,11 @@ void main() {
         .map((a) => a.name)
         .toList();
     expect(names, hasLength(200));
-    expect(names.toSet(), hasLength(200));
+    expect(names.toSet().length, lessThanOrEqualTo(200));
+    expect(names, everyElement(isNot(contains(' · '))));
     expect(names, everyElement(isNot(contains('Entidad'))));
     expect(names, everyElement(isNot(contains('Q1000'))));
-    expect(names.first, contains(' · Ámbito '));
+    expect(names.first, isNot(contains('Ámbito')));
     expect(generator.report['status'], 'complete');
     expect(generator.report['validAttractors'], 200);
     final selected = generator.report['selected'] as List;
@@ -43,7 +44,27 @@ void main() {
     expect(generator.report['status'], 'incomplete');
     final partial = generator.report['partialAxes'] as List;
     expect(partial, hasLength(10));
+    expect(generator.report['observedPivots'], 10);
+    expect(generator.report['observedAxes'], 190);
     expect((partial.first as Map)['attractors'], hasLength(19));
+  });
+
+  test('uses Spanish pivot names and never repeats the pivot as an axis suffix',
+      () async {
+    final generator = _generator(axisCount: 19);
+    await expectLater(
+      generator.generateCatalog('Contexto'),
+      throwsA(isA<CatalogUnavailable>()),
+    );
+    final pivots = generator.report['partialAxes'] as List;
+    expect(pivots, hasLength(10));
+    for (final pivot in pivots) {
+      final row = pivot as Map;
+      expect(row['name'], startsWith('Ámbito '));
+      final axes = row['attractors'] as List;
+      expect(axes, hasLength(19));
+      expect(axes, everyElement(isNot(contains(' · '))));
+    }
   });
 
   test('skips invalid non-QID bindings instead of aborting the graph', () async {
@@ -98,10 +119,21 @@ void main() {
 }
 
 const _predicates = [
-  'P17', 'P19', 'P20', 'P27', 'P30',
-  'P36', 'P39', 'P50', 'P101', 'P112',
-  'P131', 'P136', 'P150', 'P155', 'P156',
-  'P159', 'P170', 'P176', 'P186', 'P276',
+  'P17', 'P19', 'P20', 'P21', 'P22',
+  'P25', 'P26', 'P27', 'P30', 'P36',
+  'P39', 'P40', 'P47', 'P50', 'P54',
+  'P69', 'P101', 'P102', 'P103', 'P106',
+  'P108', 'P110', 'P112', 'P123', 'P127',
+  'P131', 'P136', 'P137', 'P138', 'P140',
+  'P141', 'P150', 'P155', 'P156', 'P159',
+  'P161', 'P162', 'P166', 'P170', 'P176',
+  'P178', 'P180', 'P186', 'P195', 'P206',
+  'P209', 'P241', 'P264', 'P276', 'P279',
+  'P286', 'P287', 'P289', 'P355', 'P361',
+  'P366', 'P371', 'P407', 'P449', 'P463',
+  'P466', 'P495', 'P496', 'P509', 'P527',
+  'P551', 'P569', 'P570', 'P571', 'P576',
+  'P580', 'P582', 'P585', 'P607', 'P625',
 ];
 
 AlgorithmicSemanticCatalogGenerator _generator({
@@ -123,12 +155,27 @@ AlgorithmicSemanticCatalogGenerator _generator({
         }
         if (action == 'wbgetentities') {
           final ids = uri.queryParameters['ids']!.split('|');
+          if (uri.queryParameters['props'] == 'labels') {
+            return {
+              'entities': {
+                for (final id in ids)
+                  id: {
+                    'labels': {
+                      'es': {
+                        'value':
+                            'Ámbito ${int.parse(id.substring(1)) - 501}',
+                      },
+                    },
+                  },
+              },
+            };
+          }
           return {
             'entities': {
               for (final id in ids)
                 id: {
                   'claims': {
-                    for (final property in _predicates.take(axisCount))
+                    for (final property in _predicates.skip(((int.parse(id.substring(1)) - 1000) ~/ 30) * 5).take(axisCount))
                       property: [
                         {
                           'rank': 'normal',
