@@ -5,6 +5,8 @@ param(
     [Alias('TerraModel')]
     [string]$FactualModel = 'gpt-5.6-terra',
     [switch]$VerifyOnly,
+    [switch]$Pivots,
+    [string]$PivotModel = 'gpt-5.6-terra',
     [switch]$StopService
 )
 $ErrorActionPreference = 'Stop'
@@ -110,6 +112,15 @@ if (-not $session) {
     }
 }
 Write-Host "Servicio Dart preparado: $($session.endpoint)"
+
+if ($Pivots) {
+    Push-Location (Join-Path $repo 'apps\\quizai')
+    try {
+        & $dart run tool/generar_pivotes.dart $PivotModel
+        if ($LASTEXITCODE -ne 0) { throw 'Falló la generación de pivotes.' }
+    } finally { Pop-Location }
+    return
+}
 
 # OpenAI credentials are never inherited by Flutter or passed as dart-defines.
 $previousClientEnv = @{}
