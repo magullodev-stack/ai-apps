@@ -236,6 +236,16 @@ Genera los hechos a partir de tu conocimiento interno, sin consultar fuentes, he
 Cada HECHO debe contener una única afirmación factual que satisfaga simultáneamente el pivote y la dimensión.
 Formula una PREGUNTA de 5 a 20 palabras, construida con los elementos factuales discriminativos de FUENTES y HECHO; el elemento interrogado debe corresponder al rol asignado, sin revelar la respuesta.
 La RESPUESTA debe tener entre 1 y 8 palabras.
+## Distractores
+
+La competitividad indica la proximidad de cada distractor respecto de la respuesta correcta dada la pregunta formulada:
+
+- **−:** plausible pero claramente distinguible.
+- **+:** próximo pero incorrecto por una diferencia relevante.
+- **++:** comparte categoría, contexto y relación principal; la pregunta exige identificar la diferencia específica y decisiva que lo hace incorrecto.
+
+---
+
 Cada distractor debe ser incorrecto por su contenido factual nuclear, no por un modificador, restricción, cuantificador, negación, condición o circunstancia añadido para fabricar su incorrección.
 Devuelve los diez registros en el campo "records" como texto Markdown, con este formato para cada uno:
 
