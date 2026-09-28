@@ -1,11 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
+
+import 'package:quizai/coverage/coverage_route.dart';
+import 'package:quizai/semantic_catalog/pivot_catalog.dart';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 /// Generación de pivotes con un modelo configurable.
 Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
+  final showRoute = args.contains('--ruta');
   if (model.isEmpty) {
     stderr.writeln('Uso: dart run tool/generar_pivotes.dart <modelo>');
     exitCode = 1;
@@ -65,6 +70,11 @@ Future<void> main(List<String> args) async {
     }
     for (var i = 0; i < pivots.length; i++) {
       stdout.writeln('P' + (i + 1).toString().padLeft(2, '0') + ' ' + pivots[i].toString());
+    }
+    if (showRoute) {
+      final route = compileCoverageRoute(PivotCatalog.fromJson(data), Random());
+      stdout.writeln();
+      stdout.writeln(coverageRouteDebugText(route));
     }
     final usage = result.usage;
     final inputTokens = usage?['inputTokens'];
