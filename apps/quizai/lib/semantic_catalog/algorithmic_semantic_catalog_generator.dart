@@ -174,32 +174,62 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
     }
     report['candidateCount'] = concepts.length;
 
-    // A class is only an index into a local thematic neighborhood.
-    // The attractors are not class members: they are predicates actually
-    // documented on concepts belonging to that neighborhood.
+    // Classes index candidate neighborhoods only. They are never emitted
+    // as attractors, and candidate lists must not leak into the ten-pivot UI.
     final viable = groups.values.where((g) => g.members.length >= 10).toList()
+      ..sort((a, b) => b.members.length.compareTo(a.members.length));
+    final namedCandidates = viable.take(50).toList();
+    final spanishLabels = await source.spanishLabels(
+      namedCandidates.map((g) => g.id).toList(),
+    );
+    final candidates = namedCandidates
+        .where((g) =>
+            spanishLabels.containsKey(g.id) &&
+            !_isUnrelatedBiographicalClass(spanishLabels[g.id]!, context))
+        .toList()
       ..sort((a, b) {
-        final count = b.members.length.compareTo(a.members.length);
-        return count != 0 ? count : a.id.compareTo(b.id);
+        final left = _contextualPivotScore(
+          spanishLabels[a.id]!,
+          context,
+          a.members.length,
+        );
+        final right = _contextualPivotScore(
+          spanishLabels[b.id]!,
+          context,
+          b.members.length,
+        );
+        final result = right.compareTo(left);
+        return result != 0 ? result : a.id.compareTo(b.id);
       });
-
     report['groups'] = [
-      for (final group in viable)
-        {'id': group.id, 'name': group.label, 'members': group.members.length},
+      for (final group in namedCandidates)
+        {
+          'id': group.id,
+          'spanishName': spanishLabels[group.id],
+          'members': group.members.length,
+        },
     ];
+    report['excludedWithoutSpanishLabel'] =
+        namedCandidates.length - spanishLabels.length;
+
     final selectedGroups = <_Group>[];
     final usedAxes = <String>{};
     final pivotNames = <String>{};
     final pivots = <Map<String, dynamic>>[];
+    final partialAxes = report['partialAxes'] as List;
     final diagnostics = <Map<String, dynamic>>[];
     var totalAxes = 0;
+    var observedAxes = 0;
 
-    // Bounded factual exploration: one batch of source statements per
-    // candidate neighborhood. Never use entity names as attractor labels.
-    for (final group in viable.take(24)) {
-      if (!pivotNames.add(_normalize(group.label))) continue;
+    // We *select ten pivots*, not 24. Their attractor windows may contain
+    // fewer than twenty axes; the strict 10x20 contract remains unchanged.
+    for (final group in candidates.take(24)) {
+      if (partialAxes.length == 10) break;
+      final pivotName = spanishLabels[group.id]!;
+      if (pivotNames.contains(_normalize(pivotName))) continue;
       if (selectedGroups.any((other) {
-        final a = group.members.keys.toSet(), b = other.members.keys.toSet();
+        final a = group.members.keys.toSet();
+        final b = other.members.keys.toSet();
         return a.intersection(b).length / math.min(a.length, b.length) >= 0.65;
       })) {
         continue;
@@ -207,13 +237,13 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
 
       final members = group.members.values.toList()..sort(_compareConcepts);
       final sampled = members.take(30).toList();
-      log?.call('Analizando ejes: ${group.label} (${sampled.length} conceptos).');
+      log?.call('Analizando ejes: $pivotName (${sampled.length} conceptos).');
       Map<String, dynamic> facts;
       try {
         facts = await source.claims(sampled.map((e) => e.id).toList());
       } on Exception catch (error) {
-        log?.call('  Sin hechos para ${group.label}: $error');
-        diagnostics.add({'pivot': group.label, 'error': '$error'});
+        log?.call('  Sin hechos para $pivotName: $error');
+        diagnostics.add({'pivot': pivotName, 'error': '$error'});
         continue;
       }
 
@@ -227,8 +257,6 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
           final property = entry.key.toString();
           final stem = _semanticPredicates[property];
           if (stem == null || entry.value is! List) continue;
-          // Evidence is a verified statement on a node locally connected to
-          // the context, not a guessed axis from a fixed checklist.
           final statements = entry.value as List;
           final evidenced = statements.any((statement) =>
               statement is Map &&
@@ -238,10 +266,7 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
           if (!evidenced) continue;
           final axis = axes.putIfAbsent(
             property,
-            () => _SemanticAxis(
-              property,
-              '$stem · ${group.label}',
-            ),
+            () => _SemanticAxis(property, stem),
           );
           if (axis.evidence.add(concept.id)) {
             axis.proximity +=
@@ -259,38 +284,47 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
           return cmp != 0 ? cmp : a.property.compareTo(b.property);
         });
 
+      // No suffix with the pivot name. An axis already selected by another
+      // pivot does not become "distinct" merely because its suffix changes.
       final chosen = <_SemanticAxis>[];
+      final localNames = <String>{};
       for (final axis in ranked) {
-        if (usedAxes.contains(_normalize(axis.name))) continue;
+        final name = _normalize(axis.name);
+        if (usedAxes.contains(name) || !localNames.add(name)) continue;
         chosen.add(axis);
         if (chosen.length == 20) break;
       }
       diagnostics.add({
-        'pivot': group.label,
+        'pivot': pivotName,
         'memberCount': group.members.length,
         'sampledNodes': sampled.length,
         'candidateAxes': ranked.length,
-        'selectedAxes': chosen.length,
+        'availableAfterDeduplication': chosen.length,
       });
-      // Preserve a human-readable partial result for the CLI. An incomplete
-      // catalog is never returned as a valid SemanticCatalog.
-      if (chosen.isNotEmpty) {
-        (report['partialAxes'] as List).add({
-          'name': group.label,
-          'attractors': [for (final axis in chosen) axis.name],
-        });
-      }
-      if (chosen.length != 20) continue;
+      if (chosen.isEmpty) continue;
 
       selectedGroups.add(group);
+      pivotNames.add(_normalize(pivotName));
       usedAxes.addAll(chosen.map((axis) => _normalize(axis.name)));
+      observedAxes += chosen.length;
+      partialAxes.add({
+        'name': pivotName,
+        'attractors': [for (final axis in chosen) axis.name],
+      });
+      if (chosen.length != 20) {
+        log?.call(
+          '  $pivotName: ${chosen.length} ejes documentados; '
+          'no se completan los restantes artificialmente.',
+        );
+        continue;
+      }
       pivots.add({
-        'name': group.label,
+        'name': pivotName,
         'attractors': [for (final axis in chosen) axis.name],
       });
       totalAxes += chosen.length;
       (report['selected'] as List).add({
-        'name': group.label,
+        'name': pivotName,
         'id': group.id,
         'attractors': [
           for (final axis in chosen)
@@ -302,10 +336,11 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
             },
         ],
       });
-      log?.call('  Pivote completo: ${group.label} (20 ejes).');
-      if (pivots.length == 10) break;
+      log?.call('  Pivote completo: $pivotName (20 ejes).');
     }
     report['diagnostics'] = diagnostics;
+    report['observedPivots'] = partialAxes.length;
+    report['observedAxes'] = observedAxes;
     report['partialCatalog'] = {'context': context, 'pivots': pivots};
     report['validPivots'] = pivots.length;
     report['validAttractors'] = totalAxes;
@@ -328,6 +363,33 @@ final class CatalogUnavailable implements Exception {
   final String message;
   @override
   String toString() => message;
+}
+
+// This safeguard is domain-neutral: biographical ontology classes are
+// not thematic pivots unless the requested context itself concerns people.
+bool _isUnrelatedBiographicalClass(String label, String context) {
+  final aboutPeople = RegExp(
+    r'persona|humano|personaje|biograf|genealog|ficci[oó]n|legend',
+    caseSensitive: false,
+  ).hasMatch(context);
+  if (aboutPeople) return false;
+  return RegExp(
+    r'ser humano|human being|prosopogr[aá]f|fantasma|'
+    r'personaje|fictional human|fictici[oa]|'
+    r'cognomen|car[aá]cter unicode',
+    caseSensitive: false,
+  ).hasMatch(label);
+}
+
+double _contextualPivotScore(String label, String context, int members) {
+  final contextWords =
+      _tokens(context).where((word) => word.length >= 4).toList();
+  final pivotWords =
+      _tokens(label).where((word) => word.length >= 4).toList();
+  final localMatch = pivotWords.where((word) =>
+      contextWords.any((term) =>
+          term.substring(0, 4) == word.substring(0, 4))).length;
+  return localMatch * 100 + math.log(members + 1);
 }
 
 final class _SemanticAxis {
