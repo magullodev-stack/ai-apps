@@ -120,7 +120,6 @@ SELECT DISTINCT ?item ?itemLabel ?relation ?group ?groupLabel ?kind WHERE {
   ?item ?relation wd:${anchor.id} .
   ?item wdt:P31 ?group .
   BIND(wdt:P31 AS ?kind)
-  ?item ?kind ?group .
   FILTER(?item != wd:$root)
   FILTER(?group != wd:Q5)
   SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
