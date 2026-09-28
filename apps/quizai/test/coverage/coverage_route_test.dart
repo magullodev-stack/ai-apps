@@ -1,0 +1,61 @@
+import 'dart:math';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:quizai/coverage/coverage_route.dart';
+import 'package:quizai/coverage/factual_dimensions.dart';
+import 'package:quizai/coverage/interrogative_roles.dart';
+import 'package:quizai/semantic_catalog/semantic_catalog.dart';
+
+import '../semantic_catalog/fixtures.dart';
+
+void main() {
+  test('compila diez filas reproducibles con cobertura y competitividad', () {
+    final catalog = SemanticCatalog.fromJson(
+      catalogJson('Contexto de cobertura'),
+    );
+    final originalPivots = [...catalog.pivots];
+    final route = compileCoverageRoute(catalog, Random(42));
+    final replay = compileCoverageRoute(catalog, Random(42));
+
+    expect(route.context, catalog.context);
+    expect(route.rows, hasLength(10));
+    expect(route.rows.map((row) => row.pivot).toSet(), originalPivots.toSet());
+    expect(
+      route.rows.map((row) => row.pivot),
+      isNot(orderedEquals(originalPivots)),
+    );
+    expect(catalog.pivots, orderedEquals(originalPivots));
+    expect(factualDimensions, hasLength(18));
+    expect(interrogativeRoles, hasLength(5));
+    expect(
+      route.rows.map((row) => row.distractors.map((d) => d.symbol).toList()),
+      [
+        ['−', '−', '−'],
+        ['−', '−', '−'],
+        ['+', '−', '−'],
+        ['+', '−', '−'],
+        ['+', '+', '−'],
+        ['+', '+', '−'],
+        ['+', '+', '+'],
+        ['++', '+', '+'],
+        ['++', '++', '+'],
+        ['++', '++', '++'],
+      ],
+    );
+    for (var i = 0; i < 10; i++) {
+      final row = route.rows[i];
+      expect(row.number, i + 1);
+      final index = row.pivot.attractors.indexOf(row.attractor);
+      expect(index, anyOf(2 * i, 2 * i + 1));
+      expect(row.attractor.code, 'A${(index + 1).toString().padLeft(2, '0')}');
+      expect(factualDimensions, contains(row.dimension));
+      expect(interrogativeRoles, contains(row.role));
+      expect(row.pivot, same(replay.rows[i].pivot));
+      expect(row.attractor, same(replay.rows[i].attractor));
+      expect(row.dimension, same(replay.rows[i].dimension));
+      expect(row.role, same(replay.rows[i].role));
+      expect(() => row.distractors.clear(), throwsUnsupportedError);
+    }
+    expect(() => route.rows.clear(), throwsUnsupportedError);
+  });
+}
