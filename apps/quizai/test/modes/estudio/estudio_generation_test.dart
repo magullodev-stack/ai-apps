@@ -6,9 +6,8 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizai/coverage/coverage_route.dart';
 import 'package:quizai/modes/estudio/estudio_generation.dart';
-import 'package:quizai/semantic_catalog/semantic_catalog.dart';
+import 'package:quizai/semantic_catalog/pivot_catalog.dart';
 
-import '../../semantic_catalog/fixtures.dart';
 import 'fixtures.dart';
 
 void main() {
@@ -16,7 +15,10 @@ void main() {
     'envía la ruta literal y modelo independiente mediante AiAppsClient',
     () async {
       final route = compileCoverageRoute(
-        SemanticCatalog.fromJson(catalogJson()),
+        PivotCatalog.fromJson({
+          'context': 'Contexto de prueba',
+          'pivots': [for (var i = 1; i <= 10; i++) 'Pivote $i'],
+        }),
         Random(4),
       );
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
@@ -41,7 +43,6 @@ void main() {
             prompt,
             contains('''Fila: ${row.number}
 Pivote: ${row.pivot.code} — ${row.pivot.name}
-Atractor: ${row.attractor.code} — ${row.attractor.name}
 Dimensión factual: ${row.dimension.code} — ${row.dimension.name}
 ${row.dimension.definition}
 Rol interrogativo: ${row.role.code} — ${row.role.name}
@@ -50,16 +51,7 @@ Distractor 1: ${row.distractors[0].symbol}
 Distractor 2: ${row.distractors[1].symbol}
 Distractor 3: ${row.distractors[2].symbol}'''),
           );
-          for (final attractor in row.pivot.attractors.where(
-            (a) => a != row.attractor,
-          )) {
-            expect(
-              prompt,
-              isNot(
-                contains('Atractor: ${attractor.code} — ${attractor.name}\n'),
-              ),
-            );
-          }
+          expect(prompt, isNot(contains('Atractor:')));
         }
         final schema = body['schema'] as Map;
         expect(schema['additionalProperties'], false);
