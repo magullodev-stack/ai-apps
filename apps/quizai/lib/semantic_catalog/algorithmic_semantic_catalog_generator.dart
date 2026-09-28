@@ -289,13 +289,7 @@ String _value(Map<String, dynamic> row, String key) =>
     (row[key] as Map?)?['value'] as String? ?? '';
 String _id(Map<String, dynamic> row, String key) =>
     _qid(_value(row, key).split('/').last);
-bool _isQid(String value) => RegExp(r'^Q[1-9][0-9]*
-  if (!RegExp(r'^Q[1-9][0-9]*$').hasMatch(value)) {
-    throw const FormatException('QID de Wikidata inválido.');
-  }
-  return value;
-}
-).hasMatch(value);
+bool _isQid(String value) => RegExp(r'^Q[1-9][0-9]*$').hasMatch(value);
 
 String _qid(String value) {
   if (!RegExp(r'^Q[1-9][0-9]*$').hasMatch(value)) {
