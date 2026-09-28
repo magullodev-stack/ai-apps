@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../coverage/coverage_route.dart';
 
-import '../../semantic_catalog/semantic_catalog.dart';
+import '../../semantic_catalog/pivot_catalog.dart';
 import 'estudio_generation.dart';
 
 class EstudioPage extends StatefulWidget {
@@ -16,7 +16,7 @@ class EstudioPage extends StatefulWidget {
     this.random,
   });
 
-  final SemanticCatalogGenerator generator;
+  final PivotCatalogGenerator generator;
   final EstudioQuestionGenerator questionGenerator;
   final Random? random;
 
@@ -26,7 +26,7 @@ class EstudioPage extends StatefulWidget {
 
 class _EstudioPageState extends State<EstudioPage> {
   final _contextController = TextEditingController();
-  late final SemanticCatalogGenerator _generator;
+  late final PivotCatalogGenerator _generator;
   late final EstudioQuestionGenerator _questionGenerator;
   late final Random _random;
 
