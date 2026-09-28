@@ -1,4 +1,5 @@
 import 'semantic_catalog.dart';
+import 'algorithmic_semantic_catalog_generator.dart';
 import 'wikidata_catalog_source.dart';
 
 /// Experimental, deterministic catalog built from graph relations rather than
@@ -133,11 +134,37 @@ SELECT DISTINCT ?entity ?property ?valueType ?valueTypeLabel WHERE {
       'distinctAxes': usedAxes.length,
     };
     if (pivots.length != 10) {
-      throw FormatException(
-        'Solo ${pivots.length}/10 pivotes con 20 ejes distintos; '
-        '${usedAxes.length}/200 atractores. No se rellenan ejes.',
-      );
+      // The original graph catalog already produces a complete 10x20 result
+      // for contexts such as "Historia de Roma". Keep the relational
+      // diagnostics for later refinement; do not claim its partial result
+      // is a complete relational catalog.
+      final relationalReport = Map<String, Object?>.from(report);
+      final fallback = AlgorithmicSemanticCatalogGenerator(source: source);
+      try {
+        final catalog = await fallback.generateCatalog(context);
+        report = {
+          'context': context,
+          'status': 'complete',
+          'method': 'algorithmic_fallback',
+          'relational': relationalReport,
+          'fallback': fallback.report,
+        };
+        return catalog;
+      } catch (error) {
+        report = {
+          'context': context,
+          'status': 'incomplete',
+          'method': 'algorithmic_fallback_failed',
+          'relational': relationalReport,
+          'fallback': fallback.report,
+        };
+        throw FormatException(
+          'Relacional: ${pivots.length}/10 pivotes; '
+          'algorítmico alternativo: $error',
+        );
+      }
     }
+    report['method'] = 'relational';
     return SemanticCatalog.fromJson({'context': context, 'pivots': pivots});
   }
 }
