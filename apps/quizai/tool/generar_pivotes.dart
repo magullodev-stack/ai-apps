@@ -10,7 +10,7 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 /// Generación de pivotes con un modelo configurable.
 Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
-  final showTerra = args.contains('--terra');
+  final showTerra = args.contains('--terra') || args.contains('--sol');
   final showRoute = args.contains('--ruta') || showTerra;
   if (model.isEmpty) {
     stderr.writeln('Uso: dart run tool/generar_pivotes.dart <modelo>');
@@ -107,15 +107,15 @@ Future<void> main(List<String> args) async {
     stdout.writeln('Tiempo: ' + watch.elapsedMilliseconds.toString() + ' ms');
     if (showTerra && route != null) {
       stdout.writeln();
-      stdout.writeln('Modelo: gpt-5.6-terra');
+      stdout.writeln('Modelo: gpt-5.6-sol');
       final terraWatch = Stopwatch()..start();
       final terra = await client.generate(
         application: 'quizai',
-        model: 'gpt-5.6-terra',
+        model: 'gpt-5.6-sol',
         input: _terraPrompt(coverageRouteDebugText(route)),
-        schemaName: 'quizai_terra_route_test',
+        schemaName: 'quizai_sol_route_test',
         schema: _terraSchema(),
-      ).timeout(const Duration(seconds: 180));
+      ).timeout(const Duration(seconds: 240));
       final terraData = jsonDecode(terra.text);
       if (terraData is! Map || terraData['records'] is! String) {
         throw const FormatException('Respuesta de Terra inválida.');
@@ -123,7 +123,7 @@ Future<void> main(List<String> args) async {
       stdout.writeln((terraData['records'] as String).trim());
       final terraInput = terra.usage?['inputTokens'];
       final terraOutput = terra.usage?['outputTokens'];
-      final terraRates = _modelRates['gpt-5.6-terra']!;
+      final terraRates = _modelRates['gpt-5.6-sol']!;
       final terraInputPrice = terraInput is int
           ? (terraInput * terraRates.inputUsdPerMillion / 1000000).toStringAsFixed(6) + ' USD'
           : 'no disponible';
@@ -134,10 +134,10 @@ Future<void> main(List<String> args) async {
       final terraPrice = terraInput is int && terraOutput is int
           ? ((terraInput * terraRates.inputUsdPerMillion + terraOutput * terraRates.outputUsdPerMillion) / 1000000).toStringAsFixed(6) + ' USD'
           : 'no disponible';
-      stdout.writeln('Entrada Terra: ${terraInput is int ? terraInput : 'no disponibles'} tokens | $terraInputPrice');
-      stdout.writeln('Salida Terra: ${terraOutput is int ? terraOutput : 'no disponibles'} tokens | $terraOutputPrice');
-      stdout.writeln('Total Terra: ${terraTotal ?? 'no disponible'} tokens | $terraPrice');
-      stdout.writeln('Tiempo Terra: ${terraWatch.elapsedMilliseconds} ms');
+      stdout.writeln('Entrada Sol: ${terraInput is int ? terraInput : 'no disponibles'} tokens | $terraInputPrice');
+      stdout.writeln('Salida Sol: ${terraOutput is int ? terraOutput : 'no disponibles'} tokens | $terraOutputPrice');
+      stdout.writeln('Total Sol: ${terraTotal ?? 'no disponible'} tokens | $terraPrice');
+      stdout.writeln('Tiempo Sol: ${terraWatch.elapsedMilliseconds} ms');
     }
   } catch (error) {
     stderr.writeln('ERROR: ' + error.toString());
@@ -153,6 +153,7 @@ typedef _ModelRates = ({double inputUsdPerMillion, double outputUsdPerMillion});
 
 const Map<String, _ModelRates> _modelRates = {
   'gpt-5.6-terra': (inputUsdPerMillion: 2.0, outputUsdPerMillion: 12.0),
+  'gpt-5.6-sol': (inputUsdPerMillion: 4.0, outputUsdPerMillion: 20.0),
   'gpt-5.6-luna': (inputUsdPerMillion: 0.20, outputUsdPerMillion: 1.20),
   'gpt-5.4-mini': (inputUsdPerMillion: 0.75, outputUsdPerMillion: 4.50),
 };
@@ -229,30 +230,22 @@ Map<String, Object?> _schema() => {
 };
 
 
-String _terraPrompt(String route) => '''Genera exactamente 10 registros, uno por cada fila de la Ruta de Cobertura, conservando su orden.
-Cada registro debe respetar el pivote, la dimensión factual y su definición, el rol interrogativo y su definición, y la competitividad asignada a cada distractor.
+String _terraPrompt(String route) => '''Genera exactamente 10 preguntas de opción múltiple, una por cada fila de la Ruta de Cobertura y en el mismo orden.
+Usa el pivote, la dimensión factual y su definición para establecer internamente un único hecho concreto y verificable. A partir de ese hecho formula una pregunta cuyo elemento interrogado corresponda al rol asignado y su definición. Determina internamente una única respuesta correcta, pero NO la incluyas en la salida.
+La pregunta debe tener entre 5 y 20 palabras, contener los elementos factuales discriminativos necesarios y no revelar la respuesta.
+Genera exactamente tres distractores por pregunta, respetando la competitividad D1, D2 y D3 de su fila:
+−: plausible pero claramente distinguible.
++: próximo pero incorrecto por una diferencia relevante.
+++: comparte categoría, contexto y relación principal; la pregunta exige identificar la diferencia específica y decisiva que lo hace incorrecto.
+Cada distractor debe ser incorrecto por su contenido factual nuclear, no por añadir un modificador, restricción, cuantificador, negación, condición o circunstancia que fabrique su incorrección.
+Evita distractores que también puedan responder correctamente a la pregunta.
+Devuelve exclusivamente las diez preguntas y sus tres distractores, sin hechos, fuentes, respuestas correctas, explicaciones ni configuración. En el campo "records", usa este formato para cada pregunta:
 
-Devuelve los diez registros en el campo "records" como texto Markdown, con este formato:
-
-## [n] — [Pxx Nombre del pivote] · [Ixx/Mxx/Exx Nombre de la dimensión] · [Jx Nombre del rol] · [D1, D2, D3]
-
-- **FUENTES:** [Identifica una fuente concreta para el HECHO, como una obra, publicación, documento, registro o estudio. Genera desde el conocimiento interno, sin consultar fuentes, herramientas ni recursos externos. La referencia no está verificada externamente.]
-- **HECHO:** [Una única afirmación factual que satisfaga simultáneamente el pivote y la dimensión.]
-- **PREGUNTA:** [Formula en 5-20 palabras una pregunta construida con los elementos factuales discriminativos del HECHO, cuyo elemento interrogado corresponda al rol asignado, sin revelar la respuesta.]
-- **RESPUESTA:** [Responde en 1-8 palabras.]
-
-### DISTRACTORES
-1. **[D1]:** ...
-2. **[D2]:** ...
-3. **[D3]:** ...
-
-La competitividad indica la proximidad de cada distractor respecto de la respuesta correcta dada la pregunta formulada:
-
-- **−:** plausible pero claramente distinguible.
-- **+:** próximo pero incorrecto por una diferencia relevante.
-- **++:** comparte categoría, contexto y relación principal; la pregunta exige identificar la diferencia específica y decisiva que lo hace incorrecto.
-
-Cada distractor debe ser incorrecto por su contenido factual nuclear, no porque se le añada un modificador, restricción, cuantificador, negación, condición o circunstancia que fabrique su incorrección.
+## [n]
+**PREGUNTA:** [pregunta]
+1. **[símbolo D1]:** [distractor]
+2. **[símbolo D2]:** [distractor]
+3. **[símbolo D3]:** [distractor]
 
 RUTA DE COBERTURA:
 $route''';
