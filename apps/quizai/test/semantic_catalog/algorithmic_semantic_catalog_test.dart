@@ -4,86 +4,56 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quizai/semantic_catalog/algorithmic_semantic_catalog_generator.dart';
 import 'package:quizai/semantic_catalog/wikidata_catalog_source.dart';
 
-// Synthetic unit fixtures only; the CLI always uses the live HTTP source.
+// Offline source fixtures: classes index local neighborhoods, but actual
+// attractor labels come exclusively from documented fact predicates.
 void main() {
-  test(
-    'returns the existing contract, graph ranking and 200 unique IDs',
-    () async {
-      final rows = _rows();
-      rows[0]['links'] = _binding('999');
-      final generator = _generator(rows.reversed.toList());
-      final catalog = await generator.generateCatalog(' Contexto ');
-      expect(catalog.context, ' Contexto ');
-      expect(catalog.pivots, hasLength(10));
-      expect(catalog.pivots.first.attractors.first.name, 'Concepto 0 0');
-      expect(
-        catalog.pivots.expand((p) => p.attractors).map((a) => a.name).toSet(),
-        hasLength(200),
-      );
-      expect(generator.report['status'], 'complete');
-      expect(generator.report['validAttractors'], 200);
-    },
-  );
+  test('generates 10 by 20 axes, never labels of individual entities', () async {
+    final generator = _generator();
+    final catalog = await generator.generateCatalog(' Contexto ');
+    expect(catalog.context, ' Contexto ');
+    expect(catalog.pivots, hasLength(10));
+    final names = catalog.pivots
+        .expand((p) => p.attractors)
+        .map((a) => a.name)
+        .toList();
+    expect(names, hasLength(200));
+    expect(names.toSet(), hasLength(200));
+    expect(names, everyElement(isNot(contains('Entidad'))));
+    expect(names, everyElement(isNot(contains('Q1000'))));
+    expect(names.first, contains(' · Ámbito '));
+    expect(generator.report['status'], 'complete');
+    expect(generator.report['validAttractors'], 200);
+    final selected = generator.report['selected'] as List;
+    expect((selected.first as Map)['attractors'], hasLength(20));
+    expect(
+      (((selected.first as Map)['attractors'] as List).first as Map)
+          .containsKey('evidenceQids'),
+      isTrue,
+    );
+  });
 
-  test(
-    'does not pad a group with 19 members or return a partial catalog',
-    () async {
-      final generator = _generator(_rows()..removeLast());
-      await expectLater(
-        generator.generateCatalog('Contexto'),
-        throwsA(isA<CatalogUnavailable>()),
-      );
-      expect(generator.report['validPivots'], 9);
-      expect(generator.report['validAttractors'], 180);
-      expect(generator.report['status'], 'incomplete');
-    },
-  );
-
-  test(
-    'deduplicates IDs, normalized labels and repeated relation rows globally',
-    () async {
-      final rows = _rows();
-      rows[20]['itemLabel'] = _binding('  CONCEPTO   0 0 ');
-      rows.add(Map.of(rows[0]));
-      final generator = _generator(rows);
-      await expectLater(
-        generator.generateCatalog('Contexto'),
-        throwsA(isA<CatalogUnavailable>()),
-      );
-      expect(generator.report['validAttractors'], 180);
-    },
-  );
-
-  test('unlabelled QIDs cannot fill missing positions', () async {
-    final rows = _rows();
-    rows[0]['itemLabel'] = _binding('Q1000');
-    final generator = _generator(rows);
+  test('does not manufacture the twentieth axis when evidence has 19', () async {
+    final generator = _generator(axisCount: 19);
     await expectLater(
       generator.generateCatalog('Contexto'),
       throwsA(isA<CatalogUnavailable>()),
     );
-    expect(generator.report['validAttractors'], 180);
+    expect(generator.report['validPivots'], 0);
+    expect(generator.report['validAttractors'], 0);
+    expect(generator.report['status'], 'incomplete');
+    final partial = generator.report['partialAxes'] as List;
+    expect(partial, hasLength(10));
+    expect((partial.first as Map)['attractors'], hasLength(19));
   });
 
-  test('near-identical facets cannot count as differentiated pivots', () async {
-    final rows = _rows();
-    rows.removeRange(180, 200);
-    for (final row in rows.take(40).toList()) {
-      rows.add({
-        ...row,
-        'group': _binding('http://www.wikidata.org/entity/Q999'),
-        'groupLabel': _binding('Grupo redundante'),
-      });
-    }
-    final generator = _generator(rows);
-    await expectLater(
-      generator.generateCatalog('Contexto'),
-      throwsA(isA<CatalogUnavailable>()),
-    );
-    expect(generator.report['validPivots'], 9);
+  test('skips invalid non-QID bindings instead of aborting the graph', () async {
+    final generator = _generator(includeInvalidRow: true);
+    final catalog = await generator.generateCatalog('Contexto');
+    expect(catalog.pivots, hasLength(10));
+    expect(generator.report['invalidIdentifierRows'], greaterThan(0));
   });
 
-  test('empty context makes no requests', () async {
+  test('rejects an empty context before contacting the source', () async {
     var requests = 0;
     final generator = AlgorithmicSemanticCatalogGenerator(
       source: WikidataCatalogSource(
@@ -97,42 +67,7 @@ void main() {
     expect(requests, 0);
   });
 
-  test('unresolved and weak context matches fail explicitly', () async {
-    for (final results in [
-      <Map<String, dynamic>>[],
-      [
-        {'id': 'Q1', 'label': 'Otro tema'},
-      ],
-    ]) {
-      final generator = AlgorithmicSemanticCatalogGenerator(
-        source: WikidataCatalogSource(
-          readJson: (_) async => {'search': results},
-        ),
-      );
-      await expectLater(
-        generator.generateCatalog('Contexto'),
-        throwsA(isA<CatalogUnavailable>()),
-      );
-    }
-  });
-
-  test(
-    'network failure propagates and does not retain previous success',
-    () async {
-      var fail = false;
-      final generator = _generator(_rows(), fail: () => fail);
-      await generator.generateCatalog('Contexto');
-      fail = true;
-      await expectLater(
-        generator.generateCatalog('Contexto'),
-        throwsA(isA<SocketException>()),
-      );
-      expect(generator.report['status'], 'incomplete');
-      expect(generator.report['selected'], isEmpty);
-    },
-  );
-
-  test('untrusted entity ID cannot be interpolated in SPARQL', () async {
+  test('rejects untrusted QIDs before interpolation in SPARQL', () async {
     final generator = AlgorithmicSemanticCatalogGenerator(
       source: WikidataCatalogSource(
         readJson: (_) async => {
@@ -147,47 +82,103 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('resets the report when a later request fails', () async {
+    var fail = false;
+    final generator = _generator(fail: () => fail);
+    await generator.generateCatalog('Contexto');
+    fail = true;
+    await expectLater(
+      generator.generateCatalog('Contexto'),
+      throwsA(isA<SocketException>()),
+    );
+    expect(generator.report['status'], 'incomplete');
+    expect(generator.report['selected'], isEmpty);
+  });
 }
 
-AlgorithmicSemanticCatalogGenerator _generator(
-  List<Map<String, dynamic>> rows, {
+const _predicates = [
+  'P17', 'P19', 'P20', 'P27', 'P30',
+  'P36', 'P39', 'P50', 'P101', 'P112',
+  'P131', 'P136', 'P150', 'P155', 'P156',
+  'P159', 'P170', 'P176', 'P186', 'P276',
+];
+
+AlgorithmicSemanticCatalogGenerator _generator({
+  int axisCount = 20,
+  bool includeInvalidRow = false,
   bool Function()? fail,
-}) => AlgorithmicSemanticCatalogGenerator(
-  source: WikidataCatalogSource(
-    readJson: (uri) async {
-      if (fail?.call() ?? false) throw const SocketException('offline');
-      if (uri.host == 'www.wikidata.org') {
+}) {
+  return AlgorithmicSemanticCatalogGenerator(
+    source: WikidataCatalogSource(
+      readJson: (uri) async {
+        if (fail?.call() ?? false) throw const SocketException('offline');
+        final action = uri.queryParameters['action'];
+        if (action == 'wbsearchentities') {
+          return {
+            'search': [
+              {'id': 'Q1', 'label': 'Contexto'},
+            ],
+          };
+        }
+        if (action == 'wbgetentities') {
+          final ids = uri.queryParameters['ids']!.split('|');
+          return {
+            'entities': {
+              for (final id in ids)
+                id: {
+                  'claims': {
+                    for (final property in _predicates.take(axisCount))
+                      property: [
+                        {
+                          'rank': 'normal',
+                          'mainsnak': {'snaktype': 'value'},
+                        },
+                      ],
+                  },
+                },
+            },
+          };
+        }
+        final query = uri.queryParameters['query']!;
         return {
-          'search': [
-            {'id': 'Q1', 'label': 'Contexto'},
-          ],
+          'results': {
+            'bindings': query.contains('SELECT DISTINCT ?topic')
+                ? <Map<String, dynamic>>[]
+                : [
+                    for (var p = 0; p < 10; p++)
+                      for (var i = 0; i < 30; i++)
+                        {
+                          'item': _binding(
+                            'http://www.wikidata.org/entity/Q${1000 + p * 30 + i}',
+                          ),
+                          'itemLabel': _binding('Entidad $p $i'),
+                          'relation': _binding(
+                            'http://www.wikidata.org/prop/direct/P361',
+                          ),
+                          'group': _binding(
+                            'http://www.wikidata.org/entity/Q${501 + p}',
+                          ),
+                          'groupLabel': _binding('Ámbito $p'),
+                          'kind': _binding(
+                            'http://www.wikidata.org/prop/direct/P31',
+                          ),
+                        },
+                    if (includeInvalidRow)
+                      {
+                        'item': _binding('not-an-entity'),
+                        'itemLabel': _binding('Dato corrupto'),
+                        'group': _binding(
+                          'http://www.wikidata.org/entity/Q999',
+                        ),
+                        'groupLabel': _binding('Grupo inválido'),
+                      },
+                  ],
+          },
         };
-      }
-      final query = uri.queryParameters['query']!;
-      return {
-        'results': {
-          'bindings': query.contains('SELECT DISTINCT ?topic')
-              ? <Map<String, dynamic>>[]
-              : rows,
-        },
-      };
-    },
-  ),
-);
+      },
+    ),
+  );
+}
 
 Map<String, String> _binding(String value) => {'value': value};
-List<Map<String, dynamic>> _rows() => [
-  for (var p = 0; p < 10; p++)
-    for (var a = 0; a < 20; a++)
-      {
-        'item': _binding(
-          'http://www.wikidata.org/entity/Q${1000 + p * 20 + a}',
-        ),
-        'itemLabel': _binding('Concepto $p $a'),
-        'relation': _binding('http://www.wikidata.org/prop/direct/P361'),
-        'group': _binding('http://www.wikidata.org/entity/Q${100 + p}'),
-        'groupLabel': _binding('Grupo $p'),
-        'kind': _binding('http://www.wikidata.org/prop/direct/P31'),
-        'links': _binding('$a'),
-      },
-];
