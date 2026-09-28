@@ -239,14 +239,14 @@ Genera exactamente tres distractores por pregunta, respetando la competitividad 
 ++: comparte categoría, contexto y relación principal; la pregunta exige identificar la diferencia específica y decisiva que lo hace incorrecto.
 Cada distractor debe ser incorrecto por su contenido factual nuclear, no por añadir un modificador, restricción, cuantificador, negación, condición o circunstancia que fabrique su incorrección.
 Evita distractores que también puedan responder correctamente a la pregunta.
-Devuelve exclusivamente las diez preguntas, sus respuestas correctas y sus tres distractores, sin hechos, fuentes, explicaciones ni configuración. En el campo "records", usa este formato para cada pregunta:
+Devuelve exclusivamente las diez preguntas, sus respuestas correctas y sus tres distractores, sin hechos, fuentes ni explicaciones. Conserva en cada cabecera el número de fila y los códigos y nombres de pivote, dimensión y rol de la ruta. En el campo "records", usa este formato para cada pregunta:
 
-## [n]
+## [n] — [Pxx Nombre del pivote] · [Ixx/Mxx/Exx Nombre de la dimensión] · [Jx Nombre del rol] · [D1, D2, D3]
 **PREGUNTA:** [pregunta]
 **RESPUESTA:** [respuesta correcta de 1 a 8 palabras]
-1. **[símbolo D1]:** [distractor]
-2. **[símbolo D2]:** [distractor]
-3. **[símbolo D3]:** [distractor]
+1. **D1 [símbolo D1]:** [distractor]
+2. **D2 [símbolo D2]:** [distractor]
+3. **D3 [símbolo D3]:** [distractor]
 
 RUTA DE COBERTURA:
 $route''';
