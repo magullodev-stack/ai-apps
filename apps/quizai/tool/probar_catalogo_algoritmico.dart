@@ -54,8 +54,8 @@ Future<void> main() async {
   final lines = <String>[title, ''];
   for (var i = 0; i < pivots.length; i++) {
     final pivot = pivots[i] as Map;
-    lines.add('P${(i + 1).toString().padLeft(2, '0')} — ${pivot['name']}');
     final attractors = pivot['attractors'] as List;
+    lines.add('P${(i + 1).toString().padLeft(2, '0')} — ${pivot['name']} (${attractors.length} ejes)');
     for (var j = 0; j < attractors.length; j++) {
       lines.add(
         '    A${(j + 1).toString().padLeft(2, '0')} — ${attractors[j]}',
@@ -72,10 +72,13 @@ Future<void> main() async {
   stdout.writeln(
     '\nTiempo total de generación: ${(timer.elapsedMilliseconds / 1000).toStringAsFixed(3)} s',
   );
-  stdout.writeln('Pivotes completos: ${report['validPivots'] ?? 0}/10');
-  stdout.writeln(
-    'Atractores válidos y distintos: ${report['validAttractors'] ?? 0}/200',
+  final observed = pivots.fold<int>(
+    0,
+    (total, row) => total + ((row as Map)['attractors'] as List).length,
   );
+  stdout.writeln('Pivotes mostrados: ${pivots.length}/10');
+  stdout.writeln('Ejes documentados: $observed');
+  stdout.writeln('Pivotes con 20 ejes: ${report['validPivots'] ?? 0}/10');
   stdout.writeln(
     problem == null
         ? 'Catálogo validado con SemanticCatalog.'
