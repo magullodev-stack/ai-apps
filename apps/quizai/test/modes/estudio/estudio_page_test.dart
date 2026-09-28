@@ -7,17 +7,16 @@ import 'package:quizai/app/app_theme.dart';
 import 'package:quizai/coverage/coverage_route.dart';
 import 'package:quizai/modes/estudio/estudio_generation.dart';
 import 'package:quizai/modes/estudio/estudio_page.dart';
-import 'package:quizai/semantic_catalog/semantic_catalog.dart';
+import 'package:quizai/semantic_catalog/pivot_catalog.dart';
 
-import '../../semantic_catalog/fixtures.dart';
 import 'fixtures.dart';
 
-class _CatalogGenerator implements SemanticCatalogGenerator {
-  var pending = Completer<SemanticCatalog>();
+class _CatalogGenerator implements PivotCatalogGenerator {
+  var pending = Completer<PivotCatalog>();
   final contexts = <String>[];
 
   @override
-  Future<SemanticCatalog> generateCatalog(String context) {
+  Future<PivotCatalog> generateCatalog(String context) {
     contexts.add(context);
     return pending.future;
   }
@@ -82,7 +81,7 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
     expect(find.text('Generar'), findsNothing);
     expect(questionGenerator.routes, isEmpty);
-    final catalog = SemanticCatalog.fromJson(catalogJson(context));
+    final catalog = PivotCatalog.fromJson(pivotJson(context));
     catalogGenerator.pending.complete(catalog);
     await tester.pump();
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
@@ -93,7 +92,7 @@ void main() {
     expect(actual.context, context);
     for (var i = 0; i < 10; i++) {
       expect(actual.rows[i].pivot, same(expected.rows[i].pivot));
-      expect(actual.rows[i].attractor, same(expected.rows[i].attractor));
+      expect(actual.rows[i].pivot.code, expected.rows[i].pivot.code);
       expect(actual.rows[i].dimension, same(expected.rows[i].dimension));
       expect(actual.rows[i].role, same(expected.rows[i].role));
       expect(actual.rows[i].distractors, expected.rows[i].distractors);
@@ -156,7 +155,7 @@ void main() {
       await tester.pump();
       if (factual) {
         catalog.pending.complete(
-          SemanticCatalog.fromJson(catalogJson('Historia')),
+          PivotCatalog.fromJson(pivotJson('Historia')),
         );
         await tester.pump();
         // A replacement provider must not start an incomplete game either.
@@ -171,12 +170,12 @@ void main() {
       );
       expect(find.byType(OutlinedButton), findsNothing);
       expect(find.byType(LinearProgressIndicator), findsNothing);
-      catalog.pending = Completer<SemanticCatalog>();
+      catalog.pending = Completer<PivotCatalog>();
       questions.pending = Completer<List<EstudioQuestion>>();
       await tester.tap(find.text('Generar'));
       await tester.pump();
       catalog.pending.complete(
-        SemanticCatalog.fromJson(catalogJson('Historia')),
+        PivotCatalog.fromJson(pivotJson('Historia')),
       );
       await tester.pump();
       questions.pending.complete(estudioQuestions());
@@ -196,7 +195,7 @@ void main() {
         await tester.pump();
         if (factual) {
           catalog.pending.complete(
-            SemanticCatalog.fromJson(catalogJson('Historia')),
+            PivotCatalog.fromJson(pivotJson('Historia')),
           );
           await tester.pump();
         }
@@ -205,7 +204,7 @@ void main() {
           questions.pending.complete(estudioQuestions());
         } else {
           catalog.pending.complete(
-            SemanticCatalog.fromJson(catalogJson('Historia')),
+            PivotCatalog.fromJson(pivotJson('Historia')),
           );
         }
         await tester.pumpAndSettle();
@@ -215,3 +214,8 @@ void main() {
     );
   }
 }
+
+Map<String, dynamic> pivotJson(String context) => {
+  'context': context,
+  'pivots': [for (var i = 1; i <= 10; i++) 'Pivote $i'],
+};
