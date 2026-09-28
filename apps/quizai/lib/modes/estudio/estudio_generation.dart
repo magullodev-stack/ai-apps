@@ -57,7 +57,7 @@ Genera exactamente una pregunta de opción múltiple por fila.
 
 Para cada fila:
 
-1. Materializa primero un hecho F concreto que satisfaga simultáneamente el contexto, el pivote, el atractor y la relación establecida por la dimensión factual asignada. El hecho debe ser verdadero, preciso y documentalmente sustentable. No inventes hechos para forzar combinaciones incompatibles.
+1. Materializa primero un hecho F concreto que satisfaga simultáneamente el contexto, el pivote y la relación establecida por la dimensión factual asignada. El hecho debe ser verdadero, preciso y documentalmente sustentable. No inventes hechos para forzar combinaciones incompatibles.
 
 2. A partir de F, formula una pregunta de 5 a 20 palabras que interrogue exactamente la relación definida por la dimensión y la posición funcional indicada por el rol interrogativo. La pregunta no debe contener la respuesta, una parte distintiva de ella ni una reformulación que permita identificarla sin resolver F.
 
@@ -82,7 +82,6 @@ ${route.context}
 RUTA DE COBERTURA:
 ${route.rows.map((row) => '''Fila: ${row.number}
 Pivote: ${row.pivot.code} — ${row.pivot.name}
-Atractor: ${row.attractor.code} — ${row.attractor.name}
 Dimensión factual: ${row.dimension.code} — ${row.dimension.name}
 ${row.dimension.definition}
 Rol interrogativo: ${row.role.code} — ${row.role.name}
