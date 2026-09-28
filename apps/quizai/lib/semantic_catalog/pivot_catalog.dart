@@ -43,7 +43,7 @@ final class PivotCatalog {
   }
 }
 
-/// Rechaza palabras repetidas entre pivotes y términos del contexto.
+/// Rechaza repeticiones entre pivotes, salvo palabras del contexto.
 void validatePivotVocabulary(String context, List<dynamic> pivots) {
   String normalize(String word) {
     const from = 'áéíóúü';
@@ -60,7 +60,8 @@ void validatePivotVocabulary(String context, List<dynamic> pivots) {
           .allMatches(text)
           .map((match) => normalize(match.group(0)!));
 
-  final used = words(context).toSet();
+  final contextWords = words(context).toSet();
+  final used = <String>{};
   for (var i = 0; i < pivots.length; i++) {
     final pivot = pivots[i];
     if (pivot is! String) continue;
@@ -69,8 +70,8 @@ void validatePivotVocabulary(String context, List<dynamic> pivots) {
       throw FormatException('P${i + 1}: supera tres palabras.');
     }
     for (final token in tokens) {
-      if (!used.add(token)) {
-        throw FormatException('P${i + 1}: palabra repetida o presente en el contexto: $token.');
+      if (!contextWords.contains(token) && !used.add(token)) {
+        throw FormatException('P${i + 1}: palabra repetida entre pivotes: $token.');
       }
     }
   }
@@ -180,7 +181,8 @@ P^*=
 \forall P_i:\quad \operatorname{Palabras}(P_i)\leq 3
 \]
 
-Ninguna palabra puede repetirse entre los diez pivotes ni aparecer en el contexto.
+Ninguna palabra ajena al contexto puede repetirse entre los diez pivotes.
+Las palabras del contexto pueden reutilizarse libremente para delimitar ámbitos de estudio.
 Considera equivalentes las variantes de una misma palabra,
 incluidos cambios de género, número y derivados de una misma raíz.
 Si un nombre incumple estas condiciones, sustitúyelo antes de responder.
