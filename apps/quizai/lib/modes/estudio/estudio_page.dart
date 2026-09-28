@@ -69,8 +69,11 @@ class _EstudioPageState extends State<EstudioPage> {
         AiEstudioQuestionGenerator(
           client: _client!,
           model: const String.fromEnvironment(
-            'AI_APPS_FACTUAL_MODEL',
-            defaultValue: 'gpt-5.6-terra',
+            'AI_APPS_TERRA_MODEL',
+            defaultValue: String.fromEnvironment(
+              'AI_APPS_FACTUAL_MODEL',
+              defaultValue: 'gpt-5.6-terra',
+            ),
           ),
         );
   }

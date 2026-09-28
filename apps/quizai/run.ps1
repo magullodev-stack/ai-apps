@@ -2,6 +2,7 @@ param(
     [string]$Device = 'emulator-5554',
     [string]$Model = 'gpt-4.1-mini',
     [string]$CatalogModel = 'gpt-5.6-luna',
+    [Alias('TerraModel')]
     [string]$FactualModel = 'gpt-5.6-terra',
     [switch]$VerifyOnly,
     [switch]$StopService
@@ -247,6 +248,7 @@ try {
                 AI_APPS_AI_MODEL = $Model
                 AI_APPS_CATALOG_MODEL = $CatalogModel
                 AI_APPS_FACTUAL_MODEL = $FactualModel
+                AI_APPS_TERRA_MODEL = $FactualModel
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $definesFile
             & $flutter run -d $Device "--dart-define-from-file=$definesFile"
             if ($LASTEXITCODE -ne 0) { throw 'Flutter terminó con un error.' }
