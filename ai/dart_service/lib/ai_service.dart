@@ -144,9 +144,9 @@ class AiService {
     } on TimeoutException {
       _log({'error': 'request_timeout'});
       await _send(request, 504, {'error': 'request_timeout'});
-    } catch (_) {
+    } catch (error) {
       // Never print arbitrary exceptions: they can contain headers or request data.
-      _log({'error': 'connection_or_response_failure'});
+      _log({'error': 'connection_or_response_failure', 'type': error.runtimeType.toString(), 'detail': _safe(error.toString())});
       try {
         await _send(request, 502, {'error': 'connection_or_response_failure'});
       } catch (_) {
