@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
-import 'package:ai_apps_service/ai_service.dart';
 
 /// Generación de pivotes con un modelo configurable.
 Future<void> main(List<String> args) async {
@@ -20,16 +19,32 @@ Future<void> main(List<String> args) async {
     return;
   }
 
-  final key = Platform.environment['AI_APPS_AI_API_KEY'] ?? '';
-  final service = AiService(apiKey: key, token: 'prueba-local-pivotes');
-  AiAppsClient? client;
+  final sessionFile = File('../../.ai-apps/dart-service.json');
+  if (!await sessionFile.exists()) {
+    stderr.writeln('El servicio de IA no está iniciado. Arráncalo con run.ps1.');
+    exitCode = 1;
+    return;
+  }
+  final session = jsonDecode(await sessionFile.readAsString());
+  if (session is! Map || session['endpoint'] is! String ||
+      session['token'] is! String) {
+    stderr.writeln('Sesión del servicio de IA inválida.');
+    exitCode = 1;
+    return;
+  }
+  final endpoint = Uri.tryParse(session['endpoint'] as String);
+  if (endpoint == null || endpoint.scheme != 'http' ||
+      endpoint.host != '127.0.0.1') {
+    stderr.writeln('Endpoint local del servicio de IA inválido.');
+    exitCode = 1;
+    return;
+  }
+  final client = AiAppsClient(
+    endpoint: endpoint,
+    authorization: session['token'] as String,
+  );
   final watch = Stopwatch()..start();
   try {
-    final server = await service.start();
-    client = AiAppsClient(
-      endpoint: Uri.parse('http://127.0.0.1:' + server.port.toString()),
-      authorization: 'prueba-local-pivotes',
-    );
     stdout.writeln('Modelo: ' + model);
     final result = await client.generate(
       application: 'quizai',
@@ -56,8 +71,7 @@ Future<void> main(List<String> args) async {
     stderr.writeln('ERROR: ' + error.toString());
     exitCode = 1;
   } finally {
-    client?.close();
-    await service.close();
+    client.close();
   }
 }
 
