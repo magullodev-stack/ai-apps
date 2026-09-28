@@ -59,8 +59,12 @@ Future<void> main(List<String> args) async {
       schema: _schema(),
     ).timeout(const Duration(seconds: 90));
     final data = jsonDecode(result.text);
-    if (data is! Map || data['context'] != context || data['pivots'] is! List) {
-      throw const FormatException('Respuesta inválida: contexto o pivotes.');
+    if (data is! Map || data['pivots'] is! List) {
+      throw const FormatException('Respuesta inválida: faltan los pivotes.');
+    }
+    // El contexto de la ruta es siempre el texto introducido, no la copia de IA.
+    if (data['context'] != context) {
+      stderr.writeln('Aviso: Luna devolvió otro texto de contexto; se conserva el original.');
     }
     final pivots = data['pivots'] as List;
     if (pivots.length != 10 ||
@@ -72,7 +76,7 @@ Future<void> main(List<String> args) async {
       stdout.writeln('P' + (i + 1).toString().padLeft(2, '0') + ' ' + pivots[i].toString());
     }
     if (showRoute) {
-      final route = compileCoverageRoute(PivotCatalog.fromJson(data), Random());
+      final route = compileCoverageRoute(PivotCatalog.fromJson({'context': context, 'pivots': pivots}), Random());
       stdout.writeln();
       stdout.writeln(coverageRouteDebugText(route));
     }
