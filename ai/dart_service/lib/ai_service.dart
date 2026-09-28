@@ -254,6 +254,12 @@ class AiService {
               'totalTokens': 'total_tokens'
             }.entries)
               if (usage[entry.value] is int) entry.key: usage[entry.value],
+            if (usage['output_tokens_details'] is Map &&
+                usage['output_tokens_details']['reasoning_tokens'] is int)
+              'reasoningTokens': usage['output_tokens_details']['reasoning_tokens'],
+            if (usage['input_tokens_details'] is Map &&
+                usage['input_tokens_details']['cached_tokens'] is int)
+              'cachedInputTokens': usage['input_tokens_details']['cached_tokens'],
           },
       }
     );
