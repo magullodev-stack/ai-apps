@@ -112,3 +112,17 @@ const _competitiveness = <List<DistractorCompetitiveness>>[
     DistractorCompetitiveness.high,
   ],
 ];
+
+String coverageRouteDebugText(CoverageRoute route) => [
+  '## Ruta de Cobertura para ${route.context}',
+  '# n. [Pivote, Dimensión factual (definición literal), '
+      'Rol interrogativo (definición literal), Competitividad D1, D2, D3]',
+  for (final row in route.rows)
+    '${row.number}. [${row.pivot.code} ${row.pivot.name}, '
+    '${row.dimension.code} ${row.dimension.name} '
+    '(${row.dimension.definition}), '
+    '${row.role.code} ${row.role.name} (${row.role.definition}), '
+    '${row.distractors[0].symbol}, '
+    '${row.distractors[1].symbol}, '
+    '${row.distractors[2].symbol}]',
+].join('\\n');
