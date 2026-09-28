@@ -79,7 +79,7 @@ SELECT DISTINCT ?entity ?property ?valueType ?valueTypeLabel WHERE {
 ''');
       final axes = <String, _Axis>{};
       for (final row in rows) {
-        final property = _entityId(row, 'property');
+        final property = _propertyId(row, 'property');
         final type = _entityId(row, 'valueType');
         final typeLabel = _label(row, 'valueTypeLabel');
         if (!_validLabel(typeLabel)) continue;
@@ -196,6 +196,30 @@ String _qid(String id) {
   }
   return id;
 }
+String _propertyId(Map<String, dynamic> row, String name) {
+  final id = _label(row, name).split('/').last;
+  if (!RegExp(r'^P[1-9][0-9]*
+    _qid(_label(row, name).split('/').last);
+
+final class _Topic {
+  const _Topic(this.id, this.name);
+  final String id;
+  final String name;
+}
+
+final class _Axis {
+  _Axis(this.name);
+  final String name;
+  final entities = <String>{};
+  final properties = <String>{};
+  final types = <String>{};
+}
+).hasMatch(id)) {
+    throw const FormatException('PID inválido.');
+  }
+  return id;
+}
+
 String _entityId(Map<String, dynamic> row, String name) =>
     _qid(_label(row, name).split('/').last);
 
