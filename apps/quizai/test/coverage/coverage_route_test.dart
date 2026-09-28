@@ -4,15 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quizai/coverage/coverage_route.dart';
 import 'package:quizai/coverage/factual_dimensions.dart';
 import 'package:quizai/coverage/interrogative_roles.dart';
-import 'package:quizai/semantic_catalog/semantic_catalog.dart';
+import 'package:quizai/semantic_catalog/pivot_catalog.dart';
 
-import '../semantic_catalog/fixtures.dart';
 
 void main() {
   test('compila diez filas reproducibles con cobertura y competitividad', () {
-    final catalog = SemanticCatalog.fromJson(
-      catalogJson('Contexto de cobertura'),
-    );
+    final catalog = PivotCatalog.fromJson({
+      'context': 'Contexto de cobertura',
+      'pivots': [for (var i = 1; i <= 10; i++) 'Pivote $i'],
+    });
     final originalPivots = [...catalog.pivots];
     final route = compileCoverageRoute(catalog, Random(42));
     final replay = compileCoverageRoute(catalog, Random(42));
@@ -45,13 +45,9 @@ void main() {
     for (var i = 0; i < 10; i++) {
       final row = route.rows[i];
       expect(row.number, i + 1);
-      final index = row.pivot.attractors.indexOf(row.attractor);
-      expect(index, anyOf(2 * i, 2 * i + 1));
-      expect(row.attractor.code, 'A${(index + 1).toString().padLeft(2, '0')}');
       expect(factualDimensions, contains(row.dimension));
       expect(interrogativeRoles, contains(row.role));
       expect(row.pivot, same(replay.rows[i].pivot));
-      expect(row.attractor, same(replay.rows[i].attractor));
       expect(row.dimension, same(replay.rows[i].dimension));
       expect(row.role, same(replay.rows[i].role));
       expect(() => row.distractors.clear(), throwsUnsupportedError);
