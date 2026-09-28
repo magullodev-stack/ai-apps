@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizai/app/app_theme.dart';
 import 'package:quizai/coverage/coverage_route.dart';
+import 'package:quizai/modes/estudio/estudio_generation.dart';
 import 'package:quizai/modes/estudio/estudio_page.dart';
 import 'package:quizai/semantic_catalog/semantic_catalog.dart';
 
 import '../../semantic_catalog/fixtures.dart';
+import 'fixtures.dart';
 
-class _Generator implements SemanticCatalogGenerator {
+class _CatalogGenerator implements SemanticCatalogGenerator {
   var pending = Completer<SemanticCatalog>();
   final contexts = <String>[];
 
@@ -21,128 +23,195 @@ class _Generator implements SemanticCatalogGenerator {
   }
 }
 
+class _QuestionGenerator implements EstudioQuestionGenerator {
+  var pending = Completer<List<EstudioQuestion>>();
+  final routes = <CoverageRoute>[];
+
+  @override
+  Future<List<EstudioQuestion>> generateQuestions(CoverageRoute route) {
+    routes.add(route);
+    return pending.future;
+  }
+}
+
+Widget _app(_CatalogGenerator catalog, _QuestionGenerator questions) =>
+    MaterialApp(
+      theme: quizAITheme,
+      home: EstudioPage(
+        generator: catalog,
+        questionGenerator: questions,
+        random: Random(42),
+      ),
+    );
+
 void main() {
-  testWidgets('tema, carga única y diez filas de la ruta compilada', (
+  testWidgets('tema → ruta interna → diez preguntas → partida y resultado', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(329, 752);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final generator = _Generator();
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: quizAITheme,
-        home: EstudioPage(generator: generator, random: Random(42)),
-      ),
-    );
-    expect(generator.contexts, isEmpty);
+    final catalogGenerator = _CatalogGenerator();
+    final questionGenerator = _QuestionGenerator();
+    await tester.pumpWidget(_app(catalogGenerator, questionGenerator));
     expect(
       tester
           .widget<RadioGroup<String>>(find.byType(RadioGroup<String>))
           .groupValue,
       'topic',
     );
-    final file = tester.widget<RadioListTile<String>>(
-      find.widgetWithText(RadioListTile<String>, 'Sube un archivo'),
+    expect(
+      tester
+          .widget<RadioListTile<String>>(
+            find.widgetWithText(RadioListTile<String>, 'Sube un archivo'),
+          )
+          .enabled,
+      false,
     );
-    expect(file.enabled, false);
     await tester.tap(find.text('Generar'));
     await tester.pump();
     expect(find.text('Escribe un tema antes de generar.'), findsOneWidget);
-    expect(generator.contexts, isEmpty);
+    expect(catalogGenerator.contexts, isEmpty);
 
     const context = '  Océanos y clima  ';
     await tester.enterText(find.byType(TextField), context);
     await tester.tap(find.text('Generar'));
     await tester.pump();
-    expect(generator.contexts, [context]);
+    expect(catalogGenerator.contexts, [context]);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNull,
-    );
-    expect(tester.widget<TextField>(find.byType(TextField)).readOnly, true);
-
+    expect(find.text('Generar'), findsNothing);
+    expect(questionGenerator.routes, isEmpty);
     final catalog = SemanticCatalog.fromJson(catalogJson(context));
+    catalogGenerator.pending.complete(catalog);
+    await tester.pump();
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.text('Ruta de Cobertura'), findsNothing);
+    expect(questionGenerator.routes, hasLength(1));
+    final actual = questionGenerator.routes.single;
     final expected = compileCoverageRoute(catalog, Random(42));
-    generator.pending.complete(catalog);
-    await tester.pumpAndSettle();
-    expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('Ruta de Cobertura'), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(10));
-    for (final row in expected.rows) {
-      final card = find.byKey(ValueKey('coverage-row-${row.number}'));
-      for (final text in [
-        'Fila ${row.number}',
-        'Pivote ${row.pivot.code}: ${row.pivot.name}',
-        'Atractor ${row.attractor.code}: ${row.attractor.name}',
-        'Dimensión ${row.dimension.code}: ${row.dimension.name}',
-        row.dimension.definition,
-        'Rol ${row.role.code}: ${row.role.name}',
-        row.role.definition,
-        'Competitividad de distractores: ${row.distractors.map((d) => d.symbol).join(' / ')}',
-      ]) {
-        expect(
-          find.descendant(of: card, matching: find.text(text)),
-          findsOneWidget,
-        );
-      }
+    expect(actual.context, context);
+    for (var i = 0; i < 10; i++) {
+      expect(actual.rows[i].pivot, same(expected.rows[i].pivot));
+      expect(actual.rows[i].attractor, same(expected.rows[i].attractor));
+      expect(actual.rows[i].dimension, same(expected.rows[i].dimension));
+      expect(actual.rows[i].role, same(expected.rows[i].role));
+      expect(actual.rows[i].distractors, expected.rows[i].distractors);
     }
-    await tester.ensureVisible(find.text('Fila 10'));
-    expect(find.text('Fila 10').hitTestable(), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('error recuperable y nueva generación', (tester) async {
-    final generator = _Generator();
-    await tester.pumpWidget(
-      MaterialApp(home: EstudioPage(generator: generator)),
-    );
-    await tester.enterText(find.byType(TextField), 'Historia');
-    await tester.tap(find.text('Generar'));
-    await tester.pump();
-    generator.pending.completeError(const FormatException('invalid'));
+    questionGenerator.pending.complete(estudioQuestions());
     await tester.pumpAndSettle();
-    expect(
-      find.text('El catálogo recibido no es válido. Vuelve a generar.'),
-      findsOneWidget,
-    );
-    expect(find.byType(Card), findsNothing);
+    expect(find.byType(TextField), findsNothing);
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNotNull,
-    );
-    generator.pending = Completer<SemanticCatalog>();
-    await tester.tap(find.text('Generar'));
-    await tester.pump();
-    generator.pending.complete(
-      SemanticCatalog.fromJson(catalogJson('Historia')),
-    );
+    for (var n = 1; n <= 10; n++) {
+      expect(find.text('Pregunta $n de 10'), findsOneWidget);
+      expect(find.text('Hecho interno $n'), findsNothing);
+      expect(find.textContaining('Pivote'), findsNothing);
+      expect(find.textContaining('Atractor'), findsNothing);
+      expect(find.textContaining('Dimensión'), findsNothing);
+      expect(find.textContaining('Rol'), findsNothing);
+      expect(find.textContaining('Competitividad'), findsNothing);
+      expect(find.byType(OutlinedButton), findsNWidgets(4));
+      expect(find.text('Siguiente'), findsNothing);
+      final answer = find.text(n.isOdd ? 'Correcta $n' : 'Alternativa A $n');
+      await tester.ensureVisible(answer);
+      await tester.tap(answer);
+      await tester.pumpAndSettle();
+      expect(find.text('Aciertos: ${(n + 1) ~/ 2}'), findsOneWidget);
+      expect(
+        find.text(n.isOdd ? '¡Correcto!' : 'Respuesta correcta: Correcta $n'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widgetList<OutlinedButton>(find.byType(OutlinedButton))
+            .every((button) => button.onPressed == null),
+        true,
+      );
+      await tester.ensureVisible(find.text('Siguiente'));
+      await tester.tap(find.text('Siguiente'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Resultado: 5 / 10 aciertos'), findsOneWidget);
+    await tester.tap(find.text('Escribir otro tema'));
     await tester.pumpAndSettle();
-    expect(generator.contexts, ['Historia', 'Historia']);
-    expect(find.text('Ruta de Cobertura'), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(10));
+    expect(find.byType(TextField), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      isEmpty,
+    );
+    expect(catalogGenerator.contexts, hasLength(1));
+    expect(questionGenerator.routes, hasLength(1));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'salir durante la generación no actualiza la pantalla desmontada',
-    (tester) async {
-      final generator = _Generator();
-      await tester.pumpWidget(
-        MaterialApp(home: EstudioPage(generator: generator)),
-      );
+  for (final factual in [false, true]) {
+    testWidgets('error recuperable en ${factual ? 'preguntas' : 'catálogo'}', (
+      tester,
+    ) async {
+      final catalog = _CatalogGenerator();
+      final questions = _QuestionGenerator();
+      await tester.pumpWidget(_app(catalog, questions));
       await tester.enterText(find.byType(TextField), 'Historia');
       await tester.tap(find.text('Generar'));
       await tester.pump();
-      await tester.pumpWidget(const SizedBox());
-      generator.pending.complete(
+      if (factual) {
+        catalog.pending.complete(
+          SemanticCatalog.fromJson(catalogJson('Historia')),
+        );
+        await tester.pump();
+        // A replacement provider must not start an incomplete game either.
+        questions.pending.complete(estudioQuestions().take(9).toList());
+      } else {
+        catalog.pending.completeError(const FormatException('invalid'));
+      }
+      await tester.pumpAndSettle();
+      expect(
+        find.text('La generación recibida no es válida. Vuelve a generar.'),
+        findsOneWidget,
+      );
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      catalog.pending = Completer<SemanticCatalog>();
+      questions.pending = Completer<List<EstudioQuestion>>();
+      await tester.tap(find.text('Generar'));
+      await tester.pump();
+      catalog.pending.complete(
         SemanticCatalog.fromJson(catalogJson('Historia')),
       );
+      await tester.pump();
+      questions.pending.complete(estudioQuestions());
       await tester.pumpAndSettle();
+      expect(find.text('Pregunta 1 de 10'), findsOneWidget);
       expect(tester.takeException(), isNull);
-    },
-  );
+    });
+
+    testWidgets(
+      'salir durante ${factual ? 'TERRA' : 'Luna'} no actualiza la pantalla',
+      (tester) async {
+        final catalog = _CatalogGenerator();
+        final questions = _QuestionGenerator();
+        await tester.pumpWidget(_app(catalog, questions));
+        await tester.enterText(find.byType(TextField), 'Historia');
+        await tester.tap(find.text('Generar'));
+        await tester.pump();
+        if (factual) {
+          catalog.pending.complete(
+            SemanticCatalog.fromJson(catalogJson('Historia')),
+          );
+          await tester.pump();
+        }
+        await tester.pumpWidget(const SizedBox());
+        if (factual) {
+          questions.pending.complete(estudioQuestions());
+        } else {
+          catalog.pending.complete(
+            SemanticCatalog.fromJson(catalogJson('Historia')),
+          );
+        }
+        await tester.pumpAndSettle();
+        expect(questions.routes, hasLength(factual ? 1 : 0));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }

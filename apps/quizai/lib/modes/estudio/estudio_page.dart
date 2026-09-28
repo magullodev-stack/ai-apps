@@ -7,11 +7,18 @@ import 'package:flutter/material.dart';
 import '../../coverage/coverage_route.dart';
 import '../../semantic_catalog/ai_semantic_catalog_generator.dart';
 import '../../semantic_catalog/semantic_catalog.dart';
+import 'estudio_generation.dart';
 
 class EstudioPage extends StatefulWidget {
-  const EstudioPage({super.key, this.generator, this.random});
+  const EstudioPage({
+    super.key,
+    this.generator,
+    this.questionGenerator,
+    this.random,
+  });
 
   final SemanticCatalogGenerator? generator;
+  final EstudioQuestionGenerator? questionGenerator;
   final Random? random;
 
   @override
@@ -21,9 +28,15 @@ class EstudioPage extends StatefulWidget {
 class _EstudioPageState extends State<EstudioPage> {
   final _contextController = TextEditingController();
   late final SemanticCatalogGenerator _generator;
+  late final EstudioQuestionGenerator _questionGenerator;
   late final Random _random;
   AiAppsClient? _client;
-  CoverageRoute? _route;
+  List<EstudioQuestion>? _questions;
+  List<List<String>> _options = [];
+  int _index = 0;
+  int _score = 0;
+  int? _selected;
+  bool _finished = false;
   bool _loading = false;
   String? _error;
 
@@ -31,9 +44,7 @@ class _EstudioPageState extends State<EstudioPage> {
   void initState() {
     super.initState();
     _random = widget.random ?? Random();
-    if (widget.generator case final generator?) {
-      _generator = generator;
-    } else {
+    if (widget.generator == null || widget.questionGenerator == null) {
       _client = AiAppsClient(
         endpoint: Uri.parse(
           const String.fromEnvironment(
@@ -43,14 +54,25 @@ class _EstudioPageState extends State<EstudioPage> {
         ),
         authorization: const String.fromEnvironment('AI_APPS_GAME_TOKEN'),
       );
-      _generator = AiSemanticCatalogGenerator(
-        client: _client!,
-        model: const String.fromEnvironment(
-          'AI_APPS_CATALOG_MODEL',
-          defaultValue: 'gpt-4.1-mini',
-        ),
-      );
     }
+    _generator =
+        widget.generator ??
+        AiSemanticCatalogGenerator(
+          client: _client!,
+          model: const String.fromEnvironment(
+            'AI_APPS_CATALOG_MODEL',
+            defaultValue: 'gpt-4.1-mini',
+          ),
+        );
+    _questionGenerator =
+        widget.questionGenerator ??
+        AiEstudioQuestionGenerator(
+          client: _client!,
+          model: const String.fromEnvironment(
+            'AI_APPS_TERRA_MODEL',
+            defaultValue: 'gpt-4.1-mini',
+          ),
+        );
   }
 
   @override
@@ -71,15 +93,35 @@ class _EstudioPageState extends State<EstudioPage> {
     setState(() {
       _loading = true;
       _error = null;
-      _route = null;
+      _questions = null;
     });
     try {
       final catalog = await _generator.generateCatalog(topic);
       if (!mounted) return;
       final route = compileCoverageRoute(catalog, _random);
-      setState(() => _route = route);
+      final questions = await _questionGenerator.generateQuestions(route);
+      if (!mounted) return;
+      if (questions.length != 10 ||
+          List.generate(
+            10,
+            (i) => questions[i].rowNumber != i + 1,
+          ).contains(true)) {
+        throw const FormatException('Partida incompleta.');
+      }
+      final options = [
+        for (final question in questions)
+          [question.correct, ...question.distractors]..shuffle(_random),
+      ];
+      setState(() {
+        _questions = List.unmodifiable(questions);
+        _options = options;
+        _index = 0;
+        _score = 0;
+        _selected = null;
+        _finished = false;
+      });
     } on FormatException {
-      _showError('El catálogo recibido no es válido. Vuelve a generar.');
+      _showError('La generación recibida no es válida. Vuelve a generar.');
     } on TimeoutException {
       _showError('La generación ha tardado demasiado. Vuelve a intentarlo.');
     } on StateError {
@@ -87,7 +129,9 @@ class _EstudioPageState extends State<EstudioPage> {
         'No se ha configurado la generación. Abre QuizAI con su lanzador.',
       );
     } catch (_) {
-      _showError('No se ha podido generar la ruta. Vuelve a intentarlo.');
+      _showError(
+        'No se han podido generar las preguntas. Vuelve a intentarlo.',
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -97,9 +141,41 @@ class _EstudioPageState extends State<EstudioPage> {
     if (mounted) setState(() => _error = message);
   }
 
+  void _answer(int option) {
+    if (_selected != null || _finished) return;
+    setState(() {
+      _selected = option;
+      if (_options[_index][option] == _questions![_index].correct) _score++;
+    });
+  }
+
+  void _next() {
+    if (_selected == null || _finished) return;
+    setState(() {
+      if (_index == 9) {
+        _finished = true;
+      } else {
+        _index++;
+        _selected = null;
+      }
+    });
+  }
+
+  void _newTopic() => setState(() {
+    _questions = null;
+    _options = [];
+    _contextController.clear();
+    _error = null;
+    _index = 0;
+    _score = 0;
+    _selected = null;
+    _finished = false;
+  });
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final questions = _questions;
     return Scaffold(
       appBar: AppBar(title: const Text('Estudio')),
       body: SafeArea(
@@ -111,51 +187,51 @@ class _EstudioPageState extends State<EstudioPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  RadioGroup<String>(
-                    groupValue: 'topic',
-                    onChanged: (_) {},
-                    child: Column(
-                      children: [
-                        const RadioListTile<String>(
-                          value: 'topic',
-                          title: Text('Escribe un tema'),
-                        ),
-                        TextField(
-                          controller: _contextController,
-                          readOnly: _loading,
-                          minLines: 2,
-                          maxLines: 5,
-                          decoration: const InputDecoration(
-                            labelText: 'Tema o contexto',
-                            hintText: '¿Qué quieres explorar?',
-                            border: OutlineInputBorder(),
+                  if (!_loading && questions == null)
+                    RadioGroup<String>(
+                      groupValue: 'topic',
+                      onChanged: (_) {},
+                      child: Column(
+                        children: [
+                          const RadioListTile<String>(
+                            value: 'topic',
+                            title: Text('Escribe un tema'),
                           ),
-                          onChanged: (_) => setState(() {
-                            _route = null;
-                            _error = null;
-                          }),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            onPressed: _loading ? null : _generate,
-                            child: const Text('Generar'),
+                          TextField(
+                            controller: _contextController,
+                            readOnly: _loading,
+                            minLines: 2,
+                            maxLines: 5,
+                            decoration: const InputDecoration(
+                              labelText: 'Tema o contexto',
+                              hintText: '¿Qué quieres explorar?',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (_) => setState(() {
+                              _error = null;
+                            }),
                           ),
-                        ),
-                        const RadioListTile<String>(
-                          value: 'file',
-                          enabled: false,
-                          title: Text('Sube un archivo'),
-                          subtitle: Text('Todavía no disponible'),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _loading ? null : _generate,
+                              child: const Text('Generar'),
+                            ),
+                          ),
+                          const RadioListTile<String>(
+                            value: 'file',
+                            enabled: false,
+                            title: Text('Sube un archivo'),
+                            subtitle: Text('Todavía no disponible'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   if (_loading) ...[
                     const LinearProgressIndicator(),
                     const SizedBox(height: 8),
-                    const Text('Generando tu Ruta de Cobertura…'),
+                    const Text('Generando tus diez preguntas…'),
                   ],
                   if (_error case final message?)
                     Semantics(
@@ -165,48 +241,57 @@ class _EstudioPageState extends State<EstudioPage> {
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ),
-                  if (_route case final route?) ...[
-                    const SizedBox(height: 16),
+                  if (questions != null && _finished) ...[
                     Text(
-                      'Ruta de Cobertura',
+                      'Partida completada',
                       style: theme.textTheme.titleLarge,
                     ),
-                    Text(route.context),
-                    const SizedBox(height: 8),
-                    for (final row in route.rows)
-                      Card(
-                        key: ValueKey('coverage-row-${row.number}'),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Fila ${row.number}',
-                                style: theme.textTheme.titleMedium,
-                              ),
-                              Text(
-                                'Pivote ${row.pivot.code}: ${row.pivot.name}',
-                              ),
-                              Text(
-                                'Atractor ${row.attractor.code}: ${row.attractor.name}',
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Dimensión ${row.dimension.code}: ${row.dimension.name}',
-                              ),
-                              Text(row.dimension.definition),
-                              const SizedBox(height: 8),
-                              Text('Rol ${row.role.code}: ${row.role.name}'),
-                              Text(row.role.definition),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Competitividad de distractores: ${row.distractors.map((d) => d.symbol).join(' / ')}',
-                              ),
-                            ],
+                    Text('Resultado: $_score / 10 aciertos'),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: _newTopic,
+                      child: const Text('Escribir otro tema'),
+                    ),
+                  ] else if (questions != null) ...[
+                    Text('Pregunta ${_index + 1} de 10'),
+                    Text('Aciertos: $_score'),
+                    const SizedBox(height: 16),
+                    Text(
+                      questions[_index].text,
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    for (var i = 0; i < 4; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: OutlinedButton(
+                          onPressed: _selected == null
+                              ? () => _answer(i)
+                              : null,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${_selected == i ? '● ' : ''}${_options[_index][i]}',
+                            ),
                           ),
                         ),
                       ),
+                    if (_selected != null) ...[
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          _options[_index][_selected!] ==
+                                  questions[_index].correct
+                              ? '¡Correcto!'
+                              : 'Respuesta correcta: ${questions[_index].correct}',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: _next,
+                        child: const Text('Siguiente'),
+                      ),
+                    ],
                   ],
                 ],
               ),
