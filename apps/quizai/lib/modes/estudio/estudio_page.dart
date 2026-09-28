@@ -61,7 +61,7 @@ class _EstudioPageState extends State<EstudioPage> {
           client: _client!,
           model: const String.fromEnvironment(
             'AI_APPS_CATALOG_MODEL',
-            defaultValue: 'gpt-4.1-mini',
+            defaultValue: 'gpt-5.6-luna',
           ),
         );
     _questionGenerator =
@@ -69,8 +69,8 @@ class _EstudioPageState extends State<EstudioPage> {
         AiEstudioQuestionGenerator(
           client: _client!,
           model: const String.fromEnvironment(
-            'AI_APPS_TERRA_MODEL',
-            defaultValue: 'gpt-4.1-mini',
+            'AI_APPS_FACTUAL_MODEL',
+            defaultValue: 'gpt-5.6-terra',
           ),
         );
   }
