@@ -231,7 +231,7 @@ Map<String, Object?> _schema() => {
 
 
 String _terraPrompt(String route) => '''Genera exactamente 10 preguntas de opción múltiple, una por cada fila de la Ruta de Cobertura y en el mismo orden.
-Usa el pivote, la dimensión factual y su definición para establecer internamente un único hecho concreto y verificable. A partir de ese hecho formula una pregunta cuyo elemento interrogado corresponda al rol asignado y su definición. Determina internamente una única respuesta correcta, pero NO la incluyas en la salida.
+Usa el pivote, la dimensión factual y su definición para establecer internamente un único hecho concreto y verificable. A partir de ese hecho formula una pregunta cuyo elemento interrogado corresponda al rol asignado y su definición. Determina una única respuesta correcta e inclúyela en la salida.
 La pregunta debe tener entre 5 y 20 palabras, contener los elementos factuales discriminativos necesarios y no revelar la respuesta.
 Genera exactamente tres distractores por pregunta, respetando la competitividad D1, D2 y D3 de su fila:
 −: plausible pero claramente distinguible.
@@ -239,10 +239,11 @@ Genera exactamente tres distractores por pregunta, respetando la competitividad 
 ++: comparte categoría, contexto y relación principal; la pregunta exige identificar la diferencia específica y decisiva que lo hace incorrecto.
 Cada distractor debe ser incorrecto por su contenido factual nuclear, no por añadir un modificador, restricción, cuantificador, negación, condición o circunstancia que fabrique su incorrección.
 Evita distractores que también puedan responder correctamente a la pregunta.
-Devuelve exclusivamente las diez preguntas y sus tres distractores, sin hechos, fuentes, respuestas correctas, explicaciones ni configuración. En el campo "records", usa este formato para cada pregunta:
+Devuelve exclusivamente las diez preguntas, sus respuestas correctas y sus tres distractores, sin hechos, fuentes, explicaciones ni configuración. En el campo "records", usa este formato para cada pregunta:
 
 ## [n]
 **PREGUNTA:** [pregunta]
+**RESPUESTA:** [respuesta correcta de 1 a 8 palabras]
 1. **[símbolo D1]:** [distractor]
 2. **[símbolo D2]:** [distractor]
 3. **[símbolo D3]:** [distractor]
