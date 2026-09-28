@@ -10,7 +10,8 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 /// Generación de pivotes con un modelo configurable.
 Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
-  final showRoute = args.contains('--ruta');
+  final showTerra = args.contains('--terra');
+  final showRoute = args.contains('--ruta') || showTerra;
   if (model.isEmpty) {
     stderr.writeln('Uso: dart run tool/generar_pivotes.dart <modelo>');
     exitCode = 1;
@@ -76,8 +77,10 @@ Future<void> main(List<String> args) async {
     for (var i = 0; i < pivots.length; i++) {
       stdout.writeln('P' + (i + 1).toString().padLeft(2, '0') + ' ' + pivots[i].toString());
     }
-    if (showRoute) {
-      final route = compileCoverageRoute(PivotCatalog.fromJson({'context': context, 'pivots': pivots}), Random());
+    final route = showRoute
+        ? compileCoverageRoute(PivotCatalog.fromJson({'context': context, 'pivots': pivots}), Random())
+        : null;
+    if (route != null) {
       stdout.writeln();
       stdout.writeln(coverageRouteDebugText(route));
     }
@@ -102,6 +105,40 @@ Future<void> main(List<String> args) async {
     stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponibles'} tokens | ${priceFor(outputTokens is int ? outputTokens : null, outputRate)}');
     stdout.writeln('Total: ${totalTokens is int ? totalTokens : inputTokens is int && outputTokens is int ? inputTokens + outputTokens : 'no disponible'} tokens | ${hasPrices ? ((inputTokens * inputRate + outputTokens * outputRate) / 1000000).toStringAsFixed(6) + ' USD' : 'no disponible'}');
     stdout.writeln('Tiempo: ' + watch.elapsedMilliseconds.toString() + ' ms');
+    if (showTerra && route != null) {
+      stdout.writeln();
+      stdout.writeln('Modelo: gpt-5.6-terra');
+      final terraWatch = Stopwatch()..start();
+      final terra = await client.generate(
+        application: 'quizai',
+        model: 'gpt-5.6-terra',
+        input: _terraPrompt(coverageRouteDebugText(route)),
+        schemaName: 'quizai_terra_route_test',
+        schema: _terraSchema(),
+      ).timeout(const Duration(seconds: 180));
+      final terraData = jsonDecode(terra.text);
+      if (terraData is! Map || terraData['records'] is! String) {
+        throw const FormatException('Respuesta de Terra inválida.');
+      }
+      stdout.writeln((terraData['records'] as String).trim());
+      final terraInput = terra.usage?['inputTokens'];
+      final terraOutput = terra.usage?['outputTokens'];
+      final terraRates = _modelRates['gpt-5.6-terra']!;
+      final terraInputPrice = terraInput is int
+          ? (terraInput * terraRates.inputUsdPerMillion / 1000000).toStringAsFixed(6) + ' USD'
+          : 'no disponible';
+      final terraOutputPrice = terraOutput is int
+          ? (terraOutput * terraRates.outputUsdPerMillion / 1000000).toStringAsFixed(6) + ' USD'
+          : 'no disponible';
+      final terraTotal = terraInput is int && terraOutput is int ? terraInput + terraOutput : null;
+      final terraPrice = terraInput is int && terraOutput is int
+          ? ((terraInput * terraRates.inputUsdPerMillion + terraOutput * terraRates.outputUsdPerMillion) / 1000000).toStringAsFixed(6) + ' USD'
+          : 'no disponible';
+      stdout.writeln('Entrada Terra: ${terraInput is int ? terraInput : 'no disponibles'} tokens | $terraInputPrice');
+      stdout.writeln('Salida Terra: ${terraOutput is int ? terraOutput : 'no disponibles'} tokens | $terraOutputPrice');
+      stdout.writeln('Total Terra: ${terraTotal ?? 'no disponible'} tokens | $terraPrice');
+      stdout.writeln('Tiempo Terra: ${terraWatch.elapsedMilliseconds} ms');
+    }
   } catch (error) {
     stderr.writeln('ERROR: ' + error.toString());
     exitCode = 1;
@@ -188,5 +225,48 @@ Map<String, Object?> _schema() => {
       'type': 'array',
       'items': {'type': 'string'},
     },
+  },
+};
+
+
+String _terraPrompt(String route) => '''Genera exactamente 10 registros factuales, uno por cada fila de la Ruta de Cobertura, conservando su orden.
+Respeta literalmente el pivote, la dimensión factual, su definición, el rol interrogativo y su definición, y la competitividad de cada distractor.
+No existe atractor en esta prueba. SOPORTE significa FUENTES.
+Genera los hechos a partir de tu conocimiento interno, sin consultar fuentes, herramientas ni recursos externos. Identifica para cada hecho una fuente concreta (obra, publicación, documento, registro o estudio). La referencia es propuesta desde memoria y no está verificada externamente.
+Cada HECHO debe contener una única afirmación factual que satisfaga simultáneamente el pivote y la dimensión.
+Formula una PREGUNTA de 5 a 20 palabras, construida con los elementos factuales discriminativos de FUENTES y HECHO; el elemento interrogado debe corresponder al rol asignado, sin revelar la respuesta.
+La RESPUESTA debe tener entre 1 y 8 palabras.
+Cada distractor debe ser incorrecto por su contenido factual nuclear, no por un modificador, restricción, cuantificador, negación, condición o circunstancia añadido para fabricar su incorrección.
+Devuelve los diez registros en el campo "records" como texto Markdown, con este formato para cada uno:
+
+## [n]
+
+### CONFIGURACIÓN FACTUAL
+- **PIVOTE:** [Pxx Nombre]
+- **DIMENSIÓN:** [Ixx/Mxx/Exx Nombre (Definición dimensional literal)]
+
+### BASE FACTUAL
+- **FUENTES:** [Referencia concreta propuesta desde conocimiento interno, no verificada]
+- **HECHO:** [Una única afirmación factual]
+
+### CONFIGURACIÓN INTERROGATIVA
+- **ROL INTERROGATIVO:** [Jx Nombre (Definición del rol literal)]
+- **PREGUNTA:** [5-20 palabras]
+- **RESPUESTA:** [1-8 palabras]
+
+### DISTRACTORES
+1. **[símbolo D1]:** [distractor]
+2. **[símbolo D2]:** [distractor]
+3. **[símbolo D3]:** [distractor]
+
+RUTA DE COBERTURA:
+$route''';
+
+Map<String, Object?> _terraSchema() => {
+  'type': 'object',
+  'additionalProperties': false,
+  'required': ['records'],
+  'properties': {
+    'records': {'type': 'string'},
   },
 };
