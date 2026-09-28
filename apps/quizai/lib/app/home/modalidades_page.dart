@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/quiz_generation.dart';
 import '../../modes/quiz10/quiz_page.dart';
 import '../app_theme.dart';
@@ -83,6 +84,9 @@ class ModalidadesPage extends StatelessWidget {
               subtitle: 'Aprende a tu ritmo',
               imagePath: 'assets/modalidades/estudio.png',
               height: cardHeight,
+              onTap: () => Navigator.of(context).push<void>(
+                MaterialPageRoute(builder: (_) => const EstudioPage()),
+              ),
             ),
           ]);
 

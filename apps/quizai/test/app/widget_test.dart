@@ -121,9 +121,12 @@ void main() {
           matching: find.byType(InkWell),
         );
 
-        expect(tester.widget<InkWell>(inkWell).onTap, isNull);
+        expect(
+          tester.widget<InkWell>(inkWell).onTap,
+          id == 'estudio' ? isNotNull : isNull,
+        );
       }
-      for (final title in titles.skip(1)) {
+      for (final title in titles.skip(1).take(2)) {
         final card = find.ancestor(
           of: find.text(title),
           matching: find.byType(InkWell),
@@ -135,6 +138,16 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('QuizAI'), findsOneWidget);
       }
+      await tester.ensureVisible(find.text('Estudio'));
+      await tester.tap(find.text('Estudio'));
+      await tester.pumpAndSettle();
+      expect(find.text('Escribe un tema'), findsOneWidget);
+      expect(find.text('Sube un archivo'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('Generar'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.text('QuizAI'), findsOneWidget);
       expect(generator.calls, 0);
     },
   );
@@ -170,7 +183,10 @@ void main() {
           matching: find.byType(InkWell),
         );
 
-        expect(tester.widget<InkWell>(inkWell).onTap, isNull);
+        expect(
+          tester.widget<InkWell>(inkWell).onTap,
+          id == 'estudio' ? isNotNull : isNull,
+        );
       }
     },
   );
@@ -226,7 +242,10 @@ void main() {
           matching: find.byType(InkWell),
         );
 
-        expect(tester.widget<InkWell>(inkWell).onTap, isNull);
+        expect(
+          tester.widget<InkWell>(inkWell).onTap,
+          id == 'estudio' ? isNotNull : isNull,
+        );
       }
       expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
       expect(generator.calls, 1);

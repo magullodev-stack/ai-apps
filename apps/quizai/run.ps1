@@ -1,6 +1,7 @@
 param(
     [string]$Device = 'emulator-5554',
     [string]$Model = 'gpt-4.1-mini',
+    [string]$CatalogModel = 'gpt-4.1-mini',
     [switch]$VerifyOnly,
     [switch]$StopService
 )
@@ -243,6 +244,7 @@ try {
                 AI_APPS_AI_URL = 'http://127.0.0.1:8787'
                 AI_APPS_GAME_TOKEN = $session.token
                 AI_APPS_AI_MODEL = $Model
+                AI_APPS_CATALOG_MODEL = $CatalogModel
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $definesFile
             & $flutter run -d $Device "--dart-define-from-file=$definesFile"
             if ($LASTEXITCODE -ne 0) { throw 'Flutter terminó con un error.' }
