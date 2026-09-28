@@ -29,6 +29,41 @@ final class WikidataCatalogSource {
     return (data['search'] as List).cast<Map<String, dynamic>>();
   }
 
+  /// Explicit Spanish item labels; never silently falls back to English.
+  Future<Map<String, String>> spanishLabels(List<String> ids) async {
+    if (ids.isEmpty) return {};
+    if (ids.length > 50 ||
+        ids.any((id) => !RegExp(r'^Q[1-9][0-9]*$').hasMatch(id))) {
+      throw const FormatException('Identificadores Wikidata inválidos.');
+    }
+    final data = await _readJson(
+      Uri.https('www.wikidata.org', '/w/api.php', {
+        'action': 'wbgetentities',
+        'ids': ids.join('|'),
+        'props': 'labels',
+        'languages': 'es',
+        'format': 'json',
+      }),
+    );
+    if (data['error'] != null) {
+      throw const FormatException('Wikidata rechazó las etiquetas.');
+    }
+    final entities = data['entities'];
+    if (entities is! Map) {
+      throw const FormatException('Respuesta de etiquetas inválida.');
+    }
+    final labels = <String, String>{};
+    for (final id in ids) {
+      final entity = entities[id];
+      if (entity is! Map || entity['labels'] is! Map) continue;
+      final spanish = (entity['labels'] as Map)['es'];
+      if (spanish is! Map || spanish['value'] is! String) continue;
+      final value = (spanish['value'] as String).trim();
+      if (value.isNotEmpty) labels[id] = value;
+    }
+    return labels;
+  }
+
   /// Fetches factual predicates for a bounded set of graph nodes.
   /// The values are evidence only; the catalog never prints entity labels
   /// from these statements as attractors.
