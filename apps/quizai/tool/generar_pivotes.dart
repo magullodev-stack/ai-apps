@@ -84,39 +84,23 @@ Future<void> main(List<String> args) async {
     final usage = result.usage;
     final inputTokens = usage?['inputTokens'];
     final outputTokens = usage?['outputTokens'];
-    stdout.writeln('Tokens de entrada: ${inputTokens is int ? inputTokens : 'no disponibles'}');
-    stdout.writeln('Tokens de salida: ${outputTokens is int ? outputTokens : 'no disponibles'}');
-    final reasoningTokens = usage?['reasoningTokens'];
-    final cachedInputTokens = usage?['cachedInputTokens'];
-    final visibleOutputTokens = outputTokens is int && reasoningTokens is int
-        ? outputTokens - reasoningTokens
-        : null;
-    stdout.writeln('  Razonamiento interno: ${reasoningTokens is int ? reasoningTokens : 'no disponibles'}');
-    stdout.writeln('  Salida sin razonamiento: ${visibleOutputTokens != null && visibleOutputTokens >= 0 ? visibleOutputTokens : 'no disponible'}');
-    stdout.writeln('Tokens de entrada en caché: ${cachedInputTokens is int ? cachedInputTokens : 'no disponibles'}');
+    final totalTokens = usage?['totalTokens'];
     final rates = _modelRates[model.toLowerCase()];
     final inputRate = rates?.inputUsdPerMillion;
     final outputRate = rates?.outputUsdPerMillion;
-    if (inputTokens is int &&
+    final hasPrices = inputTokens is int &&
         outputTokens is int &&
         inputRate != null &&
         outputRate != null &&
         inputRate >= 0 &&
-        outputRate >= 0) {
-      final price = (inputTokens * inputRate + outputTokens * outputRate) / 1000000;
-      stdout.writeln('Precio estimado (USD): ' + price.toStringAsFixed(6));
-      stdout.writeln('  Coste entrada (USD): ' + (inputTokens * inputRate / 1000000).toStringAsFixed(6));
-      if (reasoningTokens is int && visibleOutputTokens != null && visibleOutputTokens >= 0) {
-        stdout.writeln('  Coste razonamiento (USD): ' + (reasoningTokens * outputRate / 1000000).toStringAsFixed(6));
-        stdout.writeln('  Coste salida sin razonamiento (USD): ' + (visibleOutputTokens * outputRate / 1000000).toStringAsFixed(6));
-      }
-      if (cachedInputTokens is int && cachedInputTokens > 0) {
-        stdout.writeln('Aviso: el coste de entrada usa la tarifa general; no descuenta posibles tarifas de caché.');
-      }
-    } else {
-      stdout.writeln('Precio: no disponible (faltan tarifas verificadas para ' +
-          model + ').');
-    }
+        outputRate >= 0;
+    String priceFor(int? tokens, double? rate) =>
+        tokens != null && rate != null && rate >= 0
+            ? (tokens * rate / 1000000).toStringAsFixed(6) + ' USD'
+            : 'no disponible';
+    stdout.writeln('Entrada: ${inputTokens is int ? inputTokens : 'no disponibles'} tokens | ${priceFor(inputTokens is int ? inputTokens : null, inputRate)}');
+    stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponibles'} tokens | ${priceFor(outputTokens is int ? outputTokens : null, outputRate)}');
+    stdout.writeln('Total: ${totalTokens is int ? totalTokens : inputTokens is int && outputTokens is int ? inputTokens + outputTokens : 'no disponible'} tokens | ${hasPrices ? ((inputTokens * inputRate + outputTokens * outputRate) / 1000000).toStringAsFixed(6) + ' USD' : 'no disponible'}');
     stdout.writeln('Tiempo: ' + watch.elapsedMilliseconds.toString() + ' ms');
   } catch (error) {
     stderr.writeln('ERROR: ' + error.toString());
