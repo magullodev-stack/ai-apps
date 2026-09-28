@@ -29,6 +29,29 @@ final class WikidataCatalogSource {
     return (data['search'] as List).cast<Map<String, dynamic>>();
   }
 
+  /// Fetches factual predicates for a bounded set of graph nodes.
+  /// The values are evidence only; the catalog never prints entity labels
+  /// from these statements as attractors.
+  Future<Map<String, dynamic>> claims(List<String> ids) async {
+    if (ids.isEmpty) return {};
+    if (ids.length > 30 ||
+        ids.any((id) => !RegExp(r'^Q[1-9][0-9]*$').hasMatch(id))) {
+      throw const FormatException('Identificadores Wikidata inválidos.');
+    }
+    final data = await _readJson(
+      Uri.https('www.wikidata.org', '/w/api.php', {
+        'action': 'wbgetentities',
+        'ids': ids.join('|'),
+        'props': 'claims',
+        'format': 'json',
+      }),
+    );
+    if (data['error'] != null) {
+      throw const FormatException('Wikidata rechazó la consulta de hechos.');
+    }
+    return (data['entities'] as Map).cast<String, dynamic>();
+  }
+
   Future<List<Map<String, dynamic>>> query(String sparql) async {
     final data = await _readJson(
       Uri.https('query.wikidata.org', '/sparql', {
