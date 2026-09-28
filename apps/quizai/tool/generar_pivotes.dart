@@ -72,6 +72,7 @@ Future<void> main(List<String> args) async {
         pivots.map((p) => (p as String).trim().toLowerCase()).toSet().length != 10) {
       throw const FormatException('Se requieren exactamente 10 pivotes únicos.');
     }
+    validatePivotVocabulary(context, pivots);
     for (var i = 0; i < pivots.length; i++) {
       stdout.writeln('P' + (i + 1).toString().padLeft(2, '0') + ' ' + pivots[i].toString());
     }
@@ -191,6 +192,11 @@ P^*=
 \[
 \forall P_i:\quad \operatorname{Palabras}(P_i)\leq 3
 \]
+
+Ninguna palabra puede repetirse entre los diez pivotes ni aparecer en el contexto.
+Compara sin distinguir mayúsculas, tildes ni variantes de la familia «historia/histórico/histórica».
+Evita reutilizar raíces léxicas mediante cambios de género o número.
+Si un nombre incumple estas condiciones, sustitúyelo antes de responder.
 
 Devuelve exclusivamente los diez nombres de los pivotes en el orden seleccionado.
 CONTEXTO [C]: ''' + context;
