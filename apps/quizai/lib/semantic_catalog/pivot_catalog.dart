@@ -27,6 +27,7 @@ final class PivotCatalog {
       throw const FormatException('Se requieren diez pivotes.');
     }
     final names = <String>{};
+    validatePivotVocabulary(value['context'] as String, items);
     return [
       for (var i = 0; i < items.length; i++)
         if (items[i] is String &&
@@ -39,6 +40,41 @@ final class PivotCatalog {
         else
           throw const FormatException('Pivotes vacíos o duplicados.'),
     ];
+  }
+}
+
+/// Rechaza palabras repetidas entre pivotes y términos del contexto.
+void validatePivotVocabulary(String context, List<dynamic> pivots) {
+  String normalize(String word) {
+    const from = 'áéíóúü';
+    const to = 'aeiouu';
+    var normalized = word.toLowerCase();
+    for (var i = 0; i < from.length; i++) {
+      normalized = normalized.replaceAll(from[i], to[i]);
+    }
+    // Familia léxica frecuente del nombre de la disciplina.
+    if (normalized.startsWith('histori')) return 'histori';
+    return normalized;
+  }
+
+  Iterable<String> words(String text) =>
+      RegExp(r'[a-zA-ZáéíóúüÁÉÍÓÚÜñÑ]+')
+          .allMatches(text)
+          .map((match) => normalize(match.group(0)!));
+
+  final used = words(context).toSet();
+  for (var i = 0; i < pivots.length; i++) {
+    final pivot = pivots[i];
+    if (pivot is! String) continue;
+    final tokens = words(pivot).toList();
+    if (tokens.length > 3) {
+      throw FormatException('P${i + 1}: supera tres palabras.');
+    }
+    for (final token in tokens) {
+      if (!used.add(token)) {
+        throw FormatException('P${i + 1}: palabra repetida o presente en el contexto: $token.');
+      }
+    }
   }
 }
 
@@ -141,6 +177,11 @@ P^*=
 \[
 \forall P_i:\quad \operatorname{Palabras}(P_i)\leq 3
 \]
+
+Ninguna palabra puede repetirse entre los diez pivotes ni aparecer en el contexto.
+Compara sin distinguir mayúsculas, tildes ni variantes de la familia «historia/histórico/histórica».
+Evita reutilizar raíces léxicas mediante cambios de género o número.
+Si un nombre incumple estas condiciones, sustitúyelo antes de responder.
 
 Devuelve exclusivamente los diez nombres de los pivotes en el orden seleccionado.
 CONTEXTO [C]: ''' + context;
