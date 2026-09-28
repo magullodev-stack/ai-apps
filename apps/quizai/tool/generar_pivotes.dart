@@ -71,12 +71,18 @@ Future<void> main(List<String> args) async {
     final outputTokens = usage?['outputTokens'];
     stdout.writeln('Tokens de entrada: ${inputTokens is int ? inputTokens : 'no disponibles'}');
     stdout.writeln('Tokens de salida: ${outputTokens is int ? outputTokens : 'no disponibles'}');
-    final inputRate = double.tryParse(
-      Platform.environment['AI_APPS_INPUT_USD_PER_MILLION'] ?? '',
-    );
-    final outputRate = double.tryParse(
-      Platform.environment['AI_APPS_OUTPUT_USD_PER_MILLION'] ?? '',
-    );
+    // Tarifas USD por millón de tokens, facilitadas para GPT-5.6 Terra.
+    // Los demás modelos pueden configurarse mediante variables de entorno.
+    final inputRate = model.toLowerCase() == 'gpt-5.6-terra'
+        ? 2.0
+        : double.tryParse(
+            Platform.environment['AI_APPS_INPUT_USD_PER_MILLION'] ?? '',
+          );
+    final outputRate = model.toLowerCase() == 'gpt-5.6-terra'
+        ? 12.0
+        : double.tryParse(
+            Platform.environment['AI_APPS_OUTPUT_USD_PER_MILLION'] ?? '',
+          );
     if (inputTokens is int &&
         outputTokens is int &&
         inputRate != null &&
