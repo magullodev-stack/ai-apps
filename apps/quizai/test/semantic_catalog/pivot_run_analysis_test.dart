@@ -1,154 +1,133 @@
-import 'dart:math';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import '../../tool/generar_pivotes.dart';
 
-const _sample = '''
-| Pivote | Atractor 1 | Atractor 2 | Atractor 3 | Atractor 4 | Atractor 5 |
-|---|---|---|---|---|---|
-| Ciencias naturales | Química | Orgánica | Hidrocarburos | Aromáticos | Benceno |
-| Ciencias formales | Matemáticas | Álgebra | Lineal | Matrices | Determinantes |
-| Ciencias sociales | Economía | Macro | Inflación | Precios | IPC |
-| Historia | Antigua | Grecia | Clásica | Guerras | Egospótamos |
-| Humanidades | Filosofía | Ética | Normativa | Deontología | Principios |
-| Tecnología e ingeniería | Informática | IA | Aprendizaje | Redes | Transformers |
-| Artes | Música | Armonía | Acordes | Séptima | Dominante |
-| Salud y medicina | Medicina | Neurología | Parkinson | Síntomas | Temblor |
-''';
+List<AttractorItem> _batch() => [
+  for (var i = 1; i <= 10; i++)
+    (campo: 'Campo $i', atractor: 'Atractor $i'),
+];
 
-const _selectedA1 = <String, String>{
-  'Ciencias naturales': 'Química',
-  'Ciencias formales': 'Matemáticas',
-  'Ciencias sociales': 'Economía',
-  'Historia': 'Antigua',
-  'Humanidades': 'Filosofía',
-  'Tecnología e ingeniería': 'Informática',
-  'Artes': 'Música',
-  'Salud y medicina': 'Medicina',
-};
+String _response(List<AttractorItem> items) => jsonEncode({
+  'items': [
+    for (final item in items)
+      {'campo': item.campo, 'atractor': item.atractor},
+  ],
+});
 
 void main() {
-  test('selecciona A1 oficiales al azar y agota cada lista antes de repetir', () {
-    final plan = planInitialAttractors(10, random: Random(43));
-    expect(plan, hasLength(10));
-    expect(initialAttractorsByPivot, hasLength(8));
-    for (final entry in initialAttractorsByPivot.entries) {
-      final choices = entry.value;
-      expect(choices, isNotEmpty);
-      expect(
-        plan.every((sample) => choices.contains(sample[entry.key])),
-        isTrue,
-      );
-      expect(
-        plan.take(choices.length).map((sample) => sample[entry.key]).toSet(),
-        hasLength(choices.length),
-      );
-    }
+  test('el prompt pide selección directa y dificultad creciente', () {
+    final prompt = buildAttractorPrompt(const <String>[]);
+    expect(prompt, contains('Selecciona 10 campos de conocimiento variados'));
+    expect(prompt, contains('d(A_1)&<d(A_2)<'));
+    expect(prompt, contains(r'\cdots<d(A_{10})'));
+    expect(prompt, contains(r'\operatorname{id}(A_i)&\notin U'));
+    expect(prompt, contains('U · Atractores ya utilizados:\n∅'));
+    expect(prompt, isNot(contains('Markdown')));
+    expect(prompt, isNot(contains('definición breve')));
+    expect(prompt, isNot(contains('Atractor 5')));
+  });
+
+  test('el prompt recibe el historial U de llamadas anteriores', () {
+    final prompt = buildAttractorPrompt([
+      'Segunda ley de Newton',
+      'Acero inoxidable AISI 304',
+    ]);
     expect(
-      initialAttractorsByPivot['Salud y medicina'],
-      ['Medicina', 'Salud pública', 'Ciencias biomédicas'],
+      prompt,
+      contains(
+        'U · Atractores ya utilizados:\n'
+        '- Segunda ley de Newton\n'
+        '- Acero inoxidable AISI 304',
+      ),
     );
   });
 
-  test('construye el prompt con ocho A1 y sin ejemplo completo', () {
-    final prompt = buildExpansionPrompt(_selectedA1);
-    expect(prompt, contains('| Ciencias naturales | Química | | | | |'));
-    expect(prompt, contains('| Salud y medicina | Medicina | | | | |'));
-    expect(prompt, contains('Completa los atractores A2, A3, A4 y A5'));
-    expect(prompt, contains(r'\operatorname{Secciones}(x_n^{(p)}\mid S_n^{(p)})'));
-    expect(prompt, contains(r'\operatorname{Referentes}(x_5^{(p)}\mid S_5^{(p)})'));
-    expect(prompt, contains('subapartados contenidos en el apartado actual'));
-    expect(prompt, contains(r'x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)}'));
-    expect(prompt, contains(r'x_6^{(p)} &\in \operatorname{Referentes}'));
-    expect(prompt, contains('no campos generales'));
-    expect(prompt, isNot(contains(r'\rho(S_{n+1}^{(p)})')));
-    expect(prompt, contains(r'\operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)})'));
-    expect(prompt, contains(r'n=2,3,4'));
-    expect(prompt, contains(r'n=2,\ldots,5'));
-    expect(prompt, isNot(contains('## U · Referentes A5 ya utilizados')));
-    expect(prompt, isNot(contains('Orgánica')));
+  test('el esquema se interpreta como 10 parejas campo-atractor', () {
+    final parsed = parseAttractorItems(_response(_batch()));
+    expect(parsed, hasLength(10));
+    expect(parsed.first.campo, 'Campo 1');
+    expect(parsed.last.atractor, 'Atractor 10');
+  });
+
+  test('rechaza respuestas con menos o más de diez filas', () {
     expect(
-      () => buildExpansionPrompt({..._selectedA1}..remove('Artes')),
-      throwsArgumentError,
-    );
-  });
-
-  test('con igual A1, el prompt no arrastra referentes entre llamadas', () {
-    final first = buildExpansionPrompt(_selectedA1);
-    final second = buildExpansionPrompt(_selectedA1);
-    expect(second, first);
-    expect(second, isNot(contains(r'\notin U')));
-    expect(second, isNot(contains('Referentes A5 ya utilizados')));
-    expect(second, contains('| Ciencias naturales | Química | | | | |'));
-  });
-
-  test('detecta A5 repetidos entre pivotes en una misma llamada', () {
-    final table = parseExpansionTable(_sample.replaceFirst(
-      'Química | Orgánica | Hidrocarburos | Aromáticos | Benceno',
-      'Química | Orgánica | Hidrocarburos | Aromáticos | IPC',
-    ), _selectedA1);
-    final report = compareExpansionTables([table], [_selectedA1]);
-    expect(report, contains('Referentes A5 textualmente distintos: 7 de 8.'));
-    expect(report, contains('A5 repetidos textualmente entre filas o llamadas:'));
-    expect(report, contains('llamada 1, Ciencias naturales'));
-    expect(report, contains('llamada 1, Ciencias sociales'));
-  });
-
-  test('analiza ocho rutas de cinco atractores y conserva cada A1', () {
-    final result = parseExpansionTable(_sample, _selectedA1);
-    expect(result.length, 8);
-    expect(result['Historia']!.length, 5);
-  });
-
-  test('compara los ocho pivotes y detecta repeticiones exactas', () {
-    final table = parseExpansionTable(_sample, _selectedA1);
-    final result = compareExpansionTables(
-      [table, table],
-      [_selectedA1, _selectedA1],
-    );
-    expect(result, contains('8 de 16 generados'));
-    expect(result, contains('| Historia | 1 | 1 | 1 | 1 | 1 | 0 | 1 |'));
-  });
-
-  test('atribuye a Luna la divergencia desde A2 con un mismo A1', () {
-    final a = parseExpansionTable(_sample, _selectedA1);
-    final b = parseExpansionTable(_sample.replaceFirst(
-      'Matemáticas | Álgebra | Lineal | Matrices | Determinantes',
-      'Matemáticas | Geometría | Euclidiana | Triángulos | Pitágoras',
-    ), _selectedA1);
-    expect(
-      compareExpansionTables([a, b], [_selectedA1, _selectedA1]),
-      contains('| Ciencias formales | 1 | 2 | 2 | 2 | 2 | 1 | 0 |'),
-    );
-  });
-
-  test('no atribuye a Luna la diversidad de dos A1 de Dart', () {
-    final otherA1 = {..._selectedA1, 'Ciencias naturales': 'Física'};
-    final a = parseExpansionTable(_sample, _selectedA1);
-    final b = parseExpansionTable(_sample.replaceFirst(
-      'Ciencias naturales | Química | Orgánica | Hidrocarburos | Aromáticos | Benceno',
-      'Ciencias naturales | Física | Mecánica | Clásica | Movimiento | Aceleración',
-    ), otherA1);
-    expect(
-      compareExpansionTables([a, b], [_selectedA1, otherA1]),
-      contains('| Ciencias naturales | 2 | 2 | 2 | 2 | 2 | 0 | 0 |'),
-    );
-  });
-
-  test('rechaza cambios en A1, aunque sean candidatos de la lista', () {
-    expect(
-      () => parseExpansionTable(_sample.replaceFirst(
-        '| Salud y medicina | Medicina |',
-        '| Salud y medicina | Salud pública |',
-      ), _selectedA1),
+      () => parseAttractorItems(_response(_batch().take(9).toList())),
       throwsFormatException,
     );
     expect(
-      () => parseExpansionTable(_sample.replaceFirst(
-        'Matemáticas | Álgebra | Lineal | Matrices | Determinantes',
-        'Matemáticas | Álgebra | Lineal | Matrices |',
-      ), _selectedA1),
+      () => parseAttractorItems(
+        _response([..._batch(), (campo: 'Campo 11', atractor: 'Atractor 11')]),
+      ),
       throwsFormatException,
     );
+  });
+
+  test('rechaza campos vacíos y respuestas sin items', () {
+    expect(
+      () => parseAttractorItems('{}'),
+      throwsFormatException,
+    );
+    expect(
+      () => parseAttractorItems(
+        _response([
+          (campo: ' ', atractor: 'Atractor 1'),
+          ..._batch().skip(1),
+        ]),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('Dart da formato a la tabla sin requerir Markdown en el prompt', () {
+    final rendered = formatAttractorTable([
+      (campo: 'Química | física', atractor: 'A|B'),
+    ]);
+    expect(rendered, contains('| Campo de conocimiento | Atractor |'));
+    expect(rendered, contains(r'| Química \| física | A\|B |'));
+  });
+
+  test('detecta repeticiones de atractores entre llamadas', () {
+    final first = _batch();
+    final second = [
+      for (var i = 1; i <= 10; i++)
+        (
+          campo: 'Otro campo $i',
+          atractor: i == 1 ? ' ATRACTOR 1 ' : 'Otro atractor $i',
+        ),
+    ];
+    final report = compareAttractorBatches([first, second]);
+    expect(report, contains('Atractores textualmente distintos: 19 de 20.'));
+    expect(report, contains('Repeticiones textuales: 1.'));
+    expect(report, contains('Atractor 1 — llamada 1, Campo 1; llamada 2, Otro campo 1'));
+  });
+
+  test('mide campos diferentes por llamada sin rechazar errores semánticos', () {
+    final repeatedField = [
+      for (var i = 1; i <= 10; i++)
+        (campo: i == 10 ? ' Campo 1 ' : 'Campo $i', atractor: 'Atractor $i'),
+    ];
+    final report = compareAttractorBatches([repeatedField]);
+    expect(report, contains('Campos distintos por llamada: 9 de 10.'));
+  });
+
+  test('no confunde diferencias textuales con identidades semánticas', () {
+    final batch = [
+      for (var i = 1; i <= 10; i++)
+        (
+          campo: 'Campo $i',
+          atractor: i == 1 ? 'AISI 304' : 'Atractor $i',
+        ),
+    ];
+    final another = [
+      for (var i = 1; i <= 10; i++)
+        (
+          campo: 'Otro campo $i',
+          atractor: i == 1 ? 'Acero inoxidable AISI 304' : 'Otro atractor $i',
+        ),
+    ];
+    final report = compareAttractorBatches([batch, another]);
+    expect(report, contains('Atractores textualmente distintos: 20 de 20.'));
+    expect(report, contains('No se detectan equivalencias semánticas'));
   });
 }
