@@ -30,6 +30,29 @@ void main() {
     expect(prompt, isNot(contains('atractor')));
   });
 
+  test('excluye opcionalmente los tres P frecuentes sin alterar el prompt base', () {
+    const rule = 'Pᵢ ∉ {Historia, Geografía, Biología}';
+    final original = buildResponsePrompt(const <String>[]);
+    final restricted = buildResponsePrompt(
+      const <String>[],
+      excluirTop3: true,
+    );
+    expect(original, isNot(contains(rule)));
+    expect(restricted, contains(rule));
+    expect(restricted.replaceFirst('\n\n$rule', ''), original);
+    expect(restricted, contains('U:\n∅'));
+    expect(restricted, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+
+    final withoutHistory = buildResponsePrompt(
+      ['Respuesta previa'],
+      sinU: true,
+      excluirTop3: true,
+    );
+    expect(withoutHistory, contains(rule));
+    expect(withoutHistory, isNot(contains('U:')));
+    expect(withoutHistory, isNot(contains('Respuesta previa')));
+  });
+
   test('el prompt recibe el historial U de respuestas anteriores', () {
     final prompt = buildResponsePrompt([
       'Segunda ley de Newton',
