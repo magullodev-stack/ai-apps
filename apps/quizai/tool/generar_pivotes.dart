@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 /// Piloto aislado de expansión semántica; no modifica los catálogos de QuizAI.
@@ -40,6 +41,7 @@ Future<void> main(List<String> args) async {
   );
   final watch = Stopwatch()..start();
   final tables = <Map<String, List<String>>>[];
+  final selectedA1 = planInitialAttractors(samples);
   var inputSum = 0;
   var outputSum = 0;
   var completeUsage = true;
@@ -51,7 +53,7 @@ Future<void> main(List<String> args) async {
       final result = await client.generate(
         application: 'quizai',
         model: model,
-        input: _prompt,
+        input: buildExpansionPrompt(selectedA1[sample]),
         schemaName: 'quizai_semantic_expansion',
         schema: _schema(),
       ).timeout(const Duration(seconds: 90));
@@ -60,7 +62,7 @@ Future<void> main(List<String> args) async {
         throw const FormatException('Respuesta inválida: falta la tabla.');
       }
       final markdown = (data['table'] as String).trim();
-      tables.add(parseExpansionTable(markdown));
+      tables.add(parseExpansionTable(markdown, selectedA1[sample]));
       stdout.writeln(markdown);
       final usage = result.usage;
       final inputTokens = usage?['inputTokens'];
@@ -98,7 +100,7 @@ Future<void> main(List<String> args) async {
     }
     if (samples > 1) {
       stdout.writeln('\n## Comparación de las $samples llamadas');
-      stdout.writeln(compareExpansionTables(tables));
+      stdout.writeln(compareExpansionTables(tables, selectedA1));
       final rates = _modelRates[model.toLowerCase()];
       final cost = completeUsage && rates != null
           ? ((inputSum * rates.inputUsdPerMillion +
@@ -129,7 +131,67 @@ const Map<String, _ModelRates> _modelRates = {
   'gpt-5.4-mini': (inputUsdPerMillion: 0.75, outputUsdPerMillion: 4.50),
 };
 
-const _prompt = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
+/// Índice oficial de puertas de entrada A1, revisable independientemente del prompt.
+const initialAttractorsByPivot = <String, List<String>>{
+  'Ciencias naturales': <String>[
+    'Física', 'Química', 'Biología', 'Ciencias de la Tierra', 'Astronomía',
+  ],
+  'Ciencias formales': <String>[
+    'Matemáticas', 'Lógica', 'Estadística', 'Computación teórica',
+  ],
+  'Ciencias sociales': <String>[
+    'Sociología', 'Economía', 'Antropología', 'Ciencia política',
+    'Demografía', 'Geografía humana', 'Psicología',
+    'Ciencias de la comunicación',
+  ],
+  'Historia': <String>[
+    'Prehistoria', 'Antigua', 'Medieval', 'Moderna', 'Contemporánea',
+    'Política', 'Social', 'Económica', 'Cultural', 'Militar',
+  ],
+  'Humanidades': <String>[
+    'Filosofía', 'Lingüística', 'Filología', 'Literatura',
+    'Estudios religiosos', 'Estudios culturales',
+  ],
+  'Tecnología e ingeniería': <String>[
+    'Informática', 'Ingeniería mecánica', 'Ingeniería eléctrica',
+    'Ingeniería civil', 'Ingeniería química', 'Ingeniería industrial',
+    'Ingeniería de materiales', 'Telecomunicaciones',
+  ],
+  'Artes': <String>[
+    'Música', 'Artes visuales', 'Artes escénicas', 'Artes audiovisuales',
+    'Literatura', 'Arquitectura', 'Diseño',
+  ],
+  'Salud y medicina': <String>[
+    'Medicina', 'Salud pública', 'Ciencias biomédicas',
+  ],
+};
+
+/// Muestreo aleatorio equilibrado: se baraja cada lista y se agota antes de
+/// volver a barajarla. Con listas de menos de N elementos, A1 se reutiliza.
+List<Map<String, String>> planInitialAttractors(
+  int sampleCount, {
+  Random? random,
+}) {
+  if (sampleCount < 1) throw ArgumentError.value(sampleCount, 'sampleCount');
+  final rng = random ?? Random.secure();
+  final bags = <String, List<String>>{
+    for (final pivot in _pivotNames) pivot: <String>[],
+  };
+  return List.generate(sampleCount, (_) {
+    final chosen = <String, String>{};
+    for (final pivot in _pivotNames) {
+      final bag = bags[pivot]!;
+      if (bag.isEmpty) {
+        bag.addAll(initialAttractorsByPivot[pivot]!);
+        bag.shuffle(rng);
+      }
+      chosen[pivot] = bag.removeLast();
+    }
+    return Map<String, String>.unmodifiable(chosen);
+  });
+}
+
+const _promptHeader = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
 
 Sea una secuencia de conceptos:
 
@@ -143,29 +205,41 @@ $$
 \boxed{x_{n+1}\in F(x_{n-1},x_n\mid S)}
 $$
 
-Donde $F representa el conjunto de atractores semánticamente admisibles para la configuración actual, considerando el significado acumulado de la secuencia.
+Donde $F$ representa el conjunto de atractores semánticamente admisibles para la configuración actual, considerando el significado acumulado de la secuencia.
 
+## Objetivo
 
-Devuelve exclusivamente la tabla completada en bloque md``` literal.
+Completa los atractores A2, A3, A4 y A5 de cada fila.
 
----
+Los atractores A1 han sido seleccionados previamente y forman parte del campo semántico inicial de cada recorrido.
 
-# TABLA
+En cada desplazamiento, el pivote anterior pasa a ser contexto y el atractor anterior pasa a ser pivote.
+
+Conserva literalmente los pivotes y atractores A1 proporcionados.
 
 ## Contexto: Conocimiento general
 
 | Pivote | Atractor 1 | Atractor 2 | Atractor 3 | Atractor 4 | Atractor 5 |
-|---|---|---|---|---|---|
-| Ciencias naturales | Química | Orgánica | Hidrocarburos | Aromáticos | Benceno |
-| Ciencias formales | | | | | |
-| Ciencias sociales | | | | | |
-| Historia | | | | | |
-| Humanidades | | | | | |
-| Tecnología e ingeniería | | | | | |
-| Artes | | | | | |
-| Salud y medicina | | | | | |
+|---|---|---|---|---|---|''';
 
----''';
+const _promptFooter = '''
+
+## Formato de salida
+
+Devuelve exclusivamente la tabla completada en Markdown.''';
+
+String buildExpansionPrompt(Map<String, String> initialA1) {
+  if (initialA1.length != _pivotNames.length ||
+      _pivotNames.any((pivot) =>
+          !initialAttractorsByPivot[pivot]!.contains(initialA1[pivot]))) {
+    throw ArgumentError('Los A1 deben proceder del índice oficial.');
+  }
+  final rows = [
+    for (final pivot in _pivotNames)
+      '| $pivot | ${initialA1[pivot]} | | | | |',
+  ].join('\n');
+  return '$_promptHeader\n$rows\n$_promptFooter';
+}
 
 Map<String, Object?> _schema() => {
   'type': 'object',
@@ -182,12 +256,11 @@ const _pivotNames = <String>[
   'Salud y medicina',
 ];
 
-const _fixedExample = <String>[
-  'Química', 'Orgánica', 'Hidrocarburos', 'Aromáticos', 'Benceno',
-];
-
 /// Acepta tablas Markdown con o sin delimitadores de bloque.
-Map<String, List<String>> parseExpansionTable(String markdown) {
+Map<String, List<String>> parseExpansionTable(
+  String markdown,
+  Map<String, String> expectedA1,
+) {
   final rows = <String, List<String>>{};
   for (final raw in markdown.split('\n')) {
     final line = raw.trim();
@@ -207,9 +280,9 @@ Map<String, List<String>> parseExpansionTable(String markdown) {
   if (rows.length != _pivotNames.length) {
     throw const FormatException('Faltan pivotes en la tabla.');
   }
-  for (var i = 0; i < _fixedExample.length; i++) {
-    if (_key(rows[_pivotNames.first]![i]) != _key(_fixedExample[i])) {
-      throw const FormatException('El modelo modificó la fila del ejemplo.');
+  for (final pivot in _pivotNames) {
+    if (rows[pivot]!.first != expectedA1[pivot]) {
+      throw FormatException('El modelo modificó A1 de $pivot.');
     }
   }
   return rows;
@@ -221,26 +294,46 @@ String _key(String name) =>
 String _prefix(List<String> row, int n) =>
     row.take(n).map(_key).join('\u001f');
 
-/// A1..A5 muestran cuántos prefijos diferentes hay en cada profundidad.
-/// La fila inicial no interviene: ya venía completada en el prompt.
-String compareExpansionTables(List<Map<String, List<String>>> tables) {
+/// Separa el A1 escogido por Dart de las continuaciones A2–A5 de Luna.
+/// «Variantes Luna» cuenta rutas adicionales para A1 que se han reutilizado.
+String compareExpansionTables(
+  List<Map<String, List<String>>> tables,
+  List<Map<String, String>> selectedA1,
+) {
   if (tables.isEmpty) throw ArgumentError('No hay tablas para comparar.');
+  if (tables.length != selectedA1.length) {
+    throw ArgumentError('Debe haber una selección A1 por llamada.');
+  }
+  for (var i = 0; i < tables.length; i++) {
+    for (final pivot in _pivotNames) {
+      if (tables[i][pivot]?.first != selectedA1[i][pivot]) {
+        throw ArgumentError('La tabla no coincide con los A1 de la llamada.');
+      }
+    }
+  }
   final output = StringBuffer()
-    ..writeln('Se excluye Ciencias naturales (ejemplo fijo del prompt).')
-    ..writeln('A1…A5: número de prefijos completos diferentes.')
-    ..writeln('| Pivote | A1 | A1–A2 | A1–A3 | A1–A4 | A1–A5 | Repeticiones exactas |')
-    ..writeln('|---|---:|---:|---:|---:|---:|---:|');
+    ..writeln('A1 distintos: diversidad asignada por Dart.')
+    ..writeln('A1–A2…A1–A5: prefijos textuales distintos tras continuar Luna.')
+    ..writeln('Variantes Luna: rutas nuevas para A1 ya repetidos.')
+    ..writeln('| Pivote | A1 (Dart) | A1–A2 | A1–A3 | A1–A4 | A1–A5 | Variantes Luna | Rutas repetidas |')
+    ..writeln('|---|---:|---:|---:|---:|---:|---:|---:|');
+  var totalInitial = 0;
   var totalUnique = 0;
+  var totalVariants = 0;
   final coincidences = <String>[];
-  for (final pivot in _pivotNames.skip(1)) {
+  for (final pivot in _pivotNames) {
     final rows = [for (final table in tables) table[pivot]!];
+    final initialCount = selectedA1.map((call) => call[pivot]).toSet().length;
     final counts = [
       for (var n = 1; n <= 5; n++)
         rows.map((row) => _prefix(row, n)).toSet().length,
     ];
+    final variants = counts.last - initialCount;
+    totalInitial += initialCount;
     totalUnique += counts.last;
+    totalVariants += variants;
     output.writeln(
-      '| $pivot | ${counts.join(' | ')} | ${rows.length - counts.last} |',
+      '| $pivot | $initialCount | ${counts.skip(1).join(' | ')} | $variants | ${rows.length - counts.last} |',
     );
     final groups = <String, List<int>>{};
     for (var i = 0; i < rows.length; i++) {
@@ -256,11 +349,18 @@ String compareExpansionTables(List<Map<String, List<String>>> tables) {
     }
   }
   output.writeln(
-    '\nRecorridos distintos: $totalUnique de '
-    '${tables.length * (_pivotNames.length - 1)} generados.',
+    '\nDart: $totalInitial A1 distintos en '
+    '${tables.length * _pivotNames.length} asignaciones.',
+  );
+  output.writeln(
+    'Luna: $totalVariants variantes adicionales con el mismo A1.',
+  );
+  output.writeln(
+    'Recorridos completos distintos: $totalUnique de '
+    '${tables.length * _pivotNames.length} generados.',
   );
   if (coincidences.isEmpty) {
-    output.writeln('No hay filas generadas idénticas dentro del mismo pivote.');
+    output.writeln('No hay recorridos completos idénticos dentro del mismo pivote.');
   } else {
     output.writeln('\nRepeticiones exactas:');
     for (final item in coincidences) {
