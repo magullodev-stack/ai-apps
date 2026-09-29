@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 /// Piloto aislado de expansión semántica; no modifica los catálogos de QuizAI.
