@@ -42,6 +42,7 @@ Future<void> main(List<String> args) async {
   final watch = Stopwatch()..start();
   final tables = <Map<String, List<String>>>[];
   final selectedA1 = planInitialAttractors(samples);
+  final usedReferents = <String>[];
   var inputSum = 0;
   var outputSum = 0;
   var completeUsage = true;
@@ -50,10 +51,14 @@ Future<void> main(List<String> args) async {
     for (var sample = 0; sample < samples; sample++) {
       final callWatch = Stopwatch()..start();
       if (samples > 1) stdout.writeln('\n## Llamada ${sample + 1}/$samples');
+      if (samples > 1) stdout.writeln('Referentes A5 previos en U: ${usedReferents.length}');
       final result = await client.generate(
         application: 'quizai',
         model: model,
-        input: buildExpansionPrompt(selectedA1[sample]),
+        input: buildExpansionPrompt(
+          selectedA1[sample],
+          usedReferents: usedReferents,
+        ),
         schemaName: 'quizai_semantic_expansion',
         schema: _schema(),
       ).timeout(const Duration(seconds: 90));
@@ -62,7 +67,11 @@ Future<void> main(List<String> args) async {
         throw const FormatException('Respuesta inválida: falta la tabla.');
       }
       final markdown = (data['table'] as String).trim();
-      tables.add(parseExpansionTable(markdown, selectedA1[sample]));
+      final table = parseExpansionTable(markdown, selectedA1[sample]);
+      tables.add(table);
+      usedReferents.addAll(
+        _pivotNames.map((pivot) => table[pivot]!.last),
+      );
       stdout.writeln(markdown);
       final usage = result.usage;
       final inputTokens = usage?['inputTokens'];
@@ -193,33 +202,43 @@ List<Map<String, String>> planInitialAttractors(
 
 const _promptHeader = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
 
-Sea $S_n=(x_0,x_1,\ldots,x_n)$, con $(x_0,x_1,x_2)=(C,P,A_1)$.
+Sea $S_n^{(p)}=(x_0^{(p)},x_1^{(p)},\ldots,x_n^{(p)})$,
+con $(x_0^{(p)},x_1^{(p)},x_2^{(p)})=(C,P_p,A_1^{(p)})$.
 
-$
+$$
 \boxed{
 \begin{aligned}
-x_{n+1}&\in F(x_{n-1},x_n\mid S_n), && n=2,\ldots,5,\\
-\rho(S_{n+1})&>\rho(S_n), && n=2,\ldots,5,\\
-x_6&\in\mathcal R.
+x_{n+1}^{(p)} &\in F(x_{n-1}^{(p)},x_n^{(p)}\mid S_n^{(p)}),
+    && n=2,\ldots,5,\\
+\rho(S_{n+1}^{(p)}) &> \rho(S_n^{(p)}),
+    && n=2,\ldots,5,\\
+x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)},
+    && 0\le i\le n,\\
+x_6^{(p)} &\in \mathcal R_{\mathrm{concreta}},\\
+\operatorname{id}(x_6^{(p)}) &\notin U,\\
+\operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)}),
+    && p\ne q.
 \end{aligned}
 }
-$
+$$
 
-$F$: atractores semánticamente admisibles según el recorrido acumulado.
+$F$: admisibilidad semántica según el recorrido acumulado.
 $\rho$: resolución semántica del recorrido acumulado.
-$\mathcal R$: referentes identificables y consultables.
+$\equiv_S$: identidad semántica, incluidas reformulaciones del mismo referente.
+$\mathcal R_{\mathrm{concreta}}$: referentes concretos, identificables y consultables; no campos generales de estudio.
+$\operatorname{id}$: identidad del referente, independiente de cómo se nombre.
+$U$: referentes A5 de llamadas anteriores, indicados debajo.
 
 ## Objetivo
 
 Completa los atractores A2, A3, A4 y A5 de cada fila.
 
-Los atractores A1 han sido seleccionados previamente y forman parte del campo semántico inicial de cada recorrido.
+Los A1 han sido seleccionados previamente. En cada desplazamiento, el pivote
+anterior pasa a ser contexto y el atractor anterior pasa a ser pivote.
 
-En cada desplazamiento, el pivote anterior pasa a ser contexto y el atractor anterior pasa a ser pivote.
+Conserva literalmente los pivotes y atractores A1 proporcionados.''';
 
-Conserva literalmente los pivotes y atractores A1 proporcionados.
-
-## Contexto: Conocimiento general
+const _tableHeader = r'''## Contexto: Conocimiento general
 
 | Pivote | Atractor 1 | Atractor 2 | Atractor 3 | Atractor 4 | Atractor 5 |
 |---|---|---|---|---|---|''';
@@ -230,17 +249,25 @@ const _promptFooter = '''
 
 Devuelve exclusivamente la tabla completada en Markdown.''';
 
-String buildExpansionPrompt(Map<String, String> initialA1) {
+String buildExpansionPrompt(
+  Map<String, String> initialA1, {
+  Iterable<String> usedReferents = const <String>[],
+}) {
   if (initialA1.length != _pivotNames.length ||
       _pivotNames.any((pivot) =>
           !initialAttractorsByPivot[pivot]!.contains(initialA1[pivot]))) {
     throw ArgumentError('Los A1 deben proceder del índice oficial.');
   }
+  final used = usedReferents.toList(growable: false);
+  final history = used.isEmpty
+      ? '∅'
+      : used.map((referent) => '- $referent').join('\n');
   final rows = [
     for (final pivot in _pivotNames)
       '| $pivot | ${initialA1[pivot]} | | | | |',
   ].join('\n');
-  return '$_promptHeader\n$rows\n$_promptFooter';
+  return '$_promptHeader\n\n## U · Referentes A5 ya utilizados\n$history\n\n'
+      '$_tableHeader\n$rows\n$_promptFooter';
 }
 
 Map<String, Object?> _schema() => {
@@ -368,6 +395,30 @@ String compareExpansionTables(
     for (final item in coincidences) {
       output.writeln('- $item');
     }
+  }
+  final referentLocations = <String, List<String>>{};
+  for (var sample = 0; sample < tables.length; sample++) {
+    for (final pivot in _pivotNames) {
+      final referent = tables[sample][pivot]!.last;
+      referentLocations
+          .putIfAbsent(_key(referent), () => <String>[])
+          .add('llamada ${sample + 1}, $pivot');
+    }
+  }
+  final duplicatedDestinations = referentLocations.values
+      .where((locations) => locations.length > 1)
+      .toList();
+  output.writeln(
+    '\nReferentes A5 textualmente distintos: ${referentLocations.length} de '
+    '${tables.length * _pivotNames.length}.',
+  );
+  if (duplicatedDestinations.isNotEmpty) {
+    output.writeln('A5 repetidos textualmente entre filas o llamadas:');
+    for (final locations in duplicatedDestinations) {
+      output.writeln('- ${locations.join('; ')}');
+    }
+  } else {
+    output.writeln('No hay A5 repetidos textualmente entre filas o llamadas.');
   }
   output.writeln(
     '\nComparación textual normalizada: no detecta sinónimos '
