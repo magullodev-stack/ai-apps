@@ -81,9 +81,9 @@ id(Rᵢ) ∉ {id(Rⱼ) : j < i}
 
 Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
 
-| id | Pᵢ | Dificultad |
-|---:|---|---|
-${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.difficulty} |').join('\n')}''';
+| id | Pᵢ | Dificultad | Rᵢ |
+|---:|---|---|---|
+${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.difficulty} | |').join('\n')}''';
 
 /// Luna devuelve solamente sus dos campos nuevos más el identificador.
 Map<String, Object?> quiz10LunaSchema() => {
