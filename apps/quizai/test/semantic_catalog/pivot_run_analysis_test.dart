@@ -53,6 +53,36 @@ void main() {
     expect(withoutHistory, isNot(contains('Respuesta previa')));
   });
 
+  test('excluye los seis pivotes de ambos packs sin modificar el resto del prompt', () {
+    const topSix = 'Pᵢ ∉ {Historia, Geografía, Biología, Economía, Lingüística, Música}';
+    final original = buildResponsePrompt(const <String>[]);
+    final restricted = buildResponsePrompt(
+      const <String>[],
+      excluirTop6: true,
+    );
+    expect(restricted, contains(topSix));
+    expect(restricted.replaceFirst('\n\n$topSix', ''), original);
+    expect(restricted, contains('U:\n∅'));
+    expect(restricted, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+
+    final withoutHistory = buildResponsePrompt(
+      ['Respuesta previa'],
+      sinU: true,
+      excluirTop6: true,
+    );
+    expect(withoutHistory, contains(topSix));
+    expect(withoutHistory, isNot(contains('U:')));
+    expect(withoutHistory, isNot(contains('Respuesta previa')));
+    expect(
+      () => buildResponsePrompt(
+        const <String>[],
+        excluirTop3: true,
+        excluirTop6: true,
+      ),
+      throwsArgumentError,
+    );
+  });
+
   test('el prompt recibe el historial U de respuestas anteriores', () {
     final prompt = buildResponsePrompt([
       'Segunda ley de Newton',
@@ -108,6 +138,24 @@ void main() {
         '10, 0, 0, 0, 0, 0, 0, 0, 0, 0.',
       ),
     );
+  });
+
+  test('U se reinicia cada diez llamadas también en 200 muestras', () {
+    final completed = <List<ResponseItem>>[];
+    for (var call = 0; call < 200; call++) {
+      expect(
+        responseHistoryForCall(completed),
+        hasLength((call % historyBlockSize) * 10),
+      );
+      completed.add([
+        for (var i = 0; i < 10; i++)
+          (campo: 'Campo $i', respuesta: 'Respuesta $call-$i'),
+      ]);
+    }
+    expect(responseHistoryForCall(completed), isEmpty);
+    final report = formatExperimentReport(completed);
+    expect(report, contains('Llamadas: 200. Selecciones: 2000.'));
+    expect(report, contains('| B20 | 10 | 10 | 0 | 10 | 100 |'));
   });
 
   test('U evita repetir variantes textuales dentro del lote', () {
