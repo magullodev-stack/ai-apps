@@ -186,8 +186,10 @@ List<String> responseHistoryForCall(List<List<ResponseItem>> batches) {
 
 const _promptHeader = r'''Selecciona 10 campos de conocimiento aleatorios y distintos (P).
 
-En cada campo, encuentra un término, nombre o expresión (R)
-que pueda servir como respuesta inequívoca a una pregunta de conocimiento.
+Pᵢ: nombre de un campo de conocimiento.
+Rᵢ: término, nombre o expresión concreta e identificable de Pᵢ.
+
+Cada valor contiene únicamente su denominación.
 
 Sea d(Rᵢ) la dificultad estimada de que una persona
 con cultura general conozca Rᵢ.
