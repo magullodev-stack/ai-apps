@@ -11,8 +11,9 @@ param(
     [switch]$Sol,
     [switch]$SinU,
     [switch]$ExcluirTop3,
+    [switch]$ExcluirTop6,
     [string]$PivotModel = 'gpt-5.6-luna',
-    [ValidateRange(1, 100)]
+    [ValidateRange(1, 200)]
     [int]$Muestras = 1,
     [switch]$StopService,
     [switch]$SaveKeyFromClipboard
@@ -184,6 +185,7 @@ if ($Pivots) {
         if ($Muestras -gt 1) { $pivotArgs += @('--muestras', "$Muestras") }
         if ($SinU) { $pivotArgs += '--sin-u' }
         if ($ExcluirTop3) { $pivotArgs += '--excluir-top3' }
+        if ($ExcluirTop6) { $pivotArgs += '--excluir-top6' }
         & $dart @pivotArgs
         if ($LASTEXITCODE -ne 0) { throw 'Falló la generación de pivotes.' }
     } finally { Pop-Location }
