@@ -83,13 +83,13 @@ void main() {
     expect(rendered, contains(r'| Química \| física | A\|B |'));
   });
 
-  test('detecta repeticiones de respuestaes entre llamadas', () {
+  test('detecta repeticiones de respuestas entre llamadas', () {
     final first = _batch();
     final second = [
       for (var i = 1; i <= 10; i++)
         (
           campo: 'Otro campo $i',
-          respuesta: i == 1 ? ' ATRACTOR 1 ' : 'Otro respuesta $i',
+          respuesta: i == 1 ? ' RESPUESTA 1 ' : 'Otra respuesta $i',
         ),
     ];
     final report = compareResponseBatches([first, second]);
@@ -119,7 +119,7 @@ void main() {
       for (var i = 1; i <= 10; i++)
         (
           campo: 'Otro campo $i',
-          respuesta: i == 1 ? 'Acero inoxidable AISI 304' : 'Otro respuesta $i',
+          respuesta: i == 1 ? 'Acero inoxidable AISI 304' : 'Otra respuesta $i',
         ),
     ];
     final report = compareResponseBatches([batch, another]);
