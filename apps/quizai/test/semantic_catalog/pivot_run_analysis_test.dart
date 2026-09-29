@@ -39,6 +39,20 @@ void main() {
     );
   });
 
+  test('sin U no envía historial ni exclusión entre llamadas', () {
+    final empty = buildResponsePrompt(const <String>[], sinU: true);
+    final populated = buildResponsePrompt(
+      ['Segunda ley de Newton', 'AISI 304'],
+      sinU: true,
+    );
+    expect(populated, empty);
+    expect(populated, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+    expect(populated, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
+    expect(populated, isNot(contains('id(Rᵢ) ∉ U')));
+    expect(populated, isNot(contains('U:')));
+    expect(populated, isNot(contains('AISI 304')));
+  });
+
   test('el esquema se interpreta como 10 parejas campo-respuesta', () {
     final parsed = parseResponseItems(_response(_batch()));
     expect(parsed, hasLength(10));
