@@ -209,27 +209,24 @@ const _promptHeader = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
 Sea $S_n^{(p)}=(x_0^{(p)},x_1^{(p)},\ldots,x_n^{(p)})$,
 con $(x_0^{(p)},x_1^{(p)},x_2^{(p)})=(C,P_p,A_1^{(p)})$.
 
-$$
+$
 \boxed{
 \begin{aligned}
-x_{n+1}^{(p)} &\in F(x_{n-1}^{(p)},x_n^{(p)}\mid S_n^{(p)}),
-    && n=2,\ldots,5,\\
-\rho(S_{n+1}^{(p)}) &> \rho(S_n^{(p)}),
-    && n=2,\ldots,5,\\
+x_{n+1}^{(p)} &\in \operatorname{Secciones}(x_n^{(p)}\mid S_n^{(p)}),
+    && n=2,3,4,\\
+x_6^{(p)} &\in \operatorname{Referentes}(x_5^{(p)}\mid S_5^{(p)}),\\
 x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)},
-    && 0\le i\le n,\\
-x_6^{(p)} &\in \mathcal R_{\mathrm{concreta}},\\
+    && 0\le i\le n,\quad n=2,\ldots,5,\\
 \operatorname{id}(x_6^{(p)}) &\notin U,\\
 \operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)}),
     && p\ne q.
 \end{aligned}
 }
-$$
+$
 
-$F$: admisibilidad semántica según el recorrido acumulado.
-$\rho$: resolución semántica del recorrido acumulado.
+$\operatorname{Secciones}$: subapartados contenidos en el apartado actual, como en el índice de un libro, considerando el recorrido completo.
+$\operatorname{Referentes}$: objetos, nombres, hechos o conceptos concretos y consultables estudiables dentro del último apartado; no campos generales.
 $\equiv_S$: identidad semántica, incluidas reformulaciones del mismo referente.
-$\mathcal R_{\mathrm{concreta}}$: referentes concretos, identificables y consultables; no campos generales de estudio.
 $\operatorname{id}$: identidad del referente, independiente de cómo se nombre.
 $U$: referentes A5 de llamadas anteriores, indicados debajo.
 
