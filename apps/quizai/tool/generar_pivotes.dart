@@ -193,19 +193,21 @@ List<Map<String, String>> planInitialAttractors(
 
 const _promptHeader = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
 
-Sea una secuencia de conceptos:
+Sea $S_n=(x_0,x_1,\ldots,x_n)$, con $(x_0,x_1,x_2)=(C,P,A_1)$.
 
-$$
-S=(x_0,x_1,\ldots,x_n)
-$$
+$
+\boxed{
+\begin{aligned}
+x_{n+1}&\in F(x_{n-1},x_n\mid S_n), && n=2,\ldots,5,\\
+\rho(S_{n+1})&>\rho(S_n), && n=2,\ldots,5,\\
+x_6&\in\mathcal R.
+\end{aligned}
+}
+$
 
-Cada nuevo elemento se obtiene mediante:
-
-$$
-\boxed{x_{n+1}\in F(x_{n-1},x_n\mid S)}
-$$
-
-Donde $F$ representa el conjunto de atractores semánticamente admisibles para la configuración actual, considerando el significado acumulado de la secuencia.
+$F$: atractores semánticamente admisibles según el recorrido acumulado.
+$\rho$: resolución semántica del recorrido acumulado.
+$\mathcal R$: referentes identificables y consultables.
 
 ## Objetivo
 
