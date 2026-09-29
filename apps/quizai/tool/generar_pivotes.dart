@@ -7,12 +7,13 @@ Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
   final option = args.indexOf('--muestras');
   final sinU = args.contains('--sin-u');
+  final excluirTop3 = args.contains('--excluir-top3');
   final resumen = args.contains('--resumen');
   final int? samples = option < 0
       ? 1
       : option + 1 < args.length ? int.tryParse(args[option + 1]) : null;
   if (model.isEmpty || samples == null || samples < 1 || samples > 100) {
-    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-100] [--sin-u] [--resumen]');
+    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-100] [--sin-u] [--excluir-top3] [--resumen]');
     exitCode = 1;
     return;
   }
@@ -54,6 +55,7 @@ Future<void> main(List<String> args) async {
   try {
     stdout.writeln('Modelo: ' + model);
     stdout.writeln('Historial U: ${sinU ? 'desactivado' : 'reinicio cada 10 llamadas'}');
+    if (excluirTop3) stdout.writeln('P excluidos: Historia, Geografía, Biología');
     for (var sample = 0; sample < samples; sample++) {
       final callWatch = Stopwatch()..start();
       if (samples > 1 && sample % historyBlockSize == 0) {
@@ -66,6 +68,7 @@ Future<void> main(List<String> args) async {
         input: buildResponsePrompt(
           sinU ? const <String>[] : responseHistoryForCall(batches),
           sinU: sinU,
+          excluirTop3: excluirTop3,
         ),
         schemaName: 'quizai_response_selection',
         schema: _schema(),
@@ -107,6 +110,7 @@ Future<void> main(List<String> args) async {
         'lote': sample ~/ historyBlockSize + 1,
         'modelo': model,
         'sinU': sinU,
+        'excluirTop3': excluirTop3,
         'items': [
           for (final item in batch)
             {'campo': item.campo, 'respuesta': item.respuesta},
@@ -202,13 +206,19 @@ U:''';
 
 const _withoutHistoryConstraint = r'''id(Rᵢ) ∉ {id(Rⱼ) : j < i}''';
 
+const _excludedTop3Constraint = r'Pᵢ ∉ {Historia, Geografía, Biología}';
+
 String buildResponsePrompt(
   Iterable<String> usedResponses, {
   bool sinU = false,
+  bool excluirTop3 = false,
 }) {
-  if (sinU) return '$_promptHeader\n\n$_withoutHistoryConstraint';
+  final header = excluirTop3
+      ? '$_promptHeader\n\n$_excludedTop3Constraint'
+      : _promptHeader;
+  if (sinU) return '$header\n\n$_withoutHistoryConstraint';
   final history = usedResponses.toList(growable: false);
-  return '$_promptHeader\n\n$_withHistoryConstraint\n'
+  return '$header\n\n$_withHistoryConstraint\n'
       '${history.isEmpty ? '∅' : history.map((item) => '- $item').join('\n')}';
 }
 
