@@ -67,6 +67,24 @@ Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, e
 |---:|---|---|---|---|
 ${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\n')}''';
 
+/// Control experimental: mismas P y dificultades, sin información D para Luna.
+String quiz10LunaPromptSinD(List<Quiz10LunaSlot> plan) => '''Genera para cada fila i una pregunta Qᵢ y su respuesta correcta Rᵢ.
+
+Pᵢ: campo de conocimiento fijado por Dart.
+Rᵢ: respuesta factual, concreta y verificable de Pᵢ.
+Qᵢ: pregunta natural de cultura general cuya respuesta inequívoca es Rᵢ.
+
+Sea d(Rᵢ) la dificultad estimada de que una persona con cultura general conozca Rᵢ.
+
+d(R₁) < d(R₂) < ... < d(R₁₀)
+id(Rᵢ) ∉ {id(Rⱼ) : j < i}
+
+Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
+
+| id | Pᵢ | Dificultad |
+|---:|---|---|
+${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.difficulty} |').join('\n')}''';
+
 /// Luna devuelve solamente sus dos campos nuevos más el identificador.
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',

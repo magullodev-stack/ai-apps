@@ -17,10 +17,11 @@ Future<void> main(List<String> args) async {
   try {
     if (args.isEmpty) {
       await _verifyCurrentQuiz10(client);
-    } else if (args.length == 5 &&
+    } else if ((args.length == 5 || args.length == 6) &&
         args[0] == '--luna' &&
         args[1] == '--muestras' &&
-        args[3] == '--semilla') {
+        args[3] == '--semilla' &&
+        (args.length == 5 || args[5] == '--sin-d')) {
       final samples = int.tryParse(args[2]);
       final seed = int.tryParse(args[4]);
       if (samples == null ||
@@ -31,11 +32,14 @@ Future<void> main(List<String> args) async {
           seed > 1000000000) {
         throw const FormatException('Muestras 1-200 y semilla 0-1000000000.');
       }
-      await _verifyLuna(client, samples, seed,
-          env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna');
+      await _verifyLuna(
+        client, samples, seed,
+        env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
+        sinD: args.length == 6,
+      );
     } else {
       throw const FormatException(
-        'Uso: verify_generation.dart [--luna --muestras 1-200 --semilla N]',
+        'Uso: verify_generation.dart [--luna --muestras 1-200 --semilla N [--sin-d]]',
       );
     }
   } catch (error) {
@@ -64,47 +68,50 @@ Future<void> _verifyLuna(
   AiAppsClient client,
   int samples,
   int seed,
-  String model,
-) async {
+  String model, {
+  bool sinD = false,
+}) async {
   final outputDir = Directory('../../.ai-apps/experimentos-luna-pd');
   await outputDir.create(recursive: true);
   final runId = DateTime.now().toUtc().toIso8601String()
       .replaceAll(':', '-').replaceAll('.', '-');
-  final raw = File('${outputDir.path}/luna-pd-$runId.jsonl');
-  final questions = File('${outputDir.path}/luna-pd-$runId.md');
+  final filePrefix = sinD ? 'luna-p' : 'luna-pd';
+  final raw = File('${outputDir.path}/$filePrefix-$runId.jsonl');
+  final questions = File('${outputDir.path}/$filePrefix-$runId.md');
   final observed = <_Observed>[];
   var inputTokens = 0;
   var outputTokens = 0;
   var usageComplete = true;
 
   await questions.writeAsString(
-    '# Quiz10 — Preguntas reales P × D → Q, R\n\n'
+    '# Quiz10 — Preguntas reales ${sinD ? 'P' : 'P × D'} → Q, R\n\n'
     'Modelo: $model · Semilla: $seed · Sin historial U · '
     'Llamadas previstas: $samples.\n\n'
     'Estas preguntas no han sido verificadas factualmente por Terra.\n',
     flush: true,
   );
-  stdout.writeln('Luna: $samples llamadas × 10 preguntas, sin U.');
+  stdout.writeln('Luna: $samples llamadas × 10 preguntas, ${sinD ? 'sin D y ' : ''}sin U.');
   stdout.writeln('Modelo: $model; semilla inicial: $seed.');
   stdout.writeln('Resultados: ${questions.path}');
   for (var index = 0; index < samples; index++) {
     final timer = Stopwatch()..start();
     final plan = selectQuiz10LunaPlan(Random(seed + index));
-    final prompt = quiz10LunaPrompt(plan);
+    final prompt = sinD ? quiz10LunaPromptSinD(plan) : quiz10LunaPrompt(plan);
     String? rawOutput;
     final base = <String, Object?>{
       'llamada': index + 1,
       'semilla': seed + index,
       'modelo': model,
       'historialU': false,
+      'modo': sinD ? 'P' : 'P-D',
       'plan': [
         for (final slot in plan)
           {
             'id': slot.number,
             'pivote': slot.pivot,
-            'dimension': slot.dimension.code,
-            'familia': slot.dimension.familyCode,
-            'instruccion': slot.dimension.instruction,
+            if (!sinD) 'dimension': slot.dimension.code,
+            if (!sinD) 'familia': slot.dimension.familyCode,
+            if (!sinD) 'instruccion': slot.dimension.instruction,
             'dificultad': slot.difficulty,
           },
       ],
@@ -138,8 +145,8 @@ Future<void> _verifyLuna(
               {
                 'id': row.slot.number,
                 'pivote': row.slot.pivot,
-                'dimension': row.slot.dimension.code,
-                'familia': row.slot.dimension.familyCode,
+                if (!sinD) 'dimension': row.slot.dimension.code,
+                if (!sinD) 'familia': row.slot.dimension.familyCode,
                 'dificultad': row.slot.difficulty,
                 'pregunta': row.question,
                 'respuesta_correcta': row.correct,
@@ -157,16 +164,28 @@ Future<void> _verifyLuna(
       final buffer = StringBuffer()
         ..writeln('\n## Llamada ${index + 1}/$samples')
         ..writeln()
-        ..writeln('| Nº | P | D | Instrucción D | Dificultad | Pregunta Q | Respuesta R |')
-        ..writeln('|---:|---|---|---|---|---|---|');
+        ..writeln(sinD
+            ? '| Nº | P | Dificultad | Pregunta Q | Respuesta R |'
+            : '| Nº | P | D | Instrucción D | Dificultad | Pregunta Q | Respuesta R |')
+        ..writeln(sinD
+            ? '|---:|---|---|---|---|'
+            : '|---:|---|---|---|---|---|---|');
       for (final row in rows) {
-        buffer.writeln(
-          '| ${row.slot.number} | ${_cell(row.slot.pivot)} | '
-          '${row.slot.dimension.code} | '
-          '${_cell(row.slot.dimension.instruction)} | '
-          '${_cell(row.slot.difficulty)} | '
-          '${_cell(row.question)} | ${_cell(row.correct)} |',
-        );
+        if (sinD) {
+          buffer.writeln(
+            '| ${row.slot.number} | ${_cell(row.slot.pivot)} | '
+            '${_cell(row.slot.difficulty)} | '
+            '${_cell(row.question)} | ${_cell(row.correct)} |',
+          );
+        } else {
+          buffer.writeln(
+            '| ${row.slot.number} | ${_cell(row.slot.pivot)} | '
+            '${row.slot.dimension.code} | '
+            '${_cell(row.slot.dimension.instruction)} | '
+            '${_cell(row.slot.difficulty)} | '
+            '${_cell(row.question)} | ${_cell(row.correct)} |',
+          );
+        }
       }
       await questions.writeAsString(
         buffer.toString(),
@@ -196,7 +215,7 @@ Future<void> _verifyLuna(
     }
   }
 
-  final summary = _lunaSummary(observed);
+  final summary = sinD ? _lunaSummarySinD(observed) : _lunaSummary(observed);
   await questions.writeAsString(
     '\n$summary\n\n'
     'Tokens de entrada: ${usageComplete ? inputTokens : 'datos incompletos'}. '
@@ -280,6 +299,61 @@ String _lunaSummary(List<_Observed> observed) {
       'no detecta sinónimos ni distintas respuestas que remiten a un mismo '
       'hecho. Solo una comparación posterior sin D, manteniendo el mismo '
       'plan de pivotes y dificultades, permitirá aislar el efecto causal de D.');
+  return buffer.toString();
+}
+
+/// Informe del control P + dificultad: ninguna D participa en los datos.
+String _lunaSummarySinD(List<_Observed> observed) {
+  final byPivot = <String, List<_Observed>>{};
+  for (final item in observed) {
+    byPivot.putIfAbsent(item.row.slot.pivot, () => <_Observed>[]).add(item);
+  }
+  final normalized = observed.map((item) => _answerKey(item.row.correct));
+  final buffer = StringBuffer()
+    ..writeln('## Diversidad de respuestas R sin D (comparación textual)')
+    ..writeln()
+    ..writeln('Filas: ${observed.length}. '
+        'R diferentes globales: ${normalized.toSet().length}. '
+        'Repeticiones globales: '
+        '${observed.length - normalized.toSet().length}.')
+    ..writeln()
+    ..writeln('| Pivote P | Filas | R diferentes | R repetidas |')
+    ..writeln('|---|---:|---:|---:|');
+  final pivots = byPivot.keys.toList()..sort();
+  var repeatedAcrossPivots = 0;
+  final repeatedDetails = <String>[];
+  for (final pivot in pivots) {
+    final items = byPivot[pivot]!;
+    final byAnswer = <String, List<_Observed>>{};
+    for (final item in items) {
+      byAnswer.putIfAbsent(
+        _answerKey(item.row.correct), () => <_Observed>[],
+      ).add(item);
+    }
+    repeatedAcrossPivots += items.length - byAnswer.length;
+    buffer.writeln('| ${_cell(pivot)} | ${items.length} | '
+        '${byAnswer.length} | ${items.length - byAnswer.length} |');
+    for (final group in byAnswer.values.where((items) => items.length > 1)) {
+      repeatedDetails.add('- ${_cell(pivot)} — '
+          '**${_cell(group.first.row.correct)}**: '
+          '${group.map((item) => 'llamada ${item.call}').join('; ')}.');
+    }
+  }
+  buffer
+    ..writeln()
+    ..writeln('Respuestas repetidas dentro del mismo pivote: '
+        '$repeatedAcrossPivots.')
+    ..writeln()
+    ..writeln('### Coincidencias de R dentro del mismo P');
+  if (repeatedDetails.isEmpty) {
+    buffer.writeln('Ninguna repetición textual dentro del mismo P.');
+  } else {
+    for (final detail in repeatedDetails) {
+      buffer.writeln(detail);
+    }
+  }
+  buffer.writeln('\nLa comparación ignora diferencias de mayúsculas y '
+      'espacios; no identifica sinónimos ni equivalencias semánticas.');
   return buffer.toString();
 }
 

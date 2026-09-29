@@ -89,6 +89,25 @@ void main() {
     expect((itemSchema['properties'] as Map).keys, ['id', 'pregunta', 'respuesta_correcta']);
   });
 
+  test('control sin D mantiene P, dificultades y fórmula, sin transmitir D', () {
+    final plan = selectQuiz10LunaPlan(Random(20260929));
+    final original = quiz10LunaPrompt(plan);
+    final control = quiz10LunaPromptSinD(plan);
+    expect(control, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+    expect(control, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
+    expect(control, contains('{id, pregunta, respuesta_correcta}'));
+    expect(control, isNot(contains('Dᵢ')));
+    for (final slot in plan) {
+      expect(original, contains(slot.dimension.instruction));
+      expect(
+        control,
+        contains('| ${slot.number} | ${slot.pivot} | ${slot.difficulty} |'),
+      );
+      expect(control, isNot(contains(slot.dimension.code)));
+      expect(control, isNot(contains(slot.dimension.instruction)));
+    }
+  });
+
   test('acepta diez Q/R y rechaza filas incompletas, fuera de orden o extrañas', () {
     final plan = selectQuiz10LunaPlan(Random(5));
     final items = _rows(plan);

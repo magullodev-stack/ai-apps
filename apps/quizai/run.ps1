@@ -8,6 +8,7 @@ param(
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
     [switch]$ProbarLuna,
+    [switch]$SinD,
     [ValidateRange(0, 1000000000)]
     [int]$LunaSemilla = 20260929,
     [ValidateRange(1, 30)]
@@ -222,7 +223,9 @@ if ($ProbarLuna) {
         $env:AI_APPS_LUNA_MODEL = $CatalogModel
         Push-Location (Join-Path $repo 'apps\quizai')
         try {
-            & $dart run tool/verify_generation.dart --luna --muestras "$Muestras" --semilla "$LunaSemilla"
+            $lunaArgs = @('run', 'tool/verify_generation.dart', '--luna', '--muestras', "$Muestras", '--semilla', "$LunaSemilla")
+            if ($SinD) { $lunaArgs += '--sin-d' }
+            & $dart @lunaArgs
             if ($LASTEXITCODE -ne 0) { throw 'Falló la prueba real de Luna P × D.' }
         } finally { Pop-Location }
     } finally {

@@ -138,4 +138,19 @@ El informe cuenta repeticiones textuales de R por P, distinguiendo
 coincidencias con igual D y con distintas D. No identifica sinónimos;
 para atribuir causalidad a D se necesitará un control sin D.
 
+### Control sin dimensiones D
+
+Para comparar con las primeras 50 llamadas P+D, se utiliza el mismo modelo,
+las mismas semillas, los mismos pivotes P y la misma distribución de dificultad.
+Solo se elimina D del prompt enviado a Luna; tampoco se proporciona historial U.
+
+```powershell
+.\apps\quizai\run.ps1 -ProbarLuna -SinD -Muestras 50 -LunaSemilla 20260929
+```
+
+El control guarda sus resultados separados en
+`.ai-apps/experimentos-luna-pd/luna-p-*.jsonl` y `luna-p-*.md`.
+La prueba P+D previa se conserva intacta. Las estadísticas del control
+cuentan las respuestas R distintas y repetidas dentro de cada P.
+
 La opción `-VerifyOnly` de la partida anterior se mantiene sin cambios.
