@@ -10,6 +10,8 @@ param(
     [switch]$Terra,
     [switch]$Sol,
     [string]$PivotModel = 'gpt-5.6-luna',
+    [ValidateRange(1, 100)]
+    [int]$Muestras = 1,
     [switch]$StopService,
     [switch]$SaveKeyFromClipboard
 )
@@ -177,6 +179,7 @@ if ($Pivots) {
         $pivotArgs = @('run', 'tool/generar_pivotes.dart', $PivotModel)
         if ($Ruta -or $Terra -or $Sol) { $pivotArgs += '--ruta' }
         if ($Terra -or $Sol) { $pivotArgs += '--sol' }
+        if ($Muestras -gt 1) { $pivotArgs += @('--muestras', "$Muestras") }
         & $dart @pivotArgs
         if ($LASTEXITCODE -ne 0) { throw 'Falló la generación de pivotes.' }
     } finally { Pop-Location }
