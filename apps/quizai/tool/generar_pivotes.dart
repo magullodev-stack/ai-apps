@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
-/// Piloto aislado de expansión semántica; no modifica los catálogos de QuizAI.
+/// Piloto aislado de generación de respuestas; no modifica los catálogos de QuizAI.
 Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
   final option = args.indexOf('--muestras');
@@ -39,8 +39,8 @@ Future<void> main(List<String> args) async {
     authorization: session['token'] as String,
   );
   final watch = Stopwatch()..start();
-  final batches = <List<AttractorItem>>[];
-  final usedAttractors = <String>[];
+  final batches = <List<ResponseItem>>[];
+  final usedResponses = <String>[];
   final usedKeys = <String>{};
   var inputSum = 0;
   var outputSum = 0;
@@ -53,16 +53,16 @@ Future<void> main(List<String> args) async {
       final result = await client.generate(
         application: 'quizai',
         model: model,
-        input: buildAttractorPrompt(usedAttractors),
-        schemaName: 'quizai_attractor_selection',
+        input: buildResponsePrompt(usedResponses),
+        schemaName: 'quizai_response_selection',
         schema: _schema(),
       ).timeout(const Duration(seconds: 90));
-      final batch = parseAttractorItems(result.text);
+      final batch = parseResponseItems(result.text);
       batches.add(batch);
-      stdout.writeln(formatAttractorTable(batch));
+      stdout.writeln(formatResponseTable(batch));
       for (final item in batch) {
-        if (usedKeys.add(_key(item.atractor))) {
-          usedAttractors.add(item.atractor);
+        if (usedKeys.add(_key(item.respuesta))) {
+          usedResponses.add(item.respuesta);
         }
       }
       final usage = result.usage;
@@ -101,7 +101,7 @@ Future<void> main(List<String> args) async {
     }
     if (samples > 1) {
       stdout.writeln('\n## Comparación de las $samples llamadas');
-      stdout.writeln(compareAttractorBatches(batches));
+      stdout.writeln(compareResponseBatches(batches));
       final rates = _modelRates[model.toLowerCase()];
       final cost = completeUsage && rates != null
           ? ((inputSum * rates.inputUsdPerMillion +
@@ -132,27 +132,25 @@ const Map<String, _ModelRates> _modelRates = {
   'gpt-5.4-mini': (inputUsdPerMillion: 0.75, outputUsdPerMillion: 4.50),
 };
 
-/// Pareja directa: campo de conocimiento y atractor, sin niveles A1-A5.
-typedef AttractorItem = ({String campo, String atractor});
+/// Pareja directa: campo de conocimiento y respuesta, sin niveles A1-A5.
+typedef ResponseItem = ({String campo, String respuesta});
 
-const _promptHeader = r'''# GENERACIÓN DE CONOCIMIENTO
+const _promptHeader = r'''Selecciona 10 campos de conocimiento aleatorios y distintos (P).
 
-Selecciona 10 campos de conocimiento variados y un atractor de cada uno.
+En cada campo, encuentra un término, nombre o expresión (R)
+que pueda servir como respuesta inequívoca a una pregunta de conocimiento.
 
-Sea A_i el atractor de la fila i y d(A_i) la dificultad estimada de conocerlo para una persona con cultura general. Sea U el conjunto de atractores de llamadas anteriores, considerando su identidad semántica.
+Sea d(Rᵢ) la dificultad estimada de que una persona
+con cultura general conozca Rᵢ.
 
-$$
-\begin{aligned}
-d(A_1)&<d(A_2)<\cdots<d(A_{10}),\\
-\operatorname{id}(A_i)&\notin U\cup\{\operatorname{id}(A_j):j<i\},
-\quad i=1,\ldots,10.
-\end{aligned}
-$$
+d(R₁) < d(R₂) < ... < d(R₁₀)
 
-U · Atractores ya utilizados:''';
+id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}
 
-String buildAttractorPrompt(Iterable<String> usedAttractors) {
-  final history = usedAttractors.toList(growable: false);
+U:''';
+
+String buildResponsePrompt(Iterable<String> usedResponses) {
+  final history = usedResponses.toList(growable: false);
   return '$_promptHeader\n${history.isEmpty ? '∅' : history.map((item) => '- $item').join('\n')}';
 }
 
@@ -169,39 +167,39 @@ Map<String, Object?> _schema() => {
       'items': {
         'type': 'object',
         'additionalProperties': false,
-        'required': ['campo', 'atractor'],
+        'required': ['campo', 'respuesta'],
         'properties': {
           'campo': {'type': 'string'},
-          'atractor': {'type': 'string'},
+          'respuesta': {'type': 'string'},
         },
       },
     },
   },
 };
 
-List<AttractorItem> parseAttractorItems(String response) {
+List<ResponseItem> parseResponseItems(String response) {
   final decoded = jsonDecode(response);
   if (decoded is! Map || decoded['items'] is! List) {
-    throw const FormatException('Respuesta inválida: faltan los atractores.');
+    throw const FormatException('Respuesta inválida: faltan los respuestas.');
   }
   final rawItems = decoded['items'] as List;
   if (rawItems.length != 10) {
-    throw const FormatException('Se esperaban exactamente 10 atractores.');
+    throw const FormatException('Se esperaban exactamente 10 respuestas.');
   }
-  final items = <AttractorItem>[];
+  final items = <ResponseItem>[];
   for (final raw in rawItems) {
     if (raw is! Map || raw['campo'] is! String ||
-        raw['atractor'] is! String) {
-      throw const FormatException('Cada fila necesita campo y atractor.');
+        raw['respuesta'] is! String) {
+      throw const FormatException('Cada fila necesita campo y respuesta.');
     }
     final campo = (raw['campo'] as String).trim();
-    final atractor = (raw['atractor'] as String).trim();
-    if (campo.isEmpty || atractor.isEmpty) {
-      throw const FormatException('Los campos y atractores no pueden estar vacíos.');
+    final respuesta = (raw['respuesta'] as String).trim();
+    if (campo.isEmpty || respuesta.isEmpty) {
+      throw const FormatException('Los campos y respuestas no pueden estar vacíos.');
     }
-    items.add((campo: campo, atractor: atractor));
+    items.add((campo: campo, respuesta: respuesta));
   }
-  return List<AttractorItem>.unmodifiable(items);
+  return List<ResponseItem>.unmodifiable(items);
 }
 
 String _key(String value) =>
@@ -210,20 +208,20 @@ String _key(String value) =>
 String _markdownCell(String value) =>
     value.replaceAll(RegExp(r'\s+'), ' ').replaceAll('|', r'\|').trim();
 
-String formatAttractorTable(List<AttractorItem> items) {
+String formatResponseTable(List<ResponseItem> items) {
   final output = StringBuffer()
-    ..writeln('| Campo de conocimiento | Atractor |')
+    ..writeln('| Campo de conocimiento | Respuesta |')
     ..writeln('|---|---|');
   for (final item in items) {
     output.writeln(
-      '| ${_markdownCell(item.campo)} | ${_markdownCell(item.atractor)} |',
+      '| ${_markdownCell(item.campo)} | ${_markdownCell(item.respuesta)} |',
     );
   }
   return output.toString();
 }
 
 /// Analiza repeticiones textuales sin bloquear la generación.
-String compareAttractorBatches(List<List<AttractorItem>> batches) {
+String compareResponseBatches(List<List<ResponseItem>> batches) {
   if (batches.isEmpty) throw ArgumentError('No hay llamadas para comparar.');
   final occurrences = <String, List<String>>{};
   final names = <String, String>{};
@@ -231,12 +229,12 @@ String compareAttractorBatches(List<List<AttractorItem>> batches) {
   for (var call = 0; call < batches.length; call++) {
     final items = batches[call];
     if (items.length != 10) {
-      throw ArgumentError('Cada llamada debe contener 10 atractores.');
+      throw ArgumentError('Cada llamada debe contener 10 respuestas.');
     }
     fieldsPerCall.add(items.map((item) => _key(item.campo)).toSet().length);
     for (final item in items) {
-      final key = _key(item.atractor);
-      names.putIfAbsent(key, () => item.atractor);
+      final key = _key(item.respuesta);
+      names.putIfAbsent(key, () => item.respuesta);
       occurrences
           .putIfAbsent(key, () => <String>[])
           .add('llamada ${call + 1}, ${item.campo}');
@@ -245,7 +243,7 @@ String compareAttractorBatches(List<List<AttractorItem>> batches) {
   final total = batches.length * 10;
   final output = StringBuffer()
     ..writeln('Campos distintos por llamada: ${fieldsPerCall.join(', ')} de 10.')
-    ..writeln('Atractores textualmente distintos: ${occurrences.length} de $total.')
+    ..writeln('Respuestas textualmente distintos: ${occurrences.length} de $total.')
     ..writeln('Repeticiones textuales: ${total - occurrences.length}.');
   final duplicateKeys = occurrences.keys
       .where((key) => occurrences[key]!.length > 1);
