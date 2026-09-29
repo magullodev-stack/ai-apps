@@ -7,11 +7,12 @@ Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
   final option = args.indexOf('--muestras');
   final sinU = args.contains('--sin-u');
+  final resumen = args.contains('--resumen');
   final int? samples = option < 0
       ? 1
       : option + 1 < args.length ? int.tryParse(args[option + 1]) : null;
   if (model.isEmpty || samples == null || samples < 1 || samples > 100) {
-    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-100] [--sin-u]');
+    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-100] [--sin-u] [--resumen]');
     exitCode = 1;
     return;
   }
@@ -39,6 +40,12 @@ Future<void> main(List<String> args) async {
     endpoint: endpoint,
     authorization: session['token'] as String,
   );
+  final resultsDir = Directory('../../.ai-apps/experimentos-pivotes');
+  await resultsDir.create(recursive: true);
+  final runId = DateTime.now().toUtc().toIso8601String()
+      .replaceAll(':', '-').replaceAll('.', '-');
+  final rawFile = File('${resultsDir.path}/pivotes-$runId.jsonl');
+  final summaryFile = File('${resultsDir.path}/pivotes-$runId-resumen.md');
   final watch = Stopwatch()..start();
   final batches = <List<ResponseItem>>[];
   var inputSum = 0;
@@ -52,7 +59,7 @@ Future<void> main(List<String> args) async {
       if (samples > 1 && sample % historyBlockSize == 0) {
         stdout.writeln('\n## Lote ${sample ~/ historyBlockSize + 1}/${(samples + historyBlockSize - 1) ~/ historyBlockSize}');
       }
-      if (samples > 1) stdout.writeln('\n## Llamada ${sample + 1}/$samples');
+      if (samples > 1 && !resumen) stdout.writeln('\n## Llamada ${sample + 1}/$samples');
       final result = await client.generate(
         application: 'quizai',
         model: model,
@@ -65,7 +72,7 @@ Future<void> main(List<String> args) async {
       ).timeout(const Duration(seconds: 90));
       final batch = parseResponseItems(result.text);
       batches.add(batch);
-      stdout.writeln(formatResponseTable(batch));
+      if (!resumen) stdout.writeln(formatResponseTable(batch));
       final usage = result.usage;
       final inputTokens = usage?['inputTokens'];
       final outputTokens = usage?['outputTokens'];
@@ -89,10 +96,29 @@ Future<void> main(List<String> args) async {
           ? ((inputTokens * inputRate + outputTokens * outputRate) / 1000000)
               .toStringAsFixed(6) + ' USD'
           : 'no disponible';
-      stdout.writeln('Entrada: ${inputTokens is int ? inputTokens : 'no disponible'} tokens | ${priceFor(inputTokens, inputRate)}');
-      stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponible'} tokens | ${priceFor(outputTokens, outputRate)}');
-      stdout.writeln('Total: ${total ?? 'no disponible'} tokens | $totalPrice');
-      stdout.writeln('Tiempo: ${callWatch.elapsedMilliseconds} ms');
+      if (!resumen) {
+        stdout.writeln('Entrada: ${inputTokens is int ? inputTokens : 'no disponible'} tokens | ${priceFor(inputTokens, inputRate)}');
+        stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponible'} tokens | ${priceFor(outputTokens, outputRate)}');
+        stdout.writeln('Total: ${total ?? 'no disponible'} tokens | $totalPrice');
+        stdout.writeln('Tiempo: ${callWatch.elapsedMilliseconds} ms');
+      }
+      final observation = {
+        'llamada': sample + 1,
+        'lote': sample ~/ historyBlockSize + 1,
+        'modelo': model,
+        'sinU': sinU,
+        'items': [
+          for (final item in batch)
+            {'campo': item.campo, 'respuesta': item.respuesta},
+        ],
+        'inputTokens': inputTokens,
+        'outputTokens': outputTokens,
+      };
+      await rawFile.writeAsString(
+        '${jsonEncode(observation)}\n',
+        mode: FileMode.append,
+        flush: true,
+      );
       if (inputTokens is int && outputTokens is int) {
         inputSum += inputTokens;
         outputSum += outputTokens;
@@ -102,7 +128,7 @@ Future<void> main(List<String> args) async {
     }
     if (samples > 1) {
       stdout.writeln('\n## Comparación de las $samples llamadas');
-      stdout.writeln(compareResponseBatches(batches));
+      if (!resumen) stdout.writeln(compareResponseBatches(batches));
       final rates = _modelRates[model.toLowerCase()];
       final cost = completeUsage && rates != null
           ? ((inputSum * rates.inputUsdPerMillion +
@@ -115,8 +141,14 @@ Future<void> main(List<String> args) async {
       );
       stdout.writeln('Tiempo acumulado: ${watch.elapsedMilliseconds} ms');
     }
+    final report = formatExperimentReport(batches);
+    await summaryFile.writeAsString(report, flush: true);
+    if (resumen) stdout.writeln(report);
+    stdout.writeln('Datos completos: ${rawFile.path}');
+    stdout.writeln('Informe: ${summaryFile.path}');
   } catch (error) {
     stderr.writeln('ERROR: ' + error.toString());
+    stderr.writeln('Datos generados hasta el error: ${rawFile.path}');
     exitCode = 1;
   } finally {
     client.close();
