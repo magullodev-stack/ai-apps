@@ -43,6 +43,7 @@ Future<void> main(List<String> args) async {
   final tables = <Map<String, List<String>>>[];
   final selectedA1 = planInitialAttractors(samples);
   final usedReferents = <String>[];
+  final usedReferentKeys = <String>{};
   var inputSum = 0;
   var outputSum = 0;
   var completeUsage = true;
@@ -69,9 +70,12 @@ Future<void> main(List<String> args) async {
       final markdown = (data['table'] as String).trim();
       final table = parseExpansionTable(markdown, selectedA1[sample]);
       tables.add(table);
-      usedReferents.addAll(
-        _pivotNames.map((pivot) => table[pivot]!.last),
-      );
+      for (final pivot in _pivotNames) {
+        final referent = table[pivot]!.last;
+        if (usedReferentKeys.add(_key(referent))) {
+          usedReferents.add(referent);
+        }
+      }
       stdout.writeln(markdown);
       final usage = result.usage;
       final inputTokens = usage?['inputTokens'];
