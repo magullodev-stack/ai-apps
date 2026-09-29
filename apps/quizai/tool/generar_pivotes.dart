@@ -209,7 +209,7 @@ const _promptHeader = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
 Sea $S_n^{(p)}=(x_0^{(p)},x_1^{(p)},\ldots,x_n^{(p)})$,
 con $(x_0^{(p)},x_1^{(p)},x_2^{(p)})=(C,P_p,A_1^{(p)})$.
 
-$
+$$
 \boxed{
 \begin{aligned}
 x_{n+1}^{(p)} &\in \operatorname{Secciones}(x_n^{(p)}\mid S_n^{(p)}),
@@ -222,7 +222,7 @@ x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)},
     && p\ne q.
 \end{aligned}
 }
-$
+$$
 
 $\operatorname{Secciones}$: subapartados contenidos en el apartado actual, como en el índice de un libro, considerando el recorrido completo.
 $\operatorname{Referentes}$: objetos, nombres, hechos o conceptos concretos y consultables estudiables dentro del último apartado; no campos generales.
