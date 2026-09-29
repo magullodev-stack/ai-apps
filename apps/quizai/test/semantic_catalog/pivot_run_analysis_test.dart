@@ -55,6 +55,9 @@ void main() {
     expect(prompt, contains('| Ciencias naturales | Química | | | | |'));
     expect(prompt, contains('| Salud y medicina | Medicina | | | | |'));
     expect(prompt, contains('Completa los atractores A2, A3, A4 y A5'));
+    expect(prompt, contains(r'\rho(S_{n+1})&>\rho(S_n)'));
+    expect(prompt, contains(r'x_6&\in\mathcal R'));
+    expect(prompt, contains(r'n=2,\ldots,5'));
     expect(prompt, isNot(contains('Orgánica')));
     expect(
       () => buildExpansionPrompt({..._selectedA1}..remove('Artes')),
