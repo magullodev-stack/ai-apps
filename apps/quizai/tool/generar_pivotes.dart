@@ -8,12 +8,15 @@ Future<void> main(List<String> args) async {
   final option = args.indexOf('--muestras');
   final sinU = args.contains('--sin-u');
   final excluirTop3 = args.contains('--excluir-top3');
+  final excluirTop6 = args.contains('--excluir-top6');
   final resumen = args.contains('--resumen');
   final int? samples = option < 0
       ? 1
       : option + 1 < args.length ? int.tryParse(args[option + 1]) : null;
-  if (model.isEmpty || samples == null || samples < 1 || samples > 100) {
-    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-100] [--sin-u] [--excluir-top3] [--resumen]');
+  if (model.isEmpty || samples == null || samples < 1 || samples > 200 ||
+      (excluirTop3 && excluirTop6)) {
+    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-200] [--sin-u] '
+        '[--excluir-top3 | --excluir-top6] [--resumen]');
     exitCode = 1;
     return;
   }
@@ -56,6 +59,10 @@ Future<void> main(List<String> args) async {
     stdout.writeln('Modelo: ' + model);
     stdout.writeln('Historial U: ${sinU ? 'desactivado' : 'reinicio cada 10 llamadas'}');
     if (excluirTop3) stdout.writeln('P excluidos: Historia, Geografía, Biología');
+    if (excluirTop6) {
+      stdout.writeln('P excluidos: Historia, Geografía, Biología, '
+          'Economía, Lingüística, Música');
+    }
     for (var sample = 0; sample < samples; sample++) {
       final callWatch = Stopwatch()..start();
       if (samples > 1 && sample % historyBlockSize == 0) {
@@ -69,6 +76,7 @@ Future<void> main(List<String> args) async {
           sinU ? const <String>[] : responseHistoryForCall(batches),
           sinU: sinU,
           excluirTop3: excluirTop3,
+          excluirTop6: excluirTop6,
         ),
         schemaName: 'quizai_response_selection',
         schema: _schema(),
@@ -111,6 +119,7 @@ Future<void> main(List<String> args) async {
         'modelo': model,
         'sinU': sinU,
         'excluirTop3': excluirTop3,
+        'excluirTop6': excluirTop6,
         'items': [
           for (final item in batch)
             {'campo': item.campo, 'respuesta': item.respuesta},
@@ -207,15 +216,24 @@ U:''';
 const _withoutHistoryConstraint = r'''id(Rᵢ) ∉ {id(Rⱼ) : j < i}''';
 
 const _excludedTop3Constraint = r'Pᵢ ∉ {Historia, Geografía, Biología}';
+const _excludedTop6Constraint =
+    r'Pᵢ ∉ {Historia, Geografía, Biología, Economía, Lingüística, Música}';
 
 String buildResponsePrompt(
   Iterable<String> usedResponses, {
   bool sinU = false,
   bool excluirTop3 = false,
+  bool excluirTop6 = false,
 }) {
-  final header = excluirTop3
-      ? '$_promptHeader\n\n$_excludedTop3Constraint'
-      : _promptHeader;
+  if (excluirTop3 && excluirTop6) {
+    throw ArgumentError('Las exclusiones Top3 y Top6 son incompatibles.');
+  }
+  final exclusion = excluirTop6
+      ? _excludedTop6Constraint
+      : excluirTop3 ? _excludedTop3Constraint : null;
+  final header = exclusion == null
+      ? _promptHeader
+      : '$_promptHeader\n\n$exclusion';
   if (sinU) return '$header\n\n$_withoutHistoryConstraint';
   final history = usedResponses.toList(growable: false);
   return '$header\n\n$_withHistoryConstraint\n'
