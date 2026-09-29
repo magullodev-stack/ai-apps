@@ -5,8 +5,18 @@ $repo = Split-Path $PSScriptRoot -Parent
 
 function Invoke-Git {
     param([string[]]$Arguments)
-    $output = & git -C $repo @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) {
+    # Windows PowerShell 5.1 puede convertir stderr de git fetch en
+    # NativeCommandError incluso cuando Git finaliza correctamente.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $output = & git -C $repo @Arguments 2>&1
+        $gitExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($gitExitCode -ne 0) {
         throw "Git no pudo completar: git $($Arguments -join ' '). $($output | Out-String)"
     }
     return $output
