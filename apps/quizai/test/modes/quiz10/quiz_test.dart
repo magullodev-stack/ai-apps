@@ -10,11 +10,11 @@ void main() {
   final plan = selectQuizAreas(Random(7));
 
   test(
-    'selecciona diez áreas distintas de las dieciocho y respeta la progresión',
+    'selecciona diez áreas distintas de las veintiuna y respeta la progresión',
     () {
       final selections = <String>{};
       final seen = <String>{};
-      expect(quizAreas.toSet(), hasLength(18));
+      expect(quizAreas.toSet(), hasLength(21));
       for (var seed = 0; seed < 100; seed++) {
         final slots = selectQuizAreas(Random(seed));
         final areas = slots.map((slot) => slot.area).toList();

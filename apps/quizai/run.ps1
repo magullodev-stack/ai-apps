@@ -7,6 +7,9 @@ param(
     [switch]$VerifyOnly,
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
+    [switch]$ProbarLuna,
+    [ValidateRange(0, 1000000000)]
+    [int]$LunaSemilla = 20260929,
     [ValidateRange(1, 30)]
     [int]$DimensionesMuestras = 30,
     [switch]$Ruta,
@@ -201,6 +204,32 @@ if ($EvaluarDimensiones) {
         & $dart run tool/evaluar_dimensiones.dart $CatalogModel --muestras "$DimensionesMuestras"
         if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría de dimensiones.' }
     } finally { Pop-Location }
+    return
+}
+
+if ($ProbarLuna) {
+    # Reutiliza el servicio de IA sin exponer la clave a Dart cliente.
+    $previousLunaEnv = @{}
+    foreach ($name in @('AI_APPS_AI_API_KEY', 'OPENAI_API_KEY',
+                         'AI_APPS_AI_URL', 'AI_APPS_GAME_TOKEN',
+                         'AI_APPS_LUNA_MODEL')) {
+        $previousLunaEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+    }
+    try {
+        Remove-Item Env:AI_APPS_AI_API_KEY, Env:OPENAI_API_KEY -ErrorAction SilentlyContinue
+        $env:AI_APPS_AI_URL = $session.endpoint
+        $env:AI_APPS_GAME_TOKEN = $session.token
+        $env:AI_APPS_LUNA_MODEL = $CatalogModel
+        Push-Location (Join-Path $repo 'apps\quizai')
+        try {
+            & $dart run tool/verify_generation.dart --luna --muestras "$Muestras" --semilla "$LunaSemilla"
+            if ($LASTEXITCODE -ne 0) { throw 'Falló la prueba real de Luna P × D.' }
+        } finally { Pop-Location }
+    } finally {
+        foreach ($name in $previousLunaEnv.Keys) {
+            [Environment]::SetEnvironmentVariable($name, $previousLunaEnv[$name], 'Process')
+        }
+    }
     return
 }
 

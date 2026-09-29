@@ -107,3 +107,35 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
+
+## Generación P × D → Q, R (Luna)
+
+La primera operación definitiva de Quiz10 está implementada en
+`lib/modes/quiz10/quiz10_luna.dart`. Dart dispone de dos bancos cerrados:
+21 pivotes (`quiz10_pivots.dart`) y 86 instrucciones literales
+«Pregunta por…» (`lib/coverage/factual_question_dimensions.dart`),
+con sus 18 familias I/M/E. Cada partida sortea diez P distintas y diez D
+distintas, sin reemplazo; asigna la dificultad por posición. Luna recibe
+esas diez combinaciones y devuelve solamente id, pregunta Q y respuesta R.
+No genera distractores.
+
+La pantalla jugable conserva temporalmente la generación anterior hasta
+conectar Terra (validación/corrección y tres distractores). La prueba
+empírica usa el prompt real de Luna y **no envía historial U**.
+
+Desde la raíz del repositorio, con el servicio de IA preparado por el propio lanzador:
+
+```powershell
+.\apps\quizai\run.ps1 -ProbarLuna -Muestras 1
+.\apps\quizai\run.ps1 -ProbarLuna -Muestras 20
+```
+
+Se admite `-LunaSemilla 20260929` para reproducir el sorteo de P–D y
+`-CatalogModel` para elegir el modelo. El verificador existente
+`tool/verify_generation.dart` guarda las preguntas, respuestas, instrucciones
+D y uso de tokens en `.ai-apps/experimentos-luna-pd/` como JSONL y Markdown.
+El informe cuenta repeticiones textuales de R por P, distinguiendo
+coincidencias con igual D y con distintas D. No identifica sinónimos;
+para atribuir causalidad a D se necesitará un control sin D.
+
+La opción `-VerifyOnly` de la partida anterior se mantiene sin cambios.

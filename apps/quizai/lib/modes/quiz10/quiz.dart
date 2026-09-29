@@ -1,26 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
 
-const quizAreas = [
-  'Matemáticas',
-  'Física',
-  'Química',
-  'Tierra y espacio',
-  'Biología',
-  'Salud',
-  'Informática',
-  'Ingeniería',
-  'Arquitectura',
-  'Historia',
-  'Lingüística',
-  'Literatura',
-  'Filosofía',
-  'Derecho',
-  'Economía',
-  'Psicología',
-  'Sociología',
-  'Ciencia política',
-];
+import 'quiz10_pivots.dart';
+
+const quizAreas = quiz10Pivots;
 
 const quizDifficulties = [
   'Fácil',
