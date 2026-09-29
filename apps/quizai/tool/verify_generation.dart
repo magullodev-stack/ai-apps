@@ -142,7 +142,7 @@ Future<void> _verifyLuna(
                 'familia': row.slot.dimension.familyCode,
                 'dificultad': row.slot.difficulty,
                 'pregunta': row.question,
-                'correcta': row.correct,
+                'respuesta_correcta': row.correct,
               },
           ],
           'respuestaBruta': rawOutput,

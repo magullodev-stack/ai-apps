@@ -14,7 +14,7 @@ List<Map<String, Object?>> _rows(List<Quiz10LunaSlot> plan) => [
     {
       'id': slot.number,
       'pregunta': '¿Pregunta comprobable de ${slot.pivot}?',
-      'correcta': 'Respuesta ${slot.number}',
+      'respuesta_correcta': 'Respuesta ${slot.number}',
     },
 ];
 
@@ -85,8 +85,8 @@ void main() {
     expect(prompt, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
     expect(prompt, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
     final itemSchema = (quiz10LunaSchema()['properties'] as Map)['preguntas']['items'] as Map;
-    expect(itemSchema['required'], ['id', 'pregunta', 'correcta']);
-    expect((itemSchema['properties'] as Map).keys, ['id', 'pregunta', 'correcta']);
+    expect(itemSchema['required'], ['id', 'pregunta', 'respuesta_correcta']);
+    expect((itemSchema['properties'] as Map).keys, ['id', 'pregunta', 'respuesta_correcta']);
   });
 
   test('acepta diez Q/R y rechaza filas incompletas, fuera de orden o extrañas', () {
@@ -100,7 +100,7 @@ void main() {
       jsonEncode({'preguntas': items.take(9).toList()}),
       jsonEncode({'preguntas': items.reversed.toList()}),
       jsonEncode({'preguntas': [{...items.first, 'extra': 1}, ...items.skip(1)]}),
-      jsonEncode({'preguntas': [{...items.first, 'correcta': ' '}, ...items.skip(1)]}),
+      jsonEncode({'preguntas': [{...items.first, 'respuesta_correcta': ' '}, ...items.skip(1)]}),
       jsonEncode({'preguntas': [{...items.first, 'id': 99}, ...items.skip(1)]}),
     ];
     for (final value in invalid) {

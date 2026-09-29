@@ -61,7 +61,7 @@ Sea d(Rᵢ) la dificultad estimada de que una persona con cultura general conozc
 d(R₁) < d(R₂) < ... < d(R₁₀)
 id(Rᵢ) ∉ {id(Rⱼ) : j < i}
 
-Devuelve exclusivamente JSON: diez objetos {id, pregunta, correcta}, en el orden de las filas.
+Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
 
 | id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
 |---:|---|---|---|---|
@@ -78,11 +78,11 @@ Map<String, Object?> quiz10LunaSchema() => {
       'items': {
         'type': 'object',
         'additionalProperties': false,
-        'required': ['id', 'pregunta', 'correcta'],
+        'required': ['id', 'pregunta', 'respuesta_correcta'],
         'properties': {
           'id': {'type': 'integer'},
           'pregunta': {'type': 'string'},
-          'correcta': {'type': 'string'},
+          'respuesta_correcta': {'type': 'string'},
         },
       },
     },
@@ -113,11 +113,11 @@ List<Quiz10LunaRow> parseQuiz10LunaOutput(
         row.length != 3 ||
         row['id'] != plan[i].number ||
         row['pregunta'] is! String ||
-        row['correcta'] is! String) {
+        row['respuesta_correcta'] is! String) {
       throw invalid;
     }
     final question = (row['pregunta'] as String).trim();
-    final correct = (row['correcta'] as String).trim();
+    final correct = (row['respuesta_correcta'] as String).trim();
     if (question.isEmpty || correct.isEmpty) throw invalid;
     parsed.add(Quiz10LunaRow(
       slot: plan[i],
