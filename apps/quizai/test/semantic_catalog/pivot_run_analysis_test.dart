@@ -62,11 +62,10 @@ void main() {
     expect(prompt, contains(r'x_6^{(p)} &\in \operatorname{Referentes}'));
     expect(prompt, contains('no campos generales'));
     expect(prompt, isNot(contains(r'\rho(S_{n+1}^{(p)})')));
-    expect(prompt, contains(r'\operatorname{id}(x_6^{(p)}) &\notin U'));
     expect(prompt, contains(r'\operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)})'));
     expect(prompt, contains(r'n=2,3,4'));
     expect(prompt, contains(r'n=2,\ldots,5'));
-    expect(prompt, contains('## U · Referentes A5 ya utilizados\n∅'));
+    expect(prompt, isNot(contains('## U · Referentes A5 ya utilizados')));
     expect(prompt, isNot(contains('Orgánica')));
     expect(
       () => buildExpansionPrompt({..._selectedA1}..remove('Artes')),
@@ -74,14 +73,13 @@ void main() {
     );
   });
 
-  test('incorpora en U los A5 de llamadas anteriores', () {
-    final prompt = buildExpansionPrompt(
-      _selectedA1,
-      usedReferents: ['Axioma de elección', 'Fosa de las Marianas'],
-    );
-    expect(prompt, contains('## U · Referentes A5 ya utilizados'));
-    expect(prompt, contains('- Axioma de elección\n- Fosa de las Marianas'));
-    expect(prompt, contains('| Ciencias naturales | Química | | | | |'));
+  test('con igual A1, el prompt no arrastra referentes entre llamadas', () {
+    final first = buildExpansionPrompt(_selectedA1);
+    final second = buildExpansionPrompt(_selectedA1);
+    expect(second, first);
+    expect(second, isNot(contains(r'\notin U')));
+    expect(second, isNot(contains('Referentes A5 ya utilizados')));
+    expect(second, contains('| Ciencias naturales | Química | | | | |'));
   });
 
   test('detecta A5 repetidos entre pivotes en una misma llamada', () {
