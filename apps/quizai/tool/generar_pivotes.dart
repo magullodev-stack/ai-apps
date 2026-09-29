@@ -49,52 +49,52 @@ Future<void> main(List<String> args) async {
       final callWatch = Stopwatch()..start();
       if (samples > 1) stdout.writeln('\n## Llamada ${sample + 1}/$samples');
       final result = await client.generate(
-      application: 'quizai',
-      model: model,
-      input: _prompt,
-      schemaName: 'quizai_semantic_expansion',
-      schema: _schema(),
-    ).timeout(const Duration(seconds: 90));
-    final data = jsonDecode(result.text);
-    if (data is! Map || data['table'] is! String) {
-      throw const FormatException('Respuesta inválida: falta la tabla.');
-    }
-    final markdown = (data['table'] as String).trim();
-    tables.add(parseExpansionTable(markdown));
-    stdout.writeln(markdown);
-    final usage = result.usage;
-    final inputTokens = usage?['inputTokens'];
-    final outputTokens = usage?['outputTokens'];
-    final totalTokens = usage?['totalTokens'];
-    final rates = _modelRates[model.toLowerCase()];
-    final inputRate = rates?.inputUsdPerMillion;
-    final outputRate = rates?.outputUsdPerMillion;
-    String priceFor(Object? tokens, double? rate) =>
-        tokens is int && rate != null
-            ? (tokens * rate / 1000000).toStringAsFixed(6) + ' USD'
-            : 'no disponible';
-    final total = totalTokens is int
-        ? totalTokens
-        : inputTokens is int && outputTokens is int
-            ? inputTokens + outputTokens
-            : null;
-    final totalPrice = inputTokens is int &&
-            outputTokens is int &&
-            inputRate != null &&
-            outputRate != null
-        ? ((inputTokens * inputRate + outputTokens * outputRate) / 1000000)
-            .toStringAsFixed(6) + ' USD'
-        : 'no disponible';
-    stdout.writeln('Entrada: ${inputTokens is int ? inputTokens : 'no disponible'} tokens | ${priceFor(inputTokens, inputRate)}');
-    stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponible'} tokens | ${priceFor(outputTokens, outputRate)}');
-    stdout.writeln('Total: ${total ?? 'no disponible'} tokens | $totalPrice');
-    stdout.writeln('Tiempo: ${callWatch.elapsedMilliseconds} ms');
-    if (inputTokens is int && outputTokens is int) {
-      inputSum += inputTokens;
-      outputSum += outputTokens;
-    } else {
-      completeUsage = false;
-    }
+        application: 'quizai',
+        model: model,
+        input: _prompt,
+        schemaName: 'quizai_semantic_expansion',
+        schema: _schema(),
+      ).timeout(const Duration(seconds: 90));
+      final data = jsonDecode(result.text);
+      if (data is! Map || data['table'] is! String) {
+        throw const FormatException('Respuesta inválida: falta la tabla.');
+      }
+      final markdown = (data['table'] as String).trim();
+      tables.add(parseExpansionTable(markdown));
+      stdout.writeln(markdown);
+      final usage = result.usage;
+      final inputTokens = usage?['inputTokens'];
+      final outputTokens = usage?['outputTokens'];
+      final totalTokens = usage?['totalTokens'];
+      final rates = _modelRates[model.toLowerCase()];
+      final inputRate = rates?.inputUsdPerMillion;
+      final outputRate = rates?.outputUsdPerMillion;
+      String priceFor(Object? tokens, double? rate) =>
+          tokens is int && rate != null
+              ? (tokens * rate / 1000000).toStringAsFixed(6) + ' USD'
+              : 'no disponible';
+      final total = totalTokens is int
+          ? totalTokens
+          : inputTokens is int && outputTokens is int
+              ? inputTokens + outputTokens
+              : null;
+      final totalPrice = inputTokens is int &&
+              outputTokens is int &&
+              inputRate != null &&
+              outputRate != null
+          ? ((inputTokens * inputRate + outputTokens * outputRate) / 1000000)
+              .toStringAsFixed(6) + ' USD'
+          : 'no disponible';
+      stdout.writeln('Entrada: ${inputTokens is int ? inputTokens : 'no disponible'} tokens | ${priceFor(inputTokens, inputRate)}');
+      stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponible'} tokens | ${priceFor(outputTokens, outputRate)}');
+      stdout.writeln('Total: ${total ?? 'no disponible'} tokens | $totalPrice');
+      stdout.writeln('Tiempo: ${callWatch.elapsedMilliseconds} ms');
+      if (inputTokens is int && outputTokens is int) {
+        inputSum += inputTokens;
+        outputSum += outputTokens;
+      } else {
+        completeUsage = false;
+      }
     }
     if (samples > 1) {
       stdout.writeln('\n## Comparación de las $samples llamadas');
