@@ -42,8 +42,6 @@ Future<void> main(List<String> args) async {
   final watch = Stopwatch()..start();
   final tables = <Map<String, List<String>>>[];
   final selectedA1 = planInitialAttractors(samples);
-  final usedReferents = <String>[];
-  final usedReferentKeys = <String>{};
   var inputSum = 0;
   var outputSum = 0;
   var completeUsage = true;
@@ -52,14 +50,10 @@ Future<void> main(List<String> args) async {
     for (var sample = 0; sample < samples; sample++) {
       final callWatch = Stopwatch()..start();
       if (samples > 1) stdout.writeln('\n## Llamada ${sample + 1}/$samples');
-      if (samples > 1) stdout.writeln('Referentes A5 previos en U: ${usedReferents.length}');
       final result = await client.generate(
         application: 'quizai',
         model: model,
-        input: buildExpansionPrompt(
-          selectedA1[sample],
-          usedReferents: usedReferents,
-        ),
+        input: buildExpansionPrompt(selectedA1[sample]),
         schemaName: 'quizai_semantic_expansion',
         schema: _schema(),
       ).timeout(const Duration(seconds: 90));
@@ -70,12 +64,6 @@ Future<void> main(List<String> args) async {
       final markdown = (data['table'] as String).trim();
       final table = parseExpansionTable(markdown, selectedA1[sample]);
       tables.add(table);
-      for (final pivot in _pivotNames) {
-        final referent = table[pivot]!.last;
-        if (usedReferentKeys.add(_key(referent))) {
-          usedReferents.add(referent);
-        }
-      }
       stdout.writeln(markdown);
       final usage = result.usage;
       final inputTokens = usage?['inputTokens'];
@@ -217,7 +205,6 @@ x_{n+1}^{(p)} &\in \operatorname{Secciones}(x_n^{(p)}\mid S_n^{(p)}),
 x_6^{(p)} &\in \operatorname{Referentes}(x_5^{(p)}\mid S_5^{(p)}),\\
 x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)},
     && 0\le i\le n,\quad n=2,\ldots,5,\\
-\operatorname{id}(x_6^{(p)}) &\notin U,\\
 \operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)}),
     && p\ne q.
 \end{aligned}
@@ -228,7 +215,6 @@ $\operatorname{Secciones}$: subapartados contenidos en el apartado actual, como 
 $\operatorname{Referentes}$: objetos, nombres, hechos o conceptos concretos y consultables estudiables dentro del último apartado; no campos generales.
 $\equiv_S$: identidad semántica, incluidas reformulaciones del mismo referente.
 $\operatorname{id}$: identidad del referente, independiente de cómo se nombre.
-$U$: referentes A5 de llamadas anteriores, indicados debajo.
 
 ## Objetivo
 
@@ -250,25 +236,17 @@ const _promptFooter = '''
 
 Devuelve exclusivamente la tabla completada en Markdown.''';
 
-String buildExpansionPrompt(
-  Map<String, String> initialA1, {
-  Iterable<String> usedReferents = const <String>[],
-}) {
+String buildExpansionPrompt(Map<String, String> initialA1) {
   if (initialA1.length != _pivotNames.length ||
       _pivotNames.any((pivot) =>
           !initialAttractorsByPivot[pivot]!.contains(initialA1[pivot]))) {
     throw ArgumentError('Los A1 deben proceder del índice oficial.');
   }
-  final used = usedReferents.toList(growable: false);
-  final history = used.isEmpty
-      ? '∅'
-      : used.map((referent) => '- $referent').join('\n');
   final rows = [
     for (final pivot in _pivotNames)
       '| $pivot | ${initialA1[pivot]} | | | | |',
   ].join('\n');
-  return '$_promptHeader\n\n## U · Referentes A5 ya utilizados\n$history\n\n'
-      '$_tableHeader\n$rows\n$_promptFooter';
+  return '$_promptHeader\n\n$_tableHeader\n$rows\n$_promptFooter';
 }
 
 Map<String, Object?> _schema() => {
