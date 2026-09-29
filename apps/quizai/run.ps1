@@ -107,7 +107,7 @@ if ($SaveKeyFromClipboard) {
     }
     Protect-OpenAiKey $candidate
     $candidate = $null
-    Set-Clipboard -Value ''
+    Set-Clipboard -Value ' '
     Write-Host 'Clave guardada cifrada para tu usuario de Windows. Se recuperará automáticamente en los próximos arranques.'
     return
 }
