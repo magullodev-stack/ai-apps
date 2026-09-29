@@ -49,37 +49,21 @@ final class Quiz10LunaRow {
   final String correct;
 }
 
-String quiz10LunaPrompt(List<Quiz10LunaSlot> plan) => '''# Quiz10 — generación de preguntas y respuestas correctas
+String quiz10LunaPrompt(List<Quiz10LunaSlot> plan) => '''Genera para cada fila i una pregunta Qᵢ y su respuesta correcta Rᵢ.
 
-Recibes diez filas fijadas por Dart. Cada fila determina:
-- Pivote P: campo de conocimiento de la pregunta.
-- Dimensión D: instrucción literal que determina qué debe identificar la respuesta.
-- Dificultad: grado de familiaridad del conocimiento para una persona con cultura general.
+Pᵢ: campo de conocimiento fijado por Dart.
+Dᵢ: instrucción que debe satisfacer la pregunta Qᵢ.
+Rᵢ: respuesta factual, concreta y verificable de Pᵢ.
+Qᵢ: pregunta natural de cultura general que cumple Dᵢ y cuya respuesta inequívoca es Rᵢ.
 
-Para CADA fila:
-1. Encuentra un hecho real, verificable y perteneciente al pivote indicado.
-2. Elige libremente la respuesta correcta R del hecho; R no está preseleccionada.
-3. Formula una pregunta Q natural de concurso de cultura general cuya respuesta
-   inequívoca sea exactamente R y que cumpla la instrucción de esa D.
-4. Ajusta la dificultad a la familiaridad del HECHO, no a la longitud del
-   enunciado, a un lenguaje enrevesado ni a un ejercicio artificial.
+Sea d(Rᵢ) la dificultad estimada de que una persona con cultura general conozca Rᵢ.
 
-Respeta las diez parejas P–D, el orden de las filas y sus dificultades.
-No sustituyas una D difícil por otra más cómoda. Busca un hecho adecuado
-para cada combinación antes de responder. Las D abstractas deben concretarse
-en hechos específicos, no en preguntas sobre el vocabulario de la dimensión.
-No inventes supuestos, reglas ni deducciones improvisadas para forzar una D.
-Evita hechos repetidos, respuestas repetidas y preguntas equivalentes.
-Cada pregunta ha de admitir una respuesta precisa y distinguible de opciones
-incorrectas. Si hacen falta condiciones para eliminar una ambigüedad,
-exprésalas claramente en la propia pregunta.
+d(R₁) < d(R₂) < ... < d(R₁₀)
+id(Rᵢ) ∉ {id(Rⱼ) : j < i}
 
-Tu única salida es el JSON solicitado, con diez entradas en el mismo orden.
-Cada entrada contiene exclusivamente: id, pregunta y correcta.
-No repitas pivotes, dimensiones ni dificultades en la salida.
-NO generes distractores, explicaciones, niveles de confianza ni opciones.
+Devuelve exclusivamente JSON: diez objetos {id, pregunta, correcta}, en el orden de las filas.
 
-| id | Pivote P | Dimensión D | Instrucción D | Dificultad |
+| id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
 |---:|---|---|---|---|
 ${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\n')}''';
 

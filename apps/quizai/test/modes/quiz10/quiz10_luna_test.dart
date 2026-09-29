@@ -82,8 +82,8 @@ void main() {
       expect(prompt, contains(slot.dimension.instruction));
       expect(prompt, contains(slot.difficulty));
     }
-    expect(prompt, contains('NO generes distractores'));
-    expect(prompt, contains('R no está preseleccionada'));
+    expect(prompt, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+    expect(prompt, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
     final itemSchema = (quiz10LunaSchema()['properties'] as Map)['preguntas']['items'] as Map;
     expect(itemSchema['required'], ['id', 'pregunta', 'correcta']);
     expect((itemSchema['properties'] as Map).keys, ['id', 'pregunta', 'correcta']);
