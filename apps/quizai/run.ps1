@@ -43,8 +43,35 @@ function Get-ServiceSession {
 
 function Test-OpenAiKey([string]$Candidate) {
     # Nunca imprimir la clave, ni siquiera al rechazarla.
-    return -not [string]::IsNullOrWhiteSpace($Candidate) -and
-        $Candidate -cmatch '^sk-[!-~]+
+    return ((-not [string]::IsNullOrWhiteSpace($Candidate)) -and
+        ($Candidate -cmatch '^sk-[!-~]+$') -and
+        ($Candidate -cnotmatch '[\x00-\x20\x7F]'))
+}
+
+function Get-OpenAiKey {
+    foreach ($scope in @('Process', 'User', 'Machine')) {
+        foreach ($name in @('AI_APPS_AI_API_KEY', 'OPENAI_API_KEY')) {
+            $candidate = [Environment]::GetEnvironmentVariable($name, $scope)
+            if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
+            $candidate = $candidate.Trim()
+            if (Test-OpenAiKey $candidate) { return $candidate }
+            Write-Warning "Se ignora $name ($scope): clave con formato inválido. Corrige esa variable para evitar el aviso en futuros arranques."
+        }
+    }
+    $secure = Read-Host 'Clave OpenAI (entrada oculta, solo en memoria del servicio)' -AsSecureString
+    $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    try {
+        $candidate = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer).Trim()
+        if (-not (Test-OpenAiKey $candidate)) {
+            throw 'La clave introducida contiene espacios, saltos de línea o caracteres inválidos.'
+        }
+        return $candidate
+    }
+    finally {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)
+        $secure.Dispose()
+    }
+}
 
 $session = Get-ServiceSession
 if ($StopService) {
