@@ -60,6 +60,11 @@ Sea d(Rᵢ) la dificultad estimada de que una persona con cultura general conozc
 
 d(R₁) < d(R₂) < ... < d(R₁₀)
 id(Rᵢ) ∉ {id(Rⱼ) : j < i}
+4 ≤ palabras(Qᵢ) ≤ 16
+1 ≤ palabras(Rᵢ) ≤ 6
+
+Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ,
+incluidos nombres propios, epónimos y siglas.
 
 Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
 
@@ -82,6 +87,11 @@ Sea d(Rᵢ) la dificultad estimada de que una persona con cultura general conozc
 
 d(R₁) < d(R₂) < ... < d(R₁₀)
 id(Rᵢ) ∉ {id(Rⱼ) : j < i}
+4 ≤ palabras(Qᵢ) ≤ 16
+1 ≤ palabras(Rᵢ) ≤ 6
+
+Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ,
+incluidos nombres propios, epónimos y siglas.
 
 Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
 
