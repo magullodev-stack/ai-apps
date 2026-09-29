@@ -27,8 +27,8 @@ try {
     $remote = (Invoke-Git -Arguments @('rev-parse', 'refs/remotes/origin/dev') | Out-String).Trim()
 
     if ($local -eq $remote) {
-        $status = @(Invoke-Git -Arguments @('status', '--porcelain', '--untracked-files=normal'))
-        if ($status.Count -gt 0) {
+        $status = (Invoke-Git -Arguments @('status', '--porcelain', '--untracked-files=normal') | Out-String).Trim()
+        if ($status.Length -gt 0) {
             Write-Warning 'AI-APPS: commits sincronizados, pero hay archivos locales modificados o sin seguimiento. No se han tocado.'
             exit 2
         }
