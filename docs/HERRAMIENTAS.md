@@ -93,5 +93,15 @@ git log -1 --oneline
 
 # GENERAR PIVOTES
 
+La clave OpenAI puede guardarse una sola vez, cifrada mediante DPAPI para el usuario
+actual de Windows, en `.ai-apps/openai-key.dpapi` (excluido de Git).
+Copia la clave completa desde el bloc de notas y ejecuta
+`.\apps\quizai\run.ps1 -SaveKeyFromClipboard`. La orden valida el formato,
+guarda el valor cifrado y vacía el portapapeles. En arranques posteriores,
+`run.ps1` recupera automáticamente esa clave antes de consultar las variables
+de entorno. No vuelve a solicitarla interactivamente.
+La clave cifrada depende de la cuenta/perfil de Windows; si cambia, debe
+volver a guardarse. No copies el archivo cifrado a otro equipo.
+
 git pull --ff-only origin dev
 .\generar-pivotes.ps1 -Ruta
