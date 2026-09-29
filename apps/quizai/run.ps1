@@ -10,7 +10,8 @@ param(
     [switch]$Terra,
     [switch]$Sol,
     [string]$PivotModel = 'gpt-5.6-luna',
-    [switch]$StopService
+    [switch]$StopService,
+    [switch]$SaveKeyFromClipboard
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -26,6 +27,7 @@ $adb = Join-Path $sdk 'platform-tools\adb.exe'
 $runtime = Join-Path $repo '.ai-apps'
 $sessionFile = Join-Path $runtime 'dart-service.json'
 $logFile = Join-Path $runtime 'dart-service.log'
+$keyFile = Join-Path $runtime 'openai-key.dpapi'
 
 function Get-ServiceSession {
     if (-not (Test-Path -LiteralPath $sessionFile)) { return $null }
@@ -47,29 +49,67 @@ function Test-OpenAiKey([string]$Candidate) {
         ($Candidate -cnotmatch '[\x00-\x20\x7F]'))
 }
 
+function Protect-OpenAiKey([string]$Candidate) {
+    $secure = ConvertTo-SecureString -String $Candidate -AsPlainText -Force
+    try {
+        # ConvertFrom-SecureString usa DPAPI del usuario actual de Windows.
+        $encrypted = ConvertFrom-SecureString -SecureString $secure
+        Set-Content -LiteralPath $keyFile -Value $encrypted -Encoding ASCII -NoNewline
+    }
+    finally { $secure.Dispose() }
+}
+
+function Unprotect-OpenAiKey {
+    if (-not (Test-Path -LiteralPath $keyFile)) { return $null }
+    try {
+        $encrypted = Get-Content -LiteralPath $keyFile -Raw
+        $secure = ConvertTo-SecureString -String $encrypted -ErrorAction Stop
+        $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+        try {
+            $candidate = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)
+            if (-not (Test-OpenAiKey $candidate)) {
+                throw 'La clave almacenada tiene un formato inválido.'
+            }
+            return $candidate
+        }
+        finally {
+            [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)
+            $secure.Dispose()
+        }
+    }
+    catch {
+        throw 'No se puede recuperar la clave cifrada de este usuario de Windows. Vuelve a guardarla con -SaveKeyFromClipboard.'
+    }
+}
+
 function Get-OpenAiKey {
+    # La clave persistente tiene prioridad sobre variables heredadas de VS Code.
+    $saved = Unprotect-OpenAiKey
+    if ($saved) { return $saved }
     foreach ($scope in @('Process', 'User', 'Machine')) {
         foreach ($name in @('AI_APPS_AI_API_KEY', 'OPENAI_API_KEY')) {
             $candidate = [Environment]::GetEnvironmentVariable($name, $scope)
             if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
             $candidate = $candidate.Trim()
             if (Test-OpenAiKey $candidate) { return $candidate }
-            Write-Warning "Se ignora $name ($scope): clave con formato inválido. Corrige esa variable para evitar el aviso en futuros arranques."
+            Write-Warning "Se ignora $name ($scope): clave con formato inválido."
         }
     }
-    $secure = Read-Host 'Clave OpenAI (entrada oculta, solo en memoria del servicio)' -AsSecureString
-    $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-    try {
-        $candidate = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer).Trim()
-        if (-not (Test-OpenAiKey $candidate)) {
-            throw 'La clave introducida contiene espacios, saltos de línea o caracteres inválidos.'
-        }
-        return $candidate
+    throw 'No hay clave OpenAI guardada. Copia la clave del bloc de notas y ejecuta una sola vez: .\apps\quizai\run.ps1 -SaveKeyFromClipboard'
+}
+
+if ($SaveKeyFromClipboard) {
+    New-Item -ItemType Directory -Force -Path $runtime | Out-Null
+    $candidate = (Get-Clipboard -Raw -ErrorAction Stop)
+    if ($null -ne $candidate) { $candidate = $candidate.Trim() }
+    if (-not (Test-OpenAiKey $candidate)) {
+        throw 'El portapapeles no contiene una clave OpenAI válida (debe comenzar por sk-). No se ha guardado nada.'
     }
-    finally {
-        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)
-        $secure.Dispose()
-    }
+    Protect-OpenAiKey $candidate
+    $candidate = $null
+    Set-Clipboard -Value ''
+    Write-Host 'Clave guardada cifrada para tu usuario de Windows. Se recuperará automáticamente en los próximos arranques.'
+    return
 }
 
 $session = Get-ServiceSession
