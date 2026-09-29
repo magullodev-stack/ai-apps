@@ -3,61 +3,57 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import '../../tool/generar_pivotes.dart';
 
-List<AttractorItem> _batch() => [
+List<ResponseItem> _batch() => [
   for (var i = 1; i <= 10; i++)
-    (campo: 'Campo $i', atractor: 'Atractor $i'),
+    (campo: 'Campo $i', respuesta: 'Respuesta $i'),
 ];
 
-String _response(List<AttractorItem> items) => jsonEncode({
+String _response(List<ResponseItem> items) => jsonEncode({
   'items': [
     for (final item in items)
-      {'campo': item.campo, 'atractor': item.atractor},
+      {'campo': item.campo, 'respuesta': item.respuesta},
   ],
 });
 
 void main() {
-  test('el prompt pide selección directa y dificultad creciente', () {
-    final prompt = buildAttractorPrompt(const <String>[]);
-    expect(prompt, contains('Selecciona 10 campos de conocimiento variados'));
-    expect(prompt, contains('d(A_1)&<d(A_2)<'));
-    expect(prompt, contains(r'\cdots<d(A_{10})'));
-    expect(prompt, contains(r'\operatorname{id}(A_i)&\notin U'));
-    expect(prompt, contains('U · Atractores ya utilizados:\n∅'));
+  test('el prompt pide respuestas inequívocas y dificultad creciente', () {
+    final prompt = buildResponsePrompt(const <String>[]);
+    expect(prompt, contains('Selecciona 10 campos de conocimiento aleatorios y distintos (P).'));
+    expect(prompt, contains('un término, nombre o expresión (R)'));
+    expect(prompt, contains('respuesta inequívoca a una pregunta de conocimiento'));
+    expect(prompt, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+    expect(prompt, contains('id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}'));
+    expect(prompt, contains('U:\n∅'));
     expect(prompt, isNot(contains('Markdown')));
-    expect(prompt, isNot(contains('definición breve')));
-    expect(prompt, isNot(contains('Atractor 5')));
+    expect(prompt, isNot(contains('atractor')));
   });
 
-  test('el prompt recibe el historial U de llamadas anteriores', () {
-    final prompt = buildAttractorPrompt([
+  test('el prompt recibe el historial U de respuestas anteriores', () {
+    final prompt = buildResponsePrompt([
       'Segunda ley de Newton',
       'Acero inoxidable AISI 304',
     ]);
     expect(
       prompt,
-      contains(
-        'U · Atractores ya utilizados:\n'
-        '- Segunda ley de Newton\n'
-        '- Acero inoxidable AISI 304',
-      ),
+      contains('U:\n- Segunda ley de Newton\n- Acero inoxidable AISI 304'),
     );
   });
 
-  test('el esquema se interpreta como 10 parejas campo-atractor', () {
-    final parsed = parseAttractorItems(_response(_batch()));
+  test('el esquema se interpreta como 10 parejas campo-respuesta', () {
+    final parsed = parseResponseItems(_response(_batch()));
     expect(parsed, hasLength(10));
     expect(parsed.first.campo, 'Campo 1');
-    expect(parsed.last.atractor, 'Atractor 10');
+    expect(parsed.last.respuesta, 'Respuesta 10');
   });
 
   test('rechaza respuestas con menos o más de diez filas', () {
     expect(
-      () => parseAttractorItems(_response(_batch().take(9).toList())),
+      () => parseResponseItems(_response(_batch().take(9).toList())),
       throwsFormatException,
     );
     expect(
-      () => parseAttractorItems(
-        _response([..._batch(), (campo: 'Campo 11', atractor: 'Atractor 11')]),
+      () => parseResponseItems(
+        _response([..._batch(), (campo: 'Campo 11', respuesta: 'Respuesta 11')]),
       ),
       throwsFormatException,
     );
@@ -65,13 +61,13 @@ void main() {
 
   test('rechaza campos vacíos y respuestas sin items', () {
     expect(
-      () => parseAttractorItems('{}'),
+      () => parseResponseItems('{}'),
       throwsFormatException,
     );
     expect(
-      () => parseAttractorItems(
+      () => parseResponseItems(
         _response([
-          (campo: ' ', atractor: 'Atractor 1'),
+          (campo: ' ', respuesta: 'Respuesta 1'),
           ..._batch().skip(1),
         ]),
       ),
@@ -80,34 +76,34 @@ void main() {
   });
 
   test('Dart da formato a la tabla sin requerir Markdown en el prompt', () {
-    final rendered = formatAttractorTable([
-      (campo: 'Química | física', atractor: 'A|B'),
+    final rendered = formatResponseTable([
+      (campo: 'Química | física', respuesta: 'A|B'),
     ]);
-    expect(rendered, contains('| Campo de conocimiento | Atractor |'));
+    expect(rendered, contains('| Campo de conocimiento | Respuesta |'));
     expect(rendered, contains(r'| Química \| física | A\|B |'));
   });
 
-  test('detecta repeticiones de atractores entre llamadas', () {
+  test('detecta repeticiones de respuestaes entre llamadas', () {
     final first = _batch();
     final second = [
       for (var i = 1; i <= 10; i++)
         (
           campo: 'Otro campo $i',
-          atractor: i == 1 ? ' ATRACTOR 1 ' : 'Otro atractor $i',
+          respuesta: i == 1 ? ' ATRACTOR 1 ' : 'Otro respuesta $i',
         ),
     ];
-    final report = compareAttractorBatches([first, second]);
-    expect(report, contains('Atractores textualmente distintos: 19 de 20.'));
+    final report = compareResponseBatches([first, second]);
+    expect(report, contains('Respuestas textualmente distintas: 19 de 20.'));
     expect(report, contains('Repeticiones textuales: 1.'));
-    expect(report, contains('Atractor 1 — llamada 1, Campo 1; llamada 2, Otro campo 1'));
+    expect(report, contains('Respuesta 1 — llamada 1, Campo 1; llamada 2, Otro campo 1'));
   });
 
   test('mide campos diferentes por llamada sin rechazar errores semánticos', () {
     final repeatedField = [
       for (var i = 1; i <= 10; i++)
-        (campo: i == 10 ? ' Campo 1 ' : 'Campo $i', atractor: 'Atractor $i'),
+        (campo: i == 10 ? ' Campo 1 ' : 'Campo $i', respuesta: 'Respuesta $i'),
     ];
-    final report = compareAttractorBatches([repeatedField]);
+    final report = compareResponseBatches([repeatedField]);
     expect(report, contains('Campos distintos por llamada: 9 de 10.'));
   });
 
@@ -116,18 +112,18 @@ void main() {
       for (var i = 1; i <= 10; i++)
         (
           campo: 'Campo $i',
-          atractor: i == 1 ? 'AISI 304' : 'Atractor $i',
+          respuesta: i == 1 ? 'AISI 304' : 'Respuesta $i',
         ),
     ];
     final another = [
       for (var i = 1; i <= 10; i++)
         (
           campo: 'Otro campo $i',
-          atractor: i == 1 ? 'Acero inoxidable AISI 304' : 'Otro atractor $i',
+          respuesta: i == 1 ? 'Acero inoxidable AISI 304' : 'Otro respuesta $i',
         ),
     ];
-    final report = compareAttractorBatches([batch, another]);
-    expect(report, contains('Atractores textualmente distintos: 20 de 20.'));
+    final report = compareResponseBatches([batch, another]);
+    expect(report, contains('Respuestas textualmente distintas: 20 de 20.'));
     expect(report, contains('No se detectan equivalencias semánticas'));
   });
 }
