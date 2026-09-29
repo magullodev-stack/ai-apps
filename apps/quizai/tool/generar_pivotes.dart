@@ -40,8 +40,9 @@ Future<void> main(List<String> args) async {
     authorization: session['token'] as String,
   );
   final watch = Stopwatch()..start();
-  final tables = <Map<String, List<String>>>[];
-  final selectedA1 = planInitialAttractors(samples);
+  final batches = <List<AttractorItem>>[];
+  final usedAttractors = <String>[];
+  final usedKeys = <String>{};
   var inputSum = 0;
   var outputSum = 0;
   var completeUsage = true;
@@ -53,18 +54,18 @@ Future<void> main(List<String> args) async {
       final result = await client.generate(
         application: 'quizai',
         model: model,
-        input: buildExpansionPrompt(selectedA1[sample]),
-        schemaName: 'quizai_semantic_expansion',
+        input: buildAttractorPrompt(usedAttractors),
+        schemaName: 'quizai_attractor_selection',
         schema: _schema(),
       ).timeout(const Duration(seconds: 90));
-      final data = jsonDecode(result.text);
-      if (data is! Map || data['table'] is! String) {
-        throw const FormatException('Respuesta inválida: falta la tabla.');
+      final batch = parseAttractorItems(result.text);
+      batches.add(batch);
+      stdout.writeln(formatAttractorTable(batch));
+      for (final item in batch) {
+        if (usedKeys.add(_key(item.atractor))) {
+          usedAttractors.add(item.atractor);
+        }
       }
-      final markdown = (data['table'] as String).trim();
-      final table = parseExpansionTable(markdown, selectedA1[sample]);
-      tables.add(table);
-      stdout.writeln(markdown);
       final usage = result.usage;
       final inputTokens = usage?['inputTokens'];
       final outputTokens = usage?['outputTokens'];
@@ -101,7 +102,7 @@ Future<void> main(List<String> args) async {
     }
     if (samples > 1) {
       stdout.writeln('\n## Comparación de las $samples llamadas');
-      stdout.writeln(compareExpansionTables(tables, selectedA1));
+      stdout.writeln(compareAttractorBatches(batches));
       final rates = _modelRates[model.toLowerCase()];
       final cost = completeUsage && rates != null
           ? ((inputSum * rates.inputUsdPerMillion +
@@ -132,276 +133,129 @@ const Map<String, _ModelRates> _modelRates = {
   'gpt-5.4-mini': (inputUsdPerMillion: 0.75, outputUsdPerMillion: 4.50),
 };
 
-/// Índice oficial de puertas de entrada A1, revisable independientemente del prompt.
-const initialAttractorsByPivot = <String, List<String>>{
-  'Ciencias naturales': <String>[
-    'Física', 'Química', 'Biología', 'Ciencias de la Tierra', 'Astronomía',
-  ],
-  'Ciencias formales': <String>[
-    'Matemáticas', 'Lógica', 'Estadística', 'Computación teórica',
-  ],
-  'Ciencias sociales': <String>[
-    'Sociología', 'Economía', 'Antropología', 'Ciencia política',
-    'Demografía', 'Geografía humana', 'Psicología',
-    'Ciencias de la comunicación',
-  ],
-  'Historia': <String>[
-    'Prehistoria', 'Antigua', 'Medieval', 'Moderna', 'Contemporánea',
-    'Política', 'Social', 'Económica', 'Cultural', 'Militar',
-  ],
-  'Humanidades': <String>[
-    'Filosofía', 'Lingüística', 'Filología', 'Literatura',
-    'Estudios religiosos', 'Estudios culturales',
-  ],
-  'Tecnología e ingeniería': <String>[
-    'Informática', 'Ingeniería mecánica', 'Ingeniería eléctrica',
-    'Ingeniería civil', 'Ingeniería química', 'Ingeniería industrial',
-    'Ingeniería de materiales', 'Telecomunicaciones',
-  ],
-  'Artes': <String>[
-    'Música', 'Artes visuales', 'Artes escénicas', 'Artes audiovisuales',
-    'Literatura', 'Arquitectura', 'Diseño',
-  ],
-  'Salud y medicina': <String>[
-    'Medicina', 'Salud pública', 'Ciencias biomédicas',
-  ],
-};
+/// Pareja directa: campo de conocimiento y atractor, sin niveles A1-A5.
+typedef AttractorItem = ({String campo, String atractor});
 
-/// Muestreo aleatorio equilibrado: se baraja cada lista y se agota antes de
-/// volver a barajarla. Con listas de menos de N elementos, A1 se reutiliza.
-List<Map<String, String>> planInitialAttractors(
-  int sampleCount, {
-  Random? random,
-}) {
-  if (sampleCount < 1) throw ArgumentError.value(sampleCount, 'sampleCount');
-  final rng = random ?? Random.secure();
-  final bags = <String, List<String>>{
-    for (final pivot in _pivotNames) pivot: <String>[],
-  };
-  return List.generate(sampleCount, (_) {
-    final chosen = <String, String>{};
-    for (final pivot in _pivotNames) {
-      final bag = bags[pivot]!;
-      if (bag.isEmpty) {
-        bag.addAll(initialAttractorsByPivot[pivot]!);
-        bag.shuffle(rng);
-      }
-      chosen[pivot] = bag.removeLast();
-    }
-    return Map<String, String>.unmodifiable(chosen);
-  });
-}
+const _promptHeader = r'''# GENERACIÓN DE CONOCIMIENTO
 
-const _promptHeader = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
+Selecciona 10 campos de conocimiento variados y un atractor de cada uno.
 
-Sea $S_n^{(p)}=(x_0^{(p)},x_1^{(p)},\ldots,x_n^{(p)})$,
-con $(x_0^{(p)},x_1^{(p)},x_2^{(p)})=(C,P_p,A_1^{(p)})$.
+Sea A_i el atractor de la fila i y d(A_i) la dificultad estimada de conocerlo para una persona con cultura general. Sea U el conjunto de atractores de llamadas anteriores, considerando su identidad semántica.
 
 $$
-\boxed{
 \begin{aligned}
-x_{n+1}^{(p)} &\in \operatorname{Secciones}(x_n^{(p)}\mid S_n^{(p)}),
-    && n=2,3,4,\\
-x_6^{(p)} &\in \operatorname{Referentes}(x_5^{(p)}\mid S_5^{(p)}),\\
-x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)},
-    && 0\le i\le n,\quad n=2,\ldots,5,\\
-\operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)}),
-    && p\ne q.
+d(A_1)&<d(A_2)<\cdots<d(A_{10}),\\
+\operatorname{id}(A_i)&\notin U\cup\{\operatorname{id}(A_j):j<i\},
+\quad i=1,\ldots,10.
 \end{aligned}
-}
 $$
 
-$\operatorname{Secciones}$: subapartados contenidos en el apartado actual, como en el índice de un libro, considerando el recorrido completo.
-$\operatorname{Referentes}$: objetos, nombres, hechos o conceptos concretos y consultables estudiables dentro del último apartado; no campos generales.
-$\equiv_S$: identidad semántica, incluidas reformulaciones del mismo referente.
-$\operatorname{id}$: identidad del referente, independiente de cómo se nombre.
+U · Atractores ya utilizados:''';
 
-## Objetivo
-
-Completa los atractores A2, A3, A4 y A5 de cada fila.
-
-Los A1 han sido seleccionados previamente. En cada desplazamiento, el pivote
-anterior pasa a ser contexto y el atractor anterior pasa a ser pivote.
-
-Conserva literalmente los pivotes y atractores A1 proporcionados.''';
-
-const _tableHeader = r'''## Contexto: Conocimiento general
-
-| Pivote | Atractor 1 | Atractor 2 | Atractor 3 | Atractor 4 | Atractor 5 |
-|---|---|---|---|---|---|''';
-
-const _promptFooter = '''
-
-## Formato de salida
-
-Devuelve exclusivamente la tabla completada en Markdown.''';
-
-String buildExpansionPrompt(Map<String, String> initialA1) {
-  if (initialA1.length != _pivotNames.length ||
-      _pivotNames.any((pivot) =>
-          !initialAttractorsByPivot[pivot]!.contains(initialA1[pivot]))) {
-    throw ArgumentError('Los A1 deben proceder del índice oficial.');
-  }
-  final rows = [
-    for (final pivot in _pivotNames)
-      '| $pivot | ${initialA1[pivot]} | | | | |',
-  ].join('\n');
-  return '$_promptHeader\n\n$_tableHeader\n$rows\n$_promptFooter';
+String buildAttractorPrompt(Iterable<String> usedAttractors) {
+  final history = usedAttractors.toList(growable: false);
+  return '$_promptHeader\n${history.isEmpty ? '∅' : history.map((item) => '- $item').join('\n')}';
 }
 
+/// La estructura de salida pertenece a Dart, no al prompt de Luna.
 Map<String, Object?> _schema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['table'],
+  'required': ['items'],
   'properties': {
-    'table': {'type': 'string'},
+    'items': {
+      'type': 'array',
+      'minItems': 10,
+      'maxItems': 10,
+      'items': {
+        'type': 'object',
+        'additionalProperties': false,
+        'required': ['campo', 'atractor'],
+        'properties': {
+          'campo': {'type': 'string'},
+          'atractor': {'type': 'string'},
+        },
+      },
+    },
   },
 };
 
-const _pivotNames = <String>[
-  'Ciencias naturales', 'Ciencias formales', 'Ciencias sociales',
-  'Historia', 'Humanidades', 'Tecnología e ingeniería', 'Artes',
-  'Salud y medicina',
-];
-
-/// Acepta tablas Markdown con o sin delimitadores de bloque.
-Map<String, List<String>> parseExpansionTable(
-  String markdown,
-  Map<String, String> expectedA1,
-) {
-  final rows = <String, List<String>>{};
-  for (final raw in markdown.split('\n')) {
-    final line = raw.trim();
-    if (!line.startsWith('|') || !line.endsWith('|')) continue;
-    final cells = line.substring(1, line.length - 1)
-        .split('|').map((cell) => cell.trim()).toList();
-    if (cells.first.toLowerCase() == 'pivote' ||
-        RegExp(r'^:?-{3,}:?$').hasMatch(cells.first)) continue;
-    if (cells.length != 6 ||
-        !_pivotNames.contains(cells.first) ||
-        cells.skip(1).any((cell) => cell.isEmpty) ||
-        rows.containsKey(cells.first)) {
-      throw const FormatException('Tabla de expansión inválida.');
+List<AttractorItem> parseAttractorItems(String response) {
+  final decoded = jsonDecode(response);
+  if (decoded is! Map || decoded['items'] is! List) {
+    throw const FormatException('Respuesta inválida: faltan los atractores.');
+  }
+  final rawItems = decoded['items'] as List;
+  if (rawItems.length != 10) {
+    throw const FormatException('Se esperaban exactamente 10 atractores.');
+  }
+  final items = <AttractorItem>[];
+  for (final raw in rawItems) {
+    if (raw is! Map || raw['campo'] is! String ||
+        raw['atractor'] is! String) {
+      throw const FormatException('Cada fila necesita campo y atractor.');
     }
-    rows[cells.first] = List.unmodifiable(cells.skip(1));
-  }
-  if (rows.length != _pivotNames.length) {
-    throw const FormatException('Faltan pivotes en la tabla.');
-  }
-  for (final pivot in _pivotNames) {
-    if (rows[pivot]!.first != expectedA1[pivot]) {
-      throw FormatException('El modelo modificó A1 de $pivot.');
+    final campo = (raw['campo'] as String).trim();
+    final atractor = (raw['atractor'] as String).trim();
+    if (campo.isEmpty || atractor.isEmpty) {
+      throw const FormatException('Los campos y atractores no pueden estar vacíos.');
     }
+    items.add((campo: campo, atractor: atractor));
   }
-  return rows;
+  return List<AttractorItem>.unmodifiable(items);
 }
 
-String _key(String name) =>
-    name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
+String _key(String value) =>
+    value.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
 
-String _prefix(List<String> row, int n) =>
-    row.take(n).map(_key).join('\u001f');
+String _markdownCell(String value) =>
+    value.replaceAll(RegExp(r'\s+'), ' ').replaceAll('|', r'\|').trim();
 
-/// Separa el A1 escogido por Dart de las continuaciones A2–A5 de Luna.
-/// «Variantes Luna» cuenta rutas adicionales para A1 que se han reutilizado.
-String compareExpansionTables(
-  List<Map<String, List<String>>> tables,
-  List<Map<String, String>> selectedA1,
-) {
-  if (tables.isEmpty) throw ArgumentError('No hay tablas para comparar.');
-  if (tables.length != selectedA1.length) {
-    throw ArgumentError('Debe haber una selección A1 por llamada.');
-  }
-  for (var i = 0; i < tables.length; i++) {
-    for (final pivot in _pivotNames) {
-      if (tables[i][pivot]?.first != selectedA1[i][pivot]) {
-        throw ArgumentError('La tabla no coincide con los A1 de la llamada.');
-      }
-    }
-  }
+String formatAttractorTable(List<AttractorItem> items) {
   final output = StringBuffer()
-    ..writeln('A1 distintos: diversidad asignada por Dart.')
-    ..writeln('A1–A2…A1–A5: prefijos textuales distintos tras continuar Luna.')
-    ..writeln('Variantes Luna: rutas nuevas para A1 ya repetidos.')
-    ..writeln('| Pivote | A1 (Dart) | A1–A2 | A1–A3 | A1–A4 | A1–A5 | Variantes Luna | Rutas repetidas |')
-    ..writeln('|---|---:|---:|---:|---:|---:|---:|---:|');
-  var totalInitial = 0;
-  var totalUnique = 0;
-  var totalVariants = 0;
-  final coincidences = <String>[];
-  for (final pivot in _pivotNames) {
-    final rows = [for (final table in tables) table[pivot]!];
-    final initialCount = selectedA1.map((call) => call[pivot]).toSet().length;
-    final counts = [
-      for (var n = 1; n <= 5; n++)
-        rows.map((row) => _prefix(row, n)).toSet().length,
-    ];
-    final variants = counts.last - initialCount;
-    totalInitial += initialCount;
-    totalUnique += counts.last;
-    totalVariants += variants;
+    ..writeln('| Campo de conocimiento | Atractor |')
+    ..writeln('|---|---|');
+  for (final item in items) {
     output.writeln(
-      '| $pivot | $initialCount | ${counts.skip(1).join(' | ')} | $variants | ${rows.length - counts.last} |',
+      '| ${_markdownCell(item.campo)} | ${_markdownCell(item.atractor)} |',
     );
-    final groups = <String, List<int>>{};
-    for (var i = 0; i < rows.length; i++) {
-      groups.putIfAbsent(_prefix(rows[i], 5), () => []).add(i + 1);
+  }
+  return output.toString();
+}
+
+/// Analiza repeticiones textuales sin bloquear la generación.
+String compareAttractorBatches(List<List<AttractorItem>> batches) {
+  if (batches.isEmpty) throw ArgumentError('No hay llamadas para comparar.');
+  final occurrences = <String, List<String>>{};
+  final names = <String, String>{};
+  final fieldsPerCall = <int>[];
+  for (var call = 0; call < batches.length; call++) {
+    final items = batches[call];
+    if (items.length != 10) {
+      throw ArgumentError('Cada llamada debe contener 10 atractores.');
     }
-    for (final calls in groups.values) {
-      if (calls.length > 1) {
-        coincidences.add(
-          '$pivot — llamadas ${calls.join(', ')}: '
-          '${rows[calls.first - 1].join(' → ')}',
-        );
-      }
+    fieldsPerCall.add(items.map((item) => _key(item.campo)).toSet().length);
+    for (final item in items) {
+      final key = _key(item.atractor);
+      names.putIfAbsent(key, () => item.atractor);
+      occurrences
+          .putIfAbsent(key, () => <String>[])
+          .add('llamada ${call + 1}, ${item.campo}');
     }
   }
-  output.writeln(
-    '\nDart: $totalInitial A1 distintos en '
-    '${tables.length * _pivotNames.length} asignaciones.',
-  );
-  output.writeln(
-    'Luna: $totalVariants variantes adicionales con el mismo A1.',
-  );
-  output.writeln(
-    'Recorridos completos distintos: $totalUnique de '
-    '${tables.length * _pivotNames.length} generados.',
-  );
-  if (coincidences.isEmpty) {
-    output.writeln('No hay recorridos completos idénticos dentro del mismo pivote.');
-  } else {
-    output.writeln('\nRepeticiones exactas:');
-    for (final item in coincidences) {
-      output.writeln('- $item');
-    }
-  }
-  final referentLocations = <String, List<String>>{};
-  for (var sample = 0; sample < tables.length; sample++) {
-    for (final pivot in _pivotNames) {
-      final referent = tables[sample][pivot]!.last;
-      referentLocations
-          .putIfAbsent(_key(referent), () => <String>[])
-          .add('llamada ${sample + 1}, $pivot');
-    }
-  }
-  final duplicatedDestinations = referentLocations.values
-      .where((locations) => locations.length > 1)
-      .toList();
-  output.writeln(
-    '\nReferentes A5 textualmente distintos: ${referentLocations.length} de '
-    '${tables.length * _pivotNames.length}.',
-  );
-  if (duplicatedDestinations.isNotEmpty) {
-    output.writeln('A5 repetidos textualmente entre filas o llamadas:');
-    for (final locations in duplicatedDestinations) {
-      output.writeln('- ${locations.join('; ')}');
-    }
-  } else {
-    output.writeln('No hay A5 repetidos textualmente entre filas o llamadas.');
+  final total = batches.length * 10;
+  final output = StringBuffer()
+    ..writeln('Campos distintos por llamada: ${fieldsPerCall.join(', ')} de 10.')
+    ..writeln('Atractores textualmente distintos: ${occurrences.length} de $total.')
+    ..writeln('Repeticiones textuales: ${total - occurrences.length}.');
+  final duplicateKeys = occurrences.keys
+      .where((key) => occurrences[key]!.length > 1);
+  for (final key in duplicateKeys) {
+    output.writeln('- ${names[key]} — ${occurrences[key]!.join('; ')}');
   }
   output.writeln(
-    '\nComparación textual normalizada: no detecta sinónimos '
-    'ni comprueba la corrección semántica.',
+    '\nNo se detectan equivalencias semánticas entre nombres distintos '
+    'ni se verifica automáticamente la dificultad creciente.',
   );
   return output.toString();
 }
