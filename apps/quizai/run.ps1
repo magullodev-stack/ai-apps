@@ -6,6 +6,9 @@ param(
     [string]$FactualModel = 'gpt-5.6-terra',
     [switch]$VerifyOnly,
     [switch]$Pivots,
+    [switch]$EvaluarDimensiones,
+    [ValidateRange(1, 30)]
+    [int]$DimensionesMuestras = 30,
     [switch]$Ruta,
     [switch]$Terra,
     [switch]$Sol,
@@ -188,6 +191,15 @@ if ($Pivots) {
         if ($ExcluirTop6) { $pivotArgs += '--excluir-top6' }
         & $dart @pivotArgs
         if ($LASTEXITCODE -ne 0) { throw 'Falló la generación de pivotes.' }
+    } finally { Pop-Location }
+    return
+}
+
+if ($EvaluarDimensiones) {
+    Push-Location (Join-Path $repo 'apps\quizai')
+    try {
+        & $dart run tool/evaluar_dimensiones.dart $CatalogModel --muestras "$DimensionesMuestras"
+        if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría de dimensiones.' }
     } finally { Pop-Location }
     return
 }
