@@ -55,14 +55,40 @@ void main() {
     expect(prompt, contains('| Ciencias naturales | Química | | | | |'));
     expect(prompt, contains('| Salud y medicina | Medicina | | | | |'));
     expect(prompt, contains('Completa los atractores A2, A3, A4 y A5'));
-    expect(prompt, contains(r'\rho(S_{n+1})&>\rho(S_n)'));
-    expect(prompt, contains(r'x_6&\in\mathcal R'));
+    expect(prompt, contains(r'\rho(S_{n+1}^{(p)}) &> \rho(S_n^{(p)})'));
+    expect(prompt, contains(r'x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)}'));
+    expect(prompt, contains(r'x_6^{(p)} &\in \mathcal R_{\mathrm{concreta}}'));
+    expect(prompt, contains(r'\operatorname{id}(x_6^{(p)}) &\notin U'));
+    expect(prompt, contains(r'\operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)})'));
     expect(prompt, contains(r'n=2,\ldots,5'));
+    expect(prompt, contains('## U · Referentes A5 ya utilizados\n∅'));
     expect(prompt, isNot(contains('Orgánica')));
     expect(
       () => buildExpansionPrompt({..._selectedA1}..remove('Artes')),
       throwsArgumentError,
     );
+  });
+
+  test('incorpora en U los A5 de llamadas anteriores', () {
+    final prompt = buildExpansionPrompt(
+      _selectedA1,
+      usedReferents: ['Axioma de elección', 'Fosa de las Marianas'],
+    );
+    expect(prompt, contains('## U · Referentes A5 ya utilizados'));
+    expect(prompt, contains('- Axioma de elección\n- Fosa de las Marianas'));
+    expect(prompt, contains('| Ciencias naturales | Química | | | | |'));
+  });
+
+  test('detecta A5 repetidos entre pivotes en una misma llamada', () {
+    final table = parseExpansionTable(_sample.replaceFirst(
+      'Química | Orgánica | Hidrocarburos | Aromáticos | Benceno',
+      'Química | Orgánica | Hidrocarburos | Aromáticos | IPC',
+    ), _selectedA1);
+    final report = compareExpansionTables([table], [_selectedA1]);
+    expect(report, contains('Referentes A5 textualmente distintos: 7 de 8.'));
+    expect(report, contains('A5 repetidos textualmente entre filas o llamadas:'));
+    expect(report, contains('llamada 1, Ciencias naturales'));
+    expect(report, contains('llamada 1, Ciencias sociales'));
   });
 
   test('analiza ocho rutas de cinco atractores y conserva cada A1', () {
