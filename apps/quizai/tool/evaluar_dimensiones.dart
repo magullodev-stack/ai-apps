@@ -160,7 +160,7 @@ Analiza LAS 86 definiciones que aparecen al final de este mensaje.
 Objetivo: detectar qué definiciones, por su formulación, presentan un
 RIESGO RELEVANTE de inducir preguntas artificiosas, ambiguas o ajenas
 al formato de un concurso de cultura general tipo "¿Quién quiere ser
-millonario?", incluso cuando se seleccionan campos y referentes adecuados.
+millonario?".
 
 Criterios:
 1. La pregunta debe interrogar un hecho verdadero, concreto y comprobable;
@@ -173,11 +173,6 @@ Criterios:
    sin cambiarla por otra para construir la pregunta.
 
 IMPORTANTE:
-- NO exijas que cada D funcione con cualquier pareja concreta de
-  pivote P y referente R. Puede ser perfectamente válida si funciona
-  bien en ciertos territorios de conocimiento.
-- NO exijas que el referente R sea literalmente la respuesta correcta:
-  puede ser el objeto del hecho preguntado.
 - NO penalices una dimensión solo por ser abstracta, especializada,
   menos frecuente o porque admitiría preguntas malas si se aplica mal.
 - NO se te pide descartar las dimensiones, ni diseñar mejores dimensiones.
