@@ -88,3 +88,10 @@ git status --short --branch
 
 git pull --ff-only origin dev
 git log -1 --oneline
+
+---
+
+# GENERAR PIVOTES
+
+git pull --ff-only origin dev
+.\generar-pivotes.ps1 -Ruta
