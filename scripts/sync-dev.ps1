@@ -13,7 +13,7 @@ function Invoke-Git {
 }
 
 try {
-    $branch = (Invoke-Git @('symbolic-ref', '--quiet', '--short', 'HEAD') | Out-String).Trim()
+    $branch = (Invoke-Git -Arguments @('symbolic-ref', '--quiet', '--short', 'HEAD') | Out-String).Trim()
     if ($branch -ne 'dev') {
         Write-Warning "AI-APPS: rama actual '$branch'. Solo se sincroniza dev; no se modificó nada."
         exit 2
@@ -21,13 +21,13 @@ try {
 
     # Fetch primero: permite diagnosticar el estado real del remoto sin tocar archivos.
     Write-Host 'AI-APPS: consultando origin/dev...'
-    Invoke-Git @('fetch', '--no-tags', 'origin', 'dev') | Out-Null
+    Invoke-Git -Arguments @('fetch', '--no-tags', 'origin', 'dev') | Out-Null
 
-    $local = (Invoke-Git @('rev-parse', 'HEAD') | Out-String).Trim()
-    $remote = (Invoke-Git @('rev-parse', 'refs/remotes/origin/dev') | Out-String).Trim()
+    $local = (Invoke-Git -Arguments @('rev-parse', 'HEAD') | Out-String).Trim()
+    $remote = (Invoke-Git -Arguments @('rev-parse', 'refs/remotes/origin/dev') | Out-String).Trim()
 
     if ($local -eq $remote) {
-        $status = @(Invoke-Git @('status', '--porcelain', '--untracked-files=normal'))
+        $status = @(Invoke-Git -Arguments @('status', '--porcelain', '--untracked-files=normal'))
         if ($status.Count -gt 0) {
             Write-Warning 'AI-APPS: commits sincronizados, pero hay archivos locales modificados o sin seguimiento. No se han tocado.'
             exit 2
@@ -37,8 +37,8 @@ try {
     }
 
     # Nunca actualizar automáticamente con archivos modificados o sin seguimiento.
-    $status = @(Invoke-Git @('status', '--porcelain', '--untracked-files=normal'))
-    if ($status.Count -gt 0) {
+    $status = (Invoke-Git -Arguments @('status', '--porcelain', '--untracked-files=normal') | Out-String).Trim()
+    if ($status.Length -gt 0) {
         Write-Warning 'AI-APPS: cambios locales pendientes. No se actualiza automáticamente; revisa git status.'
         exit 2
     }
@@ -56,9 +56,9 @@ try {
     }
 
     Write-Host "AI-APPS: incorporando origin/dev ($($remote.Substring(0, 7))) mediante fast-forward..."
-    Invoke-Git @('merge', '--ff-only', 'refs/remotes/origin/dev') | Out-Null
+    Invoke-Git -Arguments @('merge', '--ff-only', 'refs/remotes/origin/dev') | Out-Null
 
-    $result = (Invoke-Git @('rev-parse', 'HEAD') | Out-String).Trim()
+    $result = (Invoke-Git -Arguments @('rev-parse', 'HEAD') | Out-String).Trim()
     if ($result -ne $remote) {
         throw 'El HEAD local no coincide con origin/dev tras el fast-forward.'
     }
