@@ -104,6 +104,25 @@ void main() {
     expect(history, isNot(contains(' respuesta 1 ')));
   });
 
+  test('el informe de experimento resume los lotes y conserva el global', () {
+    final batches = [
+      for (var call = 0; call < 11; call++)
+        [
+          for (var i = 0; i < 10; i++)
+            (
+              campo: call == 10 && i == 0 ? 'Campo nuevo' : 'Campo $i',
+              respuesta: 'Respuesta $call-$i',
+            ),
+        ],
+    ];
+    final report = formatExperimentReport(batches);
+    expect(report, contains('Llamadas: 11. Selecciones: 110.'));
+    expect(report, contains('| B1 | 10 | 10 | 10 | 10 | 100 |'));
+    expect(report, contains('| B2 | 1 | 10 | 1 | 11 | 10 |'));
+    expect(report, contains('## Comparación global'));
+    expect(report, contains('Respuestas textualmente distintas: 110 de 110.'));
+  });
+
   test('el esquema se interpreta como 10 parejas campo-respuesta', () {
     final parsed = parseResponseItems(_response(_batch()));
     expect(parsed, hasLength(10));
