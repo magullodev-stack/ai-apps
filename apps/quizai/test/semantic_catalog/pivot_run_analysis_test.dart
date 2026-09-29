@@ -55,11 +55,16 @@ void main() {
     expect(prompt, contains('| Ciencias naturales | Química | | | | |'));
     expect(prompt, contains('| Salud y medicina | Medicina | | | | |'));
     expect(prompt, contains('Completa los atractores A2, A3, A4 y A5'));
-    expect(prompt, contains(r'\rho(S_{n+1}^{(p)}) &> \rho(S_n^{(p)})'));
+    expect(prompt, contains(r'\operatorname{Secciones}(x_n^{(p)}\mid S_n^{(p)})'));
+    expect(prompt, contains(r'\operatorname{Referentes}(x_5^{(p)}\mid S_5^{(p)})'));
+    expect(prompt, contains('subapartados contenidos en el apartado actual'));
     expect(prompt, contains(r'x_{n+1}^{(p)} &\not\equiv_S x_i^{(p)}'));
-    expect(prompt, contains(r'x_6^{(p)} &\in \mathcal R_{\mathrm{concreta}}'));
+    expect(prompt, contains(r'x_6^{(p)} &\in \operatorname{Referentes}'));
+    expect(prompt, contains('no campos generales'));
+    expect(prompt, isNot(contains(r'\rho(S_{n+1}^{(p)})')));
     expect(prompt, contains(r'\operatorname{id}(x_6^{(p)}) &\notin U'));
     expect(prompt, contains(r'\operatorname{id}(x_6^{(p)}) &\ne \operatorname{id}(x_6^{(q)})'));
+    expect(prompt, contains(r'n=2,3,4'));
     expect(prompt, contains(r'n=2,\ldots,5'));
     expect(prompt, contains('## U · Referentes A5 ya utilizados\n∅'));
     expect(prompt, isNot(contains('Orgánica')));
