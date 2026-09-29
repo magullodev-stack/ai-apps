@@ -180,7 +180,7 @@ Map<String, Object?> _schema() => {
 List<ResponseItem> parseResponseItems(String response) {
   final decoded = jsonDecode(response);
   if (decoded is! Map || decoded['items'] is! List) {
-    throw const FormatException('Respuesta inválida: faltan los respuestas.');
+    throw const FormatException('Respuesta inválida: faltan las respuestas.');
   }
   final rawItems = decoded['items'] as List;
   if (rawItems.length != 10) {
@@ -195,7 +195,7 @@ List<ResponseItem> parseResponseItems(String response) {
     final campo = (raw['campo'] as String).trim();
     final respuesta = (raw['respuesta'] as String).trim();
     if (campo.isEmpty || respuesta.isEmpty) {
-      throw const FormatException('Los campos y respuestas no pueden estar vacíos.');
+      throw const FormatException('Los campos y las respuestas no pueden estar vacíos.');
     }
     items.add((campo: campo, respuesta: respuesta));
   }
@@ -243,7 +243,7 @@ String compareResponseBatches(List<List<ResponseItem>> batches) {
   final total = batches.length * 10;
   final output = StringBuffer()
     ..writeln('Campos distintos por llamada: ${fieldsPerCall.join(', ')} de 10.')
-    ..writeln('Respuestas textualmente distintos: ${occurrences.length} de $total.')
+    ..writeln('Respuestas textualmente distintas: ${occurrences.length} de $total.')
     ..writeln('Repeticiones textuales: ${total - occurrences.length}.');
   final duplicateKeys = occurrences.keys
       .where((key) => occurrences[key]!.length > 1);
