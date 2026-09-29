@@ -6,11 +6,12 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
   final option = args.indexOf('--muestras');
+  final sinU = args.contains('--sin-u');
   final int? samples = option < 0
       ? 1
       : option + 1 < args.length ? int.tryParse(args[option + 1]) : null;
   if (model.isEmpty || samples == null || samples < 1 || samples > 100) {
-    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-100]');
+    stderr.writeln('Uso: <modelo> [--ruta] [--muestras 1-100] [--sin-u]');
     exitCode = 1;
     return;
   }
@@ -47,22 +48,25 @@ Future<void> main(List<String> args) async {
   var completeUsage = true;
   try {
     stdout.writeln('Modelo: ' + model);
+    stdout.writeln('Historial U: ${sinU ? 'desactivado' : 'activado'}');
     for (var sample = 0; sample < samples; sample++) {
       final callWatch = Stopwatch()..start();
       if (samples > 1) stdout.writeln('\n## Llamada ${sample + 1}/$samples');
       final result = await client.generate(
         application: 'quizai',
         model: model,
-        input: buildResponsePrompt(usedResponses),
+        input: buildResponsePrompt(usedResponses, sinU: sinU),
         schemaName: 'quizai_response_selection',
         schema: _schema(),
       ).timeout(const Duration(seconds: 90));
       final batch = parseResponseItems(result.text);
       batches.add(batch);
       stdout.writeln(formatResponseTable(batch));
-      for (final item in batch) {
-        if (usedKeys.add(_key(item.respuesta))) {
-          usedResponses.add(item.respuesta);
+      if (!sinU) {
+        for (final item in batch) {
+          if (usedKeys.add(_key(item.respuesta))) {
+            usedResponses.add(item.respuesta);
+          }
         }
       }
       final usage = result.usage;
@@ -143,15 +147,22 @@ que pueda servir como respuesta inequívoca a una pregunta de conocimiento.
 Sea d(Rᵢ) la dificultad estimada de que una persona
 con cultura general conozca Rᵢ.
 
-d(R₁) < d(R₂) < ... < d(R₁₀)
+d(R₁) < d(R₂) < ... < d(R₁₀)''';
 
-id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}
+const _withHistoryConstraint = r'''id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}
 
 U:''';
 
-String buildResponsePrompt(Iterable<String> usedResponses) {
+const _withoutHistoryConstraint = r'''id(Rᵢ) ∉ {id(Rⱼ) : j < i}''';
+
+String buildResponsePrompt(
+  Iterable<String> usedResponses, {
+  bool sinU = false,
+}) {
+  if (sinU) return '$_promptHeader\n\n$_withoutHistoryConstraint';
   final history = usedResponses.toList(growable: false);
-  return '$_promptHeader\n${history.isEmpty ? '∅' : history.map((item) => '- $item').join('\n')}';
+  return '$_promptHeader\n\n$_withHistoryConstraint\n'
+      '${history.isEmpty ? '∅' : history.map((item) => '- $item').join('\n')}';
 }
 
 /// La estructura de salida pertenece a Dart, no al prompt de Luna.
