@@ -226,18 +226,38 @@ String compareResponseBatches(List<List<ResponseItem>> batches) {
   final occurrences = <String, List<String>>{};
   final names = <String, String>{};
   final fieldsPerCall = <int>[];
+  final fields = <String, int>{};
+  final fieldNames = <String, String>{};
+  final firstPosition = <String, int>{};
+  final discoveredFields = <String>{};
+  final newFieldsByBlock = <int>[];
+  var newFieldsInBlock = 0;
   for (var call = 0; call < batches.length; call++) {
     final items = batches[call];
     if (items.length != 10) {
       throw ArgumentError('Cada llamada debe contener 10 respuestas.');
     }
     fieldsPerCall.add(items.map((item) => _key(item.campo)).toSet().length);
-    for (final item in items) {
-      final key = _key(item.respuesta);
-      names.putIfAbsent(key, () => item.respuesta);
+    for (var row = 0; row < items.length; row++) {
+      final item = items[row];
+      final fieldKey = _key(item.campo);
+      fieldNames.putIfAbsent(fieldKey, () => item.campo);
+      fields.update(fieldKey, (count) => count + 1, ifAbsent: () => 1);
+      if (row == 0) {
+        firstPosition.update(fieldKey, (count) => count + 1,
+            ifAbsent: () => 1);
+      }
+      if (discoveredFields.add(fieldKey)) newFieldsInBlock++;
+
+      final answerKey = _key(item.respuesta);
+      names.putIfAbsent(answerKey, () => item.respuesta);
       occurrences
-          .putIfAbsent(key, () => <String>[])
+          .putIfAbsent(answerKey, () => <String>[])
           .add('llamada ${call + 1}, ${item.campo}');
+    }
+    if ((call + 1) % 10 == 0 || call + 1 == batches.length) {
+      newFieldsByBlock.add(newFieldsInBlock);
+      newFieldsInBlock = 0;
     }
   }
   final total = batches.length * 10;
@@ -250,8 +270,38 @@ String compareResponseBatches(List<List<ResponseItem>> batches) {
   for (final key in duplicateKeys) {
     output.writeln('- ${names[key]} — ${occurrences[key]!.join('; ')}');
   }
+
+  final orderedFields = fields.keys.toList()
+    ..sort((a, b) {
+      final byFrequency = fields[b]!.compareTo(fields[a]!);
+      return byFrequency != 0 ? byFrequency :
+          fieldNames[a]!.compareTo(fieldNames[b]!);
+    });
+  output
+    ..writeln('\n## Distribución empírica de pivotes P')
+    ..writeln('Campos textualmente distintos: ${fields.length} de $total selecciones.')
+    ..writeln('| Campo P | Frecuencia | Porcentaje | Primera posición |')
+    ..writeln('|---|---:|---:|---:|');
+  for (final key in orderedFields) {
+    final count = fields[key]!;
+    final percent = (100 * count / total).toStringAsFixed(1);
+    output.writeln(
+      '| ${_markdownCell(fieldNames[key]!)} | $count | $percent% | '
+      '${firstPosition[key] ?? 0} |',
+    );
+  }
   output.writeln(
-    '\nNo se detectan equivalencias semánticas entre nombres distintos '
+    'Campos nuevos descubiertos por bloque consecutivo de hasta 10 llamadas: '
+    '${newFieldsByBlock.join(', ')}.',
+  );
+  output.writeln(
+    '\nComparación textual normalizada: no unifica sinónimos ni elimina '
+    'preguntas añadidas dentro del nombre del campo. La frecuencia de P '
+    'describe las selecciones de este modelo y prompt, no la cantidad '
+    'de respuestas existentes en cada disciplina.',
+  );
+  output.writeln(
+    'No se detectan equivalencias semánticas entre nombres distintos '
     'ni se verifica automáticamente la dificultad creciente.',
   );
   return output.toString();
