@@ -157,5 +157,4 @@ git status --short --branch
 
 # GENERAR PIVOTES
 
-git pull --ff-only origin dev
 .\generar-pivotes.ps1 -Ruta
