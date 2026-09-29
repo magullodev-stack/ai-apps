@@ -137,6 +137,21 @@ void main() {
     expect(subsequent, isNot(contains('U:\n∅')));
   });
 
+  test('restricciones de longitud y de filtración en ambos prompts', () {
+    final plan = selectQuiz10LunaPlan(Random(20260929));
+    final prompts = [
+      quiz10LunaPrompt(plan),
+      quiz10LunaPromptSinD(plan),
+      quiz10LunaPromptSinD(plan, historialU: ['Miguel de Cervantes']),
+    ];
+    for (final prompt in prompts) {
+      expect(prompt, contains('4 ≤ palabras(Qᵢ) ≤ 16'));
+      expect(prompt, contains('1 ≤ palabras(Rᵢ) ≤ 6'));
+      expect(prompt, contains('Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ,'));
+      expect(prompt, contains('incluidos nombres propios, epónimos y siglas.'));
+    }
+  });
+
   test('acepta diez Q/R y rechaza filas incompletas, fuera de orden o extrañas', () {
     final plan = selectQuiz10LunaPlan(Random(5));
     final items = _rows(plan);
