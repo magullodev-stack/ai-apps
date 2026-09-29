@@ -81,37 +81,77 @@ y reutiliza Android cuando ya está conectado.
 $ErrorActionPreference = 'Stop'
 cd C:\Users\Miquelet\repos\ai-apps
 
+# 1. Comprobar la rama
 if ((git branch --show-current) -ne 'dev') {
-    throw 'La rama activa no es dev.'
+    throw 'ERROR: La rama activa no es dev.'
 }
 
+# 2. Guardar los cambios locales
 git add -A
-if ($LASTEXITCODE -ne 0) { throw 'Falló git add.' }
+if ($LASTEXITCODE -ne 0) { throw 'Error en git add.' }
 
 git diff --cached --check
 if ($LASTEXITCODE -ne 0) { throw 'Hay errores en los cambios.' }
 
 git diff --cached --quiet
+
 if ($LASTEXITCODE -eq 1) {
     git commit -m "Actualizar AI-APPS"
-    if ($LASTEXITCODE -ne 0) { throw 'Falló el commit.' }
+    if ($LASTEXITCODE -ne 0) {
+        throw 'No se pudo guardar el commit local.'
+    }
+}
+elseif ($LASTEXITCODE -ne 0) {
+    throw 'No se pudo comprobar el estado local.'
 }
 
-git pull --rebase origin dev
-if ($LASTEXITCODE -ne 0) { throw 'Falló el pull; no se hizo push.' }
+# 3. Crear un respaldo de los commits locales
+$respaldo = 'respaldo-' + (Get-Date -Format 'yyyyMMdd-HHmmss')
 
+git branch $respaldo
+if ($LASTEXITCODE -ne 0) {
+    throw 'No se pudo crear el respaldo.'
+}
+
+# 4. Descargar la versión de GitHub
+git fetch origin dev
+if ($LASTEXITCODE -ne 0) {
+    throw 'No se pudo descargar origin/dev.'
+}
+
+# 5. Integrar ambas versiones
+git merge --no-edit origin/dev
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ''
+    Write-Host 'CONFLICTO: Git no ha podido integrar algunos cambios.'
+    Write-Host "Tus commits están conservados en $respaldo."
+    Write-Host 'No se ha publicado nada.'
+    Write-Host 'Revisa los conflictos antes de continuar.'
+    return
+}
+
+# 6. Publicar en GitHub
 git push origin dev
-if ($LASTEXITCODE -ne 0) { throw 'Falló el push.' }
+if ($LASTEXITCODE -ne 0) {
+    throw 'No se pudo publicar en GitHub.'
+}
 
-git rev-parse HEAD
+# 7. Comprobar sincronización
+$localSha = git rev-parse HEAD
+$remoteSha = git rev-parse origin/dev
+
+Write-Host ''
+if ($localSha -eq $remoteSha) {
+    Write-Host 'SINCRONIZACION COMPLETADA'
+    Write-Host "VS Code: $localSha"
+    Write-Host "GitHub:  $remoteSha"
+}
+else {
+    Write-Warning 'Los commits todavía no coinciden.'
+}
+
 git status --short --branch
-
----
-
-# COMMIT DESDE GIT A VS-CODE (GPT)
-
-git pull --ff-only origin dev
-git log -1 --oneline
 
 ---
 
