@@ -1,30 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
-
-import 'package:quizai/coverage/coverage_route.dart';
-import 'package:quizai/semantic_catalog/pivot_catalog.dart';
-
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
-/// Generación de pivotes con un modelo configurable.
+/// Piloto aislado de expansión semántica; no modifica los catálogos de QuizAI.
 Future<void> main(List<String> args) async {
   final model = args.isNotEmpty ? args.first.trim() : '';
-  final showTerra = args.contains('--terra') || args.contains('--sol');
-  final showRoute = args.contains('--ruta') || showTerra;
   if (model.isEmpty) {
-    stderr.writeln('Uso: dart run tool/generar_pivotes.dart <modelo>');
+    stderr.writeln('Uso: dart run tool/generar_pivotes.dart <modelo> [--ruta]');
     exitCode = 1;
     return;
   }
-  stdout.write('Contexto: ');
-  final context = stdin.readLineSync(encoding: utf8)?.trim() ?? '';
-  if (context.isEmpty) {
-    stderr.writeln('Escribe un contexto.');
-    exitCode = 1;
-    return;
-  }
-
   final sessionFile = File('../../.ai-apps/dart-service.json');
   if (!await sessionFile.exists()) {
     stderr.writeln('El servicio de IA no está iniciado. Arráncalo con run.ps1.');
@@ -55,90 +40,20 @@ Future<void> main(List<String> args) async {
     final result = await client.generate(
       application: 'quizai',
       model: model,
-      input: _prompt(context),
-      schemaName: 'quizai_pivots',
+      input: _prompt,
+      schemaName: 'quizai_semantic_expansion',
       schema: _schema(),
     ).timeout(const Duration(seconds: 90));
     final data = jsonDecode(result.text);
-    if (data is! Map || data['pivots'] is! List) {
-      throw const FormatException('Respuesta inválida: faltan los pivotes.');
+    if (data is! Map || data['table'] is! String) {
+      throw const FormatException('Respuesta inválida: falta la tabla.');
     }
-    // El contexto de la ruta es siempre el texto introducido, no la copia de IA.
-    if (data['context'] != context) {
-      stderr.writeln('Aviso: Luna devolvió otro texto de contexto; se conserva el original.');
-    }
-    final pivots = data['pivots'] as List;
-    if (pivots.length != 10 ||
-        pivots.any((p) => p is! String || p.trim().isEmpty) ||
-        pivots.map((p) => (p as String).trim().toLowerCase()).toSet().length != 10) {
-      throw const FormatException('Se requieren exactamente 10 pivotes únicos.');
-    }
-    validatePivotVocabulary(context, pivots);
-    for (var i = 0; i < pivots.length; i++) {
-      stdout.writeln('P' + (i + 1).toString().padLeft(2, '0') + ' ' + pivots[i].toString());
-    }
-    final route = showRoute
-        ? compileCoverageRoute(PivotCatalog.fromJson({'context': context, 'pivots': pivots}), Random())
-        : null;
-    if (route != null) {
-      stdout.writeln();
-      stdout.writeln(coverageRouteDebugText(route));
-    }
+    stdout.writeln((data['table'] as String).trim());
     final usage = result.usage;
-    final inputTokens = usage?['inputTokens'];
-    final outputTokens = usage?['outputTokens'];
-    final totalTokens = usage?['totalTokens'];
-    final rates = _modelRates[model.toLowerCase()];
-    final inputRate = rates?.inputUsdPerMillion;
-    final outputRate = rates?.outputUsdPerMillion;
-    final hasPrices = inputTokens is int &&
-        outputTokens is int &&
-        inputRate != null &&
-        outputRate != null &&
-        inputRate >= 0 &&
-        outputRate >= 0;
-    String priceFor(int? tokens, double? rate) =>
-        tokens != null && rate != null && rate >= 0
-            ? (tokens * rate / 1000000).toStringAsFixed(6) + ' USD'
-            : 'no disponible';
-    stdout.writeln('Entrada: ${inputTokens is int ? inputTokens : 'no disponibles'} tokens | ${priceFor(inputTokens is int ? inputTokens : null, inputRate)}');
-    stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponibles'} tokens | ${priceFor(outputTokens is int ? outputTokens : null, outputRate)}');
-    stdout.writeln('Total: ${totalTokens is int ? totalTokens : inputTokens is int && outputTokens is int ? inputTokens + outputTokens : 'no disponible'} tokens | ${hasPrices ? ((inputTokens * inputRate + outputTokens * outputRate) / 1000000).toStringAsFixed(6) + ' USD' : 'no disponible'}');
+    stdout.writeln('Entrada: ' + (usage?['inputTokens']?.toString() ?? 'no disponible') + ' tokens');
+    stdout.writeln('Salida: ' + (usage?['outputTokens']?.toString() ?? 'no disponible') + ' tokens');
+    stdout.writeln('Total: ' + (usage?['totalTokens']?.toString() ?? 'no disponible') + ' tokens');
     stdout.writeln('Tiempo: ' + watch.elapsedMilliseconds.toString() + ' ms');
-    if (showTerra && route != null) {
-      stdout.writeln();
-      stdout.writeln('Modelo: gpt-5.6-sol');
-      final terraWatch = Stopwatch()..start();
-      final terra = await client.generate(
-        application: 'quizai',
-        model: 'gpt-5.6-sol',
-        input: _terraPrompt(coverageRouteDebugText(route)),
-        schemaName: 'quizai_sol_route_test',
-        schema: _terraSchema(),
-      ).timeout(const Duration(seconds: 240));
-      final terraData = jsonDecode(terra.text);
-      if (terraData is! Map || terraData['records'] is! String) {
-        throw const FormatException('Respuesta de Terra inválida.');
-      }
-      stdout.writeln((terraData['records'] as String).trim());
-      final terraInput = terra.usage?['inputTokens'];
-      final terraOutput = terra.usage?['outputTokens'];
-      final terraRates = _modelRates['gpt-5.6-sol']!;
-      final terraInputPrice = terraInput is int
-          ? (terraInput * terraRates.inputUsdPerMillion / 1000000).toStringAsFixed(6) + ' USD'
-          : 'no disponible';
-      final terraOutputPrice = terraOutput is int
-          ? (terraOutput * terraRates.outputUsdPerMillion / 1000000).toStringAsFixed(6) + ' USD'
-          : 'no disponible';
-      final terraTotal = terraInput is int && terraOutput is int ? terraInput + terraOutput : null;
-      final terraPrice = terraInput is int && terraOutput is int
-          ? ((terraInput * terraRates.inputUsdPerMillion + terraOutput * terraRates.outputUsdPerMillion) / 1000000).toStringAsFixed(6) + ' USD'
-          : 'no disponible';
-      stdout.writeln('Entrada Sol: ${terraInput is int ? terraInput : 'no disponibles'} tokens | $terraInputPrice');
-      stdout.writeln('Salida Sol: ${terraOutput is int ? terraOutput : 'no disponibles'} tokens | $terraOutputPrice');
-      stdout.writeln('Total Sol: ${terraTotal ?? 'no disponible'} tokens | $terraPrice');
-      stdout.writeln('Tiempo Sol: ${terraWatch.elapsedMilliseconds} ms');
-    }
   } catch (error) {
     stderr.writeln('ERROR: ' + error.toString());
     exitCode = 1;
@@ -147,115 +62,49 @@ Future<void> main(List<String> args) async {
   }
 }
 
-// Tarifas USD por millón de tokens facilitadas por el usuario.
-// Añadir nuevos modelos aquí cuando se conozcan sus tarifas.
-typedef _ModelRates = ({double inputUsdPerMillion, double outputUsdPerMillion});
+const _prompt = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
 
-const Map<String, _ModelRates> _modelRates = {
-  'gpt-5.6-terra': (inputUsdPerMillion: 2.0, outputUsdPerMillion: 12.0),
-  'gpt-5.6-sol': (inputUsdPerMillion: 4.0, outputUsdPerMillion: 20.0),
-  'gpt-5.6-luna': (inputUsdPerMillion: 0.20, outputUsdPerMillion: 1.20),
-  'gpt-5.4-mini': (inputUsdPerMillion: 0.75, outputUsdPerMillion: 4.50),
-};
+Sea una secuencia de conceptos:
 
-String _prompt(String context) => r'''# PROMPT — Generador de Pivotes
+$$
+S=(x_0,x_1,\ldots,x_n)
+$$
 
-Dado un CONTEXTO [C], genera un conjunto ordenado de 10 PIVOTES de exploración:
+Cada nuevo elemento se obtiene mediante:
 
-\[
-P(C)=\{P_1,\ldots,P_{10}\}
-\]
+$$
+\boxed{x_{n+1}\in F(x_{n-1},x_n\mid S)}
+$$
 
-Cada pivote debe constituir un objeto de estudio consultable:
-debe permitir establecer hechos sobre sí mismo,
-sobre cómo es considerado desde fuera
-y sobre su intervención en otras realidades.
+Donde $F representa el conjunto de atractores semánticamente admisibles para la configuración actual, considerando el significado acumulado de la secuencia.
 
-Cada pivote debe satisfacer:
 
-\[
-\begin{aligned}
-&\operatorname{Relevancia}(P_i,C)>0\\
-&\operatorname{Especificidad}(P_i,C)>0
-\end{aligned}
-\]
+Devuelve exclusivamente la tabla completada en bloque md``` literal.
 
-Sujeto a:
+---
 
-\[
-\forall i\neq j:
-\quad P_i\neq P_j
-\quad\land\quad
-\operatorname{Solapamiento}(P_i,P_j)\approx 0
-\]
+# TABLA
 
-La selección debe maximizar:
+## Contexto: Conocimiento general
 
-\[
-P^*=
-\underset{|P|=10}{\arg\max}
-\left[
-\operatorname{Cobertura}(P,C)
-+
-\operatorname{Diversidad}(P)
-+
-\operatorname{Profundidad}(P,C)
-\right]
-\]
+| Pivote | Atractor 1 | Atractor 2 | Atractor 3 | Atractor 4 | Atractor 5 |
+|---|---|---|---|---|---|
+| Ciencias naturales | Química | Orgánica | Hidrocarburos | Aromáticos | Benceno |
+| Ciencias formales | | | | | |
+| Ciencias sociales | | | | | |
+| Historia | | | | | |
+| Humanidades | | | | | |
+| Tecnología e ingeniería | | | | | |
+| Artes | | | | | |
+| Salud y medicina | | | | | |
 
-\[
-\forall P_i:\quad \operatorname{Palabras}(P_i)\leq 3
-\]
-
-Ninguna palabra ajena al contexto puede repetirse entre los diez pivotes.
-Las palabras del contexto pueden reutilizarse libremente para delimitar ámbitos de estudio.
-Considera equivalentes las variantes de una misma palabra,
-incluidos cambios de género, número y derivados de una misma raíz.
-Si un nombre incumple estas condiciones, sustitúyelo antes de responder.
-
-Devuelve exclusivamente los diez nombres de los pivotes en el orden seleccionado.
-CONTEXTO [C]: ''' + context;
+---''';
 
 Map<String, Object?> _schema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['context', 'pivots'],
+  'required': ['table'],
   'properties': {
-    'context': {'type': 'string'},
-    'pivots': {
-      'type': 'array',
-      'items': {'type': 'string'},
-    },
-  },
-};
-
-
-String _terraPrompt(String route) => '''Genera exactamente 10 preguntas de opción múltiple, una por cada fila de la Ruta de Cobertura y en el mismo orden.
-Usa el pivote, la dimensión factual y su definición para establecer internamente un único hecho concreto y verificable. A partir de ese hecho formula una pregunta cuyo elemento interrogado corresponda al rol asignado y su definición. Determina una única respuesta correcta e inclúyela en la salida.
-La pregunta debe tener entre 5 y 20 palabras, contener los elementos factuales discriminativos necesarios y no revelar la respuesta.
-Genera exactamente tres distractores por pregunta, respetando la competitividad D1, D2 y D3 de su fila:
-−: plausible pero claramente distinguible.
-+: próximo pero incorrecto por una diferencia relevante.
-++: comparte categoría, contexto y relación principal; la pregunta exige identificar la diferencia específica y decisiva que lo hace incorrecto.
-Cada distractor debe ser incorrecto por su contenido factual nuclear, no por añadir un modificador, restricción, cuantificador, negación, condición o circunstancia que fabrique su incorrección.
-Evita distractores que también puedan responder correctamente a la pregunta.
-Devuelve exclusivamente las diez preguntas, sus respuestas correctas y sus tres distractores, sin hechos, fuentes ni explicaciones. Conserva en cada cabecera el número de fila y los códigos y nombres de pivote, dimensión y rol de la ruta. En el campo "records", usa este formato para cada pregunta:
-
-## [n] — [Pxx Nombre del pivote] · [Ixx/Mxx/Exx Nombre de la dimensión] · [Jx Nombre del rol] · [D1, D2, D3]
-**PREGUNTA:** [pregunta]
-**RESPUESTA:** [respuesta correcta de 1 a 8 palabras]
-1. **D1 [símbolo D1]:** [distractor]
-2. **D2 [símbolo D2]:** [distractor]
-3. **D3 [símbolo D3]:** [distractor]
-
-RUTA DE COBERTURA:
-$route''';
-
-Map<String, Object?> _terraSchema() => {
-  'type': 'object',
-  'additionalProperties': false,
-  'required': ['records'],
-  'properties': {
-    'records': {'type': 'string'},
+    'table': {'type': 'string'},
   },
 };
