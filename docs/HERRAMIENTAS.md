@@ -10,6 +10,31 @@
 ---
 
 
+## Sincronización de `dev` al abrir VS Code
+
+La tarea `AI-APPS: sincronizar dev al abrir VS Code` en
+[`.vscode/tasks.json`](../.vscode/tasks.json) ejecuta
+[`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) al abrir la carpeta del proyecto.
+VS Code puede solicitar **una vez** autorización para permitir tareas automáticas
+(Allow Automatic Tasks); mientras no se autoricen, la sincronización no se ejecuta.
+La salida aparece en la terminal de la tarea.
+
+El procedimiento consulta `origin/dev` mediante `git fetch` y comprueba la
+rama y el estado local. Si `dev` está limpio y es antecesor de `origin/dev`,
+ejecuta exclusivamente `git merge --ff-only origin/dev` y verifica que el
+`HEAD` resultante coincida con el remoto. Si ya coincide, informa de ello.
+Si existen cambios sin confirmar, otra rama activa, commits locales no publicados
+o historias divergentes, informa y **no modifica nada**. Tampoco ejecuta
+`reset --hard`, `rebase`, `push` ni modifica archivos ignorados como
+`.ai-apps/openai-key.dpapi`.
+
+La tarea solo se ejecuta cuando VS Code abre el proyecto; **no** sincroniza
+continuamente ni se activa mientras el editor permanece abierto. Una rama local
+ya divergente exige intervención manual y respaldo previo; nunca se resuelve
+automáticamente.
+
+---
+
 ## Emulador Android compartido
 
 `scripts/start-android.ps1` prepara el dispositivo Android de AI-APPS.
