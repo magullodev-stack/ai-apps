@@ -50,10 +50,32 @@ Future<void> main(List<String> args) async {
     }
     stdout.writeln((data['table'] as String).trim());
     final usage = result.usage;
-    stdout.writeln('Entrada: ' + (usage?['inputTokens']?.toString() ?? 'no disponible') + ' tokens');
-    stdout.writeln('Salida: ' + (usage?['outputTokens']?.toString() ?? 'no disponible') + ' tokens');
-    stdout.writeln('Total: ' + (usage?['totalTokens']?.toString() ?? 'no disponible') + ' tokens');
-    stdout.writeln('Tiempo: ' + watch.elapsedMilliseconds.toString() + ' ms');
+    final inputTokens = usage?['inputTokens'];
+    final outputTokens = usage?['outputTokens'];
+    final totalTokens = usage?['totalTokens'];
+    final rates = _modelRates[model.toLowerCase()];
+    final inputRate = rates?.inputUsdPerMillion;
+    final outputRate = rates?.outputUsdPerMillion;
+    String priceFor(Object? tokens, double? rate) =>
+        tokens is int && rate != null
+            ? (tokens * rate / 1000000).toStringAsFixed(6) + ' USD'
+            : 'no disponible';
+    final total = totalTokens is int
+        ? totalTokens
+        : inputTokens is int && outputTokens is int
+            ? inputTokens + outputTokens
+            : null;
+    final totalPrice = inputTokens is int &&
+            outputTokens is int &&
+            inputRate != null &&
+            outputRate != null
+        ? ((inputTokens * inputRate + outputTokens * outputRate) / 1000000)
+            .toStringAsFixed(6) + ' USD'
+        : 'no disponible';
+    stdout.writeln('Entrada: ${inputTokens is int ? inputTokens : 'no disponible'} tokens | ${priceFor(inputTokens, inputRate)}');
+    stdout.writeln('Salida: ${outputTokens is int ? outputTokens : 'no disponible'} tokens | ${priceFor(outputTokens, outputRate)}');
+    stdout.writeln('Total: ${total ?? 'no disponible'} tokens | $totalPrice');
+    stdout.writeln('Tiempo: ${watch.elapsedMilliseconds} ms');
   } catch (error) {
     stderr.writeln('ERROR: ' + error.toString());
     exitCode = 1;
@@ -61,6 +83,16 @@ Future<void> main(List<String> args) async {
     client.close();
   }
 }
+
+// Tarifas USD por millón de tokens facilitadas para este proyecto.
+typedef _ModelRates = ({double inputUsdPerMillion, double outputUsdPerMillion});
+
+const Map<String, _ModelRates> _modelRates = {
+  'gpt-5.6-terra': (inputUsdPerMillion: 2.0, outputUsdPerMillion: 12.0),
+  'gpt-5.6-sol': (inputUsdPerMillion: 4.0, outputUsdPerMillion: 20.0),
+  'gpt-5.6-luna': (inputUsdPerMillion: 0.20, outputUsdPerMillion: 1.20),
+  'gpt-5.4-mini': (inputUsdPerMillion: 0.75, outputUsdPerMillion: 4.50),
+};
 
 const _prompt = r'''# PROMPT · EXPANSIÓN SEMÁNTICA
 
