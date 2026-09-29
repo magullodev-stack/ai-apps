@@ -16,11 +16,13 @@ String _response(List<ResponseItem> items) => jsonEncode({
 });
 
 void main() {
-  test('el prompt pide respuestas inequívocas y dificultad creciente', () {
+  test('el prompt define P y R sin introducir preguntas y conserva la dificultad creciente', () {
     final prompt = buildResponsePrompt(const <String>[]);
     expect(prompt, contains('Selecciona 10 campos de conocimiento aleatorios y distintos (P).'));
-    expect(prompt, contains('un término, nombre o expresión (R)'));
-    expect(prompt, contains('respuesta inequívoca a una pregunta de conocimiento'));
+    expect(prompt, contains('Pᵢ: nombre de un campo de conocimiento.'));
+    expect(prompt, contains('Rᵢ: término, nombre o expresión concreta e identificable de Pᵢ.'));
+    expect(prompt, contains('Cada valor contiene únicamente su denominación.'));
+    expect(prompt.toLowerCase(), isNot(contains('pregunta')));
     expect(prompt, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
     expect(prompt, contains('id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}'));
     expect(prompt, contains('U:\n∅'));
