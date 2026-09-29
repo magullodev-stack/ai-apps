@@ -364,3 +364,52 @@ String compareResponseBatches(List<List<ResponseItem>> batches) {
   );
   return output.toString();
 }
+
+
+/// Informe persistente: cada lote se analiza por separado sin perder la
+/// comparación global de todas las llamadas. No modifica el historial U.
+String formatExperimentReport(List<List<ResponseItem>> batches) {
+  if (batches.isEmpty) throw ArgumentError('No hay llamadas para comparar.');
+
+  final output = StringBuffer()
+    ..writeln('# Experimento de pivotes')
+    ..writeln()
+    ..writeln('Llamadas: ${batches.length}. '
+        'Selecciones: ${batches.length * 10}.')
+    ..writeln()
+    ..writeln('## Evolución por lote')
+    ..writeln('| Lote | Llamadas | P distintos | P nuevos | P acumulados | R distintas |')
+    ..writeln('|---|---:|---:|---:|---:|---:|');
+
+  final seenFields = <String>{};
+  for (var start = 0; start < batches.length; start += historyBlockSize) {
+    final block = batches.skip(start).take(historyBlockSize).toList();
+    final fields = <String>{};
+    final responses = <String>{};
+    for (final items in block) {
+      if (items.length != 10) {
+        throw ArgumentError('Cada llamada debe contener 10 respuestas.');
+      }
+      for (final item in items) {
+        fields.add(_key(item.campo));
+        responses.add(_key(item.respuesta));
+      }
+    }
+    final newFields = fields.difference(seenFields).length;
+    seenFields.addAll(fields);
+    output.writeln(
+      '| B${start ~/ historyBlockSize + 1} | ${block.length} | '
+      '${fields.length} | $newFields | ${seenFields.length} | '
+      '${responses.length} |',
+    );
+  }
+
+  output
+    ..writeln()
+    ..writeln('La novedad de P es textual: no fusiona sinónimos ni elimina '
+        'contenido añadido dentro del campo.')
+    ..writeln()
+    ..writeln('## Comparación global')
+    ..writeln(compareResponseBatches(batches));
+  return output.toString();
+}
