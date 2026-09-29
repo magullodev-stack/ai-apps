@@ -107,6 +107,41 @@ void main() {
     expect(report, contains('Campos distintos por llamada: 9 de 10.'));
   });
 
+  test('informa la frecuencia empírica de P y su sesgo de primera posición', () {
+    final first = _batch();
+    final second = [
+      for (final item in first)
+        (campo: item.campo, respuesta: 'Otra ${item.respuesta}'),
+    ];
+    final report = compareResponseBatches([first, second]);
+    expect(report, contains('Campos textualmente distintos: 10 de 20 selecciones.'));
+    expect(report, contains('| Campo 1 | 2 | 10.0% | 2 |'));
+    expect(report, contains('| Campo 2 | 2 | 10.0% | 0 |'));
+    expect(
+      report,
+      contains('Campos nuevos descubiertos por bloque consecutivo de hasta 10 llamadas: 10.'),
+    );
+  });
+
+  test('distingue descubrimientos nuevos después de las primeras diez llamadas', () {
+    final batches = [
+      for (var call = 0; call < 11; call++)
+        [
+          for (var i = 1; i <= 10; i++)
+            (
+              campo: call == 10 && i == 1 ? 'Campo 11' : 'Campo $i',
+              respuesta: 'Respuesta $call-$i',
+            ),
+        ],
+    ];
+    final report = compareResponseBatches(batches);
+    expect(report, contains('Campos textualmente distintos: 11 de 110 selecciones.'));
+    expect(
+      report,
+      contains('Campos nuevos descubiertos por bloque consecutivo de hasta 10 llamadas: 10, 1.'),
+    );
+  });
+
   test('no confunde diferencias textuales con identidades semánticas', () {
     final batch = [
       for (var i = 1; i <= 10; i++)
