@@ -41,34 +41,31 @@ Future<void> main(List<String> args) async {
   );
   final watch = Stopwatch()..start();
   final batches = <List<ResponseItem>>[];
-  final usedResponses = <String>[];
-  final usedKeys = <String>{};
   var inputSum = 0;
   var outputSum = 0;
   var completeUsage = true;
   try {
     stdout.writeln('Modelo: ' + model);
-    stdout.writeln('Historial U: ${sinU ? 'desactivado' : 'activado'}');
+    stdout.writeln('Historial U: ${sinU ? 'desactivado' : 'reinicio cada 10 llamadas'}');
     for (var sample = 0; sample < samples; sample++) {
       final callWatch = Stopwatch()..start();
+      if (samples > 1 && sample % historyBlockSize == 0) {
+        stdout.writeln('\n## Lote ${sample ~/ historyBlockSize + 1}/${(samples + historyBlockSize - 1) ~/ historyBlockSize}');
+      }
       if (samples > 1) stdout.writeln('\n## Llamada ${sample + 1}/$samples');
       final result = await client.generate(
         application: 'quizai',
         model: model,
-        input: buildResponsePrompt(usedResponses, sinU: sinU),
+        input: buildResponsePrompt(
+          sinU ? const <String>[] : responseHistoryForCall(batches),
+          sinU: sinU,
+        ),
         schemaName: 'quizai_response_selection',
         schema: _schema(),
       ).timeout(const Duration(seconds: 90));
       final batch = parseResponseItems(result.text);
       batches.add(batch);
       stdout.writeln(formatResponseTable(batch));
-      if (!sinU) {
-        for (final item in batch) {
-          if (usedKeys.add(_key(item.respuesta))) {
-            usedResponses.add(item.respuesta);
-          }
-        }
-      }
       final usage = result.usage;
       final inputTokens = usage?['inputTokens'];
       final outputTokens = usage?['outputTokens'];
@@ -138,6 +135,22 @@ const Map<String, _ModelRates> _modelRates = {
 
 /// Pareja directa: campo de conocimiento y respuesta, sin niveles A1-A5.
 typedef ResponseItem = ({String campo, String respuesta});
+
+const int historyBlockSize = 10;
+
+/// Solo las respuestas de las llamadas anteriores del lote actual entran en U.
+/// Las llamadas completas siguen conservándose en [batches] para el informe global.
+List<String> responseHistoryForCall(List<List<ResponseItem>> batches) {
+  final blockStart = (batches.length ~/ historyBlockSize) * historyBlockSize;
+  final seen = <String>{};
+  final history = <String>[];
+  for (final batch in batches.skip(blockStart)) {
+    for (final item in batch) {
+      if (seen.add(_key(item.respuesta))) history.add(item.respuesta);
+    }
+  }
+  return history;
+}
 
 const _promptHeader = r'''Selecciona 10 campos de conocimiento aleatorios y distintos (P).
 
