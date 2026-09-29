@@ -53,6 +53,55 @@ void main() {
     expect(populated, isNot(contains('AISI 304')));
   });
 
+  test('U solo arrastra las respuestas de las nueve llamadas previas del lote', () {
+    final completed = <List<ResponseItem>>[];
+    for (var call = 0; call < 100; call++) {
+      final history = responseHistoryForCall(completed);
+      expect(history, hasLength((call % historyBlockSize) * 10));
+      if (call % historyBlockSize == 0) {
+        expect(history, isEmpty);
+        expect(buildResponsePrompt(history), contains('U:\n∅'));
+      }
+      if (call % historyBlockSize == 9) {
+        expect(history.first, 'Respuesta ${call - 9}-0');
+        expect(history.last, 'Respuesta ${call - 1}-9');
+      }
+      completed.add([
+        for (var i = 0; i < 10; i++)
+          (campo: 'Campo $i', respuesta: 'Respuesta $call-$i'),
+      ]);
+    }
+
+    expect(responseHistoryForCall(completed), isEmpty);
+    final report = compareResponseBatches(completed);
+    expect(report, contains('Respuestas textualmente distintas: 1000 de 1000.'));
+    expect(report, contains('Campos textualmente distintos: 10 de 1000 selecciones.'));
+    expect(
+      report,
+      contains(
+        'Campos nuevos descubiertos por bloque consecutivo de hasta 10 llamadas: '
+        '10, 0, 0, 0, 0, 0, 0, 0, 0, 0.',
+      ),
+    );
+  });
+
+  test('U evita repetir variantes textuales dentro del lote', () {
+    final completed = [
+      _batch(),
+      [
+        for (var i = 1; i <= 10; i++)
+          (
+            campo: 'Otro campo $i',
+            respuesta: i == 1 ? ' respuesta 1 ' : 'Otra respuesta $i',
+          ),
+      ],
+    ];
+    final history = responseHistoryForCall(completed);
+    expect(history, hasLength(19));
+    expect(history.where((value) => value == 'Respuesta 1'), hasLength(1));
+    expect(history, isNot(contains(' respuesta 1 ')));
+  });
+
   test('el esquema se interpreta como 10 parejas campo-respuesta', () {
     final parsed = parseResponseItems(_response(_batch()));
     expect(parsed, hasLength(10));
