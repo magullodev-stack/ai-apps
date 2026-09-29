@@ -9,6 +9,7 @@ param(
     [switch]$EvaluarDimensiones,
     [switch]$ProbarLuna,
     [switch]$SinD,
+    [switch]$ConU,
     [ValidateRange(0, 1000000000)]
     [int]$LunaSemilla = 20260929,
     [ValidateRange(1, 30)]
@@ -209,6 +210,7 @@ if ($EvaluarDimensiones) {
 }
 
 if ($ProbarLuna) {
+    if ($ConU -and (-not $SinD)) { throw 'Para probar U, usa también -SinD.' }
     # Reutiliza el servicio de IA sin exponer la clave a Dart cliente.
     $previousLunaEnv = @{}
     foreach ($name in @('AI_APPS_AI_API_KEY', 'OPENAI_API_KEY',
@@ -225,6 +227,7 @@ if ($ProbarLuna) {
         try {
             $lunaArgs = @('run', 'tool/verify_generation.dart', '--luna', '--muestras', "$Muestras", '--semilla', "$LunaSemilla")
             if ($SinD) { $lunaArgs += '--sin-d' }
+            if ($ConU) { $lunaArgs += '--con-u' }
             & $dart @lunaArgs
             if ($LASTEXITCODE -ne 0) { throw 'Falló la prueba real de Luna P × D.' }
         } finally { Pop-Location }

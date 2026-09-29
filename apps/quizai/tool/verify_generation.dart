@@ -17,11 +17,14 @@ Future<void> main(List<String> args) async {
   try {
     if (args.isEmpty) {
       await _verifyCurrentQuiz10(client);
-    } else if ((args.length == 5 || args.length == 6) &&
+    } else if (args.length >= 5 &&
+        args.length <= 7 &&
         args[0] == '--luna' &&
         args[1] == '--muestras' &&
         args[3] == '--semilla' &&
-        (args.length == 5 || args[5] == '--sin-d')) {
+        args.skip(5).every((flag) => flag == '--sin-d' || flag == '--con-u') &&
+        args.skip(5).toSet().length == args.length - 5 &&
+        (!args.contains('--con-u') || args.contains('--sin-d'))) {
       final samples = int.tryParse(args[2]);
       final seed = int.tryParse(args[4]);
       if (samples == null ||
@@ -35,11 +38,12 @@ Future<void> main(List<String> args) async {
       await _verifyLuna(
         client, samples, seed,
         env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
-        sinD: args.length == 6,
+        sinD: args.contains('--sin-d'),
+        conU: args.contains('--con-u'),
       );
     } else {
       throw const FormatException(
-        'Uso: verify_generation.dart [--luna --muestras 1-200 --semilla N [--sin-d]]',
+        'Uso: verify_generation.dart [--luna --muestras 1-200 --semilla N [--sin-d] [--con-u]]',
       );
     }
   } catch (error) {
@@ -70,40 +74,57 @@ Future<void> _verifyLuna(
   int seed,
   String model, {
   bool sinD = false,
+  bool conU = false,
 }) async {
+  if (conU && !sinD) {
+    throw ArgumentError('El experimento con U requiere --sin-d.');
+  }
   final outputDir = Directory('../../.ai-apps/experimentos-luna-pd');
   await outputDir.create(recursive: true);
   final runId = DateTime.now().toUtc().toIso8601String()
       .replaceAll(':', '-').replaceAll('.', '-');
-  final filePrefix = sinD ? 'luna-p' : 'luna-pd';
+  final filePrefix = conU ? 'luna-pu' : sinD ? 'luna-p' : 'luna-pd';
   final raw = File('${outputDir.path}/$filePrefix-$runId.jsonl');
   final questions = File('${outputDir.path}/$filePrefix-$runId.md');
   final observed = <_Observed>[];
+  final historyU = <String>[];
   var inputTokens = 0;
   var outputTokens = 0;
   var usageComplete = true;
 
   await questions.writeAsString(
     '# Quiz10 — Preguntas reales ${sinD ? 'P' : 'P × D'} → Q, R\n\n'
-    'Modelo: $model · Semilla: $seed · Sin historial U · '
+    'Modelo: $model · Semilla: $seed · '
+    '${conU ? 'U por bloques de diez llamadas' : 'Sin historial U'} · '
     'Llamadas previstas: $samples.\n\n'
     'Estas preguntas no han sido verificadas factualmente por Terra.\n',
     flush: true,
   );
-  stdout.writeln('Luna: $samples llamadas × 10 preguntas, ${sinD ? 'sin D y ' : ''}sin U.');
+  stdout.writeln('Luna: $samples llamadas × 10 preguntas, '
+      '${sinD ? 'sin D' : 'con D'}, '
+      '${conU ? 'U reiniciada cada diez llamadas' : 'sin U'}.');
   stdout.writeln('Modelo: $model; semilla inicial: $seed.');
   stdout.writeln('Resultados: ${questions.path}');
   for (var index = 0; index < samples; index++) {
+    if (conU && index % 10 == 0) historyU.clear();
+    final historySent = List<String>.unmodifiable(historyU);
     final timer = Stopwatch()..start();
     final plan = selectQuiz10LunaPlan(Random(seed + index));
-    final prompt = sinD ? quiz10LunaPromptSinD(plan) : quiz10LunaPrompt(plan);
+    final prompt = sinD
+        ? quiz10LunaPromptSinD(
+            plan, historialU: conU ? historySent : null,
+          )
+        : quiz10LunaPrompt(plan);
     String? rawOutput;
     final base = <String, Object?>{
       'llamada': index + 1,
       'semilla': seed + index,
       'modelo': model,
-      'historialU': false,
-      'modo': sinD ? 'P' : 'P-D',
+      'historialU': conU,
+      'modo': conU ? 'P-U' : sinD ? 'P' : 'P-D',
+      if (conU) 'bloque': index ~/ 10 + 1,
+      if (conU) 'posicionBloque': index % 10 + 1,
+      if (conU) 'U': historySent,
       'plan': [
         for (final slot in plan)
           {
@@ -128,6 +149,11 @@ Future<void> _verifyLuna(
       ).timeout(const Duration(seconds: 120));
       rawOutput = result.text;
       final rows = parseQuiz10LunaOutput(result.text, plan);
+      final repeatedAgainstU = conU
+          ? rows.where((row) => historySent.any(
+              (answer) => _answerKey(answer) == _answerKey(row.correct),
+            )).map((row) => row.correct).toList()
+          : <String>[];
       final inTokens = result.usage?['inputTokens'];
       final outTokens = result.usage?['outputTokens'];
       if (inTokens is int && outTokens is int) {
@@ -153,6 +179,7 @@ Future<void> _verifyLuna(
               },
           ],
           'respuestaBruta': rawOutput,
+          if (conU) 'repetidasEnU': repeatedAgainstU,
           'tokensEntrada': inTokens,
           'tokensSalida': outTokens,
           'duracionMs': timer.elapsedMilliseconds,
@@ -161,6 +188,12 @@ Future<void> _verifyLuna(
         flush: true,
       );
       observed.addAll([for (final row in rows) (call: index + 1, row: row)]);
+      if (conU) {
+        final seen = historyU.map(_answerKey).toSet();
+        for (final row in rows) {
+          if (seen.add(_answerKey(row.correct))) historyU.add(row.correct);
+        }
+      }
       final buffer = StringBuffer()
         ..writeln('\n## Llamada ${index + 1}/$samples')
         ..writeln()
@@ -192,9 +225,13 @@ Future<void> _verifyLuna(
         mode: FileMode.append,
         flush: true,
       );
+      final suffix = conU
+          ? ' Bloque ${index ~/ 10 + 1}, U: ${historySent.length} R, '
+              'coincidencias con U: ${repeatedAgainstU.length}.'
+          : '';
       stdout.writeln(
         'Llamada ${index + 1}/$samples: 10 Q/R guardadas; '
-        '${timer.elapsedMilliseconds} ms.',
+        '${timer.elapsedMilliseconds} ms.$suffix',
       );
     } catch (error) {
       await raw.writeAsString(
@@ -215,7 +252,9 @@ Future<void> _verifyLuna(
     }
   }
 
-  final summary = sinD ? _lunaSummarySinD(observed) : _lunaSummary(observed);
+  final summary = conU
+      ? _lunaSummaryConU(observed)
+      : sinD ? _lunaSummarySinD(observed) : _lunaSummary(observed);
   await questions.writeAsString(
     '\n$summary\n\n'
     'Tokens de entrada: ${usageComplete ? inputTokens : 'datos incompletos'}. '
@@ -354,6 +393,60 @@ String _lunaSummarySinD(List<_Observed> observed) {
   }
   buffer.writeln('\nLa comparación ignora diferencias de mayúsculas y '
       'espacios; no identifica sinónimos ni equivalencias semánticas.');
+  return buffer.toString();
+}
+
+/// Evalúa cada bloque de 10 llamadas sin penalizar repeticiones entre bloques.
+String _lunaSummaryConU(List<_Observed> observed) {
+  final buffer = StringBuffer()
+    ..writeln('## Control P + dificultad con U')
+    ..writeln()
+    ..writeln('U recibe solo las R de las llamadas anteriores del mismo bloque.')
+    ..writeln('Se reinicia en las llamadas 1, 11, 21, ..., 91.')
+    ..writeln()
+    ..writeln('| Bloque | Llamadas | Respuestas | R distintas | '
+        'R repetidas desde llamadas anteriores (incumplen U) | '
+        'R repetidas dentro de una llamada | R repetidas en el mismo P |')
+    ..writeln('|---:|---:|---:|---:|---:|---:|---:|');
+  var allPast = 0;
+  var allCurrent = 0;
+  var allSameP = 0;
+  for (var start = 1; start <= observed.last.call; start += 10) {
+    final block = observed.where(
+      (item) => item.call >= start && item.call < start + 10,
+    ).toList();
+    final past = <String>{};
+    final byPivot = <String>{};
+    var pastDuplicates = 0;
+    var currentDuplicates = 0;
+    var samePivotDuplicates = 0;
+    for (var call = start; call < start + 10; call++) {
+      final current = <String>{};
+      for (final item in block.where((row) => row.call == call)) {
+        final normalized = _answerKey(item.row.correct);
+        if (past.contains(normalized)) pastDuplicates++;
+        if (!current.add(normalized)) currentDuplicates++;
+        if (!byPivot.add('${item.row.slot.pivot}|$normalized')) {
+          samePivotDuplicates++;
+        }
+      }
+      past.addAll(current);
+    }
+    allPast += pastDuplicates;
+    allCurrent += currentDuplicates;
+    allSameP += samePivotDuplicates;
+    buffer.writeln('| ${(start - 1) ~/ 10 + 1} | '
+        '${block.map((item) => item.call).toSet().length} | '
+        '${block.length} | ${past.length} | '
+        '$pastDuplicates | $currentDuplicates | $samePivotDuplicates |');
+  }
+  buffer
+    ..writeln()
+    ..writeln('Repeticiones contra U: $allPast; '
+        'dentro de llamada: $allCurrent; dentro del mismo P: $allSameP.')
+    ..writeln('Las R repetidas entre bloques no incumplen U porque se reinicia.')
+    ..writeln('La comparación es textual normalizada por mayúsculas y espacios; '
+        'no unifica sinónimos ni hechos equivalentes.');
   return buffer.toString();
 }
 

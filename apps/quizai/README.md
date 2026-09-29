@@ -153,4 +153,22 @@ El control guarda sus resultados separados en
 La prueba P+D previa se conserva intacta. Las estadísticas del control
 cuentan las respuestas R distintas y repetidas dentro de cada P.
 
+### Control sin D y con U en bloques de 10 llamadas
+
+Esta variante mantiene P, dificultad, modelo y semilla del control sin D.
+En cada bloque U comienza vacío; recibe las respuestas R de las llamadas
+anteriores y vuelve a vaciarse antes de las llamadas 11, 21, ..., 91.
+Luna recibe solo la lista U y no recibe dimensiones D ni preguntas anteriores.
+
+```powershell
+.\apps\quizai\run.ps1 -ProbarLuna -SinD -ConU -Muestras 100 -LunaSemilla 20260929
+```
+
+Las 100 llamadas son diez bloques independientes de diez. El verificador
+reutilizado registra U por llamada y las coincidencias textuales de R con U,
+sin descartar respuestas infractoras (forman parte del experimento).
+Los resultados se guardan como `luna-pu-*.jsonl` y `luna-pu-*.md`
+en el directorio habitual. Se guardan por llamada; al interrumpir el lote,
+se conservan las llamadas terminadas.
+
 La opción `-VerifyOnly` de la partida anterior se mantiene sin cambios.

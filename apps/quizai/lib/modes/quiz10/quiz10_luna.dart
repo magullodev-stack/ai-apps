@@ -68,7 +68,11 @@ Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, e
 ${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\n')}''';
 
 /// Control experimental: mismas P y dificultades, sin información D para Luna.
-String quiz10LunaPromptSinD(List<Quiz10LunaSlot> plan) => '''Genera para cada fila i una pregunta Qᵢ y su respuesta correcta Rᵢ.
+String quiz10LunaPromptSinD(
+  List<Quiz10LunaSlot> plan, {
+  List<String>? historialU,
+}) {
+  final base = '''Genera para cada fila i una pregunta Qᵢ y su respuesta correcta Rᵢ.
 
 Pᵢ: campo de conocimiento fijado por Dart.
 Rᵢ: respuesta factual, concreta y verificable de Pᵢ.
@@ -84,6 +88,14 @@ Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, e
 | id | Pᵢ | Dificultad | Rᵢ |
 |---:|---|---|---|
 ${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.difficulty} | |').join('\n')}''';
+
+  if (historialU == null) return base;
+  return base.replaceFirst(
+    'id(Rᵢ) ∉ {id(Rⱼ) : j < i}',
+    'id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}\n\n'
+        'U:\n${historialU.isEmpty ? '∅' : historialU.map((r) => '- $r').join('\n')}',
+  );
+}
 
 /// Luna devuelve solamente sus dos campos nuevos más el identificador.
 Map<String, Object?> quiz10LunaSchema() => {

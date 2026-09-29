@@ -108,6 +108,35 @@ void main() {
     }
   });
 
+  test('U se añade al control sin D sin alterar P ni dificultad', () {
+    final plan = selectQuiz10LunaPlan(Random(20260929));
+    final control = quiz10LunaPromptSinD(plan);
+    final initial = quiz10LunaPromptSinD(plan, historialU: []);
+    final subsequent = quiz10LunaPromptSinD(
+      plan,
+      historialU: ['Miguel de Cervantes', 'Marte'],
+    );
+
+    expect(control, isNot(contains('U:')));
+    expect(control, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
+    expect(initial, contains('id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}'));
+    expect(initial, contains('U:\n∅'));
+    expect(subsequent, contains('U:\n- Miguel de Cervantes\n- Marte'));
+    expect(subsequent, contains('id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}'));
+    expect(subsequent, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+    expect(subsequent, contains('| id | Pᵢ | Dificultad | Rᵢ |'));
+    expect(subsequent, isNot(contains('Dᵢ')));
+    for (final slot in plan) {
+      expect(
+        subsequent,
+        contains('| ${slot.number} | ${slot.pivot} | ${slot.difficulty} | |'),
+      );
+      expect(subsequent, isNot(contains(slot.dimension.code)));
+      expect(subsequent, isNot(contains(slot.dimension.instruction)));
+    }
+    expect(subsequent, isNot(contains('U:\n∅')));
+  });
+
   test('acepta diez Q/R y rechaza filas incompletas, fuera de orden o extrañas', () {
     final plan = selectQuiz10LunaPlan(Random(5));
     final items = _rows(plan);
