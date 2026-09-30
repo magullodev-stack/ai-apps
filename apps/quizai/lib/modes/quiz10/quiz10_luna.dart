@@ -1,40 +1,11 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
-import '../../coverage/factual_question_dimensions.dart';
-import 'quiz.dart';
-import 'quiz10_pivots.dart';
+import 'quiz10_catalog.dart';
 
-class Quiz10LunaSlot {
-  const Quiz10LunaSlot({
-    required this.number,
-    required this.pivot,
-    required this.dimension,
-    required this.difficulty,
-  });
-
-  final int number;
-  final String pivot;
-  final FactualQuestionDimension dimension;
-  final String difficulty;
-}
-
-List<Quiz10LunaSlot> selectQuiz10LunaPlan(Random random) {
-  final pivots = [...quiz10Pivots]..shuffle(random);
-  final dimensions = [...factualQuestionDimensions]..shuffle(random);
-
-  return List.unmodifiable([
-    for (var i = 0; i < 10; i++)
-      Quiz10LunaSlot(
-        number: i + 1,
-        pivot: pivots[i],
-        dimension: dimensions[i],
-        difficulty: quizDifficulties[i],
-      ),
-  ]);
-}
+// El catálogo selecciona P y D.
+// Luna recibe esas parejas y genera Q y R.
 
 const String quiz10LunaPrompt = '''Para cada fila i, primero selecciona una Rᵢ factual, concreta y verificable.
 Después formula Qᵢ conforme a Pᵢ y Dᵢ, de modo que Rᵢ sea una respuesta correcta.
@@ -56,21 +27,23 @@ C = {(Rᵢ,Rⱼ): 1 ≤ j < i ≤ 10}
 
 ∀(x,y) ∈ C: x ≠literal y ∧ x ≢semántica y''';
 
-String quiz10LunaInput(List<Quiz10LunaSlot> plan) {
+String quiz10LunaInput(List<Quiz10Pair> plan) {
   if (plan.length != 10) {
-    throw ArgumentError('Luna requiere diez filas.');
+    throw ArgumentError('Luna requiere diez parejas P-D.');
   }
 
   final rows = [
     for (final slot in plan)
       {
         'id': slot.number,
-        'P': slot.pivot,
+        'P': {
+          'codigo': slot.pivot.code,
+          'nombre': slot.pivot.name,
+        },
         'D': {
           'codigo': slot.dimension.code,
-          'instruccion': slot.dimension.instruction,
+          'definicion': slot.dimension.instruction,
         },
-        'dificultad': slot.difficulty,
       },
   ];
 
@@ -87,7 +60,11 @@ Map<String, Object?> quiz10LunaSchema() => {
       'items': {
         'type': 'object',
         'additionalProperties': false,
-        'required': ['id', 'pregunta', 'respuesta_correcta'],
+        'required': [
+          'id',
+          'pregunta',
+          'respuesta_correcta',
+        ],
         'properties': {
           'id': {'type': 'integer'},
           'pregunta': {'type': 'string'},
@@ -105,23 +82,24 @@ class Quiz10LunaRow {
     required this.correct,
   });
 
-  final Quiz10LunaSlot slot;
+  final Quiz10Pair slot;
   final String question;
   final String correct;
 }
 
 List<Quiz10LunaRow> parseQuiz10LunaOutput(
   String text,
-  List<Quiz10LunaSlot> plan,
+  List<Quiz10Pair> plan,
 ) {
   const invalid = FormatException(
     'La respuesta de Luna no cumple el formato de Quiz10.',
   );
 
+  if (plan.length != 10) throw invalid;
+
   final decoded = jsonDecode(text);
 
-  if (plan.length != 10 ||
-      decoded is! Map<String, dynamic> ||
+  if (decoded is! Map<String, dynamic> ||
       decoded['preguntas'] is! List) {
     throw invalid;
   }
@@ -145,7 +123,9 @@ List<Quiz10LunaRow> parseQuiz10LunaOutput(
     final question = (row['pregunta'] as String).trim();
     final correct = (row['respuesta_correcta'] as String).trim();
 
-    if (question.isEmpty || correct.isEmpty) throw invalid;
+    if (question.isEmpty || correct.isEmpty) {
+      throw invalid;
+    }
 
     result.add(
       Quiz10LunaRow(
@@ -161,7 +141,7 @@ List<Quiz10LunaRow> parseQuiz10LunaOutput(
 
 abstract interface class Quiz10LunaGenerator {
   Future<List<Quiz10LunaRow>> generate(
-    List<Quiz10LunaSlot> plan,
+    List<Quiz10Pair> plan,
   );
 }
 
@@ -176,9 +156,10 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
   @override
   Future<List<Quiz10LunaRow>> generate(
-    List<Quiz10LunaSlot> plan,
+    List<Quiz10Pair> plan,
   ) async {
-    if (model.trim().isEmpty || client.authorization.trim().isEmpty) {
+    if (model.trim().isEmpty ||
+        client.authorization.trim().isEmpty) {
       throw StateError('Falta configurar Luna.');
     }
 
