@@ -8,8 +8,6 @@ param(
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
     [switch]$ProbarLuna,
-    [switch]$SinD,
-    [switch]$ConU,
     [ValidateSet('15', '86')]
     [string]$BancoD,
     [ValidateRange(0, 1000000000)]
@@ -212,8 +210,6 @@ if ($EvaluarDimensiones) {
 }
 
 if ($ProbarLuna) {
-    if ($ConU -and (-not $SinD)) { throw 'Para probar U, usa también -SinD.' }
-    if ($BancoD -and ($SinD -or $ConU)) { throw 'La comparación de bancos D no admite -SinD ni -ConU.' }
     # Reutiliza el servicio de IA sin exponer la clave a Dart cliente.
     $previousLunaEnv = @{}
     foreach ($name in @('AI_APPS_AI_API_KEY', 'OPENAI_API_KEY',
@@ -229,8 +225,6 @@ if ($ProbarLuna) {
         Push-Location (Join-Path $repo 'apps\quizai')
         try {
             $lunaArgs = @('run', 'tool/verify_generation.dart', '--luna', '--muestras', "$Muestras", '--semilla', "$LunaSemilla")
-            if ($SinD) { $lunaArgs += '--sin-d' }
-            if ($ConU) { $lunaArgs += '--con-u' }
             if ($BancoD) { $lunaArgs += @('--banco-d', $BancoD) }
             & $dart @lunaArgs
             if ($LASTEXITCODE -ne 0) { throw 'Falló la prueba real de Luna P × D.' }
