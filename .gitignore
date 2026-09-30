@@ -7,4 +7,6 @@ build/
 *.iml
 .DS_Store
 Thumbs.db
-.ai-apps/
+# Mantener privados los archivos locales; versionar experimentos de cualquier fecha.
+.ai-apps/*
+!.ai-apps/experimentos-*/
