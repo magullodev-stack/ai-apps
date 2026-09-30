@@ -106,89 +106,31 @@ final class Quiz10LunaRow {
   final String correct;
 }
 
-String quiz10LunaPrompt(List<Quiz10LunaSlot> plan) => '''Genera para cada fila i una pregunta Qᵢ y su respuesta correcta Rᵢ.
+String quiz10LunaPrompt(List<Quiz10LunaSlot> plan) => '''Para cada fila i, primero selecciona una Rᵢ factual, concreta y verificable.
+Después formula Qᵢ conforme a Pᵢ y Dᵢ, de modo que Rᵢ sea una respuesta correcta.
 
-Pᵢ: campo de conocimiento fijado por Dart.
-Dᵢ: instrucción que debe satisfacer la pregunta Qᵢ.
-Rᵢ: respuesta factual, concreta y verificable de Pᵢ.
-Qᵢ: pregunta natural de cultura general que cumple Dᵢ y cuya respuesta inequívoca es Rᵢ.
+dif(Rᵢ): dificultad estimada de conocer Rᵢ.
 
-Sea d(Rᵢ) la dificultad estimada de que una persona con cultura general conozca Rᵢ.
+max(dif(R₁),...,dif(R₄)) < min(dif(R₅),...,dif(R₇))
+max(dif(R₅),...,dif(R₇)) < min(dif(R₈),dif(R₉))
+max(dif(R₈),dif(R₉)) < dif(R₁₀)
 
-d(R₁) < d(R₂) < ... < d(R₁₀)
-id(Rᵢ) ∉ {id(Rⱼ) : j < i}
-4 ≤ palabras(Qᵢ) ≤ 16
-1 ≤ palabras(Rᵢ) ≤ 6
-
-Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ,
-incluidos nombres propios, epónimos y siglas.
-
-Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
-
-| id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
-|---:|---|---|---|---|
-${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\n')}''';
-
-/// Prompt fijo y exclusivo del experimento de comparación D15/D86.
-String quiz10LunaPromptComparacionBancosD(List<Quiz10LunaSlot> plan) => '''Para cada fila i, selecciona primero una respuesta Rᵢ factual, concreta y verificable de Pᵢ, ajustada al nivel de dificultad indicado. Después formula una pregunta natural Qᵢ que cumpla Dᵢ y cuya única respuesta correcta sea Rᵢ.
-
-Pᵢ: campo de conocimiento fijado por Dart.
-Dᵢ: instrucción que debe satisfacer Qᵢ.
-Utiliza exclusivamente Pᵢ, Dᵢ y el nivel de dificultad asignados en la matriz.
-
-Sea d(Rᵢ) la dificultad estimada de conocer la respuesta Rᵢ.
-
-max(d(R₁),...,d(R₄)) < min(d(R₅),...,d(R₇))
-max(d(R₅),...,d(R₇)) < min(d(R₈),d(R₉))
-max(d(R₈),d(R₉)) < d(R₁₀)
-
-Rᵢ no repite ni equivale semánticamente a ninguna Rⱼ de esta llamada (j < i).
 4 ≤ palabras(Qᵢ) ≤ 24
 1 ≤ palabras(Rᵢ) ≤ 8
 
-Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ, incluidos nombres propios, epónimos y siglas.
+C = {(Rᵢ,Rⱼ): 1 ≤ j < i ≤ 10}
+    ∪ ⋃ᵢ₌₁¹⁰ (
+        PalabrasYExpresiones(Qᵢ)
+        × ({Rᵢ} ∪ AliasYFragmentos(Rᵢ))
+      )
+
+∀(x,y) ∈ C: x ≠literal y ∧ x ≢semántica y
 
 Devuelve exclusivamente un objeto JSON con la propiedad "preguntas": un array de diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
-No devuelvas Pᵢ, Dᵢ, dificultad ni la matriz.
 
 | id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
 |---:|---|---|---|---|
 ${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\n')}''';
-
-/// Control experimental: mismas P y dificultades, sin información D para Luna.
-String quiz10LunaPromptSinD(
-  List<Quiz10LunaSlot> plan, {
-  List<String>? historialU,
-}) {
-  final base = '''Genera para cada fila i una pregunta Qᵢ y su respuesta correcta Rᵢ.
-
-Pᵢ: campo de conocimiento fijado por Dart.
-Rᵢ: respuesta factual, concreta y verificable de Pᵢ.
-Qᵢ: pregunta natural de cultura general cuya respuesta inequívoca es Rᵢ.
-
-Sea d(Rᵢ) la dificultad estimada de que una persona con cultura general conozca Rᵢ.
-
-d(R₁) < d(R₂) < ... < d(R₁₀)
-id(Rᵢ) ∉ {id(Rⱼ) : j < i}
-4 ≤ palabras(Qᵢ) ≤ 16
-1 ≤ palabras(Rᵢ) ≤ 6
-
-Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ,
-incluidos nombres propios, epónimos y siglas.
-
-Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
-
-| id | Pᵢ | Dificultad | Rᵢ |
-|---:|---|---|---|
-${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.difficulty} | |').join('\n')}''';
-
-  if (historialU == null) return base;
-  return base.replaceFirst(
-    'id(Rᵢ) ∉ {id(Rⱼ) : j < i}',
-    'id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}\n\n'
-        'U:\n${historialU.isEmpty ? '∅' : historialU.map((r) => '- $r').join('\n')}',
-  );
-}
 
 /// Luna devuelve solamente sus dos campos nuevos más el identificador.
 Map<String, Object?> quiz10LunaSchema() => {
