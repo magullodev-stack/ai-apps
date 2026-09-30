@@ -82,73 +82,29 @@ void main() {
       expect(prompt, contains(slot.dimension.instruction));
       expect(prompt, contains(slot.difficulty));
     }
-    expect(prompt, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
-    expect(prompt, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
+    expect(prompt, contains('max(dif(R₁),...,dif(R₄)) < min(dif(R₅),...,dif(R₇))'));
+    expect(prompt, contains('max(dif(R₅),...,dif(R₇)) < min(dif(R₈),dif(R₉))'));
+    expect(prompt, contains('max(dif(R₈),dif(R₉)) < dif(R₁₀)'));
+    expect(prompt, contains('C = {(Rᵢ,Rⱼ): 1 ≤ j < i ≤ 10}'));
+    expect(prompt, contains('PalabrasYExpresiones(Qᵢ)'));
+    expect(prompt, contains('AliasYFragmentos(Rᵢ)'));
+    expect(prompt, contains('∀(x,y) ∈ C: x ≠literal y ∧ x ≢semántica y'));
+    expect(prompt, contains('4 ≤ palabras(Qᵢ) ≤ 24'));
+    expect(prompt, contains('1 ≤ palabras(Rᵢ) ≤ 8'));
     final itemSchema = (quiz10LunaSchema()['properties'] as Map)['preguntas']['items'] as Map;
     expect(itemSchema['required'], ['id', 'pregunta', 'respuesta_correcta']);
     expect((itemSchema['properties'] as Map).keys, ['id', 'pregunta', 'respuesta_correcta']);
   });
 
-  test('control sin D mantiene P, dificultades y fórmula, sin transmitir D', () {
+  test('el prompt único conserva los requisitos aprobados y la matriz de cada partida', () {
     final plan = selectQuiz10LunaPlan(Random(20260929));
-    final original = quiz10LunaPrompt(plan);
-    final control = quiz10LunaPromptSinD(plan);
-    expect(control, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
-    expect(control, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
-    expect(control, contains('{id, pregunta, respuesta_correcta}'));
-    expect(control, isNot(contains('Dᵢ')));
+    final prompt = quiz10LunaPrompt(plan);
+    expect(prompt, startsWith('Para cada fila i, primero selecciona una Rᵢ factual, concreta y verificable.'));
+    expect(prompt, contains('Después formula Qᵢ conforme a Pᵢ y Dᵢ, de modo que Rᵢ sea una respuesta correcta.'));
+    expect(prompt, contains('Devuelve exclusivamente un objeto JSON con la propiedad "preguntas"'));
+    expect(prompt, isNot(contains('d(R₁) < d(R₂)')));
     for (final slot in plan) {
-      expect(original, contains(slot.dimension.instruction));
-      expect(
-        control,
-        contains('| ${slot.number} | ${slot.pivot} | ${slot.difficulty} |'),
-      );
-      expect(control, isNot(contains(slot.dimension.code)));
-      expect(control, isNot(contains(slot.dimension.instruction)));
-    }
-  });
-
-  test('U se añade al control sin D sin alterar P ni dificultad', () {
-    final plan = selectQuiz10LunaPlan(Random(20260929));
-    final control = quiz10LunaPromptSinD(plan);
-    final initial = quiz10LunaPromptSinD(plan, historialU: []);
-    final subsequent = quiz10LunaPromptSinD(
-      plan,
-      historialU: ['Miguel de Cervantes', 'Marte'],
-    );
-
-    expect(control, isNot(contains('U:')));
-    expect(control, contains('id(Rᵢ) ∉ {id(Rⱼ) : j < i}'));
-    expect(initial, contains('id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}'));
-    expect(initial, contains('U:\n∅'));
-    expect(subsequent, contains('U:\n- Miguel de Cervantes\n- Marte'));
-    expect(subsequent, contains('id(Rᵢ) ∉ U ∪ {id(Rⱼ) : j < i}'));
-    expect(subsequent, contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
-    expect(subsequent, contains('| id | Pᵢ | Dificultad | Rᵢ |'));
-    expect(subsequent, isNot(contains('Dᵢ')));
-    for (final slot in plan) {
-      expect(
-        subsequent,
-        contains('| ${slot.number} | ${slot.pivot} | ${slot.difficulty} | |'),
-      );
-      expect(subsequent, isNot(contains(slot.dimension.code)));
-      expect(subsequent, isNot(contains(slot.dimension.instruction)));
-    }
-    expect(subsequent, isNot(contains('U:\n∅')));
-  });
-
-  test('restricciones de longitud y de filtración en ambos prompts', () {
-    final plan = selectQuiz10LunaPlan(Random(20260929));
-    final prompts = [
-      quiz10LunaPrompt(plan),
-      quiz10LunaPromptSinD(plan),
-      quiz10LunaPromptSinD(plan, historialU: ['Miguel de Cervantes']),
-    ];
-    for (final prompt in prompts) {
-      expect(prompt, contains('4 ≤ palabras(Qᵢ) ≤ 16'));
-      expect(prompt, contains('1 ≤ palabras(Rᵢ) ≤ 6'));
-      expect(prompt, contains('Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ,'));
-      expect(prompt, contains('incluidos nombres propios, epónimos y siglas.'));
+      expect(prompt, contains('| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |'));
     }
   });
 
@@ -200,7 +156,7 @@ void main() {
     }
   });
 
-  test('comparación D15/D86 solo cambia las D de la tabla', () {
+  test('comparación D15/D86 solo cambia la matriz del mismo prompt', () {
     const seed = 20260929;
     final original = selectQuiz10LunaPlanBancoD(
       Random(seed), bancoD: 86, callIndex: 0, seed: seed,
@@ -208,22 +164,17 @@ void main() {
     final candidate = selectQuiz10LunaPlanBancoD(
       Random(seed), bancoD: 15, callIndex: 0, seed: seed,
     );
-    final prompt86 = quiz10LunaPromptComparacionBancosD(original);
-    final prompt15 = quiz10LunaPromptComparacionBancosD(candidate);
+    final prompt86 = quiz10LunaPrompt(original);
+    final prompt15 = quiz10LunaPrompt(candidate);
     expect(prompt86.split('| id | Pᵢ |').first, prompt15.split('| id | Pᵢ |').first);
+    expect(prompt86, isNot(equals(prompt15)));
     for (final prompt in [prompt86, prompt15]) {
-      expect(prompt, contains('max(d(R₁),...,d(R₄)) < min(d(R₅),...,d(R₇))'));
-      expect(prompt, contains('max(d(R₅),...,d(R₇)) < min(d(R₈),d(R₉))'));
-      expect(prompt, contains('max(d(R₈),d(R₉)) < d(R₁₀)'));
+      expect(prompt, contains('max(dif(R₁),...,dif(R₄)) < min(dif(R₅),...,dif(R₇))'));
+      expect(prompt, contains('max(dif(R₅),...,dif(R₇)) < min(dif(R₈),dif(R₉))'));
+      expect(prompt, contains('max(dif(R₈),dif(R₉)) < dif(R₁₀)'));
       expect(prompt, contains('4 ≤ palabras(Qᵢ) ≤ 24'));
       expect(prompt, contains('1 ≤ palabras(Rᵢ) ≤ 8'));
-      expect(prompt, contains('Utiliza exclusivamente Pᵢ, Dᵢ y el nivel'));
-      expect(prompt, contains('Rᵢ no repite ni equivale semánticamente a ninguna Rⱼ de esta llamada (j < i).'));
-      expect(prompt, contains('Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ'));
-      expect(prompt, contains('un objeto JSON con la propiedad "preguntas"'));
-      expect(prompt, contains('No devuelvas Pᵢ, Dᵢ, dificultad ni la matriz.'));
     }
-    expect(quiz10LunaPrompt(original), contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
   });
 
   test('acepta diez Q/R y rechaza filas incompletas, fuera de orden o extrañas', () {
