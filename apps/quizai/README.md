@@ -110,59 +110,27 @@ activo. El archivo de selección es local y no se publica en Git.
 
 ## Generación P × D → Q, R (Luna)
 
-La primera operación definitiva de Quiz10 está implementada en
-`lib/modes/quiz10/quiz10_luna.dart`. Dart dispone de dos bancos cerrados:
-21 pivotes (`quiz10_pivots.dart`) y 86 instrucciones literales
-«Pregunta por…» (`lib/coverage/factual_question_dimensions.dart`),
-con sus 18 familias I/M/E. Cada partida sortea diez P distintas y diez D
-distintas, sin reemplazo; asigna la dificultad por posición. Luna recibe
-esas diez combinaciones y devuelve solamente id, pregunta Q y respuesta R.
-No genera distractores.
+El catálogo canónico de Quiz10 se encuentra en
+`lib/modes/quiz10/quiz10_catalog.dart`: contiene los 21 pivotes P01–P21
+y las 34 dimensiones D01–D34. Dart selecciona diez P y diez D distintas
+por partida, las combina por fila y las entrega a Luna sin etiquetas de
+dificultad heredadas.
 
-La pantalla jugable conserva temporalmente la generación anterior hasta
-conectar Terra (validación/corrección y tres distractores). La prueba
-empírica usa el prompt único de Luna y **no envía historial U**.
+`lib/modes/quiz10/quiz10_luna.dart` contiene el prompt literal de Luna,
+la preparación de los datos P–D, el esquema de respuesta y la llamada
+para obtener diez pares pregunta Q y respuesta R. El orden de dificultad
+está definido en el propio prompt.
 
-Desde la raíz del repositorio, con el servicio de IA preparado por el propio lanzador:
+Terra, encargada de la validación y los distractores, todavía no está
+conectada. La pantalla de Quiz10 conserva su interfaz y espera esas
+preguntas terminadas; no utiliza el generador antiguo.
+
+Desde la raíz del repositorio, `-ProbarLuna` ejecuta únicamente esa
+etapa con el catálogo actual y muestra los pares Q–R en la terminal:
 
 ```powershell
 .\apps\quizai\run.ps1 -ProbarLuna -Muestras 1
-.\apps\quizai\run.ps1 -ProbarLuna -Muestras 20
 ```
 
-Se admite `-LunaSemilla 20260929` para reproducir el sorteo de P–D y
-`-CatalogModel` para elegir el modelo. El verificador existente
-`tool/verify_generation.dart` guarda las preguntas, respuestas, instrucciones
-D y uso de tokens en `.ai-apps/experimentos-luna-pd/` como JSONL y Markdown.
-El informe cuenta repeticiones textuales de R por P, distinguiendo
-coincidencias con igual D y con distintas D. No identifica sinónimos;
-para atribuir causalidad a D se necesitará un control sin D.
-
-Las salidas de las antiguas pruebas sin D y con U permanecen como registros
-históricos en `.ai-apps/experimentos-luna-pd/`, pero sus variantes de prompt
-ya no forman parte del código ejecutable. `-VerifyOnly` conserva la verificación
-de la partida anterior.
-
-### Comparación experimental del banco D15 frente a D86
-
-El banco candidato conserva las definiciones originales de
-[`Dimensiones_15.md`](Dimensiones_15.md). No modifica los 86 códigos de producción.
-La comparación utiliza el **mismo prompt único de Luna** que el generador
-principal (seleccionar R antes de Q, separación 4/3/2/1, Q de 4 a 24
-palabras, R de 1 a 8), cambiando únicamente la matriz de D, sin U.
-P y dificultades coinciden llamada a llamada. Los archivos de pruebas
-anteriores a esta unificación conservan el prompt de su ejecución original.
-Los dos bancos usan el mismo selector equilibrado, sin repetir D en una llamada:
-en 200 llamadas, cada D15 aparece 13-14 veces en cada posición y cada D86
-aparece 2-3 veces por posición.
-
-```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -BancoD 15 -Muestras 200 -LunaSemilla 20260929
-.\apps\quizai\run.ps1 -ProbarLuna -BancoD 86 -Muestras 200 -LunaSemilla 20260929
-```
-
-El primer comando crea `luna-banco-d15-*.jsonl` y `.md`; el segundo
-crea `luna-banco-d86-*.jsonl` y `.md` bajo
-`.ai-apps/experimentos-luna-pd/`. Los resultados se guardan por llamada.
-El selector D15/D86 solo se utiliza en las pruebas; no altera el banco
-canónico de la aplicación. Los resultados no están factualmente validados por Terra.
+`-VerifyOnly` verifica también solo la etapa de Luna, **no** una
+partida completa ni la verificación factual de Terra.
