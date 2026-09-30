@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../modes/estudio/estudio_page.dart';
-import '../../modes/quiz10/quiz_generation.dart';
 import '../../modes/quiz10/quiz_page.dart';
 import '../app_theme.dart';
 import '../generation_dependencies.dart';
 import 'modalidad_card.dart';
 
 class ModalidadesPage extends StatelessWidget {
-  const ModalidadesPage({super.key, this.generator});
-
-  final QuizGenerator? generator;
+  const ModalidadesPage({super.key});
 
   void _openQuiz10(BuildContext context) {
     Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => QuizPage(generator: generator)),
+      MaterialPageRoute(builder: (_) => const QuizPage()),
     );
   }
 
