@@ -37,6 +37,55 @@ List<Quiz10LunaSlot> selectQuiz10LunaPlan(Random random) {
   ]);
 }
 
+/// Banco cerrado para la comparación experimental con las 86 D originales.
+const quiz10CandidateDimensionCodes = <String>[
+  'D01',
+  'D02',
+  'D05',
+  'D06',
+  'D10',
+  'D13',
+  'D15',
+  'D24',
+  'D34',
+  'D35',
+  'D45',
+  'D49',
+  'D50',
+  'D69',
+  'D78',
+];
+
+/// En 200 llamadas, cada D candidata ocupa cada posición 13 o 14 veces.
+/// Mantiene el mismo pivote y nivel que el plan original con la misma semilla.
+List<Quiz10LunaSlot> selectQuiz10LunaPlanBanco15(
+  Random random, {
+  required int callIndex,
+  required int seed,
+}) {
+  if (callIndex < 0) throw RangeError.value(callIndex, 'callIndex');
+  final original = selectQuiz10LunaPlan(random);
+  final bank = [
+    for (final code in quiz10CandidateDimensionCodes)
+      factualQuestionDimensions.firstWhere((dimension) => dimension.code == code),
+  ];
+  final cycle = callIndex ~/ bank.length;
+  final phase = callIndex % bank.length;
+  final order = [...bank]..shuffle(Random(seed + cycle));
+
+  // El paso 4 es coprimo con 15: diez D diferentes en cada llamada;
+  // cada posición recorre las 15 D en cada ciclo.
+  return List.unmodifiable([
+    for (var i = 0; i < original.length; i++)
+      Quiz10LunaSlot(
+        number: original[i].number,
+        pivot: original[i].pivot,
+        dimension: order[(phase + 4 * i) % bank.length],
+        difficulty: original[i].difficulty,
+      ),
+  ]);
+}
+
 final class Quiz10LunaRow {
   const Quiz10LunaRow({
     required this.slot,
@@ -71,6 +120,30 @@ Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, e
 | id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
 |---:|---|---|---|---|
 ${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\n')}''';
+
+/// Prompt fijo y exclusivo del experimento de comparación D15/D86.
+String quiz10LunaPromptComparacionBancosD(List<Quiz10LunaSlot> plan) => '''Para cada fila i, selecciona primero una respuesta Rᵢ factual, concreta y verificable de Pᵢ, ajustada al nivel de dificultad indicado. Después formula una pregunta natural Qᵢ que cumpla Dᵢ y cuya única respuesta correcta sea Rᵢ.
+
+Pᵢ: campo de conocimiento fijado por Dart.
+Dᵢ: instrucción que debe satisfacer Qᵢ.
+
+Sea d(Rᵢ) la dificultad estimada de conocer la respuesta Rᵢ.
+
+max(d(R₁),...,d(R₄)) < min(d(R₅),...,d(R₇))
+max(d(R₅),...,d(R₇)) < min(d(R₈),d(R₉))
+max(d(R₈),d(R₉)) < d(R₁₀)
+
+Rᵢ no repite ni equivale semánticamente a ninguna respuesta anterior.
+4 ≤ palabras(Qᵢ) ≤ 24
+1 ≤ palabras(Rᵢ) ≤ 8
+
+Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ, incluidos nombres propios, epónimos y siglas.
+
+Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
+
+| id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
+|---:|---|---|---|---|
+${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\\n')}''';
 
 /// Control experimental: mismas P y dificultades, sin información D para Luna.
 String quiz10LunaPromptSinD(
