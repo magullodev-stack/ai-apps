@@ -152,47 +152,61 @@ void main() {
     }
   });
 
-  test('banco D15 equilibra por posición y conserva los pivotes', () {
+  test('bancos D15/D86 equilibrados por posición y sin repetir D', () {
     const seed = 20260929;
     expect(quiz10CandidateDimensionCodes, hasLength(15));
     expect(quiz10CandidateDimensionCodes.toSet(), hasLength(15));
-    final byPosition = [
-      for (var i = 0; i < 10; i++) <String, int>{},
-    ];
-    for (var call = 0; call < 200; call++) {
-      final original = selectQuiz10LunaPlan(Random(seed + call));
-      final candidate = selectQuiz10LunaPlanBanco15(
-        Random(seed + call), callIndex: call, seed: seed,
-      );
-      expect(candidate, hasLength(10));
-      expect(candidate.map((slot) => slot.dimension.code).toSet(), hasLength(10));
-      for (var row = 0; row < 10; row++) {
-        expect(candidate[row].number, original[row].number);
-        expect(candidate[row].pivot, original[row].pivot);
-        expect(candidate[row].difficulty, original[row].difficulty);
-        expect(
-          quiz10CandidateDimensionCodes,
-          contains(candidate[row].dimension.code),
+    for (final size in [15, 86]) {
+      final byPosition = [
+        for (var i = 0; i < 10; i++) <String, int>{},
+      ];
+      for (var call = 0; call < 200; call++) {
+        final original = selectQuiz10LunaPlan(Random(seed + call));
+        final selected = selectQuiz10LunaPlanBancoD(
+          Random(seed + call),
+          bancoD: size,
+          callIndex: call,
+          seed: seed,
         );
-        byPosition[row].update(
-          candidate[row].dimension.code,
-          (count) => count + 1,
-          ifAbsent: () => 1,
-        );
+        expect(selected, hasLength(10));
+        expect(selected.map((slot) => slot.dimension.code).toSet(), hasLength(10));
+        for (var row = 0; row < 10; row++) {
+          expect(selected[row].number, original[row].number);
+          expect(selected[row].pivot, original[row].pivot);
+          expect(selected[row].difficulty, original[row].difficulty);
+          if (size == 15) {
+            expect(
+              quiz10CandidateDimensionCodes,
+              contains(selected[row].dimension.code),
+            );
+          }
+          byPosition[row].update(
+            selected[row].dimension.code,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
+        }
       }
-    }
-    for (final counts in byPosition) {
-      expect(counts.keys.toSet(), quiz10CandidateDimensionCodes.toSet());
-      expect(counts.values.every((count) => count == 13 || count == 14), isTrue);
-      expect(counts.values.reduce((a, b) => a + b), 200);
+      for (final counts in byPosition) {
+        expect(counts.keys, hasLength(size));
+        expect(
+          counts.values.every(
+            (count) => count == 200 ~/ size || count == (200 ~/ size) + 1,
+          ),
+          isTrue,
+        );
+        expect(counts.values.reduce((a, b) => a + b), 200);
+      }
     }
   });
 
   test('comparación D15/D86 solo cambia las D de la tabla', () {
     const seed = 20260929;
-    final original = selectQuiz10LunaPlan(Random(seed));
-    final candidate = selectQuiz10LunaPlanBanco15(
-      Random(seed), callIndex: 0, seed: seed,
+    final original = selectQuiz10LunaPlanBancoD(
+      Random(seed), bancoD: 86, callIndex: 0, seed: seed,
+    );
+    final candidate = selectQuiz10LunaPlanBancoD(
+      Random(seed), bancoD: 15, callIndex: 0, seed: seed,
     );
     final prompt86 = quiz10LunaPromptComparacionBancosD(original);
     final prompt15 = quiz10LunaPromptComparacionBancosD(candidate);
