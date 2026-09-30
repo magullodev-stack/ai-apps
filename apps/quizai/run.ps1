@@ -8,8 +8,6 @@ param(
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
     [switch]$ProbarLuna,
-    [ValidateSet('15', '86')]
-    [string]$BancoD,
     [ValidateRange(0, 1000000000)]
     [int]$LunaSemilla = 20260929,
     [ValidateRange(1, 30)]
@@ -225,7 +223,6 @@ if ($ProbarLuna) {
         Push-Location (Join-Path $repo 'apps\quizai')
         try {
             $lunaArgs = @('run', 'tool/verify_generation.dart', '--luna', '--muestras', "$Muestras", '--semilla', "$LunaSemilla")
-            if ($BancoD) { $lunaArgs += @('--banco-d', $BancoD) }
             & $dart @lunaArgs
             if ($LASTEXITCODE -ne 0) { throw 'Falló la prueba real de Luna P × D.' }
         } finally { Pop-Location }
@@ -239,7 +236,7 @@ if ($ProbarLuna) {
 
 # OpenAI credentials are never inherited by Flutter or passed as dart-defines.
 $previousClientEnv = @{}
-foreach ($name in @('AI_APPS_AI_API_KEY','OPENAI_API_KEY','AI_APPS_GAME_TOKEN','AI_APPS_AI_URL','ADB_SERVER_SOCKET')) {
+foreach ($name in @('AI_APPS_AI_API_KEY','OPENAI_API_KEY','AI_APPS_GAME_TOKEN','AI_APPS_AI_URL','AI_APPS_LUNA_MODEL','ADB_SERVER_SOCKET')) {
     $previousClientEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 try {
@@ -253,10 +250,11 @@ try {
             if (Test-Path -LiteralPath $receipt) { Remove-Item -LiteralPath $receipt }
             $env:AI_APPS_AI_URL = $session.endpoint
             $env:AI_APPS_GAME_TOKEN = $session.token
+            $env:AI_APPS_LUNA_MODEL = $CatalogModel
             & $dart run tool/verify_generation.dart
-            if ($LASTEXITCODE -ne 0) { throw "La generación real no superó la validación. Consulta $logFile" }
+            if ($LASTEXITCODE -ne 0) { throw "La generación Q-R de Luna no superó la validación. Consulta $logFile" }
             @{
-                model = 'gpt-4.1-mini'; validatedQuestions = 10
+                model = $CatalogModel; validatedLunaRows = 10; scope = 'Luna Q-R (sin Terra)'
                 completedAt = [DateTime]::UtcNow.ToString('o')
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $receipt
         } else {
