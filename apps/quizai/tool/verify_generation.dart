@@ -54,7 +54,7 @@ Future<void> main(List<String> args) async {
         .substring(0, 19)
         .replaceFirst('T', '_')
         .replaceAll(':', '-');
-    final reportPath = 'Q+R_$timestamp.txt';
+    final reportPath = 'Quiz10_Luna_Q+R_$timestamp.txt';
     final report = File(reportPath).openWrite();
 
     try {
