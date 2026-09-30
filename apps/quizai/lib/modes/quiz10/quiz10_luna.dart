@@ -56,25 +56,33 @@ const quiz10CandidateDimensionCodes = <String>[
   'D78',
 ];
 
-/// En 200 llamadas, cada D candidata ocupa cada posición 13 o 14 veces.
-/// Mantiene el mismo pivote y nivel que el plan original con la misma semilla.
-List<Quiz10LunaSlot> selectQuiz10LunaPlanBanco15(
+/// Selector experimental equilibrado por posición; el banco es la única
+/// variable entre los dos brazos. P y niveles coinciden llamada a llamada.
+List<Quiz10LunaSlot> selectQuiz10LunaPlanBancoD(
   Random random, {
+  required int bancoD,
   required int callIndex,
   required int seed,
 }) {
+  if (bancoD != 15 && bancoD != 86) {
+    throw ArgumentError.value(bancoD, 'bancoD');
+  }
   if (callIndex < 0) throw RangeError.value(callIndex, 'callIndex');
   final original = selectQuiz10LunaPlan(random);
-  final bank = [
-    for (final code in quiz10CandidateDimensionCodes)
-      factualQuestionDimensions.firstWhere((dimension) => dimension.code == code),
-  ];
+  final bank = bancoD == 15
+      ? [
+          for (final code in quiz10CandidateDimensionCodes)
+            factualQuestionDimensions.firstWhere(
+              (dimension) => dimension.code == code,
+            ),
+        ]
+      : factualQuestionDimensions;
   final cycle = callIndex ~/ bank.length;
   final phase = callIndex % bank.length;
   final order = [...bank]..shuffle(Random(seed + cycle));
 
-  // El paso 4 es coprimo con 15: diez D diferentes en cada llamada;
-  // cada posición recorre las 15 D en cada ciclo.
+  // Diez D distintas por llamada. Cada posición recorre las D del banco
+  // una vez por ciclo: 13-14 apariciones (D15), 2-3 (D86) en 200 llamadas.
   return List.unmodifiable([
     for (var i = 0; i < original.length; i++)
       Quiz10LunaSlot(
