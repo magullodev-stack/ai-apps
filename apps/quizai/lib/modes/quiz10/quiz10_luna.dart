@@ -7,8 +7,10 @@ import 'quiz10_catalog.dart';
 // El catálogo selecciona P y D.
 // Luna recibe esas parejas y genera Q y R.
 
-const String quiz10LunaPrompt = '''Para cada fila i, primero selecciona una Rᵢ factual, concreta y verificable.
-Después formula Qᵢ conforme a Pᵢ y Dᵢ, de modo que Rᵢ sea una respuesta correcta.
+const String quiz10LunaPrompt = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ y Dᵢ.
+Rᵢ debe ser una respuesta factual, concreta, verificable y correcta para Qᵢ.
+
+Las diez parejas Qᵢ–Rᵢ deben cumplir las siguientes restricciones:
 
 dif(Rᵢ): dificultad estimada de conocer Rᵢ.
 
