@@ -141,9 +141,12 @@ Future<void> _verifyLuna(
     if (conU && index % 10 == 0) historyU.clear();
     final historySent = List<String>.unmodifiable(historyU);
     final timer = Stopwatch()..start();
-    final plan = bancoD == 15
-        ? selectQuiz10LunaPlanBanco15(
-            Random(seed + index), callIndex: index, seed: seed,
+    final plan = bancoD != null
+        ? selectQuiz10LunaPlanBancoD(
+            Random(seed + index),
+            bancoD: bancoD,
+            callIndex: index,
+            seed: seed,
           )
         : selectQuiz10LunaPlan(Random(seed + index));
     final prompt = bancoD != null
@@ -163,6 +166,7 @@ Future<void> _verifyLuna(
           ? (conU ? 'P-U' : sinD ? 'P' : 'P-D')
           : 'P-D$bancoD',
       if (bancoD != null) 'bancoD': bancoD,
+      if (bancoD != null) 'asignacionD': 'equilibrada-por-posicion',
       if (bancoD != null) 'promptVersion': 'bancos-d-v1-4-3-2-1-q4-24-r1-8',
       if (conU) 'bloque': index ~/ 10 + 1,
       if (conU) 'posicionBloque': index % 10 + 1,
