@@ -180,8 +180,9 @@ El banco candidato conserva las definiciones originales de
 La comparación usa un **mismo prompt experimental** (seleccionar R antes de Q,
 separación de niveles 4/3/2/1, Q de 4 a 24 palabras, R de 1 a 8)
 para los dos bancos, sin U. P y dificultades coinciden llamada a llamada.
-D15 se distribuye de forma equilibrada: cada candidata ocupa cada posición
-13 o 14 veces en 200 llamadas, sin repetir D dentro de una llamada.
+Los dos bancos usan el mismo selector equilibrado, sin repetir D en una llamada:
+en 200 llamadas, cada D15 aparece 13-14 veces en cada posición y cada D86
+aparece 2-3 veces por posición.
 
 ```powershell
 .\apps\quizai\run.ps1 -ProbarLuna -BancoD 15 -Muestras 200 -LunaSemilla 20260929
