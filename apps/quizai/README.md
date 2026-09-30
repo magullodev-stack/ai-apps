@@ -121,7 +121,7 @@ No genera distractores.
 
 La pantalla jugable conserva temporalmente la generación anterior hasta
 conectar Terra (validación/corrección y tres distractores). La prueba
-empírica usa el prompt real de Luna y **no envía historial U**.
+empírica usa el prompt único de Luna y **no envía historial U**.
 
 Desde la raíz del repositorio, con el servicio de IA preparado por el propio lanzador:
 
@@ -138,48 +138,20 @@ El informe cuenta repeticiones textuales de R por P, distinguiendo
 coincidencias con igual D y con distintas D. No identifica sinónimos;
 para atribuir causalidad a D se necesitará un control sin D.
 
-### Control sin dimensiones D
-
-Para comparar con las primeras 50 llamadas P+D, se utiliza el mismo modelo,
-las mismas semillas, los mismos pivotes P y la misma distribución de dificultad.
-Solo se elimina D del prompt enviado a Luna; tampoco se proporciona historial U.
-
-```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -SinD -Muestras 50 -LunaSemilla 20260929
-```
-
-El control guarda sus resultados separados en
-`.ai-apps/experimentos-luna-pd/luna-p-*.jsonl` y `luna-p-*.md`.
-La prueba P+D previa se conserva intacta. Las estadísticas del control
-cuentan las respuestas R distintas y repetidas dentro de cada P.
-
-### Control sin D y con U en bloques de 10 llamadas
-
-Esta variante mantiene P, dificultad, modelo y semilla del control sin D.
-En cada bloque U comienza vacío; recibe las respuestas R de las llamadas
-anteriores y vuelve a vaciarse antes de las llamadas 11, 21, ..., 91.
-Luna recibe solo la lista U y no recibe dimensiones D ni preguntas anteriores.
-
-```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -SinD -ConU -Muestras 100 -LunaSemilla 20260929
-```
-
-Las 100 llamadas son diez bloques independientes de diez. El verificador
-reutilizado registra U por llamada y las coincidencias textuales de R con U,
-sin descartar respuestas infractoras (forman parte del experimento).
-Los resultados se guardan como `luna-pu-*.jsonl` y `luna-pu-*.md`
-en el directorio habitual. Se guardan por llamada; al interrumpir el lote,
-se conservan las llamadas terminadas.
-
-La opción `-VerifyOnly` de la partida anterior se mantiene sin cambios.
+Las salidas de las antiguas pruebas sin D y con U permanecen como registros
+históricos en `.ai-apps/experimentos-luna-pd/`, pero sus variantes de prompt
+ya no forman parte del código ejecutable. `-VerifyOnly` conserva la verificación
+de la partida anterior.
 
 ### Comparación experimental del banco D15 frente a D86
 
 El banco candidato conserva las definiciones originales de
 [`Dimensiones_15.md`](Dimensiones_15.md). No modifica los 86 códigos de producción.
-La comparación usa un **mismo prompt experimental** (seleccionar R antes de Q,
-separación de niveles 4/3/2/1, Q de 4 a 24 palabras, R de 1 a 8)
-para los dos bancos, sin U. P y dificultades coinciden llamada a llamada.
+La comparación utiliza el **mismo prompt único de Luna** que el generador
+principal (seleccionar R antes de Q, separación 4/3/2/1, Q de 4 a 24
+palabras, R de 1 a 8), cambiando únicamente la matriz de D, sin U.
+P y dificultades coinciden llamada a llamada. Los archivos de pruebas
+anteriores a esta unificación conservan el prompt de su ejecución original.
 Los dos bancos usan el mismo selector equilibrado, sin repetir D en una llamada:
 en 200 llamadas, cada D15 aparece 13-14 veces en cada posición y cada D86
 aparece 2-3 veces por posición.
@@ -192,5 +164,5 @@ aparece 2-3 veces por posición.
 El primer comando crea `luna-banco-d15-*.jsonl` y `.md`; el segundo
 crea `luna-banco-d86-*.jsonl` y `.md` bajo
 `.ai-apps/experimentos-luna-pd/`. Los resultados se guardan por llamada.
-No se aplican los cambios de prompt ni selección experimental al generador
-de la aplicación; los resultados no están factualmente validados por Terra.
+El selector D15/D86 solo se utiliza en las pruebas; no altera el banco
+canónico de la aplicación. Los resultados no están factualmente validados por Terra.
