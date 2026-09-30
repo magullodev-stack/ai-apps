@@ -41,9 +41,31 @@ Future<void> main(List<String> args) async {
         sinD: args.contains('--sin-d'),
         conU: args.contains('--con-u'),
       );
+    } else if (args.length == 7 &&
+        args[0] == '--luna' &&
+        args[1] == '--muestras' &&
+        args[3] == '--semilla' &&
+        args[5] == '--banco-d' &&
+        (args[6] == '15' || args[6] == '86')) {
+      final samples = int.tryParse(args[2]);
+      final seed = int.tryParse(args[4]);
+      if (samples == null ||
+          samples < 1 ||
+          samples > 200 ||
+          seed == null ||
+          seed < 0 ||
+          seed > 1000000000) {
+        throw const FormatException('Muestras 1-200 y semilla 0-1000000000.');
+      }
+      await _verifyLuna(
+        client, samples, seed,
+        env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
+        bancoD: int.parse(args[6]),
+      );
     } else {
       throw const FormatException(
-        'Uso: verify_generation.dart [--luna --muestras 1-200 --semilla N [--sin-d] [--con-u]]',
+        'Uso: verify_generation.dart [--luna --muestras 1-200 --semilla N [--sin-d] [--con-u]] '
+        'o [--luna --muestras 1-200 --semilla N --banco-d 15|86]',
       );
     }
   } catch (error) {
@@ -75,7 +97,14 @@ Future<void> _verifyLuna(
   String model, {
   bool sinD = false,
   bool conU = false,
+  int? bancoD,
 }) async {
+  if (bancoD != null && bancoD != 15 && bancoD != 86) {
+    throw ArgumentError.value(bancoD, 'bancoD');
+  }
+  if (bancoD != null && (conU || sinD)) {
+    throw ArgumentError('La comparación de bancos utiliza D y no utiliza U.');
+  }
   if (conU && !sinD) {
     throw ArgumentError('El experimento con U requiere --sin-d.');
   }
@@ -83,7 +112,9 @@ Future<void> _verifyLuna(
   await outputDir.create(recursive: true);
   final runId = DateTime.now().toUtc().toIso8601String()
       .replaceAll(':', '-').replaceAll('.', '-');
-  final filePrefix = conU ? 'luna-pu' : sinD ? 'luna-p' : 'luna-pd';
+  final filePrefix = bancoD != null
+      ? 'luna-banco-d$bancoD'
+      : conU ? 'luna-pu' : sinD ? 'luna-p' : 'luna-pd';
   final raw = File('${outputDir.path}/$filePrefix-$runId.jsonl');
   final questions = File('${outputDir.path}/$filePrefix-$runId.md');
   final observed = <_Observed>[];
@@ -95,6 +126,7 @@ Future<void> _verifyLuna(
   await questions.writeAsString(
     '# Quiz10 — Preguntas reales ${sinD ? 'P' : 'P × D'} → Q, R\n\n'
     'Modelo: $model · Semilla: $seed · '
+    '${bancoD == null ? 'Prompt de referencia' : 'Comparación banco D$bancoD; prompt bloques 4/3/2/1; Q 4-24; R 1-8'} · '
     '${conU ? 'U por bloques de diez llamadas' : 'Sin historial U'} · '
     'Llamadas previstas: $samples.\n\n'
     'Estas preguntas no han sido verificadas factualmente por Terra.\n',
@@ -109,19 +141,29 @@ Future<void> _verifyLuna(
     if (conU && index % 10 == 0) historyU.clear();
     final historySent = List<String>.unmodifiable(historyU);
     final timer = Stopwatch()..start();
-    final plan = selectQuiz10LunaPlan(Random(seed + index));
-    final prompt = sinD
-        ? quiz10LunaPromptSinD(
-            plan, historialU: conU ? historySent : null,
+    final plan = bancoD == 15
+        ? selectQuiz10LunaPlanBanco15(
+            Random(seed + index), callIndex: index, seed: seed,
           )
-        : quiz10LunaPrompt(plan);
+        : selectQuiz10LunaPlan(Random(seed + index));
+    final prompt = bancoD != null
+        ? quiz10LunaPromptComparacionBancosD(plan)
+        : sinD
+            ? quiz10LunaPromptSinD(
+                plan, historialU: conU ? historySent : null,
+              )
+            : quiz10LunaPrompt(plan);
     String? rawOutput;
     final base = <String, Object?>{
       'llamada': index + 1,
       'semilla': seed + index,
       'modelo': model,
       'historialU': conU,
-      'modo': conU ? 'P-U' : sinD ? 'P' : 'P-D',
+      'modo': bancoD == null
+          ? (conU ? 'P-U' : sinD ? 'P' : 'P-D')
+          : 'P-D$bancoD',
+      if (bancoD != null) 'bancoD': bancoD,
+      if (bancoD != null) 'promptVersion': 'bancos-d-v1-4-3-2-1-q4-24-r1-8',
       if (conU) 'bloque': index ~/ 10 + 1,
       if (conU) 'posicionBloque': index % 10 + 1,
       if (conU) 'U': historySent,
