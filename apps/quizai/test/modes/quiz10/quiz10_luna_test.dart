@@ -217,8 +217,11 @@ void main() {
       expect(prompt, contains('max(d(R₈),d(R₉)) < d(R₁₀)'));
       expect(prompt, contains('4 ≤ palabras(Qᵢ) ≤ 24'));
       expect(prompt, contains('1 ≤ palabras(Rᵢ) ≤ 8'));
-      expect(prompt, contains('Rᵢ no repite ni equivale semánticamente'));
+      expect(prompt, contains('Utiliza exclusivamente Pᵢ, Dᵢ y el nivel'));
+      expect(prompt, contains('Rᵢ no repite ni equivale semánticamente a ninguna Rⱼ de esta llamada (j < i).'));
       expect(prompt, contains('Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ'));
+      expect(prompt, contains('un objeto JSON con la propiedad "preguntas"'));
+      expect(prompt, contains('No devuelvas Pᵢ, Dᵢ, dificultad ni la matriz.'));
     }
     expect(quiz10LunaPrompt(original), contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
   });
