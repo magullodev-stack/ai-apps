@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../modes/quiz10/quiz_generation.dart';
 import 'app_theme.dart';
 import 'home/modalidades_page.dart';
 import 'profile/profile_page.dart';
 import 'settings/settings_page.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, this.generator});
-
-  final QuizGenerator? generator;
+  const AppShell({super.key});
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -93,7 +90,7 @@ class _AppShellState extends State<AppShell> {
           top: false,
           bottom: false,
           child: _selectedTab == 0
-              ? ModalidadesPage(generator: widget.generator)
+              ? const ModalidadesPage()
               : Theme(
                   data: Theme.of(context).copyWith(
                     textTheme: Theme.of(context).textTheme.apply(
