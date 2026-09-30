@@ -172,3 +172,24 @@ en el directorio habitual. Se guardan por llamada; al interrumpir el lote,
 se conservan las llamadas terminadas.
 
 La opción `-VerifyOnly` de la partida anterior se mantiene sin cambios.
+
+### Comparación experimental del banco D15 frente a D86
+
+El banco candidato conserva las definiciones originales de
+[`Dimensiones_15.md`](Dimensiones_15.md). No modifica los 86 códigos de producción.
+La comparación usa un **mismo prompt experimental** (seleccionar R antes de Q,
+separación de niveles 4/3/2/1, Q de 4 a 24 palabras, R de 1 a 8)
+para los dos bancos, sin U. P y dificultades coinciden llamada a llamada.
+D15 se distribuye de forma equilibrada: cada candidata ocupa cada posición
+13 o 14 veces en 200 llamadas, sin repetir D dentro de una llamada.
+
+```powershell
+.\apps\quizai\run.ps1 -ProbarLuna -BancoD 15 -Muestras 200 -LunaSemilla 20260929
+.\apps\quizai\run.ps1 -ProbarLuna -BancoD 86 -Muestras 200 -LunaSemilla 20260929
+```
+
+El primer comando crea `luna-banco-d15-*.jsonl` y `.md`; el segundo
+crea `luna-banco-d86-*.jsonl` y `.md` bajo
+`.ai-apps/experimentos-luna-pd/`. Los resultados se guardan por llamada.
+No se aplican los cambios de prompt ni selección experimental al generador
+de la aplicación; los resultados no están factualmente validados por Terra.
