@@ -1,6 +1,5 @@
 param(
     [string]$Device = 'emulator-5554',
-    [string]$Model = 'gpt-4.1-mini',
     [string]$CatalogModel = 'gpt-5.6-luna',
     [Alias('TerraModel')]
     [string]$FactualModel = 'gpt-5.6-terra',
@@ -369,7 +368,6 @@ try {
             @{
                 AI_APPS_AI_URL = 'http://127.0.0.1:8787'
                 AI_APPS_GAME_TOKEN = $session.token
-                AI_APPS_AI_MODEL = $Model
                 AI_APPS_CATALOG_MODEL = $CatalogModel
                 AI_APPS_FACTUAL_MODEL = $FactualModel
                 AI_APPS_TERRA_MODEL = $FactualModel
