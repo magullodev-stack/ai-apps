@@ -78,99 +78,24 @@ y reutiliza Android cuando ya está conectado.
 
 ## COMMIT
 
-$ErrorActionPreference = 'Stop'
->> $PSNativeCommandUseErrorActionPreference = $false
->> 
->> Set-Location 'C:\Users\Miquelet\repos\ai-apps'
->> 
->> # 1. Verificar rama y ausencia de conflictos pendientes
->> if ((git branch --show-current) -ne 'dev') {
->>     throw 'La rama activa no es dev.'
->> }
->> 
->> if (@(git ls-files -u).Count -gt 0) {
->>     throw 'Hay conflictos pendientes. Resuélvelos antes de sincronizar.'
->> }
->> 
->> # 2. Guardar TODOS los cambios habituales
->> git add -A
->> if ($LASTEXITCODE -ne 0) { throw 'Error en git add.' }
->> 
->> # Incluir TODOS los resultados experimentales, actuales y futuros
->> $experimentos = '.ai-apps/experimentos-luna-pd'
->> 
->> if (Test-Path -LiteralPath $experimentos -PathType Container) {
->>     git add -f -A -- $experimentos
->>     if ($LASTEXITCODE -ne 0) {
->>         throw 'Error al añadir los experimentos.'
->>     }
->> }
->> 
->> git diff --cached --check
->> if ($LASTEXITCODE -ne 0) {
->>     throw 'Hay errores en los cambios preparados.'
->> }
->> 
->> # 3. Crear commit solo si hay cambios
->> $pendientes = @(git diff --cached --name-only)
->> 
->> if ($LASTEXITCODE -ne 0) {
->>     throw 'No se pudieron comprobar los cambios.'
->> }
->> 
->> if ($pendientes.Count -gt 0) {
->>     git commit -m "Sincronizar AI-APPS"
->>     if ($LASTEXITCODE -ne 0) {
->>         throw 'No se pudo crear el commit.'
->>     }
->> }
->> 
->> # 4. Crear respaldo local
->> $respaldo = 'respaldo-' + (Get-Date -Format 'yyyyMMdd-HHmmssfff')
->> 
->> git branch $respaldo
->> if ($LASTEXITCODE -ne 0) {
->>     throw 'No se pudo crear el respaldo.'
->> }
->> 
->> # 5. Descargar cambios de GitHub
->> git fetch origin dev
->> if ($LASTEXITCODE -ne 0) {
->>     throw 'No se pudieron descargar los cambios.'
->> }
->> 
->> # 6. Integrar ambas versiones sin descartar cambios locales
->> git merge --no-edit origin/dev
->> 
->> if ($LASTEXITCODE -ne 0) {
->>     throw "Conflicto de integración. Respaldo: $respaldo. No se ha publicado nada."
->> }
->> 
->> # 7. Publicar en GitHub
->> git push origin dev
->> if ($LASTEXITCODE -ne 0) {
->>     throw 'No se pudo publicar en GitHub.'
->> }
->> 
->> # 8. Comprobar que GitHub y VS Code coinciden
->> git fetch origin dev
->> if ($LASTEXITCODE -ne 0) {
->>     throw 'No se pudo verificar GitHub.'
->> }
->> 
->> $localSha  = git rev-parse HEAD
->> $remoteSha = git rev-parse origin/dev
->> 
->> if ($localSha -ne $remoteSha) {
->>     throw 'La sincronización no se ha completado.'
->> }
->> 
->> Write-Host ''
->> Write-Host 'SINCRONIZACION COMPLETADA' -ForegroundColor Green
->> Write-Host "VS Code: $localSha"
->> Write-Host "GitHub:  $remoteSha"
->> Write-Host "Respaldo: $respaldo"
->> Write-Host ''
+Set-Location 'C:\Users\Miquelet\repos\ai-apps'
+git add -A
+if ($LASTEXITCODE -ne 0) { throw 'Error al preparar archivos' }
+if (Test-Path '.ai-apps/experimentos-luna-pd') {
+    git add -f -A -- '.ai-apps/experimentos-luna-pd'
+    if ($LASTEXITCODE -ne 0) { throw 'Error en experimentos' }
+}
+$cambios = git diff --cached --name-only
+if ($LASTEXITCODE -ne 0) { throw 'Error al comprobar cambios' }
+if ($cambios) {
+    git commit -m 'Sincronizar AI-APPS'
+    if ($LASTEXITCODE -ne 0) { throw 'Error al guardar cambios' }
+}
+git pull --no-rebase origin dev
+if ($LASTEXITCODE -ne 0) { throw 'Error o conflicto al integrar. No se publica nada.' }
+git push origin dev
+if ($LASTEXITCODE -ne 0) { throw 'Error al publicar en GitHub' }
+Write-Host 'SINCRONIZACION COMPLETADA' -ForegroundColor Green
 
 ---
 
