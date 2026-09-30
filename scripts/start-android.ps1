@@ -27,6 +27,10 @@ if (-not (Test-Path -LiteralPath $adb)) {
 
 function Get-ConnectedEmulators {
 
+    param([switch]$ReadyOnly)
+
+    $statePattern = if ($ReadyOnly) { 'device' } else { 'device|offline' }
+
     $output = & $adb devices
 
     if ($LASTEXITCODE -ne 0) {
@@ -36,7 +40,7 @@ function Get-ConnectedEmulators {
     @(
         $output |
             Where-Object {
-                $_ -match '^\s*(emulator-\d+)\s+(device|offline)\s*$'
+                $_ -match "^\s*(emulator-\d+)\s+($statePattern)\s*$"
             } |
             ForEach-Object {
                 ($_.Trim() -split '\s+')[0]
@@ -149,18 +153,23 @@ for ($attempt = 0; $attempt -lt 120; $attempt++) {
 
     if ($serial) {
 
-        $deviceState = $connected | Where-Object {
-            $_ -eq $serial
-        }
+        # Un emulador offline existe, pero aún no admite comandos shell.
+        if ($serial -in @(Get-ConnectedEmulators -ReadyOnly)) {
 
-        if ($deviceState) {
+            $boot = ''
 
-            $boot = (
-                & $adb -s $serial shell getprop sys.boot_completed 2>$null |
-                    Out-String
-            ).Trim()
+            try {
+                $boot = (
+                    & $adb -s $serial shell getprop sys.boot_completed 2>$null |
+                        Out-String
+                ).Trim()
+            }
+            catch {
+                # ADB puede pasar a offline entre comprobar y consultar.
+                $boot = ''
+            }
 
-            if ($boot -eq '1') {
+            if ($LASTEXITCODE -eq 0 -and $boot -eq '1') {
 
                 $ready = $true
                 break
