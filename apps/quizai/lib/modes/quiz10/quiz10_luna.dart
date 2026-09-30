@@ -143,7 +143,7 @@ Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, e
 
 | id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
 |---:|---|---|---|---|
-${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\\n')}''';
+${plan.map((slot) => '| ${slot.number} | ${slot.pivot} | ${slot.dimension.code} | ${slot.dimension.instruction} | ${slot.difficulty} |').join('\n')}''';
 
 /// Control experimental: mismas P y dificultades, sin información D para Luna.
 String quiz10LunaPromptSinD(
