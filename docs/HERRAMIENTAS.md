@@ -40,8 +40,11 @@ automáticamente.
 `scripts/start-android.ps1` prepara el dispositivo Android de AI-APPS.
 
 El procedimiento reutiliza un emulador conectado o inicia el AVD
-Medium_Phone sin ventana externa. Espera a que Android termine de
-arrancar y devuelve el identificador del dispositivo preparado.
+Medium_Phone sin ventana externa. Durante el arranque distingue los estados
+`offline` y `device`: solo consulta `sys.boot_completed` cuando ADB indica
+`device`, y tolera una desconexión transitoria entre consultas. Mantiene
+el límite de espera de 240 segundos y devuelve el identificador del
+dispositivo preparado.
 
 No ejecuta ninguna aplicación ni inicia servicios de inteligencia
 artificial.
