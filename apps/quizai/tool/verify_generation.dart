@@ -49,7 +49,21 @@ Future<void> main(List<String> args) async {
       model: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
     );
 
-    // STATS_LUNA_200: solo resultados reales, sin modificar el prompt.
+    // El detalle queda en el informe; la terminal solo muestra el progreso.
+    final timestamp = DateTime.now().toIso8601String()
+        .substring(0, 19)
+        .replaceFirst('T', '_')
+        .replaceAll(':', '-');
+    final reportPath = 'Q+R_$timestamp.txt';
+    final report = File(reportPath).openWrite();
+
+    try {
+      report.writeln('AUDITORÍA Q+R — Luna');
+      report.writeln('Fecha: ${DateTime.now()}');
+      report.writeln('Modelo: ${luna.model}');
+      report.writeln('Semilla: $seed | Llamadas solicitadas: $samples');
+      report.writeln();
+
     final timer = Stopwatch()..start();
     final pivots = <String, int>{};
     final dimensions = <String, int>{};
@@ -77,10 +91,10 @@ Future<void> main(List<String> args) async {
         successful++;
         totalMillis += callTimer.elapsedMilliseconds;
         final withinCall = <String>{};
-        stdout.writeln(
-          'Luna: llamada ${i + 1}/$samples, '
-          '${rows.length} Q-R, '
-          '${callTimer.elapsedMilliseconds} ms.',
+        report.writeln(
+          'Llamada ${i + 1}/$samples | '
+          '${rows.length} Q-R | '
+          '${callTimer.elapsedMilliseconds} ms',
         );
 
         for (final row in rows) {
@@ -120,7 +134,7 @@ Future<void> main(List<String> args) async {
             answersInQuestions++;
           }
 
-          stdout.writeln(
+          report.writeln(
             '${row.slot.number}. $pivot $dimension | '
             '${row.question} → ${row.correct}',
           );
@@ -129,60 +143,72 @@ Future<void> main(List<String> args) async {
         callTimer.stop();
         totalMillis += callTimer.elapsedMilliseconds;
         failed++;
-        stderr.writeln('Luna: llamada ${i + 1}/$samples FALLÓ: $error');
+        report.writeln('Llamada ${i + 1}/$samples | ERROR: $error');
+      } finally {
+        report.writeln();
+        await report.flush();
+        stdout.writeln('${i + 1}/$samples');
       }
     }
     timer.stop();
 
-    stdout.writeln('\n=== ESTADÍSTICAS LUNA P-D → Q-R ===');
-    stdout.writeln('Modelo: ${luna.model} | Semilla inicial: $seed');
-    stdout.writeln('Llamadas: $samples | Correctas: $successful | Fallidas: $failed');
-    stdout.writeln('Q-R obtenidas: $generated');
-    stdout.writeln('Tiempo total: ${timer.elapsed.inSeconds} s');
-    stdout.writeln(
+    report.writeln('\n=== ESTADÍSTICAS LUNA P-D → Q-R ===');
+    report.writeln('Modelo: ${luna.model} | Semilla inicial: $seed');
+    report.writeln('Llamadas: $samples | Correctas: $successful | Fallidas: $failed');
+    report.writeln('Q-R obtenidas: $generated');
+    report.writeln('Tiempo total: ${timer.elapsed.inSeconds} s');
+    report.writeln(
       'Tiempo medio por llamada: '
       '${(totalMillis / samples / 1000).toStringAsFixed(2)} s',
     );
-    stdout.writeln('Preguntas fuera de 4-24 palabras: $badQuestions');
-    stdout.writeln('Respuestas fuera de 1-8 palabras: $badAnswers');
-    stdout.writeln(
+    report.writeln('Preguntas fuera de 4-24 palabras: $badQuestions');
+    report.writeln('Respuestas fuera de 1-8 palabras: $badAnswers');
+    report.writeln(
       'Media palabras Q: '
       '${generated == 0 ? "n/d" : (totalQuestionWords / generated).toStringAsFixed(2)}',
     );
-    stdout.writeln(
+    report.writeln(
       'Media palabras R: '
       '${generated == 0 ? "n/d" : (totalAnswerWords / generated).toStringAsFixed(2)}',
     );
-    stdout.writeln('Respuestas distintas (texto normalizado): ${answers.length}');
-    stdout.writeln(
+    report.writeln('Respuestas distintas (texto normalizado): ${answers.length}');
+    report.writeln(
       'Repeticiones textuales R dentro de una llamada: '
       '$answersRepeatedInCall',
     );
-    stdout.writeln(
+    report.writeln(
       'Repeticiones textuales R por P con la misma D: '
       '$answersRepeatedSameD',
     );
-    stdout.writeln(
+    report.writeln(
       'Repeticiones textuales R por P con distinta D: '
       '$answersRepeatedOtherD',
     );
-    stdout.writeln(
+    report.writeln(
       'Q que contienen R como subcadena (indicador aproximado): '
       '$answersInQuestions',
     );
-    stdout.writeln('Frecuencias de pivotes P:');
+    report.writeln('Frecuencias de pivotes P:');
     for (final code in pivots.keys.toList()..sort()) {
-      stdout.writeln('  $code: ${pivots[code]}');
+      report.writeln('  $code: ${pivots[code]}');
     }
-    stdout.writeln('Frecuencias de dimensiones D:');
+    report.writeln('Frecuencias de dimensiones D:');
     for (final code in dimensions.keys.toList()..sort()) {
-      stdout.writeln('  $code: ${dimensions[code]}');
+      report.writeln('  $code: ${dimensions[code]}');
     }
-    stdout.writeln(
+    report.writeln(
       'No evaluado automáticamente: verdad factual, '
       'dificultad de conocimiento, sinónimos ni equivalencia semántica.',
     );
+    await report.flush();
+    stdout.writeln('Auditoría guardada: $reportPath');
+    stdout.writeln(
+      'Correctas: $successful | Fallidas: $failed | Q-R: $generated',
+    );
     if (failed > 0) exitCode = 1;
+    } finally {
+      await report.close();
+    }
   } catch (error) {
     stderr.writeln('Falló la generación Q-R de Luna: $error');
     exitCode = 1;
