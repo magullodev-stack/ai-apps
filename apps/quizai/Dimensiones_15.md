@@ -30,7 +30,7 @@ En `resultado-auditoria-D-30.md`, 13 de estas 15 dimensiones obtuvieron 0 objeci
 - Constantes: modelo, semilla, pivote por fila, niveles de dificultad 4/3/2/1, prompt experimental y esquema de salida. Sin U.
 - Se sustituye solamente el banco de D. P por fila coincide entre brazos para cada llamada.
 - D15: selección sin reemplazo por llamada, equilibrada por posición: cada D aparece 13 o 14 veces en cada fila al completar 200 llamadas.
-- D86: selección sin reemplazo del catálogo original (aleatoria, sin equilibrio forzado).
+- D86: mismo selector experimental equilibrado, ahora sobre 86 D; cada D ocupa cada posición 2 o 3 veces en 200 llamadas.
 - Medir dificultad efectiva y validez factual de Q10, univocidad, repeticiones semánticas y diferencias reales entre D34/D50 y D35/D49; vigilar D01, D02, D13 y D78.
 - El prompt experimental usa: selección de R antes de Q, tres desigualdades estrictas entre bloques, 4–24 palabras en Q, 1–8 en R y prohibición de revelar R. No altera el prompt de producción.
 - Los JSONL registran el prompt, el banco y las diez D utilizadas en cada llamada; resultados separados y guardados incrementalmente.
