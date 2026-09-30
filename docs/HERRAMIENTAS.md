@@ -79,79 +79,98 @@ y reutiliza Android cuando ya está conectado.
 ## COMMIT
 
 $ErrorActionPreference = 'Stop'
-cd C:\Users\Miquelet\repos\ai-apps
-
-# 1. Comprobar la rama
-if ((git branch --show-current) -ne 'dev') {
-    throw 'ERROR: La rama activa no es dev.'
-}
-
-# 2. Guardar los cambios locales
-git add -A
-if ($LASTEXITCODE -ne 0) { throw 'Error en git add.' }
-
-git diff --cached --check
-if ($LASTEXITCODE -ne 0) { throw 'Hay errores en los cambios.' }
-
-git diff --cached --quiet
-
-if ($LASTEXITCODE -eq 1) {
-    git commit -m "Actualizar AI-APPS"
-    if ($LASTEXITCODE -ne 0) {
-        throw 'No se pudo guardar el commit local.'
-    }
-}
-elseif ($LASTEXITCODE -ne 0) {
-    throw 'No se pudo comprobar el estado local.'
-}
-
-# 3. Crear un respaldo de los commits locales
-$respaldo = 'respaldo-' + (Get-Date -Format 'yyyyMMdd-HHmmss')
-
-git branch $respaldo
-if ($LASTEXITCODE -ne 0) {
-    throw 'No se pudo crear el respaldo.'
-}
-
-# 4. Descargar la versión de GitHub
-git fetch origin dev
-if ($LASTEXITCODE -ne 0) {
-    throw 'No se pudo descargar origin/dev.'
-}
-
-# 5. Integrar ambas versiones
-git merge --no-edit origin/dev
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host ''
-    Write-Host 'CONFLICTO: Git no ha podido integrar algunos cambios.'
-    Write-Host "Tus commits están conservados en $respaldo."
-    Write-Host 'No se ha publicado nada.'
-    Write-Host 'Revisa los conflictos antes de continuar.'
-    return
-}
-
-# 6. Publicar en GitHub
-git push origin dev
-if ($LASTEXITCODE -ne 0) {
-    throw 'No se pudo publicar en GitHub.'
-}
-
-# 7. Comprobar sincronización
-$localSha = git rev-parse HEAD
-$remoteSha = git rev-parse origin/dev
-
-Write-Host ''
-if ($localSha -eq $remoteSha) {
-    Write-Host 'SINCRONIZACION COMPLETADA'
-    Write-Host "VS Code: $localSha"
-    Write-Host "GitHub:  $remoteSha"
-}
-else {
-    Write-Warning 'Los commits todavía no coinciden.'
-}
-
-git status --short --branch
+>> $PSNativeCommandUseErrorActionPreference = $false
+>> 
+>> Set-Location 'C:\Users\Miquelet\repos\ai-apps'
+>> 
+>> # 1. Verificar rama y ausencia de conflictos pendientes
+>> if ((git branch --show-current) -ne 'dev') {
+>>     throw 'La rama activa no es dev.'
+>> }
+>> 
+>> if (@(git ls-files -u).Count -gt 0) {
+>>     throw 'Hay conflictos pendientes. Resuélvelos antes de sincronizar.'
+>> }
+>> 
+>> # 2. Guardar TODOS los cambios habituales
+>> git add -A
+>> if ($LASTEXITCODE -ne 0) { throw 'Error en git add.' }
+>> 
+>> # Incluir TODOS los resultados experimentales, actuales y futuros
+>> $experimentos = '.ai-apps/experimentos-luna-pd'
+>> 
+>> if (Test-Path -LiteralPath $experimentos -PathType Container) {
+>>     git add -f -A -- $experimentos
+>>     if ($LASTEXITCODE -ne 0) {
+>>         throw 'Error al añadir los experimentos.'
+>>     }
+>> }
+>> 
+>> git diff --cached --check
+>> if ($LASTEXITCODE -ne 0) {
+>>     throw 'Hay errores en los cambios preparados.'
+>> }
+>> 
+>> # 3. Crear commit solo si hay cambios
+>> $pendientes = @(git diff --cached --name-only)
+>> 
+>> if ($LASTEXITCODE -ne 0) {
+>>     throw 'No se pudieron comprobar los cambios.'
+>> }
+>> 
+>> if ($pendientes.Count -gt 0) {
+>>     git commit -m "Sincronizar AI-APPS"
+>>     if ($LASTEXITCODE -ne 0) {
+>>         throw 'No se pudo crear el commit.'
+>>     }
+>> }
+>> 
+>> # 4. Crear respaldo local
+>> $respaldo = 'respaldo-' + (Get-Date -Format 'yyyyMMdd-HHmmssfff')
+>> 
+>> git branch $respaldo
+>> if ($LASTEXITCODE -ne 0) {
+>>     throw 'No se pudo crear el respaldo.'
+>> }
+>> 
+>> # 5. Descargar cambios de GitHub
+>> git fetch origin dev
+>> if ($LASTEXITCODE -ne 0) {
+>>     throw 'No se pudieron descargar los cambios.'
+>> }
+>> 
+>> # 6. Integrar ambas versiones sin descartar cambios locales
+>> git merge --no-edit origin/dev
+>> 
+>> if ($LASTEXITCODE -ne 0) {
+>>     throw "Conflicto de integración. Respaldo: $respaldo. No se ha publicado nada."
+>> }
+>> 
+>> # 7. Publicar en GitHub
+>> git push origin dev
+>> if ($LASTEXITCODE -ne 0) {
+>>     throw 'No se pudo publicar en GitHub.'
+>> }
+>> 
+>> # 8. Comprobar que GitHub y VS Code coinciden
+>> git fetch origin dev
+>> if ($LASTEXITCODE -ne 0) {
+>>     throw 'No se pudo verificar GitHub.'
+>> }
+>> 
+>> $localSha  = git rev-parse HEAD
+>> $remoteSha = git rev-parse origin/dev
+>> 
+>> if ($localSha -ne $remoteSha) {
+>>     throw 'La sincronización no se ha completado.'
+>> }
+>> 
+>> Write-Host ''
+>> Write-Host 'SINCRONIZACION COMPLETADA' -ForegroundColor Green
+>> Write-Host "VS Code: $localSha"
+>> Write-Host "GitHub:  $remoteSha"
+>> Write-Host "Respaldo: $respaldo"
+>> Write-Host ''
 
 ---
 

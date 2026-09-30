@@ -1,0 +1,1 @@
+{"recordId":"161b013e-6e54-49e8-91f9-ab9360c9c7ac","timestamp":"2026-09-24T11:25:38.594981Z","type":"ai_call","application":"quiz10","operation":"other","model":"gpt-4.1-mini","durationMillis":402,"result":"error","usageKnown":false,"errorCode":"AiError.HttpFailure(400)"}
