@@ -134,6 +134,7 @@ String quiz10LunaPromptComparacionBancosD(List<Quiz10LunaSlot> plan) => '''Para 
 
 Pᵢ: campo de conocimiento fijado por Dart.
 Dᵢ: instrucción que debe satisfacer Qᵢ.
+Utiliza exclusivamente Pᵢ, Dᵢ y el nivel de dificultad asignados en la matriz.
 
 Sea d(Rᵢ) la dificultad estimada de conocer la respuesta Rᵢ.
 
@@ -141,13 +142,14 @@ max(d(R₁),...,d(R₄)) < min(d(R₅),...,d(R₇))
 max(d(R₅),...,d(R₇)) < min(d(R₈),d(R₉))
 max(d(R₈),d(R₉)) < d(R₁₀)
 
-Rᵢ no repite ni equivale semánticamente a ninguna respuesta anterior.
+Rᵢ no repite ni equivale semánticamente a ninguna Rⱼ de esta llamada (j < i).
 4 ≤ palabras(Qᵢ) ≤ 24
 1 ≤ palabras(Rᵢ) ≤ 8
 
 Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ, incluidos nombres propios, epónimos y siglas.
 
-Devuelve exclusivamente JSON: diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
+Devuelve exclusivamente un objeto JSON con la propiedad "preguntas": un array de diez objetos {id, pregunta, respuesta_correcta}, en el orden de las filas.
+No devuelvas Pᵢ, Dᵢ, dificultad ni la matriz.
 
 | id | Pᵢ | Dᵢ | Instrucción Dᵢ | Dificultad |
 |---:|---|---|---|---|
