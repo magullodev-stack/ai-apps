@@ -1,190 +1,188 @@
-import 'dart:async';
-import 'dart:math';
-
-import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:flutter/material.dart';
 
-import 'quiz.dart';
-import 'quiz_generation.dart';
+typedef Quiz10Question = ({
+  String pivot,
+  String question,
+  String correct,
+  List<String> options,
+});
 
 class QuizPage extends StatefulWidget {
-  const QuizPage({super.key, this.generator});
-  final QuizGenerator? generator;
+  const QuizPage({super.key, this.loadQuestions});
+
+  // Recibirá las diez preguntas terminadas por Terra.
+  final Future<List<Quiz10Question>> Function()? loadQuestions;
 
   @override
   State<QuizPage> createState() => _QuizPageState();
 }
 
 class _QuizPageState extends State<QuizPage> {
-  final _random = Random();
-  AiAppsClient? _client;
-  late final QuizGenerator _generator;
-  QuizGame? _game;
+  List<Quiz10Question>? _questions;
+
+  int _index = 0;
+  int _score = 0;
+  int? _selected;
+
   bool _loading = false;
+  bool _finished = false;
   String? _error;
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.generator case final generator?) {
-      _generator = generator;
-    } else {
-      _client = AiAppsClient(
-        endpoint: Uri.parse(
-          const String.fromEnvironment(
-            'AI_APPS_AI_URL',
-            defaultValue: 'http://127.0.0.1:8787',
-          ),
-        ),
-        authorization: const String.fromEnvironment('AI_APPS_GAME_TOKEN'),
-      );
-      _generator = AiQuizGenerator(
-        client: _client!,
-        model: const String.fromEnvironment('AI_APPS_AI_MODEL'),
-      );
-    }
-    _start();
-  }
-
-  @override
-  void dispose() {
-    _client?.close();
-    super.dispose();
-  }
-
   Future<void> _start() async {
-    if (_loading) return;
+    final load = widget.loadQuestions;
+    if (load == null || _loading) return;
+
     setState(() {
       _loading = true;
       _error = null;
-      _game = null;
+      _questions = null;
+      _index = 0;
+      _score = 0;
+      _selected = null;
+      _finished = false;
     });
+
     try {
-      final questions = await _generator.generate(selectQuizAreas(_random));
+      final questions = await load();
+
+      if (questions.length != 10 ||
+          questions.any(
+            (q) =>
+                q.options.length != 4 ||
+                q.options.toSet().length != 4 ||
+                !q.options.contains(q.correct),
+          )) {
+        throw const FormatException('Preguntas inválidas.');
+      }
+
       if (!mounted) return;
-      setState(() => _game = QuizGame(questions));
-    } on FormatException {
-      _showError(
-        'Las preguntas recibidas no son válidas. Pulsa 🎲 para generar otras.',
-      );
-    } on StateError {
-      _showError(
-        'No se ha configurado la generación de preguntas. Consulta las instrucciones de ejecución de QuizAI.',
-      );
-    } on TimeoutException {
-      _showError(
-        'La generación ha tardado demasiado. Pulsa 🎲 para volver a intentarlo.',
-      );
+      setState(() => _questions = questions);
     } catch (_) {
-      _showError(
-        'No se han podido generar las preguntas. Pulsa 🎲 para volver a intentarlo.',
-      );
+      if (mounted) {
+        setState(() => _error = 'No se pudieron preparar las preguntas.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _showError(String message) {
-    if (mounted) setState(() => _error = message);
+  void _answer(int index) {
+    final questions = _questions;
+    if (questions == null || _selected != null || _finished) return;
+
+    setState(() {
+      _selected = index;
+
+      if (questions[_index].options[index] ==
+          questions[_index].correct) {
+        _score++;
+      }
+    });
+  }
+
+  void _next() {
+    if (_selected == null) return;
+
+    setState(() {
+      if (_index == 9) {
+        _finished = true;
+      } else {
+        _index++;
+        _selected = null;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final game = _game;
+    final questions = _questions;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('🎲 Quiz10'), centerTitle: false),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_loading) ...[
-                    const Center(child: CircularProgressIndicator()),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Generando tus diez preguntas…',
-                      textAlign: TextAlign.center,
+      appBar: AppBar(title: const Text('Quiz10')),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.loadQuestions == null)
+                  const Text('Pendiente conectar Luna → Terra.')
+
+                else if (_loading)
+                  const Center(child: CircularProgressIndicator())
+
+                else if (questions == null || _finished) ...[
+                  Text(
+                    _finished
+                        ? 'Partida completada'
+                        : 'Quiz10',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  if (_finished)
+                    Text('Resultado: $_score / 10'),
+                  if (_error != null)
+                    Text(_error!),
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: _start,
+                    child: Text(
+                      _finished ? 'Otra partida' : 'Jugar',
                     ),
-                  ] else if (game == null || game.finished) ...[
-                    Text(
-                      game == null
-                          ? 'No se ha podido iniciar la partida'
-                          : 'Partida completada',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 16),
-                    if (game != null)
-                      Text('Resultado: ${game.score} / 10 aciertos'),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      Text(_error!),
-                    ],
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: _start,
-                      child: Text(
-                        game == null ? '🎲 Jugar' : '🎲 Otra partida',
+                  ),
+                ]
+
+                else ...[
+                  Text('Pregunta ${_index + 1} de 10'),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(value: _index / 10),
+                  const SizedBox(height: 16),
+
+                  Text('Aciertos: $_score'),
+                  const SizedBox(height: 16),
+
+                  Text(questions[_index].pivot),
+                  const SizedBox(height: 8),
+
+                  Text(
+                    questions[_index].question,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 20),
+
+                  for (var i = 0;
+                      i < questions[_index].options.length;
+                      i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: OutlinedButton(
+                        onPressed: _selected == null
+                            ? () => _answer(i)
+                            : null,
+                        child: Text(questions[_index].options[i]),
                       ),
                     ),
-                  ] else ...[
-                    Text('Pregunta ${game.questionNumber} de 10'),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: game.progress,
-                      semanticsLabel:
-                          'Preguntas respondidas: ${game.answeredCount} de 10',
-                    ),
-                    const SizedBox(height: 8),
-                    Text('Aciertos: ${game.score}'),
-                    const SizedBox(height: 24),
-                    Text(
-                      '${game.current.slot.area} · ${game.current.slot.difficulty}',
-                    ),
+
+                  if (_selected != null) ...[
                     const SizedBox(height: 12),
                     Text(
-                      game.current.text,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      questions[_index].options[_selected!] ==
+                              questions[_index].correct
+                          ? '¡Correcto!'
+                          : 'Respuesta correcta: '
+                            '${questions[_index].correct}',
                     ),
                     const SizedBox(height: 16),
-                    for (var i = 0; i < game.current.options.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: OutlinedButton(
-                          key: ValueKey('option-$i'),
-                          onPressed: game.answered
-                              ? null
-                              : () => setState(() => game.answer(i)),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              '${game.selectedIndex == i ? '● ' : ''}${game.current.options[i]}',
-                            ),
-                          ),
-                        ),
+                    FilledButton(
+                      onPressed: _next,
+                      child: Text(
+                        _index == 9 ? 'Ver resultado' : 'Siguiente',
                       ),
-                    if (game.answered) ...[
-                      Text(
-                        game.isCorrect
-                            ? '¡Correcto!'
-                            : 'Respuesta correcta: ${game.current.correct}',
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        onPressed: () => setState(game.next),
-                        child: Text(
-                          game.questionNumber == 10
-                              ? 'Ver resultado'
-                              : 'Siguiente',
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ],
-              ),
+              ],
             ),
           ),
         ),
