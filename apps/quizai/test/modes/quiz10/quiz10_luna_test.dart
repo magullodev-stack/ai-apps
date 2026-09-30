@@ -152,6 +152,63 @@ void main() {
     }
   });
 
+  test('banco D15 equilibra por posición y conserva los pivotes', () {
+    const seed = 20260929;
+    expect(quiz10CandidateDimensionCodes, hasLength(15));
+    expect(quiz10CandidateDimensionCodes.toSet(), hasLength(15));
+    final byPosition = [
+      for (var i = 0; i < 10; i++) <String, int>{},
+    ];
+    for (var call = 0; call < 200; call++) {
+      final original = selectQuiz10LunaPlan(Random(seed + call));
+      final candidate = selectQuiz10LunaPlanBanco15(
+        Random(seed + call), callIndex: call, seed: seed,
+      );
+      expect(candidate, hasLength(10));
+      expect(candidate.map((slot) => slot.dimension.code).toSet(), hasLength(10));
+      for (var row = 0; row < 10; row++) {
+        expect(candidate[row].number, original[row].number);
+        expect(candidate[row].pivot, original[row].pivot);
+        expect(candidate[row].difficulty, original[row].difficulty);
+        expect(
+          quiz10CandidateDimensionCodes,
+          contains(candidate[row].dimension.code),
+        );
+        byPosition[row].update(
+          candidate[row].dimension.code,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+      }
+    }
+    for (final counts in byPosition) {
+      expect(counts.keys.toSet(), quiz10CandidateDimensionCodes.toSet());
+      expect(counts.values.every((count) => count == 13 || count == 14), isTrue);
+      expect(counts.values.reduce((a, b) => a + b), 200);
+    }
+  });
+
+  test('comparación D15/D86 solo cambia las D de la tabla', () {
+    const seed = 20260929;
+    final original = selectQuiz10LunaPlan(Random(seed));
+    final candidate = selectQuiz10LunaPlanBanco15(
+      Random(seed), callIndex: 0, seed: seed,
+    );
+    final prompt86 = quiz10LunaPromptComparacionBancosD(original);
+    final prompt15 = quiz10LunaPromptComparacionBancosD(candidate);
+    expect(prompt86.split('| id | Pᵢ |').first, prompt15.split('| id | Pᵢ |').first);
+    for (final prompt in [prompt86, prompt15]) {
+      expect(prompt, contains('max(d(R₁),...,d(R₄)) < min(d(R₅),...,d(R₇))'));
+      expect(prompt, contains('max(d(R₅),...,d(R₇)) < min(d(R₈),d(R₉))'));
+      expect(prompt, contains('max(d(R₈),d(R₉)) < d(R₁₀)'));
+      expect(prompt, contains('4 ≤ palabras(Qᵢ) ≤ 24'));
+      expect(prompt, contains('1 ≤ palabras(Rᵢ) ≤ 8'));
+      expect(prompt, contains('Rᵢ no repite ni equivale semánticamente'));
+      expect(prompt, contains('Qᵢ no contiene Rᵢ ni palabras distintivas de Rᵢ'));
+    }
+    expect(quiz10LunaPrompt(original), contains('d(R₁) < d(R₂) < ... < d(R₁₀)'));
+  });
+
   test('acepta diez Q/R y rechaza filas incompletas, fuera de orden o extrañas', () {
     final plan = selectQuiz10LunaPlan(Random(5));
     final items = _rows(plan);
