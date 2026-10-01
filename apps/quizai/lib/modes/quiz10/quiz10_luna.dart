@@ -8,26 +8,47 @@ import 'quiz10_catalog.dart';
 // Luna recibe esas parejas y genera Q y R.
 
 const String quiz10LunaPrompt = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ y Dᵢ.
+
 Rᵢ debe ser una respuesta factual, concreta, verificable y correcta para Qᵢ.
 
 Las diez parejas Qᵢ–Rᵢ deben cumplir las siguientes restricciones:
 
-dif(Rᵢ): dificultad estimada de conocer Rᵢ.
+### Dificultad
 
-max(dif(R₁),...,dif(R₄)) < min(dif(R₅),...,dif(R₇))
-max(dif(R₅),...,dif(R₇)) < min(dif(R₈),dif(R₉))
-max(dif(R₈),dif(R₉)) < dif(R₁₀)
+δᵢ = dif(Qᵢ,Rᵢ): dificultad estimada de conocer Rᵢ como respuesta correcta a Qᵢ.
+
+max(δ₁,...,δ₄) < min(δ₅,...,δ₇)
+max(δ₅,...,δ₇) < min(δ₈,δ₉)
+max(δ₈,δ₉) < δ₁₀
+
+### Longitud
 
 4 ≤ palabras(Qᵢ) ≤ 24
 1 ≤ palabras(Rᵢ) ≤ 8
 
-C = {(Rᵢ,Rⱼ): 1 ≤ j < i ≤ 10}
-    ∪ ⋃ᵢ₌₁¹⁰ (
-        PalabrasYExpresiones(Qᵢ)
-        × ({Rᵢ} ∪ AliasYFragmentos(Rᵢ))
-      )
+### No revelación interna
 
-∀(x,y) ∈ C: x ≠literal y ∧ x ≢semántica y''';
+L(X) = FormasLingüísticasSignificativas(X)
+
+L comprende las expresiones lingüísticas significativas, sus variantes, alias y fragmentos significativos, normalizados por equivalencia lingüística.
+
+∀i ∈ {1,...,10}:
+    L(Qᵢ) ∩ L(Rᵢ) = ∅
+
+### Diversidad global
+
+Sᵢ = ContenidoDistintivo(Qᵢ,Rᵢ)
+
+Sᵢ comprende los referentes, las respuestas y los hechos distintivos de la pareja, normalizados por identidad semántica.
+
+∀ 1 ≤ i < j ≤ 10:
+    Sᵢ ∩ Sⱼ = ∅
+    Rᵢ ≠literal Rⱼ
+
+### Exclusividad operativa
+
+∀i ∈ {1,...,10}:
+    DimensionesAdmisibles(Qᵢ,Rᵢ) = {Dᵢ}''';
 
 String quiz10LunaInput(List<Quiz10Pair> plan) {
   if (plan.length != 10) {
