@@ -7,6 +7,7 @@ param(
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
     [switch]$ProbarLuna,
+    [switch]$PromptLigero,
     # Precios USD por millón de tokens (opcional; nunca se inventan tarifas).
     [string]$PrecioEntradaMillon,
     [string]$PrecioSalidaMillon,
@@ -28,6 +29,9 @@ param(
     [switch]$SaveKeyFromClipboard
 )
 $ErrorActionPreference = 'Stop'
+if ($PromptLigero -and -not $ProbarLuna) {
+    throw '-PromptLigero requiere -ProbarLuna.'
+}
 # Las auditorías de Luna son de 20 llamadas por defecto; se permite una
 # muestra menor (-Muestras 1) para verificar el funcionamiento sin coste alto.
 if ($ProbarLuna -and -not $PSBoundParameters.ContainsKey('Muestras')) {
@@ -224,6 +228,7 @@ if ($ProbarLuna) {
     foreach ($name in @('AI_APPS_AI_API_KEY', 'OPENAI_API_KEY',
                          'AI_APPS_AI_URL', 'AI_APPS_GAME_TOKEN',
                          'AI_APPS_LUNA_MODEL',
+                         'AI_APPS_LUNA_PROMPT_LIGERO',
                          'AI_APPS_LUNA_INPUT_USD_PER_M',
                          'AI_APPS_LUNA_OUTPUT_USD_PER_M',
                          'AI_APPS_LUNA_CACHED_INPUT_USD_PER_M')) {
@@ -234,6 +239,8 @@ if ($ProbarLuna) {
         $env:AI_APPS_AI_URL = $session.endpoint
         $env:AI_APPS_GAME_TOKEN = $session.token
         $env:AI_APPS_LUNA_MODEL = $CatalogModel
+        $env:AI_APPS_LUNA_PROMPT_LIGERO = '0'
+        if ($PromptLigero) { $env:AI_APPS_LUNA_PROMPT_LIGERO = '1' }
         if ($PrecioEntradaMillon) { $env:AI_APPS_LUNA_INPUT_USD_PER_M = $PrecioEntradaMillon }
         if ($PrecioSalidaMillon) { $env:AI_APPS_LUNA_OUTPUT_USD_PER_M = $PrecioSalidaMillon }
         if ($PrecioEntradaCacheMillon) { $env:AI_APPS_LUNA_CACHED_INPUT_USD_PER_M = $PrecioEntradaCacheMillon }
