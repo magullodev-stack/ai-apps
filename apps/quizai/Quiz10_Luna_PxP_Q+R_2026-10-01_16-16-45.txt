@@ -1,0 +1,227 @@
+AUDITORÍA QUIZ10 — LUNA — Q+R
+Fecha: 2026-10-01 16:16:45.801855
+Modelo: gpt-5.6-luna
+Cruce por fila: P×P con D.
+Prompt literal:
+Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ[1] × Pᵢ[2] y Dᵢ.
+Integra ambos pivotes en la misma pregunta y respuesta.
+Rᵢ debe ser factual, concreta, verificable y correcta para Qᵢ.
+Las diez respuestas deben tener contenidos distintos entre sí: no repitas respuestas, alias ni equivalentes semánticos entre filas.
+Semilla: 20260929 | Llamadas solicitadas: 5
+P: 20; D: 34.
+Tarifas USD/1M tokens: entrada 0.2, salida 1.2, entrada en caché tarifa de entrada normal (sin descuento).
+Los importes son ESTIMACIONES, no facturas. Se calculan solo cuando existen tokens y tarifas suficientes. Sin tarifa específica de caché se cobra la entrada en caché como entrada normal en el cálculo (puede sobreestimar el coste). Si el proveedor omite el uso de caché se supone 0. Los tokens de razonamiento ya están incluidos en los de salida.
+Coincidencia textual = mismo texto ignorando mayúsculas y espacios repetidos. Los parecidos léxicos son orientativos.
+
+Llamada 1/5 | OK | 22.72 s | espera servicio/red: 22.71 s | parseo JSON: 0 ms | entrada: 859 | salida: 2378 | caché: 0 | razonamiento: 1788 (75.2% de la salida) | salida visible estimada: 590 | coste estimado: USD 0.003025
+1. P07×P04 D15 | ¿Qué norma filosófica aplicada a la biología establece que, ante un riesgo de daño grave o irreversible y ausencia de certeza científica completa, no debe aplazarse la adopción de medidas preventivas? → El principio de precaución.
+2. P16×P08 D02 | En física matemática, ¿qué propiedad constitutiva tiene el momento lineal de una partícula clásica de masa constante? → Es una magnitud vectorial igual al producto de la masa por la velocidad: p = m·v, y apunta en la dirección del movimiento.
+3. P15×P14 D01 | ¿Qué entidad lingüística y literaria consiste en repetir una palabra o grupo de palabras al comienzo de varios versos o enunciados consecutivos? → La anáfora.
+4. P05×P09 D04 | En un contrato jurídico de suministro de aceite de oliva para un restaurante, si el restaurante actúa como comprador, ¿qué otro participante contractual interviene? → La cooperativa oleícola suministradora.
+5. P12×P03 D06 | ¿Qué distancia temporal separa el lanzamiento histórico del Sputnik 1 del alunizaje del Apolo 11? → Doce años: el Sputnik 1 fue lanzado en 1957 y el Apolo 11 llegó a la Luna en 1969.
+6. P19×P10 D09 | ¿De qué antecedente material geológico procede la obsidiana mediante un proceso de transformación química y enfriamiento? → De lava volcánica rica en sílice que se enfría rápidamente.
+7. P13×P06 D11 | ¿Qué condiciones causaron principalmente el aumento mundial del precio de las tarjetas gráficas durante 2020 y 2021, según factores informáticos y económicos? → La escasez mundial de semiconductores junto con el fuerte aumento de la demanda de GPU para minería de criptomonedas.
+8. P01×P02 D10 | ¿Qué efecto acústico se produce en una sala arquitectónica destinada a la música cuando predominan superficies duras que reflejan repetidamente el sonido? → La reverberación.
+9. P20×P11 D29 | En un estudio sociológico y geológico de la minería a cielo abierto, ¿qué realidad externa preexistente es intervenida para modificar su estado? → El yacimiento o capa geológica de carbón.
+10. P18×P17 D26 | ¿Qué respuesta psicofisiológica y médica presenta la pupila cuando recibe directamente un estímulo luminoso intenso? → El reflejo fotomotor, que produce la constricción de la pupila.
+
+Llamada 2/5 | OK | 35.28 s | espera servicio/red: 35.27 s | parseo JSON: 0 ms | entrada: 862 | salida: 2869 | caché: 0 | razonamiento: 2270 (79.1% de la salida) | salida visible estimada: 599 | coste estimado: USD 0.003615
+1. P17×P13 D30 | En una terapia intravenosa controlada mediante parámetros informáticos, ¿qué instrumento médico emplea el ejecutor para administrar de forma programada el fármaco, en lugar de ser el estímulo o contenido administrado? → Una bomba de infusión programable.
+2. P01×P05 D07 | ¿En qué fecha se publicó en España la Ley 12/2023, de 24 de mayo, por el derecho a la vivienda, norma relacionada con la regulación del entorno residencial y la edificación? → El 25 de mayo de 2023.
+3. P04×P16 D08 | En un cruce mendeliano entre dos individuos heterocigotos para un carácter dominante, ¿qué proporción fenotípica se deriva del modelo matemático de la herencia? → Una proporción de 3:1.
+4. P19×P09 D13 | En la preparación de una mayonesa, ¿qué proceso químico-gastronómico permite que la lecitina mantenga dispersas las gotas de aceite en la fase acuosa? → La emulsificación.
+5. P03×P07 D10 | Desde una explicación causal de la evolución estelar, ¿qué objeto astronómico puede producirse cuando el núcleo de una estrella masiva colapsa y su masa supera el límite que permite sostenerlo como estrella de neutrones? → Un agujero negro.
+6. P15×P12 D28 | ¿Qué institución histórica controló la censura inquisitorial de libros en la España moderna, interviniendo sobre la circulación de obras literarias? → El Tribunal del Santo Oficio de la Inquisición española.
+7. P06×P11 D04 | Además de Venezuela, ¿qué otro país fue miembro fundador de la OPEP en 1960, organización económica vinculada a la explotación de un recurso geológico? → Arabia Saudita.
+8. P14×P20 D14 | En el sistema lingüístico compartido por una comunidad, ¿qué función estable cumple el sufijo «-s» en palabras como «casas»? → Actuar como marcador gramatical de número plural.
+9. P10×P08 D34 | ¿Qué modificación física y geográfica produjo directamente la excavación del canal de Panamá sobre el terreno intervenido? → La creación de un canal artificial que conecta el océano Atlántico con el océano Pacífico.
+10. P18×P02 D15 | ¿Qué regla de la psicología de la Gestalt se aplica también a la composición artística al establecer que tendemos a completar mentalmente contornos o figuras incompletas? → La ley de cierre.
+
+Llamada 3/5 | OK | 28.49 s | espera servicio/red: 28.48 s | parseo JSON: 0 ms | entrada: 818 | salida: 2503 | caché: 0 | razonamiento: 1921 (76.7% de la salida) | salida visible estimada: 582 | coste estimado: USD 0.003167
+1. P12×P01 D29 | ¿Sobre qué realidad externa preexistente se levantó la intervención arquitectónica de la Acrópolis de Atenas, transformando históricamente su entorno? → La colina rocosa de la Acrópolis de Atenas.
+2. P02×P10 D26 | ¿Qué respuesta dio John D. Rockefeller Jr. ante la inclusión de la imagen de Vladímir Lenin en el mural de Diego Rivera Man at the Crossroads, situado en Nueva York? → Ordenó destruir el mural en 1934.
+3. P08×P13 D07 | ¿En qué fecha presentó Tim Berners-Lee en el CERN su propuesta inicial de la World Wide Web, vinculada con la física y la informática? → El 12 de marzo de 1989.
+4. P07×P05 D25 | ¿Qué estímulo jurídico provocó la respuesta judicial que condenó a Sócrates, figura central de la filosofía griega? → La acusación formal de impiedad y de corromper a los jóvenes, presentada por Meleto.
+5. P17×P18 D32 | ¿Qué intervención médico-psicológica puede ejecutarse técnicamente en un paciente con depresión mayor resistente si puede recibir anestesia general y monitorización adecuada? → La terapia electroconvulsiva.
+6. P04×P14 D15 | ¿Qué norma, comparable a una regla de uso lingüístico, establece cómo deben formarse y aplicarse los nombres científicos de los organismos? → El Código Internacional de Nomenclatura para algas, hongos y plantas.
+7. P06×P15 D33 | Ante la externalidad positiva y el consumo insuficiente de literatura, ¿qué intervención de política económica está indicada dentro de un marco de fomento cultural? → Un subsidio público a la compra de libros y a los programas de lectura.
+8. P20×P03 D13 | ¿Respecto de qué proceso sociocultural desempeña la Luna una función operativa estable en el calendario islámico, estudiado también por la astronomía? → La determinación de los meses lunares.
+9. P16×P11 D06 | ¿Qué relación temporal existe entre la extinción masiva del final del Pérmico y el presente, expresada mediante una distancia temporal geológica? → La extinción ocurrió aproximadamente hace 252 millones de años.
+10. P09×P19 D02 | ¿Qué propiedad química descriptiva del cloruro de sodio resulta relevante en gastronomía y permite identificarlo físicamente? → Su punto de fusión es de aproximadamente 801 °C.
+
+Llamada 4/5 | OK | 28.86 s | espera servicio/red: 28.85 s | parseo JSON: 0 ms | entrada: 795 | salida: 2747 | caché: 0 | razonamiento: 2148 (78.2% de la salida) | salida visible estimada: 599 | coste estimado: USD 0.003455
+1. P19×P02 D33 | En conservación de obras de arte sobre papel, ¿qué intervención química se indica para un soporte ácido y estable al agua, conforme a los criterios de conservación preventiva? → La desacidificación acuosa con hidróxido de calcio.
+2. P01×P12 D22 | ¿Qué concepción documentada de la arquitectura sostuvo Vitruvio en su tratado histórico sobre la disciplina? → Que la arquitectura debe reunir firmitas, utilitas y venustas: solidez, utilidad y belleza.
+3. P18×P07 D06 | En la teoría psicoanalítica de Freud, ¿qué relación temporal mantiene el recuerdo encubridor con la experiencia infantil a la que remite? → El recuerdo encubridor es posterior a la experiencia infantil que representa o encubre.
+4. P06×P10 D23 | En economía geográfica, ¿qué afirmación se contrasta mediante un modelo de comercio bilateral que incorpora la distancia entre países como variable de referencia? → La hipótesis de que una mayor distancia económica o geográfica reduce el comercio bilateral.
+5. P17×P11 D12 | ¿Qué componente mineral constituye la principal fase inorgánica del tejido óseo y se estudia tanto en medicina como en geología? → La hidroxiapatita, un fosfato de calcio cristalino.
+6. P03×P04 D10 | ¿Qué efecto produce la radiación ultravioleta solar sobre el ADN de los organismos vivos cuando incide sobre él? → La formación de dímeros de pirimidina, especialmente dímeros de timina.
+7. P13×P09 D21 | En informática gastronómica, ¿a qué fenómeno se refiere el concepto documentado de food pairing o maridaje por afinidad? → A la tendencia de ciertos ingredientes a combinarse cuando comparten compuestos aromáticos.
+8. P20×P08 D28 | En una intervención experimental sobre el funcionamiento del Gran Colisionador de Hadrones, ¿qué sistema controla operativamente la ejecución de las colisiones de haces? → El Centro de Control del CERN, que opera el LHC.
+9. P15×P14 D07 | ¿En qué año apareció documentado por primera vez el término «robot» en la obra literaria checa R.U.R., un hecho relevante para la historia de la lingüística? → En 1920.
+10. P16×P05 D31 | ¿Qué intervención jurídica efectivamente realizada modificó en Estados Unidos el criterio aplicable a la patentabilidad de algoritmos y otras ideas abstractas? → La sentencia de la Corte Suprema en el caso Alice Corp. v. CLS Bank International, dictada en 2014.
+
+Llamada 5/5 | OK | 26.96 s | espera servicio/red: 26.96 s | parseo JSON: 0 ms | entrada: 857 | salida: 2248 | caché: 0 | razonamiento: 1757 (78.2% de la salida) | salida visible estimada: 491 | coste estimado: USD 0.002869
+1. P06×P09 D13 | ¿Qué proceso gastronómico cumple, dentro de la economía operativa de un restaurante, la función estable de organizar y disponer previamente los ingredientes, utensilios y preparaciones? → La mise en place.
+2. P18×P16 D34 | Al aplicar una transformación logarítmica a las puntuaciones de un test psicológico, ¿qué modificación se produce directamente sobre los datos matemáticos? → Cada puntuación es sustituida por su logaritmo correspondiente.
+3. P03×P01 D22 | ¿Qué concepción del universo expuso Claudio Ptolomeo y que también se incorporó como tema en representaciones arquitectónicas medievales de la esfera celeste? → La concepción geocéntrica, según la cual la Tierra permanece inmóvil en el centro del universo.
+4. P10×P20 D10 | ¿Qué efecto geográfico y sociológico puede producir la desertificación prolongada de una región agrícola? → El desplazamiento de población hacia zonas con mejores condiciones de habitabilidad y empleo.
+5. P02×P14 D30 | ¿Qué instrumento emplea un grabador para incidir una imagen lingüística o artística sobre una plancha metálica? → Un buril.
+6. P07×P15 D01 | ¿Qué entidad textual es la República de Platón dentro de la literatura filosófica? → Un diálogo filosófico compuesto por diez libros.
+7. P12×P04 D18 | ¿Qué obra de biología e historia natural se atribuye a Charles Darwin? → El origen de las especies.
+8. P11×P13 D11 | ¿Qué condiciones geológicas pueden provocar un deslizamiento que inutilice la infraestructura física de un centro de datos informático? → La saturación de agua del suelo y la inestabilidad de una ladera.
+9. P05×P17 D31 | ¿Qué intervención médico-legal se realiza para determinar la causa de una muerte en una investigación judicial? → Una autopsia forense.
+10. P08×P19 D26 | ¿Qué respuesta presenta un gas cuando se calienta a presión constante? → Se expande y aumenta su volumen.
+
+
+========== ESTADÍSTICAS FINALES ==========
+Modelo: gpt-5.6-luna | Semilla: 20260929
+Llamadas: 5 | OK: 5 | Fallidas: 0
+Q-R válidas: 50 / 50 solicitadas.
+Duración total: 142.32 s | media por llamada: 28.46 s | mediana: 28.49 s | p95: 35.28 s | máxima: 35.28 s.
+Tiempo de espera del servicio/red (aproxima la petición al modelo, pero incluye transporte y servicio local): media 28.45 s | mediana 28.48 s | p95 35.27 s | máxima 35.27 s.
+Parseo JSON: total 0 ms | media 0.0 ms.
+Razonamiento informado: 5/5 llamadas; tokens de razonamiento / salida de esas llamadas: 77.6%.
+Cinco esperas más largas con desglose de salida:
+  L2: 35.27 s de espera; 2869 tokens de salida; 2270 de razonamiento (79.1%).
+  L4: 28.85 s de espera; 2747 tokens de salida; 2148 de razonamiento (78.2%).
+  L3: 28.48 s de espera; 2503 tokens de salida; 1921 de razonamiento (76.7%).
+  L5: 26.96 s de espera; 2248 tokens de salida; 1757 de razonamiento (78.2%).
+  L1: 22.71 s de espera; 2378 tokens de salida; 1788 de razonamiento (75.2%).
+Consumo observado en 5/5 llamadas (las demás pueden tener consumo desconocido):
+  Entrada: 4191 | Salida: 12745 | Total: 16936 | Entrada en caché conocida: 0 | Razonamiento conocido (incluido en salida): 9884.
+  Coste estimado conocido: USD 0.016132 (5/5 llamadas calculables; NO equivale al coste total si faltan tarifas o datos de uso).
+Longitud Q: fuera de 4-24 = 9; R: fuera de 1-8 = 22.
+Media palabras: Q = 20.96, R = 8.46.
+Posibles filtraciones literales: Q contiene su R = 0; Q contiene R de otra fila de su llamada = 0 (indicadores léxicos, no semánticos).
+
+Frecuencias P individuales (20 códigos observados):
+  P01: 5
+  P02: 5
+  P03: 5
+  P04: 5
+  P05: 5
+  P06: 5
+  P07: 5
+  P08: 5
+  P09: 5
+  P10: 5
+  P11: 5
+  P12: 5
+  P13: 5
+  P14: 5
+  P15: 5
+  P16: 5
+  P17: 5
+  P18: 5
+  P19: 5
+  P20: 5
+
+Frecuencias D (26 códigos observados):
+  D01: 2
+  D02: 2
+  D04: 2
+  D06: 3
+  D07: 3
+  D08: 1
+  D09: 1
+  D10: 4
+  D11: 2
+  D12: 1
+  D13: 3
+  D14: 1
+  D15: 3
+  D18: 1
+  D21: 1
+  D22: 2
+  D23: 1
+  D25: 1
+  D26: 3
+  D28: 2
+  D29: 2
+  D30: 2
+  D31: 2
+  D32: 1
+  D33: 2
+  D34: 2
+
+Frecuencias cruces PxP/D (50 códigos observados):
+  P01×P02/D10: 1
+  P01×P05/D07: 1
+  P01×P12/D22: 1
+  P02×P10/D26: 1
+  P02×P14/D30: 1
+  P03×P01/D22: 1
+  P03×P04/D10: 1
+  P03×P07/D10: 1
+  P04×P14/D15: 1
+  P04×P16/D08: 1
+  P05×P09/D04: 1
+  P05×P17/D31: 1
+  P06×P09/D13: 1
+  P06×P10/D23: 1
+  P06×P11/D04: 1
+  P06×P15/D33: 1
+  P07×P04/D15: 1
+  P07×P05/D25: 1
+  P07×P15/D01: 1
+  P08×P13/D07: 1
+  P08×P19/D26: 1
+  P09×P19/D02: 1
+  P10×P08/D34: 1
+  P10×P20/D10: 1
+  P11×P13/D11: 1
+  P12×P01/D29: 1
+  P12×P03/D06: 1
+  P12×P04/D18: 1
+  P13×P06/D11: 1
+  P13×P09/D21: 1
+  P14×P20/D14: 1
+  P15×P12/D28: 1
+  P15×P14/D01: 1
+  P15×P14/D07: 1
+  P16×P05/D31: 1
+  P16×P08/D02: 1
+  P16×P11/D06: 1
+  P17×P11/D12: 1
+  P17×P13/D30: 1
+  P17×P18/D32: 1
+  P18×P02/D15: 1
+  P18×P07/D06: 1
+  P18×P16/D34: 1
+  P18×P17/D26: 1
+  P19×P02/D33: 1
+  P19×P09/D13: 1
+  P19×P10/D09: 1
+  P20×P03/D13: 1
+  P20×P08/D28: 1
+  P20×P11/D29: 1
+
+PREGUNTAS Q REPETIDAS (texto normalizado)
+Únicos: 50 | Grupos repetidos: 0 (entre llamadas: 0) | Apariciones adicionales: 0 (dentro de llamadas: 0; entre llamadas: 0).
+La cuenta entre llamadas registra una nueva aparición por cada llamada adicional; el detalle incluye TODAS las apariciones.
+Apariciones en llamadas posteriores: 0 | mismo cruce PxP: 0; otro cruce: 0 | misma D: 0; otra D: 0 | mismo cruce PxP-D: 0; otro cruce-D: 0.
+Ninguna coincidencia textual.
+
+RESPUESTAS R REPETIDAS (texto normalizado)
+Únicos: 50 | Grupos repetidos: 0 (entre llamadas: 0) | Apariciones adicionales: 0 (dentro de llamadas: 0; entre llamadas: 0).
+La cuenta entre llamadas registra una nueva aparición por cada llamada adicional; el detalle incluye TODAS las apariciones.
+Apariciones en llamadas posteriores: 0 | mismo cruce PxP: 0; otro cruce: 0 | misma D: 0; otra D: 0 | mismo cruce PxP-D: 0; otro cruce-D: 0.
+Ninguna coincidencia textual.
+
+PAREJAS Q+R COMPLETAS REPETIDAS
+Únicos: 50 | Grupos repetidos: 0 (entre llamadas: 0) | Apariciones adicionales: 0 (dentro de llamadas: 0; entre llamadas: 0).
+La cuenta entre llamadas registra una nueva aparición por cada llamada adicional; el detalle incluye TODAS las apariciones.
+Apariciones en llamadas posteriores: 0 | mismo cruce PxP: 0; otro cruce: 0 | misma D: 0; otra D: 0 | mismo cruce PxP-D: 0; otro cruce-D: 0.
+Ninguna coincidencia textual.
+
+MISMA Q CON RESPUESTAS DISTINTAS:
+Grupos: 0.
+
+MISMA R PARA PREGUNTAS DISTINTAS:
+Grupos: 0.
+
+PREGUNTAS PARECIDAS ENTRE LLAMADAS (candidatas léxicas, Jaccard de palabras ≥ 0.80; no equivale a similitud semántica):
+Pares candidatos: 0.
+
+No evaluado automáticamente: exactitud factual, equivalencias semánticas, alias de respuestas y orden real de dificultad. Requieren revisión semántica.
