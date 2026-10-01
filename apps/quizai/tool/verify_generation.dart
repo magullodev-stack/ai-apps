@@ -149,9 +149,9 @@ void _reportDuplicates(
   );
   report.writeln(
     'Apariciones en llamadas posteriores: $laterCallOccurrences | '
-    'misma P: $repeatSameP; otra P: $repeatOtherP | '
+    'mismo cruce PxP: $repeatSameP; otro cruce: $repeatOtherP | '
     'misma D: $repeatSameD; otra D: $repeatOtherD | '
-    'misma pareja P-D: $repeatSamePD; otra pareja: $repeatOtherPD.',
+    'mismo cruce PxP-D: $repeatSamePD; otro cruce-D: $repeatOtherPD.',
   );
 
   if (repeated.isEmpty) {
@@ -223,7 +223,7 @@ int _percentile(List<int> values, double fraction) {
   return sorted[index];
 }
 
-/// Auditoría real: Dart selecciona P-D, Luna devuelve Q-R, sin Terra.
+/// Auditoría real: Dart selecciona P×P-D; Luna devuelve Q-R, sin Terra.
 Future<void> main(List<String> args) async {
   var samples = 1;
   var seed = 20260929;
@@ -251,7 +251,6 @@ Future<void> main(List<String> args) async {
   }
 
   final env = Platform.environment;
-  final promptLigero = env['AI_APPS_LUNA_PROMPT_LIGERO'] == '1';
   double? inputRate;
   double? outputRate;
   double? cachedRate;
@@ -274,7 +273,6 @@ Future<void> main(List<String> args) async {
     final luna = AiQuiz10LunaGenerator(
       client: client,
       model: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
-      promptLigero: promptLigero,
     );
     // Tarifas indicadas para gpt-5.6-luna, USD por millón de tokens.
     // Los parámetros de run.ps1 / variables de entorno pueden sobrescribirlas.
@@ -287,18 +285,15 @@ Future<void> main(List<String> args) async {
         .substring(0, 19)
         .replaceFirst('T', '_')
         .replaceAll(':', '-');
-    final variant = promptLigero ? 'Ligero' : 'Completo';
-    final path = 'Quiz10_Luna_Q+R_${variant}_$timestamp.txt';
+    final path = 'Quiz10_Luna_PxP_Q+R_$timestamp.txt';
     final report = File(path).openWrite();
 
     try {
       report.writeln('AUDITORÍA QUIZ10 — LUNA — Q+R');
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
-      report.writeln('Variante de prompt: $variant');
-      report.writeln(
-        'Prompt literal:\n${promptLigero ? quiz10LunaPromptLigero : quiz10LunaPrompt}',
-      );
+      report.writeln('Cruce por fila: P×P con D.');
+      report.writeln('Prompt literal:\n$quiz10LunaPrompt');
       report.writeln('Semilla: $seed | Llamadas solicitadas: $samples');
       report.writeln('P: ${quiz10Pivots.length}; D: ${quiz10Dimensions.length}.');
       report.writeln(
@@ -378,14 +373,23 @@ Future<void> main(List<String> args) async {
             final entry = _Question(
               call,
               row.slot.number,
-              row.slot.pivot.code,
+              '${row.slot.pivot.code}×${row.slot.pivot2.code}',
               row.slot.dimension.code,
               row.question,
               row.correct,
             );
             callObservations.add(entry);
             observations.add(entry);
-            pivotCounts.update(entry.p, (n) => n + 1, ifAbsent: () => 1);
+            pivotCounts.update(
+              row.slot.pivot.code,
+              (n) => n + 1,
+              ifAbsent: () => 1,
+            );
+            pivotCounts.update(
+              row.slot.pivot2.code,
+              (n) => n + 1,
+              ifAbsent: () => 1,
+            );
             dimensionCounts.update(entry.d, (n) => n + 1, ifAbsent: () => 1);
             pairCounts.update(
               '${entry.p}/${entry.d}',
@@ -509,7 +513,8 @@ Future<void> main(List<String> args) async {
           } else {
             for (final row in rows!) {
               report.writeln(
-                '${row.slot.number}. ${row.slot.pivot.code} '
+                '${row.slot.number}. '
+                '${row.slot.pivot.code}×${row.slot.pivot2.code} '
                 '${row.slot.dimension.code} | '
                 '${row.question} → ${row.correct}',
               );
@@ -628,9 +633,9 @@ Future<void> main(List<String> args) async {
         }
       }
 
-      _distribution(report, 'P', pivotCounts);
+      _distribution(report, 'P individuales', pivotCounts);
       _distribution(report, 'D', dimensionCounts);
-      _distribution(report, 'parejas P/D', pairCounts);
+      _distribution(report, 'cruces PxP/D', pairCounts);
       _reportDuplicates(
         report, 'PREGUNTAS Q REPETIDAS (texto normalizado)',
         qGroups, value: (r) => r.q,
