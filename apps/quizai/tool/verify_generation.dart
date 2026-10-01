@@ -53,13 +53,16 @@ double? _estimatedCost({
   required double? outputRate,
   required double? cachedRate,
 }) {
-  if (input == null || output == null || cached == null ||
+  if (input == null || output == null ||
       inputRate == null || outputRate == null ||
-      (cached > 0 && cachedRate == null) || cached > input) {
+      (cached != null && cached > input)) {
     return null;
   }
-  return ((input - cached) * inputRate +
-          cached * (cachedRate ?? inputRate) +
+  // La caché sin tarifa explícita se valora a tarifa de entrada normal.
+  // La cifra es una estimación conservadora, no el importe facturado.
+  final pricedCached = cached ?? 0;
+  return ((input - pricedCached) * inputRate +
+          pricedCached * (cachedRate ?? inputRate) +
           output * outputRate) /
       1000000;
 }
@@ -271,6 +274,13 @@ Future<void> main(List<String> args) async {
       client: client,
       model: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
     );
+    // Tarifas indicadas para gpt-5.6-luna, USD por millón de tokens.
+    // Los parámetros de run.ps1 / variables de entorno pueden sobrescribirlas.
+    // No asignar automáticamente estas tarifas a modelos diferentes.
+    if (luna.model == 'gpt-5.6-luna') {
+      inputRate ??= 0.20;
+      outputRate ??= 1.20;
+    }
     final timestamp = DateTime.now().toIso8601String()
         .substring(0, 19)
         .replaceFirst('T', '_')
@@ -287,11 +297,14 @@ Future<void> main(List<String> args) async {
       report.writeln(
         'Tarifas USD/1M tokens: entrada ${inputRate ?? "n/d"}, '
         'salida ${outputRate ?? "n/d"}, '
-        'entrada en caché ${cachedRate ?? "n/d"}.',
+        'entrada en caché ${cachedRate ?? "tarifa de entrada normal (sin descuento)"}.',
       );
       report.writeln(
         'Los importes son ESTIMACIONES, no facturas. '
         'Se calculan solo cuando existen tokens y tarifas suficientes. '
+        'Sin tarifa específica de caché se cobra la entrada en caché '
+        'como entrada normal en el cálculo (puede sobreestimar el coste). '
+        'Si el proveedor omite el uso de caché se supone 0. '
         'Los tokens de razonamiento ya están incluidos en los de salida.',
       );
       report.writeln(
@@ -449,11 +462,15 @@ Future<void> main(List<String> args) async {
           }
           report.writeln();
           await report.flush();
+          stdout.writeln('$call/$samples');
+          stdout.writeln('Tiempo: $secs s');
           stdout.writeln(
-            '$call/$samples · $secs s · '
-            'E: ${_known(inTokens)} / S: ${_known(outTokens)} · '
-            '${_usd(price)}${failure == null ? "" : " · ERROR"}',
+            'Tokens totales: ${inTokens == null || outTokens == null ? "n/d" : inTokens + outTokens}',
           );
+          stdout.writeln(
+            'Precio: ${_usd(price)}',
+          );
+          if (call < samples) stdout.writeln();
         }
       }
       clock.stop();
@@ -571,12 +588,7 @@ Future<void> main(List<String> args) async {
       );
 
       await report.flush();
-      stdout.writeln('Informe: $path');
-      stdout.writeln(
-        'OK: $succeeded | Fallidas: $failed | '
-        'Q-R: ${observations.length} | '
-        'Coste conocido: ${_usd(pricedCalls == 0 ? null : costSum)}',
-      );
+      // El resumen completo y la ruta quedan exclusivamente en el .txt.
       if (failed > 0) exitCode = 1;
     } finally {
       await report.close();

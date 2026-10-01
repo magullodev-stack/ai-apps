@@ -183,7 +183,7 @@ if (-not $session) {
         throw "El servicio Dart no está disponible. Consulta $logFile"
     }
 }
-Write-Host "Servicio Dart preparado: $($session.endpoint)"
+if (-not $ProbarLuna) { Write-Host "Servicio Dart preparado: $($session.endpoint)" }
 
 if ($Pivots) {
     Push-Location (Join-Path $repo 'apps\\quizai')

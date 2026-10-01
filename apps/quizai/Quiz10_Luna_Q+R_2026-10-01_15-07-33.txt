@@ -1,0 +1,250 @@
+AUDITORÍA QUIZ10 — LUNA — Q+R
+Fecha: 2026-10-01 15:07:33.466098
+Modelo: gpt-5.6-luna
+Semilla: 20260929 | Llamadas solicitadas: 200
+P: 20; D: 34.
+Tarifas USD/1M tokens: entrada 0.2, salida 1.2, entrada en caché tarifa de entrada normal (sin descuento).
+Los importes son ESTIMACIONES, no facturas. Se calculan solo cuando existen tokens y tarifas suficientes. Sin tarifa específica de caché se cobra la entrada en caché como entrada normal en el cálculo (puede sobreestimar el coste). Si el proveedor omite el uso de caché se supone 0. Los tokens de razonamiento ya están incluidos en los de salida.
+Coincidencia textual = mismo texto ignorando mayúsculas y espacios repetidos. Los parecidos léxicos son orientativos.
+
+Llamada 1/200 | OK | 39.88 s | entrada: 1053 | salida: 2904 | caché: 1050 | razonamiento: 2588 | coste estimado: USD 0.003695
+1. P07 D15 | En Kant, ¿qué mandato exige actuar según reglas universalizables? → Imperativo categórico
+2. P04 D02 | ¿Qué estructura caracteriza al ADN? → Doble hélice
+3. P16 D01 | ¿Qué número es suma de dos cubos positivos de dos maneras? → 1729
+4. P08 D04 | En una colisión Compton, ¿qué partícula retrocede? → Electrón
+5. P15 D06 | ¿En qué año se publicó la novela Ulysses? → 1922
+6. P14 D09 | ¿De qué lengua procede etimológicamente «almohada»? → Árabe
+7. P05 D11 | ¿Qué requisito activa la legítima defensa en derecho penal? → Agresión ilegítima
+8. P09 D10 | ¿Qué sustancia puede formarse al freír alimentos ricos en almidón? → Acrilamida
+9. P12 D29 | ¿Qué ciudad fue objetivo principal de la Operación Gomorra? → Hamburgo
+10. P03 D26 | ¿Qué radiación emite una estrella de neutrones al acrecer gas? → Rayos X
+
+Llamada 2/200 | OK | 39.35 s | entrada: 1057 | salida: 3210 | caché: 0 | razonamiento: 2886 | coste estimado: USD 0.004063
+1. P17 D30 | ¿Con qué se administra insulina? → Jeringa
+2. P13 D07 | ¿En qué año se lanzó Windows 95? → 1995
+3. P01 D08 | ¿Qué corriente arquitectónica reaccionó contra el estilo internacional? → Posmodernismo
+4. P05 D13 | ¿Qué resolución revisa normalmente la apelación? → Sentencia de primera instancia
+5. P04 D10 | ¿Qué producto genera la nitrogenasa al fijar nitrógeno atmosférico? → Amoníaco
+6. P16 D28 | ¿Qué sistema ajusta iterativamente una variable hacia un valor objetivo? → Controlador PID
+7. P19 D04 | ¿Quién colaboró con Otto Hahn en el descubrimiento de la fisión nuclear? → Fritz Strassmann
+8. P09 D14 | ¿Qué función cumple la pectina en una mermelada? → Formar un gel
+9. P03 D34 | ¿Qué modificación produjo la sonda sobre el cometa Tempel 1? → Un cráter de impacto
+10. P07 D15 | ¿Qué tesis de Quine aplica la revisión empírica al conjunto de una teoría? → Holismo confirmacional
+
+AVISO [L3/F2 [P01/D26]]: Q contiene R literalmente.
+Llamada 3/200 | OK | 41.27 s | entrada: 1008 | salida: 3974 | caché: 0 | razonamiento: 3624 | coste estimado: USD 0.004970
+1. P12 D29 | ¿Sobre qué ciudad cayó la bomba atómica Little Boy? → Hiroshima
+2. P01 D26 | ¿Qué edificio ofreció Gaudí como solución para la casa Batlló? → Casa Batlló
+3. P02 D07 | ¿En qué año se estrenó La consagración de la primavera? → 1913
+4. P10 D25 | ¿Qué factor oceánico favorece la aridez extrema del desierto de Atacama? → La corriente de Humboldt
+5. P08 D32 | ¿Qué maniobra puede realizar una nave al pasar cerca de un planeta masivo? → Asistencia gravitatoria
+6. P13 D15 | ¿Qué principio limita los permisos de cada usuario a lo estrictamente necesario? → Mínimo privilegio
+7. P07 D33 | ¿Qué ejercicio recomienda Séneca ante la posibilidad de desgracias? → Premeditación de males
+8. P05 D13 | ¿Respecto de qué instrumento opera la aceptación cambiaria? → Letra de cambio
+9. P17 D06 | ¿Qué lapso suele separar la exposición al virus varicela-zóster del inicio del exantema? → Diez a veintiún días
+10. P18 D02 | ¿Qué propiedad distingue la memoria episódica en el modelo de Tulving? → Conciencia autonoética
+
+Llamada 4/200 | OK | 49.50 s | entrada: 985 | salida: 3782 | caché: 0 | razonamiento: 3441 | coste estimado: USD 0.004735
+1. P19 D33 | ¿Qué reactivo se indica para detectar cloruros por precipitado blanco? → Nitrato de plata
+2. P02 D22 | ¿Qué concepción sostenía Platón sobre la poesía? → Imitación de las apariencias
+3. P01 D06 | ¿Qué precedió a la construcción de la Villa Savoye? → La Primera Guerra Mundial
+4. P12 D23 | ¿Qué tesis verificaron las pruebas genéticas sobre Tutankamón? → Que era hijo de Akenatón
+5. P18 D12 | ¿Qué estructura cerebral consolida recuerdos episódicos? → El hipocampo
+6. P07 D10 | ¿Qué efecto produce el aislamiento sensorial prolongado? → Alucinaciones perceptivas
+7. P06 D21 | ¿Qué designa Adam Smith mediante la expresión «mano invisible»? → Coordinación espontánea del mercado
+8. P10 D28 | ¿Qué compañía opera la central nuclear de Fukushima Daiichi? → Tokyo Electric Power Company Holdings
+9. P17 D07 | ¿Cuándo se efectuó el primer trasplante renal exitoso? → 23 de diciembre de 1954
+10. P11 D31 | ¿Qué intervención provocó la subsidencia de Ciudad de México? → Extracción intensiva de agua subterránea
+
+Llamada 5/200 | OK | 35.13 s | entrada: 1052 | salida: 3065 | caché: 0 | razonamiento: 2710 | coste estimado: USD 0.003888
+1. P06 D13 | ¿Qué proceso articula la banca comercial dentro del sistema económico? → Intermediación financiera
+2. P09 D34 | ¿Qué transformación produce hornear una masa de pan? → Gelatinización del almidón y coagulación proteica
+3. P18 D22 | ¿Qué sostiene Skinner acerca del lenguaje humano? → Una conducta moldeada por contingencias ambientales
+4. P16 D10 | ¿Qué sucede con la suma de los ángulos internos de un triángulo euclídeo? → Alcanza ciento ochenta grados
+5. P03 D30 | ¿Qué empleó Galileo para examinar los astros? → Un telescopio refractor
+6. P01 D01 | ¿Qué construcción modernista se encuentra en Poissy, Francia? → Villa Savoye
+7. P10 D18 | ¿Qué obra cartográfica creó Abraham Ortelius? → Theatrum Orbis Terrarum
+8. P20 D11 | ¿Qué condiciones favorecen el suicidio anómico según Durkheim? → Desregulación normativa y deseos ilimitados
+9. P02 D31 | ¿Qué intervención realizó Banksy durante la subasta de 2018? → Activó una trituradora oculta
+10. P14 D26 | ¿Qué hacen los oyentes ante «The horse raced past the barn fell»? → Reanalizan la estructura sintáctica
+
+Llamada 6/200 | OK | 38.92 s | entrada: 1017 | salida: 3379 | caché: 0 | razonamiento: 3043 | coste estimado: USD 0.004258
+1. P07 D18 | ¿Qué obra filosófica compuso Platón? → La República
+2. P16 D02 | ¿Cuántos vértices posee un cubo geométrico? → Ocho
+3. P05 D20 | ¿Qué signo representa el parágrafo en textos jurídicos? → §
+4. P19 D16 | ¿En qué rango de concentraciones se aplica la ley de Beer-Lambert? → A concentraciones bajas
+5. P12 D24 | ¿Qué hallazgo permitió descifrar los jeroglíficos egipcios? → La piedra de Rosetta
+6. P02 D14 | ¿Qué función cumple el claroscuro en la pintura? → Modelar volúmenes
+7. P03 D21 | ¿Qué cometa origina las Perseidas? → Swift-Tuttle
+8. P20 D03 | ¿Qué medida cuenta cuántos caminos mínimos atraviesan un actor? → Centralidad de intermediación
+9. P09 D32 | Con 65 °C y una bolsa sellada, ¿qué técnica puede ejecutarse? → Cocción sous-vide
+10. P18 D33 | En terapia cognitivo-conductual, con fobia específica y evitación persistente, ¿qué intervención se indica? → Exposición gradual
+
+Llamada 7/200 | OK | 37.97 s | entrada: 1061 | salida: 3188 | caché: 0 | razonamiento: 2849 | coste estimado: USD 0.004038
+1. P04 D01 | ¿Qué orgánulo celular posee doble membrana y ADN propio? → Mitocondria
+2. P02 D27 | ¿En qué contexto se pintó Guernica? → Pabellón español de 1937
+3. P17 D14 | ¿Qué función cumple la hemoglobina en la sangre? → Transportar oxígeno
+4. P01 D08 | ¿Qué estructura resulta de prolongar un arco semicircular? → Bóveda de cañón
+5. P08 D05 | ¿Qué acontecimiento ocurrió el 20 de julio de 1969? → Alunizaje del Apolo 11
+6. P12 D16 | ¿En qué territorio rigió el Edicto de Nantes? → Reino de Francia
+7. P14 D34 | ¿Qué transformación sufre «crocodilo» en «cocodrilo»? → Metátesis
+8. P09 D02 | ¿Qué propiedad reológica caracteriza al kétchup al agitarlo? → Adelgazamiento por cizalla
+9. P19 D26 | ¿Qué producto forma el acetileno al hidratarse en medio ácido? → Etanal
+10. P16 D03 | ¿Qué número ocupa el vigésimo término de Fibonacci? → 6765
+
+Llamada 8/200 | OK | 46.06 s | entrada: 1001 | salida: 3442 | caché: 0 | razonamiento: 3106 | coste estimado: USD 0.004331
+1. P18 D11 | ¿Qué causa el daltonismo rojo-verde? → Mutaciones en OPN1LW y OPN1MW
+2. P16 D33 | ¿Cómo se obtiene el máximo común divisor mediante enteros? → Aplicando el algoritmo de Euclides
+3. P07 D34 | ¿Qué entidad niega Hume al analizar el haz de percepciones? → El yo sustancial
+4. P13 D17 | ¿Qué indica el icono de una papelera? → Eliminar archivos
+5. P19 D32 | ¿Cómo se obtiene amoníaco a gran escala? → Mediante Haber-Bosch
+6. P04 D14 | ¿Qué función cumple la RuBisCO en plantas? → Catalizar la fijación del carbono
+7. P11 D22 | ¿Qué sostenía Wegener sobre los continentes? → Que se desplazaban lentamente
+8. P08 D29 | ¿Sobre qué actúa la fuerza de Lorentz? → Cargas eléctricas en movimiento
+9. P10 D06 | ¿Qué evento precedió al cierre del istmo de Panamá? → La elevación tectónica centroamericana
+10. P14 D21 | ¿A qué fenómeno alude la teoría de la acomodación comunicativa? → La adaptación mutua entre hablantes
+
+Llamada 9/200 | OK | 50.42 s | entrada: 1034 | salida: 3486 | caché: 0 | razonamiento: 3106 | coste estimado: USD 0.004390
+1. P04 D04 | ¿Qué científico colaboró con Francis Crick en el descubrimiento de la estructura del ADN? → James Watson
+2. P03 D32 | Con combustible limitado, ¿qué maniobra permite cambiar la trayectoria de una nave aprovechando un planeta? → Asistencia gravitatoria
+3. P15 D15 | En teoría narrativa, ¿qué principio exige coherencia con el mundo representado? → Principio de verosimilitud
+4. P05 D12 | En un Estado constitucional, ¿qué órgano controla la conformidad de las leyes con la Constitución? → Tribunal Constitucional
+5. P19 D07 | ¿En qué año John Dalton publicó su teoría atómica? → 1808
+6. P13 D28 | En un sistema operativo, ¿qué componente decide la asignación de tiempo a los procesos? → Kernel
+7. P20 D30 | En el experimento de Milgram, ¿qué aparato accionaba el investigador para aplicar la supuesta sanción? → Generador de descargas eléctricas
+8. P16 D09 | Bajo una inversión geométrica, ¿qué imagen tiene una recta que no pasa por el centro? → Una circunferencia
+9. P01 D16 | Según la Ley de Costas española, en suelo no urbanizado, ¿hasta dónde alcanza la servidumbre de protección? → Cien metros tierra adentro
+10. P02 D05 | ¿Qué muestra londinense presentó Roger Fry en 1910? → Manet and the Post-Impressionists
+
+Llamada 10/200 | OK | 46.75 s | entrada: 1015 | salida: 2971 | caché: 0 | razonamiento: 2588 | coste estimado: USD 0.003768
+1. P06 D10 | ¿Qué sucede con el precio de un bien cuando aumenta su oferta, ceteris paribus? → Disminuye.
+2. P12 D32 | ¿Qué edificación resultó técnicamente realizable mediante el hormigón romano? → El Panteón de Roma.
+3. P08 D25 | ¿Qué radiación activa el efecto fotoeléctrico en ciertos metales? → Luz de frecuencia suficiente.
+4. P15 D14 | ¿Qué papel desempeña el narrador omnisciente en una novela? → Dosificar la información.
+5. P20 D21 | ¿A qué fenómeno alude la noción durkheimiana de anomia? → Desregulación normativa.
+6. P16 D33 | Según el grado del denominador, ¿qué transformación se indica en fracciones racionales? → Descomposición en fracciones parciales.
+7. P19 D17 | ¿Qué nombre corresponde a [Fe(CN)₆]³⁻? → Hexacianoferrato(III).
+8. P03 D16 | ¿Dónde deja de ser fiable la ley de Hubble? → A escalas gravitacionalmente ligadas.
+9. P13 D22 | ¿Qué supuesto sostiene el modelo de confianza cero sobre la red interna? → No confiar implícitamente en ningún usuario.
+10. P17 D15 | ¿Qué esquema ajusta la proporción corporal quemada a la edad del paciente? → La regla de Lund y Browder.
+
+Llamada 11/200 | OK | 39.14 s | entrada: 1019 | salida: 3436 | caché: 0 | razonamiento: 3106 | coste estimado: USD 0.004327
+1. P20 D17 | ¿Qué representa la paloma blanca como símbolo sociológico? → La paz
+2. P11 D22 | ¿Qué sostuvo Alfred Wegener respecto a Pangea? → Que se fragmentó y desplazó
+3. P17 D28 | ¿Quién controla los brazos durante una cirugía robótica? → El cirujano
+4. P09 D30 | ¿Qué objeto permite emulsionar manualmente una mayonesa? → Un batidor de varillas
+5. P19 D26 | ¿Cómo responde el tornasol azul ante un ácido? → Se vuelve rojo
+6. P03 D16 | ¿Dónde resulta válida la ley de Hubble-Lemaître? → En escalas cosmológicas
+7. P02 D15 | ¿Qué regla cromática formuló Johannes Itten? → El contraste de complementarios
+8. P13 D33 | ¿Qué corrección exige WCAG 2.2 para una imagen informativa? → Añadir texto alternativo
+9. P18 D05 | ¿Qué acontecimiento precedió al cambio conductual de Phineas Gage? → La perforación craneal por una barra
+10. P06 D23 | ¿Qué hipótesis contrasta el test de Hausman? → La consistencia de efectos aleatorios
+
+Llamada 12/200 | OK | 34.94 s | entrada: 1033 | salida: 3458 | caché: 0 | razonamiento: 3106 | coste estimado: USD 0.004356
+1. P05 D19 | ¿Quién pintó la Mona Lisa? → Leonardo da Vinci
+2. P06 D09 | ¿Cuál es el origen natural del corcho comercial? → Corteza de Quercus suber
+3. P13 D07 | ¿En qué año apareció la primera versión de Linux? → 1991
+4. P11 D33 | Para rocas ígneas, ¿qué técnica se recomienda con isótopos? → Datación radiométrica
+5. P17 D16 | ¿Cuál es el alcance preventivo de nirsevimab? → Lactantes frente al virus respiratorio sincitial
+6. P08 D20 | ¿Qué letra griega representa la sección eficaz en física nuclear? → Sigma (σ)
+7. P01 D11 | ¿Qué factor favorece la aparición de puentes térmicos en un edificio? → Discontinuidad del aislamiento
+8. P20 D27 | ¿En qué contexto histórico se desarrolló la Comuna de París? → Derrota francesa en la guerra franco-prusiana
+9. P03 D01 | ¿Qué objeto transneptuniano presenta una forma bilobulada? → Arrokoth
+10. P19 D31 | ¿Qué reactivos se emplean en una reacción de Mitsunobu para invertir la configuración de un alcohol? → DEAD y trifenilfosfina
+
+Llamada 13/200 | OK | 39.75 s | entrada: 1037 | salida: 3446 | caché: 0 | razonamiento: 3078 | coste estimado: USD 0.004343
+1. P04 D27 | ¿Dónde se realiza la fotosíntesis en una célula vegetal? → En los cloroplastos
+2. P20 D26 | ¿Qué hicieron los participantes del experimento de Milgram ante las órdenes? → Aplicaron descargas eléctricas
+3. P11 D20 | ¿Cuál es la fórmula química del cuarzo? → SiO₂
+4. P14 D34 | ¿Qué alternancia caracteriza la conjugación del verbo irregular «poder»? → Diptongación y cierre vocálico
+5. P06 D31 | ¿Qué decisión estabilizó la moneda alemana tras la hiperinflación de 1923? → La introducción del Rentenmark
+6. P18 D05 | ¿Qué acontecimiento señaló el comienzo del conductismo en 1913? → La publicación del manifiesto de Watson
+7. P19 D11 | ¿Qué provoca la formación de ozono troposférico? → Radiación solar, NOₓ y compuestos orgánicos volátiles
+8. P08 D19 | ¿Quién formuló las ecuaciones del electromagnetismo? → James Clerk Maxwell
+9. P10 D16 | ¿A qué zona se aplica el Tratado Antártico? → Al sur de los 60° de latitud sur
+10. P07 D13 | ¿Qué papel desempeña la epoché en la fenomenología de Husserl? → Suspender el juicio sobre la existencia
+
+Llamada 14/200 | OK | 37.64 s | entrada: 1009 | salida: 3383 | caché: 0 | razonamiento: 3032 | coste estimado: USD 0.004261
+1. P09 D17 | En la cocina japonesa, ¿qué representa el círculo rojo del sushi? → El sol
+2. P12 D07 | ¿En qué año comenzó la Revolución francesa? → 1789
+3. P19 D23 | ¿Qué anión identifica la efervescencia al añadir ácido a una muestra? → El ion carbonato
+4. P11 D25 | ¿Ante qué fenómeno responde un sismógrafo? → Las vibraciones del suelo
+5. P08 D20 | ¿Qué símbolo del SI designa la unidad de actividad radiactiva? → Bq (becquerel)
+6. P01 D33 | ¿Qué técnica admite la Carta de Venecia para recomponer partes originales dispersas? → La anastilosis
+7. P07 D08 | ¿Qué estado, según el budismo, surge inmediatamente del deseo? → El apego
+8. P10 D04 | Además de Indonesia, ¿qué país comparte la gran isla situada al norte de Australia? → Papúa Nueva Guinea
+9. P05 D31 | ¿Qué instrumento jurídico formalizó la transferencia de Hong Kong en 1997? → Declaración Conjunta Sino-Británica
+10. P15 D05 | En el Ulises, ¿qué acontecimiento se conmemora cada 16 de junio? → El recorrido de Leopold Bloom por Dublín
+
+Llamada 15/200 | OK | 56.85 s | entrada: 1031 | salida: 3708 | caché: 0 | razonamiento: 3367 | coste estimado: USD 0.004656
+1. P08 D20 | ¿Qué letra simboliza la fuerza en física? → F
+2. P02 D17 | ¿Qué objetos aparecen deformados en La persistencia de la memoria? → Relojes blandos
+3. P01 D02 | ¿Qué forma tiene la planta del Panteón de Roma? → Circular
+4. P16 D27 | ¿En qué contexto histórico se desarrolló el cálculo infinitesimal? → La Revolución Científica europea
+5. P14 D12 | ¿Qué unidad distingue palabras por contraste, aunque carezca de significado propio? → Fonema
+6. P12 D26 | ¿Qué decisión adoptó la ONU ante la invasión iraquí de Kuwait? → La Resolución 678
+7. P17 D33 | Según las guías, ¿qué se administra primero ante anafilaxia? → Adrenalina intramuscular
+8. P11 D16 | ¿Cuál es el ámbito de aplicación de la clasificación de Dunham? → Rocas carbonatadas
+9. P05 D03 | ¿Qué órgano ocupa el vértice jurisdiccional en materia administrativa española? → Sala Tercera del Tribunal Supremo
+10. P03 D11 | ¿Qué causa la precesión de los equinoccios? → Torque gravitatorio solar-lunar sobre el abultamiento terrestre
+
+Llamada 16/200 | OK | 52.95 s | entrada: 1039 | salida: 3455 | caché: 0 | razonamiento: 3106 | coste estimado: USD 0.004354
+1. P11 D13 | ¿Respecto de qué proceso las raíces fracturan rocas? → Meteorización biológica
+2. P09 D34 | ¿Qué cambio produce la fermentación láctica en la leche? → Acidificación
+3. P01 D14 | ¿Qué función estructural cumple un dintel sobre una puerta? → Distribuir cargas
+4. P17 D24 | ¿Qué marcador confirma la anemia ferropénica? → Ferritina sérica
+5. P02 D33 | En conservación de pinturas, ¿qué intervención estabiliza una capa desprendida? → Consolidación
+6. P08 D04 | En la desintegración beta menos, ¿qué partícula acompaña al electrón emitido? → Antineutrino electrónico
+7. P07 D17 | ¿Qué simboliza la caverna en la alegoría platónica? → La ignorancia humana
+8. P18 D11 | ¿Cuál es la causa neural típica de la prosopagnosia adquirida? → Daño occipitotemporal bilateral
+9. P03 D05 | ¿Qué acontecimiento precedió a la formación observable de la nebulosa del Cangrejo? → Supernova SN 1054
+10. P10 D10 | ¿Qué estructura tectónica se forma entre una fosa y un arco volcánico? → Cuenca de antearco
+
+Llamada 17/200 | OK | 53.58 s | entrada: 1016 | salida: 4078 | caché: 0 | razonamiento: 3727 | coste estimado: USD 0.005097
+1. P08 D18 | ¿Qué obra atribuye la física a Isaac Newton? → Philosophiæ Naturalis Principia Mathematica
+2. P13 D11 | ¿Qué originó el ataque informático WannaCry de 2017? → La vulnerabilidad EternalBlue de Windows
+3. P19 D21 | ¿A qué fenómeno aludía la teoría del flogisto? → La combustión
+4. P20 D22 | ¿Qué entendía Durkheim por hecho social? → Formas de actuar externas y coercitivas
+5. P11 D29 | ¿Qué realidad geológica investigó la perforación del pozo superprofundo de Kola? → La corteza continental
+6. P12 D04 | ¿Quién asumió el mando tras la muerte de Magallanes? → Juan Sebastián Elcano
+7. P05 D27 | ¿En qué contexto se aprobó la Ley francesa de 1905? → La disputa entre republicanismo y catolicismo
+8. P07 D31 | ¿Qué acción ejecutó Sócrates para consumar su condena? → Bebió la cicuta
+9. P09 D01 | ¿Qué dulce siciliano combina ricota azucarada y una envoltura frita? → Cannolo
+10. P10 D02 | ¿Cuál es la profundidad máxima del lago Baikal? → 1.642 metros
+
+Llamada 18/200 | OK | 32.88 s | entrada: 1011 | salida: 3284 | caché: 0 | razonamiento: 2953 | coste estimado: USD 0.004143
+1. P08 D22 | ¿Qué idea sostuvo Einstein sobre la radiación? → Que la energía se intercambia en cuantos
+2. P01 D19 | ¿Quién diseñó la Casa de la Cascada? → Frank Lloyd Wright
+3. P17 D28 | ¿Quién controla la ejecución de una cirugía robótica? → El cirujano
+4. P14 D18 | ¿Qué alfabeto creó Sejong el Grande? → Hangul
+5. P12 D17 | ¿Qué acontecimiento representa el tapiz de Bayeux? → La conquista normanda de Inglaterra
+6. P13 D31 | ¿Qué intervención realizó Stuxnet en Natanz? → Manipuló periódicamente la velocidad de giro
+7. P20 D03 | Según Wright, ¿qué grupo controla parcialmente recursos productivos? → La pequeña burguesía
+8. P10 D11 | ¿Qué condiciones forman las terrazas de Pamukkale? → Manantiales termales ricos en carbonato cálcico
+9. P02 D02 | ¿Qué fenómeno distingue al azul egipcio bajo radiación visible? → Emisión infrarroja persistente
+10. P15 D04 | En La muerte de Artemio Cruz, ¿quién permanece junto al moribundo? → Catalina Bernal
+
+Llamada 19/200 | OK | 46.58 s | entrada: 1013 | salida: 3223 | caché: 0 | razonamiento: 2897 | coste estimado: USD 0.004070
+1. P06 D14 | ¿Qué función cumple el dinero en una economía? → Medio de intercambio
+2. P03 D32 | ¿Qué operación puede colocar un satélite en órbita mediante un cohete? → Un lanzamiento espacial
+3. P01 D01 | ¿Qué estructura arquitectónica cubre un espacio mediante una superficie curva? → Una bóveda
+4. P07 D29 | ¿Sobre qué realidad externa actúa el tallado escultórico? → La piedra
+5. P04 D05 | ¿Qué acontecimiento produce un cigoto en la reproducción sexual? → La fecundación
+6. P15 D10 | ¿Qué efecto produce la anáfora repetida al inicio de varios versos? → Énfasis rítmico
+7. P18 D17 | ¿Qué concepto representa la lechuza como atributo de Atenea? → La sabiduría
+8. P08 D13 | ¿Respecto de qué entidad se mide la velocidad de un móvil? → Sistema de referencia
+9. P19 D06 | ¿Cuál es la semivida aproximada del carbono-14? → 5730 años
+10. P09 D22 | ¿Qué atribuía Brillat-Savarin a la gastronomía? → El conocimiento razonado de la alimentación
+
+Llamada 20/200 | OK | 41.26 s | entrada: 1010 | salida: 3587 | caché: 0 | razonamiento: 3237 | coste estimado: USD 0.004506
+1. P14 D20 | ¿Qué símbolo representa al sodio en la tabla periódica? → Na
+2. P19 D28 | ¿Qué enzima regula la velocidad de la glucólisis? → Fosfofructoquinasa-1
+3. P17 D21 | ¿A qué se refiere la teoría germinal de la enfermedad? → Microorganismos patógenos
+4. P16 D07 | ¿En qué año se demostró el último teorema de Fermat? → 1994
+5. P10 D18 | ¿Quién formuló la clasificación climática basada en letras? → Wladimir Köppen
+6. P04 D14 | ¿Qué función cumple el endosoma temprano dentro de la célula? → Clasificar cargas internalizadas
+7. P01 D24 | ¿Qué evidencia contrasta la resistencia prevista de una estructura de hormigón? → Resultados de un ensayo esclerométrico
+8. P05 D15 | ¿Qué máxima tutela la legalidad de los delitos y las penas? → Nullum crimen, nulla poena sine lege
+9. P15 D25 | ¿Qué desencadena la segunda creación del protagonista en la novela de Shelley? → La amenaza de su primera criatura
+10. P09 D30 | ¿Qué recipiente se utiliza para manipular nitrógeno líquido en cocina? → Dewar criogénico
+
