@@ -251,6 +251,7 @@ Future<void> main(List<String> args) async {
   }
 
   final env = Platform.environment;
+  final promptLigero = env['AI_APPS_LUNA_PROMPT_LIGERO'] == '1';
   double? inputRate;
   double? outputRate;
   double? cachedRate;
@@ -273,6 +274,7 @@ Future<void> main(List<String> args) async {
     final luna = AiQuiz10LunaGenerator(
       client: client,
       model: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
+      promptLigero: promptLigero,
     );
     // Tarifas indicadas para gpt-5.6-luna, USD por millón de tokens.
     // Los parámetros de run.ps1 / variables de entorno pueden sobrescribirlas.
@@ -285,13 +287,18 @@ Future<void> main(List<String> args) async {
         .substring(0, 19)
         .replaceFirst('T', '_')
         .replaceAll(':', '-');
-    final path = 'Quiz10_Luna_Q+R_$timestamp.txt';
+    final variant = promptLigero ? 'Ligero' : 'Completo';
+    final path = 'Quiz10_Luna_Q+R_${variant}_$timestamp.txt';
     final report = File(path).openWrite();
 
     try {
       report.writeln('AUDITORÍA QUIZ10 — LUNA — Q+R');
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
+      report.writeln('Variante de prompt: $variant');
+      report.writeln(
+        'Prompt literal:\n${promptLigero ? quiz10LunaPromptLigero : quiz10LunaPrompt}',
+      );
       report.writeln('Semilla: $seed | Llamadas solicitadas: $samples');
       report.writeln('P: ${quiz10Pivots.length}; D: ${quiz10Dimensions.length}.');
       report.writeln(
@@ -477,7 +484,7 @@ Future<void> main(List<String> args) async {
                   reasoningTokens > outTokens
               ? null
               : outTokens - reasoningTokens;
-          final reasoningPercent = visibleTokens == null
+          final reasoningPercent = visibleTokens == null || outTokens == 0
               ? 'n/d'
               : (100 * reasoningTokens! / outTokens!).toStringAsFixed(1);
           report.writeln(
@@ -512,12 +519,16 @@ Future<void> main(List<String> args) async {
           await report.flush();
           stdout.writeln('$call/$samples');
           stdout.writeln('Tiempo: $secs s');
+          stdout.writeln('Tokens entrada: ${_known(inTokens)}');
+          stdout.writeln('Tokens salida: ${_known(outTokens)}');
+          stdout.writeln(
+            'Tokens razonamiento: ${_known(reasoningTokens)} '
+            '(${reasoningPercent == "n/d" ? "n/d" : "$reasoningPercent%"} de salida)',
+          );
           stdout.writeln(
             'Tokens totales: ${inTokens == null || outTokens == null ? "n/d" : inTokens + outTokens}',
           );
-          stdout.writeln(
-            'Precio: ${_usd(price)}',
-          );
+          stdout.writeln('Precio: ${_usd(price)}');
           if (call < samples) stdout.writeln();
         }
       }
