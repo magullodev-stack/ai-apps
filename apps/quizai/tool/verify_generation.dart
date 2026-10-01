@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
-import 'package:quizai/modes/quiz10/quiz10_catalog.dart';
-import 'package:quizai/modes/quiz10/quiz10_luna.dart';
+import 'package:quizai/modes/quiz10/quiz10_DART_Pi+Di.dart';
+import 'package:quizai/modes/quiz10/quiz10_LUNA_Prompt.dart';
 
 final class _Question {
   const _Question(this.call, this.position, this.p, this.d, this.q, this.r);

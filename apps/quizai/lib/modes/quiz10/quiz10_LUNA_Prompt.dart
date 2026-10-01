@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
-import 'quiz10_catalog.dart';
+import 'quiz10_DART_Pi+Di.dart';
 
 // El catálogo selecciona P y D.
 // Luna recibe esas parejas y genera Q y R.
