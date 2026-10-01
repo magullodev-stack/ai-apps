@@ -35,6 +35,17 @@ int? _usage(Map<String, dynamic>? usage, String key) {
 
 String _known(int? count) => count?.toString() ?? 'n/d';
 
+// Identificador estable del texto exacto del prompt, para distinguir
+// auditorías aunque se edite el archivo de Luna en Windows.
+// FNV-1a de 32 bits: etiqueta, no firma criptográfica.
+String _promptId(String prompt) {
+  var hash = 0x811c9dc5;
+  for (final char in prompt.runes) {
+    hash = ((hash ^ char) * 0x01000193) & 0xffffffff;
+  }
+  return hash.toRadixString(16).padLeft(8, '0');
+}
+
 double? _rate(Map<String, String> env, String key) {
   final raw = env[key]?.trim();
   if (raw == null || raw.isEmpty) return null;
@@ -285,7 +296,11 @@ Future<void> main(List<String> args) async {
         .substring(0, 19)
         .replaceFirst('T', '_')
         .replaceAll(':', '-');
-    final path = 'Quiz10_Luna_PxP_Q+R_$timestamp.txt';
+    final modelLabel =
+        luna.model.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '-');
+    final promptId = _promptId(quiz10LunaPrompt);
+    final path =
+        'Quiz10_${modelLabel}_PxP-D_Q+R_${samples}L_prompt-${promptId}_$timestamp.txt';
     final report = File(path).openWrite();
 
     try {
@@ -293,6 +308,7 @@ Future<void> main(List<String> args) async {
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
       report.writeln('Cruce por fila: P×P con D.');
+      report.writeln('Huella del prompt: $promptId (FNV-1a 32 bits, identificador).');
       report.writeln('Prompt literal:\n$quiz10LunaPrompt');
       report.writeln('Semilla: $seed | Llamadas solicitadas: $samples');
       report.writeln('P: ${quiz10Pivots.length}; D: ${quiz10Dimensions.length}.');
