@@ -111,12 +111,12 @@ activo. El archivo de selección es local y no se publica en Git.
 ## Generación P × D → Q, R (Luna)
 
 El catálogo canónico de Quiz10 se encuentra en
-`lib/modes/quiz10/quiz10_catalog.dart`: contiene los 21 pivotes P01–P21
+`lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: contiene los 20 pivotes P01–P20
 y las 34 dimensiones D01–D34. Dart selecciona diez P y diez D distintas
 por partida, las combina por fila y las entrega a Luna sin etiquetas de
 dificultad heredadas.
 
-`lib/modes/quiz10/quiz10_luna.dart` contiene el prompt literal de Luna,
+`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene el prompt literal de Luna,
 la preparación de los datos P–D, el esquema de respuesta y la llamada
 para obtener diez pares pregunta Q y respuesta R. El orden de dificultad
 está definido en el propio prompt.
@@ -126,7 +126,8 @@ conectada. La pantalla de Quiz10 conserva su interfaz y espera esas
 preguntas terminadas; no utiliza el generador antiguo.
 
 Desde la raíz del repositorio, `-ProbarLuna` ejecuta únicamente esa
-etapa con el catálogo actual y muestra los pares Q–R en la terminal:
+etapa con el catálogo actual, muestra tiempo, tokens y precio en la terminal,
+y guarda los pares Q–R y las estadísticas en un `.txt` fechado (máximo 20 llamadas):
 
 ```powershell
 .\apps\quizai\run.ps1 -ProbarLuna -Muestras 1
