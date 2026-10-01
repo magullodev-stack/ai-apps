@@ -53,13 +53,17 @@ double? _estimatedCost({
   required double? outputRate,
   required double? cachedRate,
 }) {
-  if (input == null || output == null || cached == null ||
+  if (input == null || output == null ||
       inputRate == null || outputRate == null ||
-      (cached > 0 && cachedRate == null) || cached > input) {
+      (cached != null && cached > 0 && cachedRate == null) ||
+      (cached != null && cached > input)) {
     return null;
   }
-  return ((input - cached) * inputRate +
-          cached * (cachedRate ?? inputRate) +
+  // Si el proveedor no informa de caché, se estima toda la entrada
+  // a tarifa normal. No se presenta como importe facturado.
+  final pricedCached = cached ?? 0;
+  return ((input - pricedCached) * inputRate +
+          pricedCached * (cachedRate ?? inputRate) +
           output * outputRate) /
       1000000;
 }
@@ -292,6 +296,8 @@ Future<void> main(List<String> args) async {
       report.writeln(
         'Los importes son ESTIMACIONES, no facturas. '
         'Se calculan solo cuando existen tokens y tarifas suficientes. '
+        'Si el proveedor omite los tokens en caché se presume 0 para '
+        'estimar el importe (puede diferir del importe real). '
         'Los tokens de razonamiento ya están incluidos en los de salida.',
       );
       report.writeln(
@@ -455,7 +461,7 @@ Future<void> main(List<String> args) async {
             'Tokens totales: ${inTokens == null || outTokens == null ? "n/d" : inTokens + outTokens}',
           );
           stdout.writeln(
-            'Precio: ${price == null ? "sin tarifa configurada o datos suficientes" : _usd(price)}',
+            'Precio: ${_usd(price)}',
           );
           if (call < samples) stdout.writeln();
         }
