@@ -155,22 +155,25 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   final String model;
 
   @override
-  Future<List<Quiz10LunaRow>> generate(
-    List<Quiz10Pair> plan,
-  ) async {
+  Future<List<Quiz10LunaRow>> generate(List<Quiz10Pair> plan) async {
+    final response = await generateResponse(plan);
+    return parseQuiz10LunaOutput(response.text, plan);
+  }
+
+  /// La auditoría necesita el uso de tokens incluso si falla el parseo.
+  /// El juego conserva generate(plan) sin cambios.
+  Future<AiGeneration> generateResponse(List<Quiz10Pair> plan) async {
     if (model.trim().isEmpty ||
         client.authorization.trim().isEmpty) {
       throw StateError('Falta configurar Luna.');
     }
 
-    final response = await client.generate(
+    return client.generate(
       application: 'quiz10',
       model: model,
       input: quiz10LunaInput(plan),
       schemaName: 'quiz10_luna_questions',
       schema: quiz10LunaSchema(),
     ).timeout(const Duration(seconds: 120));
-
-    return parseQuiz10LunaOutput(response.text, plan);
   }
 }
