@@ -28,6 +28,14 @@ param(
     [switch]$SaveKeyFromClipboard
 )
 $ErrorActionPreference = 'Stop'
+# Las auditorías de Luna son de 20 llamadas por defecto; se permite una
+# muestra menor (-Muestras 1) para verificar el funcionamiento sin coste alto.
+if ($ProbarLuna -and -not $PSBoundParameters.ContainsKey('Muestras')) {
+    $Muestras = 20
+}
+if ($ProbarLuna -and $Muestras -gt 20) {
+    throw 'La auditoría de Luna admite un máximo de 20 llamadas.'
+}
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
 $flutter = if ($flutterCommand) { $flutterCommand.Source } else {
