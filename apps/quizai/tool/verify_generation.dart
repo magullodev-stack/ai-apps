@@ -90,6 +90,13 @@ void _reportDuplicates(
   var within = 0;
   var across = 0;
   var crossCallGroups = 0;
+  var laterCallOccurrences = 0;
+  var repeatSameP = 0;
+  var repeatOtherP = 0;
+  var repeatSameD = 0;
+  var repeatOtherD = 0;
+  var repeatSamePD = 0;
+  var repeatOtherPD = 0;
 
   for (final group in repeated) {
     final counts = <int, int>{};
@@ -100,6 +107,30 @@ void _reportDuplicates(
     within += group.length - counts.length;
     across += counts.length - 1;
     if (counts.length > 1) crossCallGroups++;
+
+    // Solo comparamos apariciones con llamadas anteriores, no la misma.
+    for (final current in group) {
+      final earlier = group.where((item) => item.call < current.call).toList();
+      if (earlier.isEmpty) continue;
+      laterCallOccurrences++;
+      if (earlier.any((item) => item.p == current.p)) {
+        repeatSameP++;
+      } else {
+        repeatOtherP++;
+      }
+      if (earlier.any((item) => item.d == current.d)) {
+        repeatSameD++;
+      } else {
+        repeatOtherD++;
+      }
+      if (earlier.any(
+        (item) => item.p == current.p && item.d == current.d,
+      )) {
+        repeatSamePD++;
+      } else {
+        repeatOtherPD++;
+      }
+    }
   }
 
   report.writeln('\n$label');
@@ -112,6 +143,12 @@ void _reportDuplicates(
   report.writeln(
     'La cuenta entre llamadas registra una nueva aparición por cada '
     'llamada adicional; el detalle incluye TODAS las apariciones.',
+  );
+  report.writeln(
+    'Apariciones en llamadas posteriores: $laterCallOccurrences | '
+    'misma P: $repeatSameP; otra P: $repeatOtherP | '
+    'misma D: $repeatSameD; otra D: $repeatOtherD | '
+    'misma pareja P-D: $repeatSamePD; otra pareja: $repeatOtherPD.',
   );
 
   if (repeated.isEmpty) {
