@@ -39,11 +39,10 @@ L comprende las expresiones lingüísticas significativas, sus variantes, alias 
 
 Sᵢ = ContenidoDistintivo(Qᵢ,Rᵢ)
 
-Sᵢ comprende los referentes, las respuestas y los hechos distintivos de la pareja, normalizados por identidad semántica.
+Sᵢ comprende los referentes, las respuestas y los hechos distintivos de la pareja, normalizados por identidad semántica, e incorpora la forma literal de cada respuesta como elemento distintivo.
 
 ∀ 1 ≤ i < j ≤ 10:
     Sᵢ ∩ Sⱼ = ∅
-    Rᵢ ≠literal Rⱼ
 
 ### Exclusividad operativa
 
