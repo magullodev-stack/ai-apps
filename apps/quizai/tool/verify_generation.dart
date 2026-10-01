@@ -449,11 +449,15 @@ Future<void> main(List<String> args) async {
           }
           report.writeln();
           await report.flush();
+          stdout.writeln('$call/$samples');
+          stdout.writeln('Tiempo: $secs s');
           stdout.writeln(
-            '$call/$samples · $secs s · '
-            'E: ${_known(inTokens)} / S: ${_known(outTokens)} · '
-            '${_usd(price)}${failure == null ? "" : " · ERROR"}',
+            'Tokens totales: ${inTokens == null || outTokens == null ? "n/d" : inTokens + outTokens}',
           );
+          stdout.writeln(
+            'Precio: ${price == null ? "sin tarifa configurada o datos suficientes" : _usd(price)}',
+          );
+          if (call < samples) stdout.writeln();
         }
       }
       clock.stop();
@@ -571,12 +575,7 @@ Future<void> main(List<String> args) async {
       );
 
       await report.flush();
-      stdout.writeln('Informe: $path');
-      stdout.writeln(
-        'OK: $succeeded | Fallidas: $failed | '
-        'Q-R: ${observations.length} | '
-        'Coste conocido: ${_usd(pricedCalls == 0 ? null : costSum)}',
-      );
+      // El resumen completo y la ruta quedan exclusivamente en el .txt.
       if (failed > 0) exitCode = 1;
     } finally {
       await report.close();
