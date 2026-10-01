@@ -55,12 +55,11 @@ double? _estimatedCost({
 }) {
   if (input == null || output == null ||
       inputRate == null || outputRate == null ||
-      (cached != null && cached > 0 && cachedRate == null) ||
       (cached != null && cached > input)) {
     return null;
   }
-  // Si el proveedor no informa de caché, se estima toda la entrada
-  // a tarifa normal. No se presenta como importe facturado.
+  // La caché sin tarifa explícita se valora a tarifa de entrada normal.
+  // La cifra es una estimación conservadora, no el importe facturado.
   final pricedCached = cached ?? 0;
   return ((input - pricedCached) * inputRate +
           pricedCached * (cachedRate ?? inputRate) +
@@ -275,6 +274,13 @@ Future<void> main(List<String> args) async {
       client: client,
       model: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
     );
+    // Tarifas indicadas para gpt-5.6-luna, USD por millón de tokens.
+    // Los parámetros de run.ps1 / variables de entorno pueden sobrescribirlas.
+    // No asignar automáticamente estas tarifas a modelos diferentes.
+    if (luna.model == 'gpt-5.6-luna') {
+      inputRate ??= 0.20;
+      outputRate ??= 1.20;
+    }
     final timestamp = DateTime.now().toIso8601String()
         .substring(0, 19)
         .replaceFirst('T', '_')
@@ -291,13 +297,14 @@ Future<void> main(List<String> args) async {
       report.writeln(
         'Tarifas USD/1M tokens: entrada ${inputRate ?? "n/d"}, '
         'salida ${outputRate ?? "n/d"}, '
-        'entrada en caché ${cachedRate ?? "n/d"}.',
+        'entrada en caché ${cachedRate ?? "tarifa de entrada normal (sin descuento)"}.',
       );
       report.writeln(
         'Los importes son ESTIMACIONES, no facturas. '
         'Se calculan solo cuando existen tokens y tarifas suficientes. '
-        'Si el proveedor omite los tokens en caché se presume 0 para '
-        'estimar el importe (puede diferir del importe real). '
+        'Sin tarifa específica de caché se cobra la entrada en caché '
+        'como entrada normal en el cálculo (puede sobreestimar el coste). '
+        'Si el proveedor omite el uso de caché se supone 0. '
         'Los tokens de razonamiento ya están incluidos en los de salida.',
       );
       report.writeln(
