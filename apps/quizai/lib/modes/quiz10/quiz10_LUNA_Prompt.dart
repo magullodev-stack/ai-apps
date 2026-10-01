@@ -49,7 +49,12 @@ Sᵢ comprende los referentes, las respuestas y los hechos distintivos de la par
 ∀i ∈ {1,...,10}:
     DimensionesAdmisibles(Qᵢ,Rᵢ) = {Dᵢ}''';
 
-String quiz10LunaInput(List<Quiz10Pair> plan) {
+// Alternativa exclusiva para medir latencia y calidad frente al prompt completo.
+const String quiz10LunaPromptLigero = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ y Dᵢ.
+Rᵢ debe ser factual, concreta, verificable y correcta para Qᵢ.
+Las diez respuestas deben tener contenidos distintos entre sí: no repitas respuestas, alias ni equivalentes semánticos entre filas.''';
+
+String quiz10LunaInput(List<Quiz10Pair> plan, {bool promptLigero = false}) {
   if (plan.length != 10) {
     throw ArgumentError('Luna requiere diez parejas P-D.');
   }
@@ -69,7 +74,8 @@ String quiz10LunaInput(List<Quiz10Pair> plan) {
       },
   ];
 
-  return '$quiz10LunaPrompt\n${jsonEncode(rows)}';
+  final prompt = promptLigero ? quiz10LunaPromptLigero : quiz10LunaPrompt;
+  return '$prompt\n${jsonEncode(rows)}';
 }
 
 Map<String, Object?> quiz10LunaSchema() => {
@@ -171,10 +177,12 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   const AiQuiz10LunaGenerator({
     required this.client,
     required this.model,
+    this.promptLigero = false,
   });
 
   final AiAppsClient client;
   final String model;
+  final bool promptLigero;
 
   @override
   Future<List<Quiz10LunaRow>> generate(List<Quiz10Pair> plan) async {
@@ -193,7 +201,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     return client.generate(
       application: 'quiz10',
       model: model,
-      input: quiz10LunaInput(plan),
+      input: quiz10LunaInput(plan, promptLigero: promptLigero),
       schemaName: 'quiz10_luna_questions',
       schema: quiz10LunaSchema(),
     ).timeout(const Duration(seconds: 120));
