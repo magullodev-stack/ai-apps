@@ -7,54 +7,12 @@ import 'quiz10_DART_Pi+Di.dart';
 // El catálogo selecciona P y D.
 // Luna recibe esas parejas y genera Q y R.
 
-const String quiz10LunaPrompt = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ y Dᵢ.
-
-Rᵢ debe ser una respuesta factual, concreta, verificable y correcta para Qᵢ.
-
-Las diez parejas Qᵢ–Rᵢ deben cumplir las siguientes restricciones:
-
-### Dificultad
-
-δᵢ = dif(Qᵢ,Rᵢ): dificultad estimada de conocer Rᵢ como respuesta correcta a Qᵢ.
-
-max(δ₁,...,δ₄) < min(δ₅,...,δ₇)
-max(δ₅,...,δ₇) < min(δ₈,δ₉)
-max(δ₈,δ₉) < δ₁₀
-
-### Longitud
-
-4 ≤ palabras(Qᵢ) ≤ 24
-1 ≤ palabras(Rᵢ) ≤ 8
-
-### No revelación interna
-
-L(X) = FormasLingüísticasSignificativas(X)
-
-L comprende las expresiones lingüísticas significativas, sus variantes, alias y fragmentos significativos, normalizados por equivalencia lingüística.
-
-∀i ∈ {1,...,10}:
-    L(Qᵢ) ∩ L(Rᵢ) = ∅
-
-### Diversidad global
-
-Sᵢ = ContenidoDistintivo(Qᵢ,Rᵢ)
-
-Sᵢ comprende los referentes, las respuestas y los hechos distintivos de la pareja, normalizados por identidad semántica, e incorpora la forma literal de cada respuesta como elemento distintivo.
-
-∀ 1 ≤ i < j ≤ 10:
-    Sᵢ ∩ Sⱼ = ∅
-
-### Exclusividad operativa
-
-∀i ∈ {1,...,10}:
-    DimensionesAdmisibles(Qᵢ,Rᵢ) = {Dᵢ}''';
-
-// Alternativa exclusiva para medir latencia y calidad frente al prompt completo.
-const String quiz10LunaPromptLigero = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ y Dᵢ.
+const String quiz10LunaPrompt = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ[1] × Pᵢ[2] y Dᵢ.
+Integra ambos pivotes en la misma pregunta y respuesta.
 Rᵢ debe ser factual, concreta, verificable y correcta para Qᵢ.
 Las diez respuestas deben tener contenidos distintos entre sí: no repitas respuestas, alias ni equivalentes semánticos entre filas.''';
 
-String quiz10LunaInput(List<Quiz10Pair> plan, {bool promptLigero = false}) {
+String quiz10LunaInput(List<Quiz10Pair> plan) {
   if (plan.length != 10) {
     throw ArgumentError('Luna requiere diez parejas P-D.');
   }
@@ -63,10 +21,10 @@ String quiz10LunaInput(List<Quiz10Pair> plan, {bool promptLigero = false}) {
     for (final slot in plan)
       {
         'id': slot.number,
-        'P': {
-          'codigo': slot.pivot.code,
-          'nombre': slot.pivot.name,
-        },
+        'P': [
+          {'codigo': slot.pivot.code, 'nombre': slot.pivot.name},
+          {'codigo': slot.pivot2.code, 'nombre': slot.pivot2.name},
+        ],
         'D': {
           'codigo': slot.dimension.code,
           'definicion': slot.dimension.instruction,
@@ -74,8 +32,7 @@ String quiz10LunaInput(List<Quiz10Pair> plan, {bool promptLigero = false}) {
       },
   ];
 
-  final prompt = promptLigero ? quiz10LunaPromptLigero : quiz10LunaPrompt;
-  return '$prompt\n${jsonEncode(rows)}';
+  return '$quiz10LunaPrompt\n${jsonEncode(rows)}';
 }
 
 Map<String, Object?> quiz10LunaSchema() => {
@@ -177,12 +134,10 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   const AiQuiz10LunaGenerator({
     required this.client,
     required this.model,
-    this.promptLigero = false,
   });
 
   final AiAppsClient client;
   final String model;
-  final bool promptLigero;
 
   @override
   Future<List<Quiz10LunaRow>> generate(List<Quiz10Pair> plan) async {
@@ -201,7 +156,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     return client.generate(
       application: 'quiz10',
       model: model,
-      input: quiz10LunaInput(plan, promptLigero: promptLigero),
+      input: quiz10LunaInput(plan),
       schemaName: 'quiz10_luna_questions',
       schema: quiz10LunaSchema(),
     ).timeout(const Duration(seconds: 120));
