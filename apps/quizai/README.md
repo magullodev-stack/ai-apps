@@ -108,18 +108,18 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación P × D → Q, R (Luna)
+## Generación P × P × D → Q, R (Luna)
 
 El catálogo canónico de Quiz10 se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: contiene los 20 pivotes P01–P20
-y las 34 dimensiones D01–D34. Dart selecciona diez P y diez D distintas
-por partida, las combina por fila y las entrega a Luna sin etiquetas de
-dificultad heredadas.
+y las 34 dimensiones D01–D34. Dart utiliza los veinte P una vez por
+partida, los agrupa aleatoriamente en diez cruces P×P y asigna diez D
+distintas; Luna genera una Q–R por cruce y dimensión.
 
 `lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene el prompt literal de Luna,
-la preparación de los datos P–D, el esquema de respuesta y la llamada
-para obtener diez pares pregunta Q y respuesta R. El orden de dificultad
-está definido en el propio prompt.
+la preparación de las filas P×P–D, el esquema de respuesta y la llamada
+para obtener diez pares pregunta Q y respuesta R. Solo hay un prompt oficial
+en el archivo; las auditorías anteriores se conservan en sus informes .txt.
 
 Terra, encargada de la validación y los distractores, todavía no está
 conectada. La pantalla de Quiz10 conserva su interfaz y espera esas
@@ -127,10 +127,11 @@ preguntas terminadas; no utiliza el generador antiguo.
 
 Desde la raíz del repositorio, `-ProbarLuna` ejecuta únicamente esa
 etapa con el catálogo actual, muestra tiempo, tokens y precio en la terminal,
-y guarda los pares Q–R y las estadísticas en un `.txt` fechado (máximo 20 llamadas):
+y guarda los pares Q–R y las estadísticas en un `.txt` fechado (5 llamadas
+por defecto, máximo 20):
 
 ```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -Muestras 1
+.\apps\quizai\run.ps1 -ProbarLuna -Muestras 5
 ```
 
 `-VerifyOnly` verifica también solo la etapa de Luna, **no** una
