@@ -5,11 +5,186 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:quizai/modes/quiz10/quiz10_catalog.dart';
 import 'package:quizai/modes/quiz10/quiz10_luna.dart';
 
-/// Comprueba únicamente P-D → Luna → Q-R; Terra aún no está conectada.
+final class _Question {
+  const _Question(this.call, this.position, this.p, this.d, this.q, this.r);
+
+  final int call;
+  final int position;
+  final String p;
+  final String d;
+  final String q;
+  final String r;
+
+  String get reference => 'L$call/F$position [$p/$d]';
+}
+
+String _key(String text) =>
+    text.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+String _lexical(String text) => _key(text)
+    .replaceAll(RegExp(r'[¿?¡!.,;:()"“”‘’\[\]{}]+'), ' ')
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim();
+
+int _words(String text) => text.trim().split(RegExp(r'\s+')).length;
+
+int? _usage(Map<String, dynamic>? usage, String key) {
+  final value = usage?[key];
+  return value is int && value >= 0 ? value : null;
+}
+
+String _known(int? count) => count?.toString() ?? 'n/d';
+
+double? _rate(Map<String, String> env, String key) {
+  final raw = env[key]?.trim();
+  if (raw == null || raw.isEmpty) return null;
+  final price = double.tryParse(raw.replaceAll(',', '.'));
+  if (price == null || !price.isFinite || price < 0) {
+    throw FormatException('Tarifa inválida para $key: $raw');
+  }
+  return price;
+}
+
+double? _estimatedCost({
+  required int? input,
+  required int? output,
+  required int? cached,
+  required double? inputRate,
+  required double? outputRate,
+  required double? cachedRate,
+}) {
+  if (input == null || output == null || cached == null ||
+      inputRate == null || outputRate == null ||
+      (cached > 0 && cachedRate == null) || cached > input) {
+    return null;
+  }
+  return ((input - cached) * inputRate +
+          cached * (cachedRate ?? inputRate) +
+          output * outputRate) /
+      1000000;
+}
+
+String _usd(double? value) =>
+    value == null ? 'n/d' : 'USD ${value.toStringAsFixed(6)}';
+
+Map<String, List<_Question>> _groups(
+  List<_Question> rows,
+  String Function(_Question) key,
+) {
+  final groups = <String, List<_Question>>{};
+  for (final row in rows) {
+    groups.putIfAbsent(key(row), () => <_Question>[]).add(row);
+  }
+  return groups;
+}
+
+void _reportDuplicates(
+  IOSink report,
+  String label,
+  Map<String, List<_Question>> groups, {
+  required String Function(_Question) value,
+}) {
+  final repeated = groups.values.where((group) => group.length > 1).toList()
+    ..sort((a, b) => b.length.compareTo(a.length));
+  var extra = 0;
+  var within = 0;
+  var across = 0;
+  var crossCallGroups = 0;
+
+  for (final group in repeated) {
+    final counts = <int, int>{};
+    for (final item in group) {
+      counts.update(item.call, (n) => n + 1, ifAbsent: () => 1);
+    }
+    extra += group.length - 1;
+    within += group.length - counts.length;
+    across += counts.length - 1;
+    if (counts.length > 1) crossCallGroups++;
+  }
+
+  report.writeln('\n$label');
+  report.writeln(
+    'Únicos: ${groups.length} | Grupos repetidos: ${repeated.length} '
+    '(entre llamadas: $crossCallGroups) | '
+    'Apariciones adicionales: $extra '
+    '(dentro de llamadas: $within; entre llamadas: $across).',
+  );
+  report.writeln(
+    'La cuenta entre llamadas registra una nueva aparición por cada '
+    'llamada adicional; el detalle incluye TODAS las apariciones.',
+  );
+
+  if (repeated.isEmpty) {
+    report.writeln('Ninguna coincidencia textual.');
+    return;
+  }
+
+  for (final group in repeated) {
+    report.writeln('  ${group.length} veces: "${value(group.first)}"');
+    for (final row in group) {
+      report.writeln(
+        '    ${row.reference} | Q: ${row.q} | R: ${row.r}',
+      );
+    }
+  }
+}
+
+void _distribution(IOSink report, String name, Map<String, int> counts) {
+  final entries = counts.keys.toList()..sort();
+  report.writeln('\nFrecuencias $name (${entries.length} códigos observados):');
+  for (final code in entries) {
+    report.writeln('  $code: ${counts[code]}');
+  }
+}
+
+void _nearQuestions(IOSink report, List<_Question> rows) {
+  final tokens = [
+    for (final row in rows) _lexical(row.q).split(' ').toSet(),
+  ];
+  var detected = 0;
+  report.writeln(
+    '\nPREGUNTAS PARECIDAS ENTRE LLAMADAS (candidatas léxicas, '
+    'Jaccard de palabras ≥ 0.80; no equivale a similitud semántica):',
+  );
+  for (var i = 0; i < rows.length; i++) {
+    final a = tokens[i];
+    if (a.length < 4) continue;
+    for (var j = i + 1; j < rows.length; j++) {
+      if (rows[i].call == rows[j].call ||
+          _key(rows[i].q) == _key(rows[j].q)) {
+        continue;
+      }
+      final b = tokens[j];
+      if (b.length < 4) continue;
+      final common = a.intersection(b).length;
+      if (common == 0) continue;
+      final similarity = common / (a.length + b.length - common);
+      if (similarity >= 0.80) {
+        detected++;
+        report.writeln(
+          '  ${rows[i].reference} ↔ ${rows[j].reference} '
+          '| similitud: ${(100 * similarity).toStringAsFixed(1)}%',
+        );
+        report.writeln('    A: ${rows[i].q} → ${rows[i].r}');
+        report.writeln('    B: ${rows[j].q} → ${rows[j].r}');
+      }
+    }
+  }
+  report.writeln('Pares candidatos: $detected.');
+}
+
+int _percentile(List<int> values, double fraction) {
+  if (values.isEmpty) return 0;
+  final sorted = [...values]..sort();
+  final index = ((sorted.length * fraction).ceil() - 1)
+      .clamp(0, sorted.length - 1);
+  return sorted[index];
+}
+
+/// Auditoría real: Dart selecciona P-D, Luna devuelve Q-R, sin Terra.
 Future<void> main(List<String> args) async {
   var samples = 1;
   var seed = 20260929;
-
   if (args.isNotEmpty) {
     if (args.length != 5 ||
         args[0] != '--luna' ||
@@ -21,23 +196,32 @@ Future<void> main(List<String> args) async {
       exitCode = 64;
       return;
     }
-    final parsedSamples = int.tryParse(args[2]);
-    final parsedSeed = int.tryParse(args[4]);
-    if (parsedSamples == null ||
-        parsedSamples < 1 ||
-        parsedSamples > 200 ||
-        parsedSeed == null ||
-        parsedSeed < 0 ||
-        parsedSeed > 1000000000) {
+    final n = int.tryParse(args[2]);
+    final s = int.tryParse(args[4]);
+    if (n == null || n < 1 || n > 200 ||
+        s == null || s < 0 || s > 1000000000) {
       stderr.writeln('Muestras 1-200 y semilla 0-1000000000.');
       exitCode = 64;
       return;
     }
-    samples = parsedSamples;
-    seed = parsedSeed;
+    samples = n;
+    seed = s;
   }
 
   final env = Platform.environment;
+  double? inputRate;
+  double? outputRate;
+  double? cachedRate;
+  try {
+    inputRate = _rate(env, 'AI_APPS_LUNA_INPUT_USD_PER_M');
+    outputRate = _rate(env, 'AI_APPS_LUNA_OUTPUT_USD_PER_M');
+    cachedRate = _rate(env, 'AI_APPS_LUNA_CACHED_INPUT_USD_PER_M');
+  } on FormatException catch (error) {
+    stderr.writeln(error.message);
+    exitCode = 64;
+    return;
+  }
+
   final client = AiAppsClient(
     endpoint: Uri.parse(env['AI_APPS_AI_URL'] ?? 'http://127.0.0.1:8787'),
     authorization: env['AI_APPS_GAME_TOKEN'] ?? '',
@@ -48,169 +232,318 @@ Future<void> main(List<String> args) async {
       client: client,
       model: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
     );
-
-    // El detalle queda en el informe; la terminal solo muestra el progreso.
     final timestamp = DateTime.now().toIso8601String()
         .substring(0, 19)
         .replaceFirst('T', '_')
         .replaceAll(':', '-');
-    final reportPath = 'Quiz10_Luna_Q+R_$timestamp.txt';
-    final report = File(reportPath).openWrite();
+    final path = 'Quiz10_Luna_Q+R_$timestamp.txt';
+    final report = File(path).openWrite();
 
     try {
-      report.writeln('AUDITORÍA Q+R — Luna');
+      report.writeln('AUDITORÍA QUIZ10 — LUNA — Q+R');
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
       report.writeln('Semilla: $seed | Llamadas solicitadas: $samples');
+      report.writeln('P: ${quiz10Pivots.length}; D: ${quiz10Dimensions.length}.');
+      report.writeln(
+        'Tarifas USD/1M tokens: entrada ${inputRate ?? "n/d"}, '
+        'salida ${outputRate ?? "n/d"}, '
+        'entrada en caché ${cachedRate ?? "n/d"}.',
+      );
+      report.writeln(
+        'Los importes son ESTIMACIONES, no facturas. '
+        'Se calculan solo cuando existen tokens y tarifas suficientes. '
+        'Los tokens de razonamiento ya están incluidos en los de salida.',
+      );
+      report.writeln(
+        'Coincidencia textual = mismo texto ignorando mayúsculas y '
+        'espacios repetidos. Los parecidos léxicos son orientativos.',
+      );
       report.writeln();
 
-      final timer = Stopwatch()..start();
-      final pivots = <String, int>{};
-      final dimensions = <String, int>{};
-      final answers = <String, int>{};
-      final answersByPivot = <String, Map<String, String>>{};
-      var successful = 0;
+      final clock = Stopwatch()..start();
+      final observations = <_Question>[];
+      final pivotCounts = <String, int>{};
+      final dimensionCounts = <String, int>{};
+      final pairCounts = <String, int>{};
+      final failures = <String, int>{};
+      final durations = <int>[];
+      var succeeded = 0;
       var failed = 0;
-      var generated = 0;
-      var badQuestions = 0;
-      var badAnswers = 0;
-      var answersRepeatedInCall = 0;
-      var answersRepeatedSameD = 0;
-      var answersRepeatedOtherD = 0;
-      var answersInQuestions = 0;
-      var totalQuestionWords = 0;
-      var totalAnswerWords = 0;
-      var totalMillis = 0;
+      var qOutOfRange = 0;
+      var rOutOfRange = 0;
+      var leakedOwnAnswer = 0;
+      var leakedOtherAnswer = 0;
+      var totalQWords = 0;
+      var totalRWords = 0;
+      var tokenCalls = 0;
+      var pricedCalls = 0;
+      var totalInput = 0;
+      var totalOutput = 0;
+      var totalCached = 0;
+      var totalReasoning = 0;
+      var costSum = 0.0;
 
       for (var i = 0; i < samples; i++) {
-        final callTimer = Stopwatch()..start();
+        final call = i + 1;
+        final watch = Stopwatch()..start();
+        AiGeneration? raw;
+        List<Quiz10LunaRow>? rows;
+        Object? failure;
+
         try {
           final plan = selectQuiz10Pairs(Random(seed + i));
-          final rows = await luna.generate(plan);
-          callTimer.stop();
-          successful++;
-          totalMillis += callTimer.elapsedMilliseconds;
-          final withinCall = <String>{};
-          report.writeln(
-            'Llamada ${i + 1}/$samples | '
-            '${rows.length} Q-R | '
-            '${callTimer.elapsedMilliseconds} ms',
-          );
+          raw = await luna.generateResponse(plan);
+          rows = parseQuiz10LunaOutput(raw.text, plan);
+          succeeded++;
+          final callObservations = <_Question>[];
 
           for (final row in rows) {
-            generated++;
-            final pivot = row.slot.pivot.code;
-            final dimension = row.slot.dimension.code;
-            pivots.update(pivot, (n) => n + 1, ifAbsent: () => 1);
-            dimensions.update(dimension, (n) => n + 1, ifAbsent: () => 1);
-
-            final questionWords = row.question.trim().split(RegExp(r'\s+')).length;
-            final answerWords = row.correct.trim().split(RegExp(r'\s+')).length;
-            totalQuestionWords += questionWords;
-            totalAnswerWords += answerWords;
-            if (questionWords < 4 || questionWords > 24) badQuestions++;
-            if (answerWords < 1 || answerWords > 8) badAnswers++;
-
-            final normalized = row.correct
-                .trim()
-                .toLowerCase()
-                .replaceAll(RegExp(r'\s+'), ' ');
-            answers.update(normalized, (n) => n + 1, ifAbsent: () => 1);
-            if (!withinCall.add(normalized)) answersRepeatedInCall++;
-
-            final previousByPivot = answersByPivot.putIfAbsent(
-              pivot,
-              () => <String, String>{},
+            final entry = _Question(
+              call,
+              row.slot.number,
+              row.slot.pivot.code,
+              row.slot.dimension.code,
+              row.question,
+              row.correct,
             );
-            final previousD = previousByPivot[normalized];
-            if (previousD == null) {
-              previousByPivot[normalized] = dimension;
-            } else if (previousD == dimension) {
-              answersRepeatedSameD++;
-            } else {
-              answersRepeatedOtherD++;
-            }
-            if (row.question.toLowerCase().contains(normalized)) {
-              answersInQuestions++;
-            }
-
-            report.writeln(
-              '${row.slot.number}. $pivot $dimension | '
-              '${row.question} → ${row.correct}',
+            callObservations.add(entry);
+            observations.add(entry);
+            pivotCounts.update(entry.p, (n) => n + 1, ifAbsent: () => 1);
+            dimensionCounts.update(entry.d, (n) => n + 1, ifAbsent: () => 1);
+            pairCounts.update(
+              '${entry.p}/${entry.d}',
+              (n) => n + 1,
+              ifAbsent: () => 1,
             );
+            final qWords = _words(entry.q);
+            final rWords = _words(entry.r);
+            totalQWords += qWords;
+            totalRWords += rWords;
+            if (qWords < 4 || qWords > 24) {
+              qOutOfRange++;
+            }
+            if (rWords < 1 || rWords > 8) {
+              rOutOfRange++;
+            }
+            if (_lexical(entry.q).contains(_lexical(entry.r))) {
+              leakedOwnAnswer++;
+              report.writeln(
+                'AVISO [${entry.reference}]: Q contiene R literalmente.',
+              );
+            }
+          }
+
+          for (final question in callObservations) {
+            for (final answer in callObservations) {
+              if (question.position == answer.position) continue;
+              final q = ' ${_lexical(question.q)} ';
+              final r = ' ${_lexical(answer.r)} ';
+              if (q.contains(r)) {
+                leakedOtherAnswer++;
+                report.writeln(
+                  'AVISO [${question.reference}]: Q contiene R '
+                  'de ${answer.reference} ("${answer.r}").',
+                );
+              }
+            }
           }
         } catch (error) {
-          callTimer.stop();
-          totalMillis += callTimer.elapsedMilliseconds;
+          failure = error;
           failed++;
-          report.writeln('Llamada ${i + 1}/$samples | ERROR: $error');
+          failures.update(
+            '${error.runtimeType}: $error',
+            (n) => n + 1,
+            ifAbsent: () => 1,
+          );
         } finally {
+          watch.stop();
+          durations.add(watch.elapsedMilliseconds);
+          final inTokens = _usage(raw?.usage, 'inputTokens');
+          final outTokens = _usage(raw?.usage, 'outputTokens');
+          final cachedTokens = _usage(raw?.usage, 'cachedInputTokens');
+          final reasoningTokens = _usage(raw?.usage, 'reasoningTokens');
+          if (inTokens != null && outTokens != null) {
+            tokenCalls++;
+            totalInput += inTokens;
+            totalOutput += outTokens;
+            if (cachedTokens != null) totalCached += cachedTokens;
+            if (reasoningTokens != null) totalReasoning += reasoningTokens;
+          }
+
+          final price = _estimatedCost(
+            input: inTokens,
+            output: outTokens,
+            cached: cachedTokens,
+            inputRate: inputRate,
+            outputRate: outputRate,
+            cachedRate: cachedRate,
+          );
+          if (price != null) {
+            pricedCalls++;
+            costSum += price;
+          }
+          final secs = (watch.elapsedMilliseconds / 1000).toStringAsFixed(2);
+          report.writeln(
+            'Llamada $call/$samples | '
+            '${failure == null ? "OK" : "ERROR"} | '
+            '$secs s | '
+            'entrada: ${_known(inTokens)} | '
+            'salida: ${_known(outTokens)} | '
+            'caché: ${_known(cachedTokens)} | '
+            'razonamiento: ${_known(reasoningTokens)} | '
+            'coste estimado: ${_usd(price)}',
+          );
+          if (failure != null) {
+            report.writeln('ERROR: $failure');
+            if (raw != null) {
+              report.writeln('Salida bruta no válida: ${raw.text}');
+            }
+          } else {
+            for (final row in rows!) {
+              report.writeln(
+                '${row.slot.number}. ${row.slot.pivot.code} '
+                '${row.slot.dimension.code} | '
+                '${row.question} → ${row.correct}',
+              );
+            }
+          }
           report.writeln();
           await report.flush();
-          stdout.writeln('${i + 1}/$samples');
+          stdout.writeln(
+            '$call/$samples · $secs s · '
+            'E: ${_known(inTokens)} / S: ${_known(outTokens)} · '
+            '${_usd(price)}${failure == null ? "" : " · ERROR"}',
+          );
         }
       }
-      timer.stop();
+      clock.stop();
 
-      report.writeln('\n=== ESTADÍSTICAS LUNA P-D → Q-R ===');
-      report.writeln('Modelo: ${luna.model} | Semilla inicial: $seed');
-      report.writeln('Llamadas: $samples | Correctas: $successful | Fallidas: $failed');
-      report.writeln('Q-R obtenidas: $generated');
-      report.writeln('Tiempo total: ${timer.elapsed.inSeconds} s');
-      report.writeln(
-        'Tiempo medio por llamada: '
-        '${(totalMillis / samples / 1000).toStringAsFixed(2)} s',
+      final qGroups = _groups(observations, (q) => _key(q.q));
+      final rGroups = _groups(observations, (q) => _key(q.r));
+      final pairGroups = _groups(
+        observations,
+        (q) => '${_key(q.q)}\u001f${_key(q.r)}',
       );
-      report.writeln('Preguntas fuera de 4-24 palabras: $badQuestions');
-      report.writeln('Respuestas fuera de 1-8 palabras: $badAnswers');
+
+      report.writeln('\n========== ESTADÍSTICAS FINALES ==========');
+      report.writeln('Modelo: ${luna.model} | Semilla: $seed');
+      report.writeln('Llamadas: $samples | OK: $succeeded | Fallidas: $failed');
       report.writeln(
-        'Media palabras Q: '
-        '${generated == 0 ? "n/d" : (totalQuestionWords / generated).toStringAsFixed(2)}',
+        'Q-R válidas: ${observations.length} / ${samples * 10} solicitadas.',
       );
       report.writeln(
-        'Media palabras R: '
-        '${generated == 0 ? "n/d" : (totalAnswerWords / generated).toStringAsFixed(2)}',
-      );
-      report.writeln('Respuestas distintas (texto normalizado): ${answers.length}');
-      report.writeln(
-        'Repeticiones textuales R dentro de una llamada: '
-        '$answersRepeatedInCall',
+        'Duración total: ${(clock.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
+        '| media por llamada: ${(durations.reduce((a, b) => a + b) / durations.length / 1000).toStringAsFixed(2)} s '
+        '| mediana: ${(_percentile(durations, 0.5) / 1000).toStringAsFixed(2)} s '
+        '| p95: ${(_percentile(durations, 0.95) / 1000).toStringAsFixed(2)} s '
+        '| máxima: ${(_percentile(durations, 1) / 1000).toStringAsFixed(2)} s.',
       );
       report.writeln(
-        'Repeticiones textuales R por P con la misma D: '
-        '$answersRepeatedSameD',
+        'Consumo observado en $tokenCalls/$samples llamadas '
+        '(las demás pueden tener consumo desconocido):',
       );
       report.writeln(
-        'Repeticiones textuales R por P con distinta D: '
-        '$answersRepeatedOtherD',
+        '  Entrada: $totalInput | Salida: $totalOutput | '
+        'Total: ${totalInput + totalOutput} | '
+        'Entrada en caché conocida: $totalCached | '
+        'Razonamiento conocido (incluido en salida): $totalReasoning.',
       );
       report.writeln(
-        'Q que contienen R como subcadena (indicador aproximado): '
-        '$answersInQuestions',
+        '  Coste estimado conocido: ${_usd(pricedCalls == 0 ? null : costSum)} '
+        '($pricedCalls/$samples llamadas calculables; '
+        'NO equivale al coste total si faltan tarifas o datos de uso).',
       );
-      report.writeln('Frecuencias de pivotes P:');
-      for (final code in pivots.keys.toList()..sort()) {
-        report.writeln('  $code: ${pivots[code]}');
-      }
-      report.writeln('Frecuencias de dimensiones D:');
-      for (final code in dimensions.keys.toList()..sort()) {
-        report.writeln('  $code: ${dimensions[code]}');
+      if (inputRate == null || outputRate == null) {
+        report.writeln(
+          '  Para calcular USD configurar AI_APPS_LUNA_INPUT_USD_PER_M '
+          'y AI_APPS_LUNA_OUTPUT_USD_PER_M; si hay caché, '
+          'AI_APPS_LUNA_CACHED_INPUT_USD_PER_M.',
+        );
       }
       report.writeln(
-        'No evaluado automáticamente: verdad factual, '
-        'dificultad de conocimiento, sinónimos ni equivalencia semántica.',
+        'Longitud Q: fuera de 4-24 = $qOutOfRange; '
+        'R: fuera de 1-8 = $rOutOfRange.',
       );
+      if (observations.isNotEmpty) {
+        report.writeln(
+          'Media palabras: Q = '
+          '${(totalQWords / observations.length).toStringAsFixed(2)}, '
+          'R = ${(totalRWords / observations.length).toStringAsFixed(2)}.',
+        );
+      }
+      report.writeln(
+        'Posibles filtraciones literales: Q contiene su R = $leakedOwnAnswer; '
+        'Q contiene R de otra fila de su llamada = $leakedOtherAnswer '
+        '(indicadores léxicos, no semánticos).',
+      );
+      if (failures.isNotEmpty) {
+        report.writeln('\nERRORES POR TIPO:');
+        for (final entry in failures.entries) {
+          report.writeln('  ${entry.value} × ${entry.key}');
+        }
+      }
+
+      _distribution(report, 'P', pivotCounts);
+      _distribution(report, 'D', dimensionCounts);
+      _distribution(report, 'parejas P/D', pairCounts);
+      _reportDuplicates(
+        report, 'PREGUNTAS Q REPETIDAS (texto normalizado)',
+        qGroups, value: (r) => r.q,
+      );
+      _reportDuplicates(
+        report, 'RESPUESTAS R REPETIDAS (texto normalizado)',
+        rGroups, value: (r) => r.r,
+      );
+      _reportDuplicates(
+        report, 'PAREJAS Q+R COMPLETAS REPETIDAS',
+        pairGroups, value: (r) => '${r.q} → ${r.r}',
+      );
+
+      var questionsDifferentAnswers = 0;
+      report.writeln('\nMISMA Q CON RESPUESTAS DISTINTAS:');
+      for (final group in qGroups.values) {
+        if (group.map((r) => _key(r.r)).toSet().length < 2) continue;
+        questionsDifferentAnswers++;
+        report.writeln('  Q: "${group.first.q}"');
+        for (final row in group) {
+          report.writeln('    ${row.reference}: ${row.r}');
+        }
+      }
+      report.writeln('Grupos: $questionsDifferentAnswers.');
+
+      var answersDifferentQuestions = 0;
+      report.writeln('\nMISMA R PARA PREGUNTAS DISTINTAS:');
+      for (final group in rGroups.values) {
+        if (group.map((r) => _key(r.q)).toSet().length < 2) continue;
+        answersDifferentQuestions++;
+        report.writeln('  R: "${group.first.r}"');
+        for (final row in group) {
+          report.writeln('    ${row.reference}: ${row.q}');
+        }
+      }
+      report.writeln('Grupos: $answersDifferentQuestions.');
+
+      _nearQuestions(report, observations);
+      report.writeln(
+        '\nNo evaluado automáticamente: exactitud factual, '
+        'equivalencias semánticas, alias de respuestas y orden '
+        'real de dificultad. Requieren revisión semántica.',
+      );
+
       await report.flush();
-      stdout.writeln('Auditoría guardada: $reportPath');
+      stdout.writeln('Informe: $path');
       stdout.writeln(
-        'Correctas: $successful | Fallidas: $failed | Q-R: $generated',
+        'OK: $succeeded | Fallidas: $failed | '
+        'Q-R: ${observations.length} | '
+        'Coste conocido: ${_usd(pricedCalls == 0 ? null : costSum)}',
       );
       if (failed > 0) exitCode = 1;
     } finally {
       await report.close();
     }
   } catch (error) {
-    stderr.writeln('Falló la generación Q-R de Luna: $error');
+    stderr.writeln('Falló la auditoría Q-R de Luna: $error');
     exitCode = 1;
   } finally {
     client.close();
