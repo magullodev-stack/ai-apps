@@ -7,6 +7,10 @@ param(
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
     [switch]$ProbarLuna,
+    # Precios USD por millón de tokens (opcional; nunca se inventan tarifas).
+    [string]$PrecioEntradaMillon,
+    [string]$PrecioSalidaMillon,
+    [string]$PrecioEntradaCacheMillon,
     [ValidateRange(0, 1000000000)]
     [int]$LunaSemilla = 20260929,
     [ValidateRange(1, 30)]
@@ -211,7 +215,10 @@ if ($ProbarLuna) {
     $previousLunaEnv = @{}
     foreach ($name in @('AI_APPS_AI_API_KEY', 'OPENAI_API_KEY',
                          'AI_APPS_AI_URL', 'AI_APPS_GAME_TOKEN',
-                         'AI_APPS_LUNA_MODEL')) {
+                         'AI_APPS_LUNA_MODEL',
+                         'AI_APPS_LUNA_INPUT_USD_PER_M',
+                         'AI_APPS_LUNA_OUTPUT_USD_PER_M',
+                         'AI_APPS_LUNA_CACHED_INPUT_USD_PER_M')) {
         $previousLunaEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
     }
     try {
@@ -219,6 +226,9 @@ if ($ProbarLuna) {
         $env:AI_APPS_AI_URL = $session.endpoint
         $env:AI_APPS_GAME_TOKEN = $session.token
         $env:AI_APPS_LUNA_MODEL = $CatalogModel
+        if ($PrecioEntradaMillon) { $env:AI_APPS_LUNA_INPUT_USD_PER_M = $PrecioEntradaMillon }
+        if ($PrecioSalidaMillon) { $env:AI_APPS_LUNA_OUTPUT_USD_PER_M = $PrecioSalidaMillon }
+        if ($PrecioEntradaCacheMillon) { $env:AI_APPS_LUNA_CACHED_INPUT_USD_PER_M = $PrecioEntradaCacheMillon }
         Push-Location (Join-Path $repo 'apps\quizai')
         try {
             $lunaArgs = @('run', 'tool/verify_generation.dart', '--luna', '--muestras', "$Muestras", '--semilla', "$LunaSemilla")
