@@ -233,16 +233,16 @@ Future<void> main(List<String> args) async {
         args[1] != '--muestras' ||
         args[3] != '--semilla') {
       stderr.writeln(
-        'Uso: verify_generation.dart [--luna --muestras 1-200 --semilla N]',
+        'Uso: verify_generation.dart [--luna --muestras 1-20 --semilla N]',
       );
       exitCode = 64;
       return;
     }
     final n = int.tryParse(args[2]);
     final s = int.tryParse(args[4]);
-    if (n == null || n < 1 || n > 200 ||
+    if (n == null || n < 1 || n > 20 ||
         s == null || s < 0 || s > 1000000000) {
-      stderr.writeln('Muestras 1-200 y semilla 0-1000000000.');
+      stderr.writeln('Muestras 1-20 y semilla 0-1000000000.');
       exitCode = 64;
       return;
     }
@@ -320,6 +320,17 @@ Future<void> main(List<String> args) async {
       final pairCounts = <String, int>{};
       final failures = <String, int>{};
       final durations = <int>[];
+      final requestDurations = <int>[];
+      final parseDurations = <int>[];
+      final latencySamples = <({
+        int call,
+        int requestMillis,
+        int outputTokens,
+        int reasoningTokens,
+      })>[];
+      var reasoningReported = 0;
+      var outputsWithReasoning = 0;
+      var reasoningInCovered = 0;
       var succeeded = 0;
       var failed = 0;
       var qOutOfRange = 0;
@@ -339,14 +350,20 @@ Future<void> main(List<String> args) async {
       for (var i = 0; i < samples; i++) {
         final call = i + 1;
         final watch = Stopwatch()..start();
+        final requestWatch = Stopwatch();
+        final parseWatch = Stopwatch();
         AiGeneration? raw;
         List<Quiz10LunaRow>? rows;
         Object? failure;
 
         try {
           final plan = selectQuiz10Pairs(Random(seed + i));
+          requestWatch.start();
           raw = await luna.generateResponse(plan);
+          requestWatch.stop();
+          parseWatch.start();
           rows = parseQuiz10LunaOutput(raw.text, plan);
+          parseWatch.stop();
           succeeded++;
           final callObservations = <_Question>[];
 
@@ -409,12 +426,29 @@ Future<void> main(List<String> args) async {
             ifAbsent: () => 1,
           );
         } finally {
+          requestWatch.stop();
+          parseWatch.stop();
           watch.stop();
           durations.add(watch.elapsedMilliseconds);
+          requestDurations.add(requestWatch.elapsedMilliseconds);
+          parseDurations.add(parseWatch.elapsedMilliseconds);
           final inTokens = _usage(raw?.usage, 'inputTokens');
           final outTokens = _usage(raw?.usage, 'outputTokens');
           final cachedTokens = _usage(raw?.usage, 'cachedInputTokens');
           final reasoningTokens = _usage(raw?.usage, 'reasoningTokens');
+          if (reasoningTokens != null &&
+              outTokens != null &&
+              reasoningTokens <= outTokens) {
+            reasoningReported++;
+            outputsWithReasoning += outTokens;
+            reasoningInCovered += reasoningTokens;
+            latencySamples.add((
+              call: call,
+              requestMillis: requestWatch.elapsedMilliseconds,
+              outputTokens: outTokens,
+              reasoningTokens: reasoningTokens,
+            ));
+          }
           if (inTokens != null && outTokens != null) {
             tokenCalls++;
             totalInput += inTokens;
@@ -436,14 +470,28 @@ Future<void> main(List<String> args) async {
             costSum += price;
           }
           final secs = (watch.elapsedMilliseconds / 1000).toStringAsFixed(2);
+          final waitSecs =
+              (requestWatch.elapsedMilliseconds / 1000).toStringAsFixed(2);
+          final visibleTokens = outTokens == null ||
+                  reasoningTokens == null ||
+                  reasoningTokens > outTokens
+              ? null
+              : outTokens - reasoningTokens;
+          final reasoningPercent = visibleTokens == null
+              ? 'n/d'
+              : (100 * reasoningTokens! / outTokens!).toStringAsFixed(1);
           report.writeln(
             'Llamada $call/$samples | '
             '${failure == null ? "OK" : "ERROR"} | '
             '$secs s | '
+            'espera servicio/red: $waitSecs s | '
+            'parseo JSON: ${parseWatch.elapsedMilliseconds} ms | '
             'entrada: ${_known(inTokens)} | '
             'salida: ${_known(outTokens)} | '
             'caché: ${_known(cachedTokens)} | '
-            'razonamiento: ${_known(reasoningTokens)} | '
+            'razonamiento: ${_known(reasoningTokens)} '
+            '($reasoningPercent% de la salida) | '
+            'salida visible estimada: ${_known(visibleTokens)} | '
             'coste estimado: ${_usd(price)}',
           );
           if (failure != null) {
@@ -495,6 +543,35 @@ Future<void> main(List<String> args) async {
         '| p95: ${(_percentile(durations, 0.95) / 1000).toStringAsFixed(2)} s '
         '| máxima: ${(_percentile(durations, 1) / 1000).toStringAsFixed(2)} s.',
       );
+      report.writeln(
+        'Tiempo de espera del servicio/red (aproxima la petición al '
+        'modelo, pero incluye transporte y servicio local): '
+        'media ${(requestDurations.reduce((a, b) => a + b) / requestDurations.length / 1000).toStringAsFixed(2)} s '
+        '| mediana ${(_percentile(requestDurations, 0.5) / 1000).toStringAsFixed(2)} s '
+        '| p95 ${(_percentile(requestDurations, 0.95) / 1000).toStringAsFixed(2)} s '
+        '| máxima ${(_percentile(requestDurations, 1) / 1000).toStringAsFixed(2)} s.',
+      );
+      report.writeln(
+        'Parseo JSON: total ${parseDurations.reduce((a, b) => a + b)} ms '
+        '| media ${(parseDurations.reduce((a, b) => a + b) / parseDurations.length).toStringAsFixed(1)} ms.',
+      );
+      report.writeln(
+        'Razonamiento informado: $reasoningReported/$samples llamadas; '
+        'tokens de razonamiento / salida de esas llamadas: '
+        '${outputsWithReasoning == 0 ? "n/d" : (100 * reasoningInCovered / outputsWithReasoning).toStringAsFixed(1)}%.',
+      );
+      final slowest = [...latencySamples]
+        ..sort((a, b) => b.requestMillis.compareTo(a.requestMillis));
+      report.writeln('Cinco esperas más largas con desglose de salida:');
+      for (final sample in slowest.take(5)) {
+        report.writeln(
+          '  L${sample.call}: '
+          '${(sample.requestMillis / 1000).toStringAsFixed(2)} s de espera; '
+          '${sample.outputTokens} tokens de salida; '
+          '${sample.reasoningTokens} de razonamiento '
+          '(${(100 * sample.reasoningTokens / sample.outputTokens).toStringAsFixed(1)}%).',
+        );
+      }
       report.writeln(
         'Consumo observado en $tokenCalls/$samples llamadas '
         '(las demás pueden tener consumo desconocido):',
