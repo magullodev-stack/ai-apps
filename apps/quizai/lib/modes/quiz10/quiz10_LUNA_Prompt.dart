@@ -4,8 +4,8 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 import 'quiz10_DART_Pi+Di.dart';
 
-// El catálogo selecciona P y D.
-// Luna recibe esas parejas y genera Q y R.
+// Dart cruza dos P y asigna una D por fila.
+// Luna genera una Q-R integrando ambos pivotes y la dimensión.
 
 const String quiz10LunaPrompt = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ[1] × Pᵢ[2] y Dᵢ.
 Integra ambos pivotes en la misma pregunta y respuesta.
@@ -14,7 +14,7 @@ Las diez respuestas deben tener contenidos distintos entre sí: no repitas respu
 
 String quiz10LunaInput(List<Quiz10Pair> plan) {
   if (plan.length != 10) {
-    throw ArgumentError('Luna requiere diez parejas P-D.');
+    throw ArgumentError('Luna requiere diez filas P×P-D.');
   }
 
   final rows = [
