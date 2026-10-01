@@ -299,8 +299,13 @@ Future<void> main(List<String> args) async {
     final modelLabel =
         luna.model.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '-');
     final promptId = _promptId(quiz10LunaPrompt);
+    final catalogId = _promptId([
+      for (final pivot in quiz10Pivots) '${pivot.code}:${pivot.name}',
+      for (final dimension in quiz10Dimensions)
+        '${dimension.code}:${dimension.instruction}',
+    ].join('\n'));
     final path =
-        'Quiz10_${modelLabel}_PxP-D_Q+R_${samples}L_prompt-${promptId}_$timestamp.txt';
+        'Quiz10_${modelLabel}_PxP-D_Q+R_${samples}L_s${seed}_prompt-${promptId}_cat-${catalogId}_$timestamp.txt';
     final report = File(path).openWrite();
 
     try {
@@ -309,6 +314,7 @@ Future<void> main(List<String> args) async {
       report.writeln('Modelo: ${luna.model}');
       report.writeln('Cruce por fila: P×P con D.');
       report.writeln('Huella del prompt: $promptId (FNV-1a 32 bits, identificador).');
+      report.writeln('Huella del catálogo: $catalogId (FNV-1a 32 bits, identificador).');
       report.writeln('Prompt literal:\n$quiz10LunaPrompt');
       report.writeln('Semilla: $seed | Llamadas solicitadas: $samples');
       report.writeln('P: ${quiz10Pivots.length}; D: ${quiz10Dimensions.length}.');
