@@ -176,8 +176,10 @@ void _nearQuestions(IOSink report, List<_Question> rows) {
 int _percentile(List<int> values, double fraction) {
   if (values.isEmpty) return 0;
   final sorted = [...values]..sort();
-  final index = ((sorted.length * fraction).ceil() - 1)
-      .clamp(0, sorted.length - 1);
+  final requested = (sorted.length * fraction).ceil() - 1;
+  final index = requested < 0
+      ? 0
+      : (requested >= sorted.length ? sorted.length - 1 : requested);
   return sorted[index];
 }
 
@@ -326,7 +328,7 @@ Future<void> main(List<String> args) async {
             if (rWords < 1 || rWords > 8) {
               rOutOfRange++;
             }
-            if (_lexical(entry.q).contains(_lexical(entry.r))) {
+            if (' ${_lexical(entry.q)} '.contains(' ${_lexical(entry.r)} ')) {
               leakedOwnAnswer++;
               report.writeln(
                 'AVISO [${entry.reference}]: Q contiene R literalmente.',
