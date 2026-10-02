@@ -114,24 +114,31 @@ El catálogo canónico de Quiz10 se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: contiene los 20 pivotes P01–P20
 y las 34 dimensiones D01–D34. Dart utiliza los veinte P una vez por
 partida, los agrupa aleatoriamente en diez cruces P×P y asigna diez D
-distintas; Luna genera una Q–R por cruce y dimensión.
+distintas.
 
-`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene el prompt literal de Luna,
-la preparación de las filas P×P–D, el esquema de respuesta y la llamada
-para obtener diez pares pregunta Q y respuesta R. Solo hay un prompt oficial
-en el archivo; las auditorías anteriores se conservan en sus informes .txt.
+`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene el único prompt oficial
+de Luna. Cada cruce P×P–D se serializa como una entrada independiente y
+produce exactamente una Q–R. Dart lanza las diez peticiones de una partida
+simultáneamente mediante `Future.wait` y, cuando terminan, recompone las
+diez filas en el orden original del plan.
+
+No existe una segunda variante secuencial ni un prompt de lote. Las
+restricciones entre filas se auditan después de reunir los resultados;
+cada llamada Luna solo conoce su propio cruce P×P–D.
 
 Terra, encargada de la validación y los distractores, todavía no está
 conectada. La pantalla de Quiz10 conserva su interfaz y espera esas
 preguntas terminadas; no utiliza el generador antiguo.
 
-Desde la raíz del repositorio, `-ProbarLuna` ejecuta únicamente esa
-etapa con el catálogo actual, muestra tiempo, tokens y precio en la terminal,
-y guarda los pares Q–R y las estadísticas en un `.txt` fechado (5 llamadas
-por defecto, máximo 20):
+Desde la raíz del repositorio, `-ProbarLuna` ejecuta únicamente esa etapa
+con el catálogo actual, muestra tiempo, tokens y precio en la terminal, y
+guarda los pares Q–R y las estadísticas en un `.txt` fechado. Un test
+equivale a un Quiz10 y lanza 10 llamadas Luna laterales simultáneas. Por
+defecto se ejecuta un test; `-Muestras N` ejecuta N tests, hasta un máximo
+de 20:
 
 ```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -Muestras 5
+.\apps\quizai\run.ps1 -ProbarLuna -Muestras 1
 ```
 
 `-VerifyOnly` verifica también solo la etapa de Luna, **no** una
