@@ -28,12 +28,12 @@ param(
     [switch]$SaveKeyFromClipboard
 )
 $ErrorActionPreference = 'Stop'
-# Auditoría Luna: cinco llamadas por defecto; máximo veinte.
+# Auditoría Luna: un test por defecto; cada test lanza diez llamadas laterales simultáneas.
 if ($ProbarLuna -and -not $PSBoundParameters.ContainsKey('Muestras')) {
-    $Muestras = 5
+    $Muestras = 1
 }
 if ($ProbarLuna -and $Muestras -gt 20) {
-    throw 'La auditoría de Luna admite un máximo de 20 llamadas.'
+    throw 'La auditoría de Luna admite un máximo de 20 tests (200 llamadas Luna).'
 }
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
@@ -240,7 +240,7 @@ if ($ProbarLuna) {
         try {
             $lunaArgs = @('run', 'tool/verify_generation.dart', '--luna', '--muestras', "$Muestras", '--semilla', "$LunaSemilla")
             & $dart @lunaArgs
-            if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría Luna P×P-D.' }
+            if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría Luna P×P-D lateral.' }
         } finally { Pop-Location }
     } finally {
         foreach ($name in $previousLunaEnv.Keys) {
