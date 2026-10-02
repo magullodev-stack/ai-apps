@@ -515,7 +515,7 @@ Future<void> main(List<String> args) async {
               ? 'n/d'
               : (100 * reasoningTokens! / outTokens!).toStringAsFixed(1);
           report.writeln(
-            'Test $call/$samples | lote lateral 10/10 | '
+            'Test $call/$samples | lote lateral: 10 peticiones | '
             '${failure == null ? "OK" : "ERROR"} | '
             '$secs s | '
             'espera servicio/red: $waitSecs s | '
