@@ -5,58 +5,41 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 
 // Dart cruza dos P y asigna una D por fila.
-// Luna genera una Q-R integrando ambos pivotes y la dimensión.
+// Cada fila se envía a Luna en una llamada independiente.
+// Las diez llamadas de una partida se lanzan simultáneamente.
 
-const String quiz10LunaPrompt = '''Para cada fila i, construye Qᵢ y Rᵢ a partir de Pᵢ[1] × Pᵢ[2] y Dᵢ.
+const String quiz10LunaPrompt = '''Construye Q y R a partir de P[1] × P[2] y D.
 Integra ambos pivotes en la misma pregunta y respuesta.
-Rᵢ debe ser factual, concreta, verificable y correcta para Qᵢ.
-Las diez respuestas deben tener contenidos distintos entre sí: no repitas respuestas, alias ni equivalentes semánticos entre filas.''';
+R debe ser factual, concreta, verificable y correcta para Q.''';
 
-String quiz10LunaInput(List<Quiz10Pair> plan) {
-  if (plan.length != 10) {
-    throw ArgumentError('Luna requiere diez filas P×P-D.');
-  }
+String quiz10LunaInput(Quiz10Pair slot) {
+  final row = {
+    'id': slot.number,
+    'P': [
+      {'codigo': slot.pivot.code, 'nombre': slot.pivot.name},
+      {'codigo': slot.pivot2.code, 'nombre': slot.pivot2.name},
+    ],
+    'D': {
+      'codigo': slot.dimension.code,
+      'definicion': slot.dimension.instruction,
+    },
+  };
 
-  final rows = [
-    for (final slot in plan)
-      {
-        'id': slot.number,
-        'P': [
-          {'codigo': slot.pivot.code, 'nombre': slot.pivot.name},
-          {'codigo': slot.pivot2.code, 'nombre': slot.pivot2.name},
-        ],
-        'D': {
-          'codigo': slot.dimension.code,
-          'definicion': slot.dimension.instruction,
-        },
-      },
-  ];
-
-  return '$quiz10LunaPrompt\n${jsonEncode(rows)}';
+  return '$quiz10LunaPrompt\n${jsonEncode(row)}';
 }
 
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['preguntas'],
+  'required': [
+    'id',
+    'pregunta',
+    'respuesta_correcta',
+  ],
   'properties': {
-    'preguntas': {
-      'type': 'array',
-      'items': {
-        'type': 'object',
-        'additionalProperties': false,
-        'required': [
-          'id',
-          'pregunta',
-          'respuesta_correcta',
-        ],
-        'properties': {
-          'id': {'type': 'integer'},
-          'pregunta': {'type': 'string'},
-          'respuesta_correcta': {'type': 'string'},
-        },
-      },
-    },
+    'id': {'type': 'integer'},
+    'pregunta': {'type': 'string'},
+    'respuesta_correcta': {'type': 'string'},
   },
 };
 
@@ -72,12 +55,45 @@ class Quiz10LunaRow {
   final String correct;
 }
 
+Quiz10LunaRow parseQuiz10LunaRowOutput(
+  String text,
+  Quiz10Pair slot,
+) {
+  const invalid = FormatException(
+    'La respuesta de Luna no cumple el formato de una fila de Quiz10.',
+  );
+
+  final decoded = jsonDecode(text);
+
+  if (decoded is! Map<String, dynamic> ||
+      decoded['id'] != slot.number ||
+      decoded['pregunta'] is! String ||
+      decoded['respuesta_correcta'] is! String) {
+    throw invalid;
+  }
+
+  final question = (decoded['pregunta'] as String).trim();
+  final correct = (decoded['respuesta_correcta'] as String).trim();
+
+  if (question.isEmpty || correct.isEmpty) {
+    throw invalid;
+  }
+
+  return Quiz10LunaRow(
+    slot: slot,
+    question: question,
+    correct: correct,
+  );
+}
+
+// El auditor y la interfaz pública siguen recibiendo el lote de diez filas.
+// Este texto se construye localmente después de completar las diez llamadas.
 List<Quiz10LunaRow> parseQuiz10LunaOutput(
   String text,
   List<Quiz10Pair> plan,
 ) {
   const invalid = FormatException(
-    'La respuesta de Luna no cumple el formato de Quiz10.',
+    'La respuesta agregada de Luna no cumple el formato de Quiz10.',
   );
 
   if (plan.length != 10) throw invalid;
@@ -98,25 +114,12 @@ List<Quiz10LunaRow> parseQuiz10LunaOutput(
   for (var i = 0; i < 10; i++) {
     final row = rows[i];
 
-    if (row is! Map<String, dynamic> ||
-        row['id'] != plan[i].number ||
-        row['pregunta'] is! String ||
-        row['respuesta_correcta'] is! String) {
-      throw invalid;
-    }
-
-    final question = (row['pregunta'] as String).trim();
-    final correct = (row['respuesta_correcta'] as String).trim();
-
-    if (question.isEmpty || correct.isEmpty) {
-      throw invalid;
-    }
+    if (row is! Map<String, dynamic>) throw invalid;
 
     result.add(
-      Quiz10LunaRow(
-        slot: plan[i],
-        question: question,
-        correct: correct,
+      parseQuiz10LunaRowOutput(
+        jsonEncode(row),
+        plan[i],
       ),
     );
   }
@@ -145,20 +148,77 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     return parseQuiz10LunaOutput(response.text, plan);
   }
 
-  /// La auditoría necesita el uso de tokens incluso si falla el parseo.
-  /// El juego conserva generate(plan) sin cambios.
+  // Conserva la interfaz de lote para el juego y la auditoría, pero el lote
+  // ya no corresponde a una petición al modelo: son diez peticiones laterales.
   Future<AiGeneration> generateResponse(List<Quiz10Pair> plan) async {
+    if (plan.length != 10) {
+      throw ArgumentError('Luna requiere diez filas P×P-D.');
+    }
     if (model.trim().isEmpty ||
         client.authorization.trim().isEmpty) {
       throw StateError('Falta configurar Luna.');
     }
 
+    final calls = await Future.wait([
+      for (final slot in plan) _generateRowResponse(slot),
+    ]);
+
+    final rows = <Quiz10LunaRow>[
+      for (var i = 0; i < plan.length; i++)
+        parseQuiz10LunaRowOutput(calls[i].text, plan[i]),
+    ];
+
+    return AiGeneration(
+      text: jsonEncode({
+        'preguntas': [
+          for (final row in rows)
+            {
+              'id': row.slot.number,
+              'pregunta': row.question,
+              'respuesta_correcta': row.correct,
+            },
+        ],
+      }),
+      usage: _aggregateUsage(calls),
+    );
+  }
+
+  Future<AiGeneration> _generateRowResponse(Quiz10Pair slot) {
     return client.generate(
       application: 'quiz10',
       model: model,
-      input: quiz10LunaInput(plan),
-      schemaName: 'quiz10_luna_questions',
+      input: quiz10LunaInput(slot),
+      schemaName: 'quiz10_luna_question',
       schema: quiz10LunaSchema(),
     ).timeout(const Duration(seconds: 120));
+  }
+
+  Map<String, dynamic>? _aggregateUsage(List<AiGeneration> calls) {
+    const keys = [
+      'inputTokens',
+      'outputTokens',
+      'totalTokens',
+      'reasoningTokens',
+      'cachedInputTokens',
+    ];
+    final result = <String, dynamic>{};
+
+    for (final key in keys) {
+      var sum = 0;
+      var complete = true;
+
+      for (final call in calls) {
+        final value = call.usage?[key];
+        if (value is! int || value < 0) {
+          complete = false;
+          break;
+        }
+        sum += value;
+      }
+
+      if (complete) result[key] = sum;
+    }
+
+    return result.isEmpty ? null : result;
   }
 }
