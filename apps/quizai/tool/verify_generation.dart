@@ -234,7 +234,7 @@ int _percentile(List<int> values, double fraction) {
   return sorted[index];
 }
 
-/// Auditoría real: Dart selecciona P×P-D; Luna devuelve Q-R, sin Terra.
+/// Auditoría real: Dart selecciona P×P-D; cada fila usa una llamada Luna lateral, sin Terra.
 Future<void> main(List<String> args) async {
   var samples = 1;
   var seed = 20260929;
@@ -305,18 +305,19 @@ Future<void> main(List<String> args) async {
         '${dimension.code}:${dimension.instruction}',
     ].join('\n'));
     final path =
-        'Quiz10_${modelLabel}_PxP-D_Q+R_${samples}L_s${seed}_prompt-${promptId}_cat-${catalogId}_$timestamp.txt';
+        'Quiz10_${modelLabel}_PxP-D_Q+R_${samples}T_${samples * 10}L_s${seed}_prompt-${promptId}_cat-${catalogId}_$timestamp.txt';
     final report = File(path).openWrite();
 
     try {
-      report.writeln('AUDITORÍA QUIZ10 — LUNA — Q+R');
+      report.writeln('AUDITORÍA QUIZ10 — LUNA — Q+R — 10 LLAMADAS LATERALES');
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
       report.writeln('Cruce por fila: P×P con D.');
+      report.writeln('Ejecución: 10 peticiones Luna independientes lanzadas con Future.wait por cada test.');
       report.writeln('Huella del prompt: $promptId (FNV-1a 32 bits, identificador).');
       report.writeln('Huella del catálogo: $catalogId (FNV-1a 32 bits, identificador).');
       report.writeln('Prompt literal:\n$quiz10LunaPrompt');
-      report.writeln('Semilla: $seed | Llamadas solicitadas: $samples');
+      report.writeln('Semilla: $seed | Tests solicitados: $samples | Llamadas Luna: ${samples * 10} (10 simultáneas por test).');
       report.writeln('P: ${quiz10Pivots.length}; D: ${quiz10Dimensions.length}.');
       report.writeln(
         'Tarifas USD/1M tokens: entrada ${inputRate ?? "n/d"}, '
@@ -514,7 +515,7 @@ Future<void> main(List<String> args) async {
               ? 'n/d'
               : (100 * reasoningTokens! / outTokens!).toStringAsFixed(1);
           report.writeln(
-            'Llamada $call/$samples | '
+            'Test $call/$samples | lote lateral 10/10 | '
             '${failure == null ? "OK" : "ERROR"} | '
             '$secs s | '
             'espera servicio/red: $waitSecs s | '
@@ -544,7 +545,7 @@ Future<void> main(List<String> args) async {
           }
           report.writeln();
           await report.flush();
-          stdout.writeln('$call/$samples');
+          stdout.writeln('Test $call/$samples — 10 llamadas Luna laterales');
           stdout.writeln('Tiempo: $secs s');
           stdout.writeln('Tokens entrada: ${_known(inTokens)}');
           stdout.writeln('Tokens salida: ${_known(outTokens)}');
@@ -570,13 +571,13 @@ Future<void> main(List<String> args) async {
 
       report.writeln('\n========== ESTADÍSTICAS FINALES ==========');
       report.writeln('Modelo: ${luna.model} | Semilla: $seed');
-      report.writeln('Llamadas: $samples | OK: $succeeded | Fallidas: $failed');
+      report.writeln('Tests: $samples | OK: $succeeded | Fallidos: $failed | Llamadas Luna solicitadas: ${samples * 10}.');
       report.writeln(
         'Q-R válidas: ${observations.length} / ${samples * 10} solicitadas.',
       );
       report.writeln(
         'Duración total: ${(clock.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
-        '| media por llamada: ${(durations.reduce((a, b) => a + b) / durations.length / 1000).toStringAsFixed(2)} s '
+        '| media por test lateral: ${(durations.reduce((a, b) => a + b) / durations.length / 1000).toStringAsFixed(2)} s '
         '| mediana: ${(_percentile(durations, 0.5) / 1000).toStringAsFixed(2)} s '
         '| p95: ${(_percentile(durations, 0.95) / 1000).toStringAsFixed(2)} s '
         '| máxima: ${(_percentile(durations, 1) / 1000).toStringAsFixed(2)} s.',
@@ -594,16 +595,16 @@ Future<void> main(List<String> args) async {
         '| media ${(parseDurations.reduce((a, b) => a + b) / parseDurations.length).toStringAsFixed(1)} ms.',
       );
       report.writeln(
-        'Razonamiento informado: $reasoningReported/$samples llamadas; '
+        'Razonamiento agregado informado: $reasoningReported/$samples tests; '
         'tokens de razonamiento / salida de esas llamadas: '
         '${outputsWithReasoning == 0 ? "n/d" : (100 * reasoningInCovered / outputsWithReasoning).toStringAsFixed(1)}%.',
       );
       final slowest = [...latencySamples]
         ..sort((a, b) => b.requestMillis.compareTo(a.requestMillis));
-      report.writeln('Cinco esperas más largas con desglose de salida:');
+      report.writeln('Cinco tests laterales con mayor espera y desglose agregado de salida:');
       for (final sample in slowest.take(5)) {
         report.writeln(
-          '  L${sample.call}: '
+          '  T${sample.call}: '
           '${(sample.requestMillis / 1000).toStringAsFixed(2)} s de espera; '
           '${sample.outputTokens} tokens de salida; '
           '${sample.reasoningTokens} de razonamiento '
@@ -611,7 +612,7 @@ Future<void> main(List<String> args) async {
         );
       }
       report.writeln(
-        'Consumo observado en $tokenCalls/$samples llamadas '
+        'Consumo agregado observado en $tokenCalls/$samples tests '
         '(las demás pueden tener consumo desconocido):',
       );
       report.writeln(
@@ -622,7 +623,7 @@ Future<void> main(List<String> args) async {
       );
       report.writeln(
         '  Coste estimado conocido: ${_usd(pricedCalls == 0 ? null : costSum)} '
-        '($pricedCalls/$samples llamadas calculables; '
+        '($pricedCalls/$samples tests calculables; '
         'NO equivale al coste total si faltan tarifas o datos de uso).',
       );
       if (inputRate == null || outputRate == null) {
