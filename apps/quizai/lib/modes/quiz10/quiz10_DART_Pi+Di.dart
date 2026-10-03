@@ -3,7 +3,12 @@ import 'dart:math';
 /// Fuente única de los pivotes y dimensiones de Quiz10.
 typedef Quiz10Pivot = ({String code, String name});
 typedef Quiz10Dimension = ({String code, String instruction});
-typedef Quiz10Pair = ({int number, Quiz10Pivot pivot, Quiz10Pivot pivot2, Quiz10Dimension dimension});
+typedef Quiz10Pair = ({
+  int number,
+  Quiz10Pivot pivot,
+  Quiz10Dimension dimension,
+  String difficulty,
+});
 
 const quiz10Pivots = <Quiz10Pivot>[
   (code: 'P01', name: 'Arquitectura'),
@@ -65,17 +70,31 @@ const quiz10Dimensions = <Quiz10Dimension>[
   (code: 'D34', instruction: 'Pregunta por la modificación producida directamente sobre el objeto de una intervención efectivamente realizada, sin interrogar una respuesta reactiva del sistema receptor.'),
 ];
 
-/// Veinte P distintos, agrupados de dos en dos, y diez D sin repetición.
+/// Diez P distintos y diez D distintas por Quiz10.
+/// La posición fija la dificultad: 4 fáciles, 3 moderadas, 2 difíciles y 1 extrema.
 List<Quiz10Pair> selectQuiz10Pairs(Random random) {
   final pivots = [...quiz10Pivots]..shuffle(random);
   final dimensions = [...quiz10Dimensions]..shuffle(random);
+  const difficulties = <String>[
+    'Fácil',
+    'Fácil',
+    'Fácil',
+    'Fácil',
+    'Moderada',
+    'Moderada',
+    'Moderada',
+    'Difícil',
+    'Difícil',
+    'Extrema',
+  ];
+
   return List.unmodifiable([
     for (var i = 0; i < 10; i++)
       (
         number: i + 1,
-        pivot: pivots[2 * i],
-        pivot2: pivots[2 * i + 1],
+        pivot: pivots[i],
         dimension: dimensions[i],
+        difficulty: difficulties[i],
       ),
   ]);
 }
