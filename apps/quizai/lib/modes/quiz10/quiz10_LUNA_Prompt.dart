@@ -196,8 +196,8 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   final AiAppsClient client;
   final String model;
 
-  // Histórico de respuestas por P durante la vida de esta instancia.
-  final Map<String, List<String>> _historyByPivot = {};
+  // Histórico de respuestas por cruce P×D durante la vida de esta instancia.
+  final Map<Quiz10HistoryKey, List<String>> _historyByPivotDimension = {};
 
   @override
   Future<List<Quiz10LunaRow>> generate(List<Quiz10Pair> plan) async {
@@ -217,7 +217,8 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     final histories = [
       for (final slot in plan)
         List<String>.unmodifiable(
-          _historyByPivot[slot.pivot.code] ?? const <String>[],
+          _historyByPivotDimension[quiz10HistoryKey(slot)] ??
+              const <String>[],
         ),
     ];
 
@@ -237,8 +238,8 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
     // H solo avanza cuando el pack completo de diez unidades es válido.
     for (final row in rows) {
-      _historyByPivot
-          .putIfAbsent(row.slot.pivot.code, () => <String>[])
+      _historyByPivotDimension
+          .putIfAbsent(quiz10HistoryKey(row.slot), () => <String>[])
           .add(row.correct);
     }
 
