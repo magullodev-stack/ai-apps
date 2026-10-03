@@ -156,32 +156,8 @@ const quiz10Dimensions = <Quiz10Dimension>[
     instruction: 'Pregunta cómo responde un sistema o agente ante un estímulo, conducta, solicitud o contenido.',
   ),
   (
-    code: 'D27',
-    instruction: 'Pregunta en qué circunstancia o contexto se ejecuta una intervención.',
-  ),
-  (
-    code: 'D28',
-    instruction: 'Pregunta quién ejecuta o controla una intervención.',
-  ),
-  (
-    code: 'D29',
-    instruction: 'Pregunta sobre qué objeto o realidad actúa una intervención.',
-  ),
-  (
     code: 'D30',
     instruction: 'Pregunta con qué instrumento o medio se ejecuta una intervención.',
-  ),
-  (
-    code: 'D31',
-    instruction: 'Pregunta qué intervención produjo una modificación concreta sobre un objeto.',
-  ),
-  (
-    code: 'D32',
-    instruction: 'Pregunta qué intervención permiten realizar unas condiciones técnicas o materiales.',
-  ),
-  (
-    code: 'D33',
-    instruction: 'Pregunta qué intervención indican unos criterios dentro de un marco determinado.',
   ),
   (
     code: 'D34',
