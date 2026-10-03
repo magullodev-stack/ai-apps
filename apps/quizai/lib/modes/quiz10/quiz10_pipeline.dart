@@ -31,18 +31,24 @@ class Quiz10PipelineResult {
   const Quiz10PipelineResult({
     required this.plan,
     required this.lunaRows,
+    required this.lunaGeneration,
     required this.reviewInput,
     required this.review,
     required this.reviewedItems,
     required this.questions,
+    required this.lunaDuration,
+    required this.reviewDuration,
   });
 
   final List<Quiz10Pair> plan;
   final List<Quiz10LunaRow> lunaRows;
+  final AiGeneration lunaGeneration;
   final String reviewInput;
   final Quiz10ReviewResult review;
   final List<Quiz10ReviewedItem> reviewedItems;
   final List<Quiz10FinalQuestion> questions;
+  final Duration lunaDuration;
+  final Duration reviewDuration;
 }
 
 List<Quiz10ReviewedItem> applyQuiz10Review(
@@ -140,9 +146,17 @@ final class AiQuiz10Pipeline {
     Random? optionRandom,
   }) async {
     final plan = selectQuiz10Pairs(planRandom ?? Random());
-    final lunaRows = await luna.generate(plan);
+
+    final lunaWatch = Stopwatch()..start();
+    final lunaGeneration = await luna.generateResponse(plan);
+    lunaWatch.stop();
+    final lunaRows = parseQuiz10LunaOutput(lunaGeneration.text, plan);
+
     final reviewInput = quiz10ReviewInput(lunaRows);
+    final reviewWatch = Stopwatch()..start();
     final review = await reviewer.review(lunaRows);
+    reviewWatch.stop();
+
     final reviewedItems = applyQuiz10Review(lunaRows, review);
 
     luna.reconcileReviewedAnswers(
@@ -158,10 +172,13 @@ final class AiQuiz10Pipeline {
     return Quiz10PipelineResult(
       plan: List.unmodifiable(plan),
       lunaRows: List.unmodifiable(lunaRows),
+      lunaGeneration: lunaGeneration,
       reviewInput: reviewInput,
       review: review,
       reviewedItems: reviewedItems,
       questions: questions,
+      lunaDuration: lunaWatch.elapsed,
+      reviewDuration: reviewWatch.elapsed,
     );
   }
 }
