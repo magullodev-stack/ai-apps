@@ -9,10 +9,19 @@ import 'modalidad_card.dart';
 class ModalidadesPage extends StatelessWidget {
   const ModalidadesPage({super.key});
 
-  void _openQuiz10(BuildContext context) {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => const QuizPage()),
-    );
+  Future<void> _openQuiz10(BuildContext context) async {
+    final dependencies = QuizAiGenerationDependencies();
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => QuizPage(
+            loadQuestions: dependencies.quiz10Pipeline.generate,
+          ),
+        ),
+      );
+    } finally {
+      dependencies.close();
+    }
   }
 
   Future<void> _openEstudio(BuildContext context) async {
