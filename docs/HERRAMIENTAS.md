@@ -4,7 +4,7 @@
 
 | Herramienta | Finalidad | Ubicación | Instrucciones |
 | --- | --- | --- | --- |
-| QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; verificar una partida con `-VerifyOnly` y probar 1–200 generaciones P–D→Q–R de Luna sin U con `-ProbarLuna -Muestras N`; detener el servicio con `-StopService`. | [`apps/quizai/run.ps1`](../apps/quizai/run.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
+| QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; auditar Luna con `-ProbarLuna -Muestras N`, auditar el pipeline Luna→revisor→Dart con `-ProbarQuiz10 -Muestras N` y detener el servicio con `-StopService`. | [`apps/quizai/run.ps1`](../apps/quizai/run.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
 | Sincronizar `dev` | Sincronizar bidireccionalmente cualquier proyecto de AI-APPS con `origin/dev` desde cualquier subcarpeta del repositorio. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Sección «Sincronización universal de `dev`» de este documento. |
 
 ---
