@@ -19,7 +19,7 @@ H := {{H}}
 
 ## Generación
 
-Elige un hecho factual F de P que permita cumplir D.
+Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso, que permita cumplir D.
 
 Formula Q siguiendo la Instrucción D.
 
