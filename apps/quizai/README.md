@@ -124,9 +124,9 @@ una descomposición formal de D.
 `H` es el histórico factual de cada cruce P×D durante la vida del generador.
 Cada entrada guarda el par `(F,R)`: el hecho factual utilizado y la respuesta.
 Antes de cada pack, cada llamada recibe los pares ya utilizados para ese mismo
-P×D. Luna no puede reutilizar el mismo `(F,R)`, pero una misma R puede
-reaparecer si corresponde a otro hecho F. H solo se actualiza cuando el pack
-completo es válido.
+P×D. El prompt pide a Luna no reutilizar el mismo `(F,R)`, pero Dart no
+rechaza la fila si Luna incumple esa regla. Cada fila recibida con la estructura
+P,D,F,Q,R,A actualiza H de forma independiente.
 
 Cada unidad produce:
 
@@ -134,9 +134,10 @@ Cada unidad produce:
 (P, D, H) -> (F, Q, R, A)
 ```
 
-`F` es el hecho factual interno usado para construir la pregunta y `A`
-contiene exactamente tres distractores. `F` se conserva para H y auditoría;
-no forma parte de la experiencia visible del jugador. Las diez unidades se
+`F` es el hecho factual interno usado para construir la pregunta y el prompt
+pide tres distractores en `A`. Dart no valida semánticamente la fila: conserva
+lo que devuelve Luna para H y auditoría. `F` no forma parte de la experiencia
+visible del jugador. Las diez unidades se
 envían a Luna simultáneamente mediante `Future.wait`. Los packs se ejecutan
 secuencialmente para que H pueda acumularse entre ellos.
 
@@ -151,9 +152,12 @@ Desde la raíz del repositorio:
 
 `-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez llamadas
 Luna simultáneas; el siguiente empieza cuando termina el anterior. El auditor
-registra latencia, tokens, coste, razonamiento, P, D, F, Q, R, los tres
-distractores y duplicados exactos de `(F,R)` por cruce P×D. Si una fila falla,
-registra `Tn/Fm`, P, D, etapa y causa concreta.
+registra latencia, tokens, coste, razonamiento y todas las filas recibidas.
+No descarta una fila por contenido: marca incidencias observables como R dentro
+de A, distractores repetidos, R revelada literalmente en Q o reutilización
+exacta de `(F,R)`, y conserva también el JSON de la fila para inspección. Los
+fallos de llamada o de estructura se registran aparte con `Tn/Fm`, P, D,
+etapa, causa y salida bruta cuando existe.
 
 Terra todavía no está conectada a esta etapa. `-VerifyOnly` verifica la
 generación F-Q-R-A de Luna, no la validación factual posterior.
