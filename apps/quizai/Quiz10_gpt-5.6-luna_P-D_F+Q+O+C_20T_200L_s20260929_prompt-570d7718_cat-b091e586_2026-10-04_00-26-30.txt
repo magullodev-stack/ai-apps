@@ -1,0 +1,42 @@
+AUDITORÍA QUIZ10 — LUNA — P-D → F,Q,O,C
+Fecha: 2026-10-04 00:26:30.460520
+Modelo: gpt-5.6-luna
+Ejecución: cada test = 10 llamadas Luna simultáneas; los tests se ejecutan secuencialmente.
+H: histórico factual por cruce P×D; cada llamada recibe los pares (F,R) previos de ese cruce y cada fila estructuralmente recibida avanza H.
+La auditoría no rechaza filas por contenido: registra literalmente lo que devuelve Luna y marca las incidencias observables.
+Huella del prompt: 570d7718
+Huella del catálogo: b091e586
+Prompt oficial con variables:
+## Entrada
+
+P := {{P}}
+D := {{D}}
+Instrucción D := {{instruction}}
+
+H := {{H}}
+
+
+## Generación
+
+Elige un hecho factual F de P que permita cumplir D.
+
+Formula Q siguiendo la Instrucción D.
+
+O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, una correcta y tres incorrectas, todas plausibles y del mismo tipo.
+
+C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
+
+R := O_C
+
+Q no contiene R.
+
+(F, R) ∉ H
+
+
+## Salida
+
+| P | D | F | Q | O | C |
+|---|---|---|---|---|---|
+Semilla: 20260929 | Tests: 20 | Llamadas Luna: 200.
+Tarifas USD/1M: entrada 0.2, salida 1.2, caché entrada normal.
+
