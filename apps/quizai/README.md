@@ -108,38 +108,50 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación P × P × D → Q, R (Luna)
+## Generación P × D → Q, R, A (Luna)
 
 El catálogo canónico de Quiz10 se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: contiene los 20 pivotes P01–P20
-y las 34 dimensiones D01–D34. Dart utiliza los veinte P una vez por
-partida, los agrupa aleatoriamente en diez cruces P×P y asigna diez D
-distintas.
+y las 34 dimensiones D01–D34. En cada Quiz10, Dart selecciona diez P
+distintos y diez D distintas y forma diez unidades P-D.
 
-`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene el único prompt oficial
-de Luna. Cada cruce P×P–D se serializa como una entrada independiente y
-produce exactamente una Q–R. Dart lanza las diez peticiones de una partida
-simultáneamente mediante `Future.wait` y, cuando terminan, recompone las
-diez filas en el orden original del plan.
+La posición fija la dificultad de cada unidad:
 
-No existe una segunda variante secuencial ni un prompt de lote. Las
-restricciones entre filas se auditan después de reunir los resultados;
-cada llamada Luna solo conoce su propio cruce P×P–D.
+- 1–4: Fácil
+- 5–7: Moderada
+- 8–9: Difícil
+- 10: Extrema
 
-Terra, encargada de la validación y los distractores, todavía no está
-conectada. La pantalla de Quiz10 conserva su interfaz y espera esas
-preguntas terminadas; no utiliza el generador antiguo.
+`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene un único prompt oficial
+parametrizado. Dart materializa una copia independiente para cada posición
+con sus valores de `i`, `P`, `D`, `Dificultad` y `H`.
 
-Desde la raíz del repositorio, `-ProbarLuna` ejecuta únicamente esa etapa
-con el catálogo actual, muestra tiempo, tokens y precio en la terminal, y
-guarda los pares Q–R y las estadísticas en un `.txt` fechado. Un test
-equivale a un Quiz10 y lanza 10 llamadas Luna laterales simultáneas. Por
-defecto se ejecuta un test; `-Muestras N` ejecuta N tests, hasta un máximo
-de 20:
+`H` es el histórico de respuestas de cada P durante la vida del generador.
+Antes de cada pack, cada llamada recibe las R ya utilizadas para su P. Luna
+debe producir una R fuera de H. Cuando las diez unidades del pack son
+válidas, Dart incorpora sus nuevas R al histórico correspondiente.
 
-```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -Muestras 1
+Cada unidad produce:
+
+```text
+(P, D, Dificultad, H) -> (Q, R, A)
 ```
 
-`-VerifyOnly` verifica también solo la etapa de Luna, **no** una
-partida completa ni la verificación factual de Terra.
+donde `A` contiene exactamente tres distractores. Los diez prompts del
+Quiz10 se envían a Luna simultáneamente mediante `Future.wait`. Los packs
+de Quiz10 se ejecutan secuencialmente, de modo que H puede acumularse entre
+packs.
+
+Desde la raíz del repositorio:
+
+```powershell
+.\apps\quizai\run.ps1 -ProbarLuna -Muestras 5
+```
+
+`-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez
+llamadas Luna simultáneas; el siguiente pack empieza cuando termina el
+anterior. El auditor registra latencia, tokens, coste, P, D, dificultad,
+Q, R, los tres distractores y duplicados exactos de R por P.
+
+Terra todavía no está conectada a esta etapa. `-VerifyOnly` verifica la
+generación Q-R-A de Luna, no la validación factual posterior.
