@@ -165,8 +165,12 @@ Future<void> main(List<String> args) async {
         'los tests se ejecutan secuencialmente.',
       );
       report.writeln(
-        'H: histórico factual por cruce P×D; cada pack recibe los pares (F,R) '
-        'previos de ese cruce y H se actualiza solo al validar el pack completo.',
+        'H: histórico factual por cruce P×D; cada llamada recibe los pares (F,R) '
+        'previos de ese cruce y cada fila estructuralmente recibida avanza H.',
+      );
+      report.writeln(
+        'La auditoría no rechaza filas por contenido: registra literalmente '
+        'lo que devuelve Luna y marca las incidencias observables.',
       );
       report.writeln('Huella del prompt: $promptId');
       report.writeln('Huella del catálogo: $catalogId');
@@ -190,9 +194,12 @@ Future<void> main(List<String> args) async {
       final rCounts = <String, int>{};
       final frByPivotDimensionCounts = <String, int>{};
       final failures = <String, int>{};
+      final auditIssues = <String, int>{};
 
       var succeeded = 0;
       var failed = 0;
+      var auditedRows = 0;
+      var rowsWithIssues = 0;
       var totalInput = 0;
       var totalOutput = 0;
       var totalCached = 0;
@@ -201,6 +208,84 @@ Future<void> main(List<String> args) async {
       var usageCalls = 0;
       var pricedTests = 0;
       var totalCost = 0.0;
+
+      void recordRows(int test, Iterable<Quiz10LunaRow> batchRows) {
+        for (final row in batchRows) {
+          auditedRows++;
+          final p = row.slot.pivot.code;
+          final d = row.slot.dimension.code;
+          final pairKey =
+              '$p\u001f$d\u001f${_key(row.fact)}\u001f${_key(row.correct)}';
+          final issues = <String>[];
+
+          if (_key(row.returnedPivot) != _key(row.slot.pivot.name)) {
+            issues.add(
+              'P devuelta "${row.returnedPivot}" != ${row.slot.pivot.name}',
+            );
+          }
+          if (_key(row.returnedDimension) != _key(row.slot.dimension.code)) {
+            issues.add(
+              'D devuelta "${row.returnedDimension}" != ${row.slot.dimension.code}',
+            );
+          }
+          if (row.fact.trim().isEmpty) issues.add('F vacía');
+          if (row.question.trim().isEmpty) issues.add('Q vacía');
+          if (row.correct.trim().isEmpty) issues.add('R vacía');
+
+          final correct = row.correct.trim();
+          if (correct.isNotEmpty && row.question.contains(correct)) {
+            issues.add('Q contiene literalmente R');
+          }
+
+          if (row.distractors.length != 3) {
+            issues.add(
+              'A contiene ${row.distractors.length} elementos; se esperaban 3',
+            );
+          }
+          final normalizedDistractors =
+              row.distractors.map(_key).toList(growable: false);
+          if (normalizedDistractors.toSet().length !=
+              normalizedDistractors.length) {
+            issues.add('A contiene distractores duplicados');
+          }
+          if (_key(row.correct).isNotEmpty &&
+              normalizedDistractors.contains(_key(row.correct))) {
+            issues.add('A contiene la propia R');
+          }
+          if ((frByPivotDimensionCounts[pairKey] ?? 0) > 0) {
+            issues.add('H ya contenía el par factual (F,R)');
+          }
+
+          pCounts.update(p, (n) => n + 1, ifAbsent: () => 1);
+          dCounts.update(d, (n) => n + 1, ifAbsent: () => 1);
+          qCounts.update(_key(row.question), (n) => n + 1, ifAbsent: () => 1);
+          rCounts.update(_key(row.correct), (n) => n + 1, ifAbsent: () => 1);
+          frByPivotDimensionCounts.update(
+            pairKey,
+            (n) => n + 1,
+            ifAbsent: () => 1,
+          );
+
+          report.writeln(
+            '${row.slot.number}. $p $d | '
+            'F: ${row.fact} | Q: ${row.question} | R: ${row.correct} | '
+            'A: ${row.distractors.join(" / ")}',
+          );
+
+          if (issues.isNotEmpty) {
+            rowsWithIssues++;
+            for (final issue in issues) {
+              auditIssues.update(issue, (n) => n + 1, ifAbsent: () => 1);
+            }
+            report.writeln('  INCIDENCIAS: ${issues.join(" | ")}');
+            report.writeln('  RAW: ${row.rawText}');
+            stdout.writeln(
+              'T$test/F${row.slot.number} | $p $d | '
+              'INCIDENCIAS: ${issues.join(" | ")}',
+            );
+          }
+        }
+      }
 
       for (var i = 0; i < samples; i++) {
         final test = i + 1;
@@ -223,27 +308,17 @@ Future<void> main(List<String> args) async {
             '${(watch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s',
           );
 
-          for (final row in rows) {
-            final p = row.slot.pivot.code;
-            final d = row.slot.dimension.code;
-            pCounts.update(p, (n) => n + 1, ifAbsent: () => 1);
-            dCounts.update(d, (n) => n + 1, ifAbsent: () => 1);
-            qCounts.update(_key(row.question), (n) => n + 1, ifAbsent: () => 1);
-            rCounts.update(_key(row.correct), (n) => n + 1, ifAbsent: () => 1);
-            frByPivotDimensionCounts.update(
-              '$p\u001f$d\u001f${_key(row.fact)}\u001f${_key(row.correct)}',
-              (n) => n + 1,
-              ifAbsent: () => 1,
-            );
-
-            report.writeln(
-              '${row.slot.number}. $p $d | '
-              'F: ${row.fact} | Q: ${row.question} | R: ${row.correct} | '
-              'A: ${row.distractors.join(" / ")}',
-            );
-          }
+          recordRows(test, rows);
         } on Quiz10LunaPackException catch (error) {
           failure = error;
+          rows = error.rows;
+          if (rows.isNotEmpty) {
+            report.writeln(
+              'TEST $test/$samples — PACK INCOMPLETO — '
+              '${(watch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s',
+            );
+            recordRows(test, rows);
+          }
           failed++;
           failures.update(
             '${error.runtimeType}: $error',
@@ -325,6 +400,9 @@ Future<void> main(List<String> args) async {
                 report.writeln('D = ${slot.dimension.code}');
                 report.writeln('Etapa = ${item.stage}');
                 report.writeln('causa = ${item.cause}');
+                if (item.rawText != null) {
+                  report.writeln('RAW = ${item.rawText}');
+                }
                 stdout.writeln(
                   'T$test/F${slot.number} | '
                   '${slot.pivot.code} ${slot.dimension.code} | '
@@ -349,8 +427,9 @@ Future<void> main(List<String> args) async {
 
       report.writeln('========== ESTADÍSTICAS FINALES ==========');
       report.writeln(
-        'Tests: $samples | OK: $succeeded | Fallidos: $failed | '
-        'Ítems solicitados: ${samples * 10}.',
+        'Tests: $samples | Packs completos: $succeeded | '
+        'Packs incompletos: $failed | Ítems solicitados: ${samples * 10} | '
+        'Filas observadas: $auditedRows | Filas con incidencias: $rowsWithIssues.',
       );
       report.writeln(
         'Duración total: '
@@ -382,16 +461,22 @@ Future<void> main(List<String> args) async {
         '$repeatedFactAnswerForSamePivotDimension.',
       );
       report.writeln(
-        'La última cifra debe ser 0: H prohíbe reutilizar un mismo par '
-        'factual (F,R) dentro del mismo cruce P×D; una misma R puede '
-        'reaparecer si corresponde a otro F.',
+        'La última cifra se observa, no se bloquea: H se envía a Luna, '
+        'pero Dart no rechaza una fila si Luna reutiliza un par (F,R).',
       );
 
       _distribution(report, 'Frecuencias P', pCounts);
       _distribution(report, 'Frecuencias D', dCounts);
 
+      if (auditIssues.isNotEmpty) {
+        report.writeln('\nINCIDENCIAS DE CONTENIDO:');
+        for (final entry in auditIssues.entries) {
+          report.writeln('  ${entry.value} × ${entry.key}');
+        }
+      }
+
       if (failures.isNotEmpty) {
-        report.writeln('\nERRORES:');
+        report.writeln('\nERRORES DE LLAMADA/ESTRUCTURA:');
         for (final entry in failures.entries) {
           report.writeln('  ${entry.value} × ${entry.key}');
         }
