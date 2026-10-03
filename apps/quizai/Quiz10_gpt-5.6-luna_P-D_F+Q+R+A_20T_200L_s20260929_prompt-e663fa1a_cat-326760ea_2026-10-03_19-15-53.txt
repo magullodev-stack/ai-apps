@@ -1,0 +1,379 @@
+AUDITORÍA QUIZ10 — LUNA — P-D → F,Q,R,A
+Fecha: 2026-10-03 19:15:53.827478
+Modelo: gpt-5.6-luna
+Ejecución: cada test = 10 llamadas Luna simultáneas; los tests se ejecutan secuencialmente.
+Dificultad por posición: 1-4 Fácil; 5-7 Moderada; 8-9 Difícil; 10 Extrema.
+H: histórico factual por cruce P×D; cada pack recibe los pares (F,R) previos de ese cruce y H se actualiza solo al validar el pack completo.
+Huella del prompt: e663fa1a
+Huella del catálogo: 326760ea
+Prompt oficial con variables:
+## Entrada
+
+P := {{P}}
+D := {{D}}
+Dificultad := {{Dificultad}}
+
+H := {{H}}
+
+D → (
+ρ := {{rho}}
+π := {{pi}}
+τ := {{tau}}
+Γ := {{gamma}}
+)
+
+
+## Generación
+
+Elige un hecho factual f de P tal que:
+
+f instancia ρ
+
+Γ(f) = verdadero
+
+F := f
+
+R := π(f)
+
+type(R) ∈ τ
+
+(F, R) ∉ H
+
+Formula Q a partir de:
+
+f[π := ?]
+
+Genera tres distractores:
+
+A := {a₁, a₂, a₃}
+
+Para cada aᵢ:
+
+type(aᵢ) ∈ τ
+
+Γ(f[π := aᵢ]) = verdadero
+
+f[π := aᵢ] = falso
+
+aᵢ debe corresponder a un hecho real del mismo contexto que pueda confundirse con R.
+
+difficulty(Q, R, A | P, D) = Dificultad
+
+
+## Salida
+
+| P | D | F | Q | R | A |
+|---|---|---|---|---|---|
+Semilla: 20260929 | Tests: 20 | Llamadas Luna: 200.
+Tarifas USD/1M: entrada 0.2, salida 1.2, caché entrada normal.
+
+TEST 1/20 — 10 llamadas simultáneas — 12.74 s
+1. P07 D15 Fácil | F: En la alegoría de la caverna de Platón, el prisionero liberado asciende fuera de la caverna y, después de acostumbrarse a la luz, contempla finalmente el sol. | Q: ¿Qué contempla finalmente el prisionero liberado en la alegoría de la caverna? | R: El sol, que Platón presenta como causa de lo visible y símbolo de la verdad o del bien. | A: Las sombras proyectadas en el fondo de la caverna. / Los objetos y las imágenes reflejadas en el agua. / La entrada de la caverna, desde donde observa a los demás prisioneros.
+2. P04 D02 Fácil | F: La hemoglobina es una proteína que contiene hierro. | Q: ¿Qué elemento químico contiene la hemoglobina? | R: Hierro | A: Cobre / Magnesio / Calcio
+3. P16 D01 Fácil | F: Un triángulo tiene tres lados. | Q: ¿Cuántos lados tiene un triángulo? | R: Tres | A: Dos / Cuatro / Cinco
+4. P08 D04 Fácil | F: Marie Curie y Pierre Curie descubrieron conjuntamente el polonio en 1898. | Q: ¿Con quién descubrió conjuntamente Marie Curie el polonio en 1898? | R: Pierre Curie | A: Henri Becquerel / Ernest Rutherford / André-Louis Debierne
+5. P15 D06 Moderada | F: La segunda parte de Don Quijote de la Mancha, de Miguel de Cervantes, se publicó en 1615. | Q: ¿En qué año se publicó la segunda parte de Don Quijote de la Mancha? | R: 1615 | A: 1605 / 1614 / 1616
+6. P14 D09 Moderada | F: La palabra española «escuela» procede del latín «schola». | Q: ¿De qué palabra latina procede la palabra española «escuela»? | R: schola | A: ludus / disciplina / magister
+7. P05 D11 Moderada | F: En el Derecho sucesorio español, la sucesión se abre en el momento de la muerte del causante, conforme al artículo 657 del Código Civil. | Q: ¿Qué hecho produce la apertura de la sucesión? | R: La muerte del causante | A: El otorgamiento del testamento / La aceptación de la herencia / La declaración de herederos
+8. P09 D10 Difícil | F: En la elaboración del sake, el koji —arroz inoculado con *Aspergillus oryzae*— aporta enzimas amilolíticas que hidrolizan el almidón del arroz y lo convierten en azúcares fermentables durante la fermentación principal. | Q: ¿Qué proceso permite principalmente el koji durante la fermentación principal del sake? | R: La sacarificación del almidón del arroz en azúcares fermentables. | A: La fermentación alcohólica de los azúcares en etanol, llevada a cabo principalmente por la levadura. / La acidificación láctica del moromi mediante bacterias lácticas. / La oxidación del etanol a ácido acético por bacterias acéticas.
+9. P12 D29 Difícil | F: La Operación Barbarroja fue la invasión de la Unión Soviética por la Alemania nazi, iniciada el 22 de junio de 1941. | Q: ¿Qué territorio fue objeto de la Operación Barbarroja? | R: La Unión Soviética | A: Polonia / Francia / Yugoslavia
+10. P03 D26 Extrema | F: PSR B1937+21 fue el primer púlsar de milisegundos descubierto; gira aproximadamente 642 veces por segundo, con un período de unos 1,56 milisegundos. | Q: ¿Qué designación corresponde al primer púlsar de milisegundos descubierto, cuyo período de rotación es de aproximadamente 1,56 milisegundos? | R: PSR B1937+21 | A: PSR J1748−2446ad / PSR B1957+20 / PSR J0437−4715
+
+TEST 2/20 — 10 llamadas simultáneas — 30.63 s
+1. P17 D30 Fácil | F: Una inyección intramuscular se administra habitualmente mediante una jeringa. | Q: ¿Mediante qué instrumento se administra habitualmente una inyección intramuscular? | R: Una jeringa | A: Un inhalador / Un nebulizador / Un catéter intravenoso
+2. P13 D07 Fácil | F: Apple presentó el primer iPhone durante la conferencia Macworld de San Francisco. | Q: ¿En qué fecha presentó Apple el primer iPhone? | R: 9 de enero de 2007 | A: 29 de junio de 2007 / 9 de junio de 2008 / 7 de junio de 2010
+3. P01 D08 Fácil | F: La arquitectura gótica se desarrolló a partir de la arquitectura románica. | Q: ¿De qué estilo arquitectónico se desarrolló la arquitectura gótica? | R: La arquitectura románica | A: La arquitectura bizantina / La arquitectura renacentista / La arquitectura barroca
+4. P05 D13 Fácil | F: En el sistema constitucional argentino, la acción de hábeas corpus cumple la función de proteger la libertad física o ambulatoria de las personas. | Q: ¿Qué derecho protege principalmente la acción de hábeas corpus? | R: La libertad física o ambulatoria | A: Los datos personales / El derecho de propiedad / La intimidad personal
+5. P04 D10 Moderada | F: La hormona antidiurética (ADH o vasopresina) aumenta la reabsorción de agua en los túbulos colectores renales al promover la inserción de acuaporinas-2 en la membrana apical. | Q: ¿Qué hormona aumenta la reabsorción de agua en los túbulos colectores mediante la inserción de acuaporinas-2? | R: Hormona antidiurética (ADH o vasopresina) | A: Aldosterona / Péptido natriurético auricular (ANP) / Cortisol
+6. P16 D28 Moderada | F: En un grafo ponderado con pesos no negativos, el algoritmo de Dijkstra calcula las distancias mínimas desde un vértice origen seleccionando iterativamente el vértice no visitado con menor distancia provisional y relajando sus aristas. | Q: ¿Qué algoritmo calcula las distancias mínimas desde un vértice origen en un grafo con pesos no negativos seleccionando iterativamente el vértice no visitado con menor distancia provisional y relajando sus aristas? | R: El algoritmo de Dijkstra | A: El algoritmo de Bellman-Ford / El algoritmo de Floyd-Warshall / El algoritmo A*
+7. P19 D04 Moderada | F: Ernest Rutherford y Frederick Soddy formularon conjuntamente la teoría de la desintegración radiactiva entre 1902 y 1903. | Q: ¿Quién fue el otro participante, además de Ernest Rutherford, en la formulación de la teoría de la desintegración radiactiva? | R: Frederick Soddy | A: Henri Becquerel / Pierre Curie / J. J. Thomson
+8. P09 D14 Difícil | F: En la elaboración de la mayonesa, la lecitina presente en la yema de huevo reduce la tensión interfacial y estabiliza la emulsión entre el aceite y la fase acuosa. | Q: ¿Qué función desempeña la lecitina de la yema de huevo durante la elaboración de la mayonesa? | R: Actuar como emulsionante, facilitando y estabilizando la dispersión del aceite en la fase acuosa. | A: Aportar acidez a la salsa para favorecer la coagulación de sus proteínas. / Espesar la preparación mediante la gelatinización de almidones. / Conservar la salsa inhibiendo el crecimiento microbiano mediante una elevada concentración de sal.
+9. P03 D34 Difícil | F: La misión DART de la NASA impactó deliberadamente contra Dimorphos, la luna del asteroide Didymos, y modificó su período orbital. | Q: ¿Qué modificación produjo DART en el período orbital de Dimorphos? | R: Lo acortó aproximadamente 32 minutos, de unas 11 h 55 min a unas 11 h 23 min. | A: Generó una extensa pluma de material expulsado que se prolongó miles de kilómetros. / Dejó una estela de grandes bloques rocosos desprendidos de Dimorphos. / Produjo un cráter de impacto de aproximadamente 10 metros de diámetro en la superficie de Dimorphos.
+10. P07 D15 Extrema | F: En la línea dividida de la República VI, Platón asigna la diánoia al segundo segmento del ámbito inteligible. | Q: ¿Qué objetos y método caracterizan a la diánoia en la línea dividida de Platón? | R: Las entidades matemáticas inteligibles, abordadas mediante hipótesis tomadas como supuestos de partida. | A: Las imágenes y sombras sensibles, aprehendidas por la imaginación (eikasia). / Los objetos físicos sensibles, aceptados mediante la creencia (pistis). / Las Ideas inteligibles, alcanzadas dialécticamente sin depender de hipótesis, como en la noesis.
+
+TEST 3/20 — 10 llamadas simultáneas — 28.54 s
+1. P12 D29 Fácil | F: La Operación Overlord fue la invasión aliada de Normandía, iniciada el 6 de junio de 1944. | Q: ¿Qué territorio fue invadido durante la Operación Overlord? | R: Normandía | A: Sicilia / Anzio / Dunkerque
+2. P01 D26 Fácil | F: Ante la pregunta «¿Qué arquitectura utiliza memorias separadas para las instrucciones y los datos?», la respuesta correcta es «arquitectura Harvard». | Q: ¿Qué arquitectura utiliza memorias separadas para las instrucciones y los datos? | R: Arquitectura Harvard | A: Arquitectura de von Neumann / Arquitectura Princeton / Arquitectura Harvard modificada
+3. P02 D07 Fácil | F: Pablo Picasso pintó *Guernica* en 1937. | Q: ¿En qué año pintó Pablo Picasso *Guernica*? | R: 1937 | A: 1907 / 1921 / 1903-1904
+4. P10 D25 Fácil | F: Canberra es la capital de Australia. | Q: ¿Cuál es la capital de Australia? | R: Canberra | A: Sídney / Melbourne / Brisbane
+5. P08 D32 Moderada | F: Para medir la corriente que atraviesa una resistencia en un circuito, el amperímetro se conecta en serie con la resistencia. | Q: ¿Cómo debe conectarse un amperímetro para medir la corriente que atraviesa una resistencia en un circuito? | R: En serie con la resistencia | A: En paralelo con la resistencia / En paralelo con la fuente de alimentación / En serie con la resistencia, pero con la resistencia desconectada del circuito
+6. P13 D15 Moderada | F: En el modelo OSI, la capa responsable del direccionamiento lógico y del enrutamiento de paquetes entre redes es la capa de red. | Q: ¿Qué capa del modelo OSI es responsable del direccionamiento lógico y del enrutamiento de paquetes entre redes? | R: La capa de red (capa 3). | A: La capa de transporte (capa 4). / La capa de enlace de datos (capa 2). / La capa de sesión (capa 5).
+7. P07 D33 Moderada | F: En el utilitarismo clásico de Bentham y Mill, el criterio explícito para indicar qué acción debe realizarse es la maximización de la felicidad o utilidad total. | Q: Según el utilitarismo clásico de Bentham y Mill, ¿qué acción debe realizarse? | R: La acción que maximiza la utilidad total. | A: La acción que se ajusta al imperativo categórico, independientemente de sus consecuencias. / La acción que expresa de manera excelente una virtud moral del agente. / La acción que maximiza exclusivamente el placer o beneficio del propio agente.
+8. P05 D13 Difícil | F: En el sistema constitucional argentino, la acción de hábeas data cumple la función de proteger los datos personales registrados en archivos o bancos de datos. | Q: ¿Qué objeto protege funcionalmente la acción de hábeas data? | R: Los datos personales registrados en archivos o bancos de datos | A: La libertad física o ambulatoria / La inviolabilidad del domicilio / La libertad de expresión
+9. P17 D06 Difícil | F: En el infarto agudo de miocardio, la mioglobina se eleva antes que la CK-MB, las troponinas cardíacas y la LDH. | Q: Tras un infarto agudo de miocardio, ¿cuál de los siguientes biomarcadores suele mostrar elevación detectable más precozmente? | R: Mioglobina | A: CK-MB / Troponina cardíaca (I o T) / LDH
+10. P18 D02 Extrema | F: En la teoría de detección de señales, bajo el supuesto de distribuciones de igual varianza, el índice d′ de discriminabilidad no varía aunque se modifique el criterio de respuesta. | Q: Bajo el modelo de teoría de detección de señales con distribuciones de igual varianza, el índice d′ se caracteriza por ______. | R: ser invariante respecto del criterio de respuesta | A: depender sistemáticamente del criterio de respuesta / ser un índice de sesgo de respuesta y no de discriminabilidad / calcularse directamente como la diferencia entre la tasa de aciertos y la tasa de falsas alarmas
+
+TEST 4/20 — 10 llamadas simultáneas — 42.84 s
+1. P19 D33 Fácil | F: Para detectar la presencia de almidón en una muestra, se indica añadir solución de Lugol, que produce una coloración azul oscura o negra. | Q: ¿Qué reactivo debe añadirse para detectar almidón en una muestra? | R: Solución de Lugol | A: Reactivo de Benedict / Reactivo de Biuret / Sudán III
+2. P02 D22 Fácil | F: En su texto «El credo creativo» (1920), Paul Klee sostuvo que el arte no reproduce lo visible, sino que lo hace visible. | Q: ¿Qué concepción del arte expresó Paul Klee en «El credo creativo» (1920)? | R: El arte no reproduce lo visible, sino que lo hace visible. | A: Una línea es un punto que salió a pasear. / El color es el lugar donde se encuentran nuestro cerebro y el universo. / El arte juega un papel inconsciente en la creación de nuevas realidades.
+3. P01 D06 Fácil | F: La Torre Eiffel fue inaugurada después de que comenzara su construcción. | Q: ¿En qué año fue inaugurada la Torre Eiffel? | R: 1889 | A: 1887 / 1888 / 1900
+4. P12 D23 Fácil | F: La Declaración de Independencia de los Estados Unidos fue adoptada el 4 de julio de 1776, según el texto del documento y los registros del Congreso Continental. | Q: ¿En qué fecha fue adoptada la Declaración de Independencia de los Estados Unidos? | R: 4 de julio de 1776 | A: 19 de abril de 1775 / 3 de septiembre de 1783 / 17 de septiembre de 1787
+5. P18 D12 Moderada | F: El hipocampo desempeña una función crucial en la consolidación de recuerdos declarativos a largo plazo dentro del sistema de memoria. | Q: ¿Qué estructura cerebral desempeña una función crucial en la consolidación de recuerdos declarativos a largo plazo? | R: El hipocampo | A: La amígdala / La corteza prefrontal / El cerebelo
+6. P07 D10 Moderada | F: El dualismo de sustancias de Descartes generó el problema de explicar cómo interactúan la mente y el cuerpo. | Q: ¿Qué problema filosófico se deriva del dualismo cartesiano de sustancias? | R: El problema mente-cuerpo, especialmente la explicación de la interacción entre ambos. | A: La duda metódica como fundamento del conocimiento cierto. / El problema de la inducción formulado en la tradición empirista. / La demostración ontológica de la existencia de Dios.
+7. P06 D21 Moderada | F: En 1958, Alban William Phillips publicó el artículo que introdujo la relación conocida como curva de Phillips, que vinculaba la tasa de desempleo con la variación de los salarios monetarios. | Q: ¿Quién publicó en 1958 el artículo que introdujo la curva de Phillips? | R: Alban William Phillips (A. W. Phillips) | A: John Maynard Keynes / Milton Friedman / Paul Samuelson
+8. P10 D28 Difícil | F: La construcción del Canal de Panamá entre 1904 y 1914 fue ejecutada y controlada operativamente por Estados Unidos, mediante la Comisión del Canal Ístmico. | Q: ¿Qué actor estatal ejerció el control operativo de la construcción del Canal de Panamá durante el período 1904–1914? | R: Estados Unidos, a través de la Comisión del Canal Ístmico. | A: Francia / Colombia / Panamá
+9. P17 D07 Difícil | F: El primer trasplante cardíaco humano exitoso del mundo fue realizado por Christiaan Barnard en el Groote Schuur Hospital de Ciudad del Cabo. | Q: ¿En qué fecha se realizó el primer trasplante cardíaco humano exitoso del mundo? | R: 3 de diciembre de 1967 | A: 23 de enero de 1964 / 6 de diciembre de 1967 / 6 de enero de 1968
+10. P11 D31 Extrema | F: El impacto del asteroide que formó el cráter de Chicxulub produjo la capa global de esférulas y la anomalía de iridio asociadas al límite Cretácico–Paleógeno. | Q: ¿Qué intervención geológica produjo principalmente la capa global de esférulas y la anomalía de iridio del límite Cretácico–Paleógeno? | R: El impacto del asteroide que formó el cráter de Chicxulub. | A: El vulcanismo de las Traps del Decán / El impacto de Boltysh en Ucrania / El impacto que formó el cráter de Manicouagan
+
+TEST 5/20 — 10 llamadas simultáneas — 16.17 s
+1. P06 D13 Fácil | F: El dinero desempeña la función de medio de intercambio en una economía. | Q: En una economía, el dinero desempeña la función de ____ en las transacciones. | R: medio de intercambio | A: unidad de cuenta / depósito de valor / medio de pago diferido
+2. P09 D34 Fácil | F: Batir la nata incorpora aire y produce una espuma. | Q: ¿Qué modificación produce directamente batir la nata? | R: Formación de espuma | A: Formación de una emulsión / Gelificación / Caramelización
+3. P18 D22 Fácil | F: Sigmund Freud sostuvo que la personalidad está estructurada en tres instancias: ello, yo y superyó. | Q: ¿Qué concepción sostuvo Sigmund Freud sobre la estructura de la personalidad? | R: La personalidad está estructurada en tres instancias: ello, yo y superyó. | A: La mente se organiza en los sistemas consciente, preconsciente e inconsciente. / La personalidad se desarrolla mediante cinco etapas psicosexuales. / La conducta está determinada principalmente por el aprendizaje mediante refuerzos y castigos.
+4. P16 D10 Fácil | F: Al sumar 7 + 5, se obtiene 12. | Q: ¿Qué resultado se obtiene al sumar 7 + 5? | R: 12 | A: 10 / 11 / 13
+5. P03 D30 Moderada | F: El telescopio espacial Hubble fue puesto en órbita el 24 de abril de 1990 por el transbordador espacial Discovery, durante la misión STS-31. | Q: ¿Mediante qué transbordador espacial fue puesto en órbita el telescopio Hubble en 1990? | R: Discovery | A: Atlantis / Endeavour / Columbia
+6. P01 D01 Moderada | F: La Casa Farnsworth posee una estructura portante principal de acero. | Q: ¿Qué material constituye la estructura portante principal de la Casa Farnsworth? | R: acero | A: vidrio / travertino / hormigón
+7. P10 D18 Moderada | F: La proyección cartográfica de Peters fue desarrollada por Arno Peters. | Q: ¿Quién desarrolló la proyección cartográfica de Peters? | R: Arno Peters | A: Gerardus Mercator / Arthur H. Robinson / Richard Buckminster Fuller
+8. P20 D11 Difícil | F: En *El suicidio*, Émile Durkheim sostiene que el suicidio egoísta se explica por una integración social insuficiente. | Q: Según la tipología causal de Durkheim, ¿qué condición social explica específicamente el suicidio egoísta? | R: Baja integración social | A: Baja regulación normativa o anomia / Integración social excesiva / Regulación social excesiva
+9. P02 D31 Difícil | F: En la restauración del Políptico de Gante (2012-2019), la eliminación de repintes posteriores en el panel central dejó visible el aspecto original del Cordero Místico. | Q: En la restauración del Políptico de Gante (2012-2019), ¿qué intervención dejó visible el aspecto original del Cordero Místico? | R: La eliminación de repintes posteriores | A: La limpieza de los barnices oscurecidos / La consolidación de la capa pictórica / La reintegración cromática de las lagunas
+10. P14 D26 Extrema | F: La ley de Grimm describe el cambio fonológico por el que las oclusivas sordas protoindoeuropeas *p, *t y *k se convierten regularmente en las fricativas sordas proto-germánicas *f, *þ y *h. | Q: ¿Qué ley describe específicamente el cambio protoindoeuropeo *p, *t, *k → proto-germánico *f, *þ, *h? | R: La ley de Grimm, también llamada primera mutación consonántica germánica. | A: La ley de Verner / La ley de Grassmann / La ley de Kluge
+
+TEST 6/20 — 10 llamadas simultáneas — 25.70 s
+1. P07 D18 Fácil | F: La República fue escrita por Platón. | Q: ¿Qué obra fue escrita por Platón? | R: La República | A: El banquete / Fedón / Apología de Sócrates
+2. P16 D02 Fácil | F: El número 2 es un número primo. | Q: ¿Qué propiedad tiene el número 2? | R: Es un número primo. | A: Es un número compuesto. / Es un número irracional. / Es un número negativo.
+3. P05 D20 Fácil | F: En España, la mayoría de edad legal se alcanza a los 18 años. | Q: ¿Qué edad representa la mayoría de edad legal en España? | R: 18 años | A: 14 años / 16 años / 21 años
+4. P19 D16 Fácil | F: El oxígeno tiene el número atómico 8. | Q: ¿Cuál es el número atómico del oxígeno? | R: 8 | A: 6 / 7 / 9
+5. P12 D24 Moderada | F: El desciframiento de los jeroglíficos egipcios fue posible en gran medida gracias a la Piedra de Rosetta, hallada en 1799 y conservada actualmente en el British Museum. | Q: ¿Qué evidencia material permite contrastar esta afirmación? | R: La Piedra de Rosetta, conservada en el British Museum con la referencia EA 24. | A: El Decreto de Canopo, conservado en el Museo Egipcio de El Cairo. / El Papiro de Turín, conservado en el Museo Egizio de Turín. / La estela de los Buitres, conservada en el Museo del Louvre.
+6. P02 D14 Moderada | F: En la arquitectura gótica, el arbotante transmite los empujes laterales de las bóvedas hacia los contrafuertes. | Q: ¿Qué función desempeña el arbotante en la arquitectura gótica? | R: Transmitir los empujes laterales de las bóvedas hacia los contrafuertes. | A: Recibir directamente los empujes y conducirlos hacia el suelo mediante una masa mural vertical. / Añadir peso en la parte superior del edificio para estabilizar los muros. / Filtrar y colorear la luz que penetra en el interior mediante vidrieras.
+7. P03 D21 Moderada | F: En 2006, la Unión Astronómica Internacional clasificó oficialmente a Plutón como planeta enano. | Q: ¿Cómo clasificó oficialmente la Unión Astronómica Internacional a Plutón en 2006? | R: Como planeta enano | A: Como planeta / Como asteroide / Como cometa
+8. P20 D03 Difícil | F: Louis Wirth fue el primer presidente de la Asociación Internacional de Sociología (ISA), de 1949 a 1952. | Q: ¿Quién ocupó la presidencia inaugural de la Asociación Internacional de Sociología (ISA)? | R: Louis Wirth | A: René König / Robert C. Angell / Georges Friedmann
+9. P09 D32 Difícil | F: En la elaboración tradicional japonesa del tofu, la leche de soja se coagula característicamente con nigari, una solución rica en cloruro de magnesio. | Q: ¿Qué coagulante se utiliza característicamente en la elaboración tradicional japonesa del tofu? | R: Nigari (cloruro de magnesio) | A: Sulfato de calcio (yeso alimentario) / Glucono-delta-lactona (GDL) / Cloruro de calcio
+10. P18 D33 Extrema | F: Según la guía NICE NG116, en adultos con síntomas clínicamente significativos de trastorno de estrés postraumático (TEPT) que consultan dentro del primer mes posterior a un acontecimiento traumático no relacionado con combate, debe ofrecerse una intervención psicológica individual focalizada en el trauma. | Q: En este contexto clínico y temporal, ¿qué intervención psicológica debe ofrecerse? | R: Terapia cognitivo-conductual individual focalizada en el trauma (TCC-T). | A: Desensibilización y reprocesamiento por movimientos oculares (EMDR) / Psicoterapia psicodinámica / Psicoterapia de apoyo no focalizada en el trauma
+
+TEST 7/20 — 10 llamadas simultáneas — 24.71 s
+1. P04 D01 Fácil | F: La pared celular de las plantas está compuesta principalmente de celulosa. | Q: ¿De qué sustancia está compuesta principalmente la pared celular de las plantas? | R: Celulosa | A: Quitina / Peptidoglucano / Glucógeno
+2. P02 D27 Fácil | F: Pablo Picasso pintó *Guernica* en París en 1937, utilizando óleo sobre lienzo. | Q: ¿En qué ciudad pintó Pablo Picasso *Guernica*? | R: París | A: Madrid / Barcelona / Nueva York
+3. P17 D14 Fácil | F: La mitocondria desempeña la función de producir ATP mediante la respiración celular en la célula eucariota. | Q: ¿Qué función desempeña principalmente la mitocondria en la célula eucariota? | R: Producir ATP mediante la respiración celular | A: Sintetizar proteínas / Modificar y empaquetar proteínas / Degradar sustancias y orgánulos celulares
+4. P01 D08 Fácil | F: La arquitectura barroca se desarrolló a partir de la arquitectura renacentista. | Q: ¿A partir de qué estilo se desarrolló la arquitectura barroca? | R: La arquitectura renacentista | A: La arquitectura gótica / La arquitectura románica / La arquitectura neoclásica
+5. P08 D05 Moderada | F: La teoría de la relatividad especial fue formulada por Albert Einstein en 1905, antes que la teoría de la relatividad general, formulada en 1915. | Q: ¿Qué acontecimiento ocurrió antes que la formulación de la teoría de la relatividad general? | R: La formulación de la teoría de la relatividad especial en 1905 | A: La formulación de la mecánica cuántica en 1925 / El descubrimiento del fondo cósmico de microondas en 1965 / La primera detección directa de ondas gravitacionales en 2015
+6. P12 D16 Moderada | F: La Constitución española actualmente vigente fue promulgada en 1978. | Q: ¿En qué año fue promulgada la Constitución española actualmente vigente? | R: 1978 | A: 1812 / 1931 / 1876
+7. P14 D34 Moderada | F: En la producción de un sonido, el descenso del velo del paladar, manteniendo abierta la vía nasal, produce nasalización. | Q: En la producción de un sonido, el descenso del velo del paladar, manteniendo abierta la vía nasal, produce ____. | R: Nasalización | A: Oralización / Labialización / Palatalización
+8. P09 D02 Difícil | F: El Parmigiano Reggiano presenta una textura dura y granulosa. | Q: ¿Qué textura presenta el Parmigiano Reggiano? | R: Dura y granulosa | A: Blanda y cremosa / Elástica y fibrosa / Semiblanda y untuosa
+9. P19 D26 Difícil | F: En condiciones de nitración monofuncional suave (mezcla HNO₃/H₂SO₄ diluida, 0–5 °C), el anisole (metoxibenceno) experimenta sustitución electrofílica aromática y forma predominantemente el isómero para-nitrado, debido a la orientación orto/para del grupo metoxi y a la menor impedimenta estérica en la posición para. | Q: ¿Cuál es el producto principal de la nitración suave del anisole bajo estas condiciones? | R: p-nitroanisole (4-nitroanisole). | A: o-nitroanisole (2-nitroanisole). / m-nitroanisole (3-nitroanisole). / 2,4-dinitroanisole.
+10. P16 D03 Extrema | F: En el espacio proyectivo PG(15,2), la recta que contiene los puntos [1011011001101001] y [0110110101011110] tiene como tercer punto a [1101101100110111], pues sobre F₂ la suma de los dos vectores determina el tercer punto de la recta. | Q: En PG(15,2), ¿qué punto es el tercer punto de la recta que contiene a [1011011001101001] y [0110110101011110]? | R: [1101101100110111] | A: [1101101100110110] / [1101101000110111] / [1100101100110111]
+
+TEST 8/20 — 10 llamadas simultáneas — 17.43 s
+1. P18 D11 Fácil | F: La privación de sueño disminuye el rendimiento en tareas de atención sostenida. | Q: ¿Qué condición causal disminuye el rendimiento en tareas de atención sostenida? | R: La privación de sueño | A: Una siesta breve / La práctica de ejercicio físico moderado / La exposición a luz natural
+2. P16 D33 Fácil | F: Si dos triángulos tienen dos lados correspondientes iguales y también es igual el ángulo comprendido entre esos lados, el criterio LAL permite concluir que los triángulos son congruentes. | Q: ¿Qué criterio de congruencia se aplica en este caso? | R: LAL (lado-ángulo-lado) | A: LLL (lado-lado-lado) / ALA (ángulo-lado-ángulo) / LAA (lado-ángulo-ángulo)
+3. P07 D34 Fácil | F: Platón fundó la Academia en Atenas alrededor del año 387 a. C. | Q: ¿Qué institución fundó Platón en Atenas? | R: La Academia | A: El Liceo / La Stoa / El Jardín
+4. P13 D17 Fácil | F: En un diagrama de flujo, el rombo representa una decisión. | Q: ¿Qué figura representa una decisión en un diagrama de flujo? | R: El rombo | A: El rectángulo / El óvalo / El paralelogramo
+5. P19 D32 Moderada | F: En la nitración del benceno con una mezcla de ácido nítrico y ácido sulfúrico, la especie electrofílica que ataca al anillo aromático es el ion nitronio. | Q: En la nitración del benceno con una mezcla de ácido nítrico y ácido sulfúrico, ¿qué especie actúa como electrófilo y ataca al anillo aromático? | R: Ion nitronio (NO₂⁺) | A: Ácido nítrico (HNO₃) / Ion nitrato (NO₃⁻) / Ion bisulfato (HSO₄⁻)
+6. P04 D14 Moderada | F: Los ribosomas sintetizan proteínas a partir de la información contenida en el ARN mensajero en las células. | Q: ¿Qué función desempeñan los ribosomas en las células? | R: Sintetizar proteínas a partir de la información del ARN mensajero. | A: Producir ATP mediante la respiración celular. / Modificar, clasificar y empaquetar proteínas para su distribución. / Degradar sustancias y orgánulos celulares mediante enzimas digestivas.
+7. P11 D22 Moderada | F: En 1912, Alfred Wegener sostuvo que los continentes habían estado unidos en un supercontinente llamado Pangea y que posteriormente se habían desplazado hasta sus posiciones actuales. | Q: ¿Qué hipótesis defendió Alfred Wegener en 1912 para explicar la distribución actual de los continentes? | R: La hipótesis de la deriva continental: los continentes habían formado Pangea y se habían desplazado con el tiempo. | A: La expansión del fondo oceánico, propuesta posteriormente por Harry Hess. / La tectónica de placas, formulada posteriormente como un marco teórico integral. / El contraccionismo terrestre, según el cual el enfriamiento de la Tierra produjo el plegamiento y desplazamiento de los continentes.
+8. P08 D29 Difícil | F: En la dispersión Compton de un fotón de rayos X por un electrón inicialmente libre o débilmente ligado, el fotón transfiere al electrón parte de su energía y momento, por lo que el fotón dispersado aumenta su longitud de onda. | Q: En la dispersión Compton descrita, ¿qué partícula material recibe el retroceso y la energía y el momento transferidos por el fotón? | R: El electrón inicialmente libre o débilmente ligado. | A: El protón del núcleo atómico / El neutrón del núcleo atómico / El positrón
+9. P10 D06 Difícil | F: El Canal de Panamá fue inaugurado oficialmente el 15 de agosto de 1914. | Q: ¿En qué año fue inaugurado oficialmente el Canal de Panamá? | R: 1914 | A: 1903 / 1904 / 1913
+10. P14 D21 Extrema | F: Ferdinand de Saussure sostuvo en el *Curso de lingüística general* (1916) que el signo lingüístico es, en principio, arbitrario: no existe una conexión natural necesaria entre el significante y el significado. | Q: ¿Qué lingüista sostuvo, en el *Curso de lingüística general* (1916), que el signo lingüístico es, en principio, arbitrario, sin una conexión natural necesaria entre significante y significado? | R: Ferdinand de Saussure | A: Charles Sanders Peirce / Leonard Bloomfield / Edward Sapir
+
+TEST 9/20 — 10 llamadas simultáneas — 14.20 s
+1. P04 D04 Fácil | F: El dióxido de carbono y el agua participan conjuntamente en la fotosíntesis. | Q: ¿Qué sustancia participa conjuntamente con el agua en la fotosíntesis? | R: Dióxido de carbono | A: Oxígeno / Nitrógeno / Glucosa
+2. P03 D32 Fácil | F: Neil Armstrong fue la primera persona en caminar sobre la Luna durante la misión Apolo 11. | Q: ¿Quién fue la primera persona en caminar sobre la Luna? | R: Neil Armstrong | A: Buzz Aldrin / Michael Collins / Yuri Gagarin
+3. P15 D15 Fácil | F: Don Quijote de la Mancha fue escrito por Miguel de Cervantes. | Q: ¿Quién escribió Don Quijote de la Mancha? | R: Miguel de Cervantes | A: Lope de Vega / Francisco de Quevedo / Pedro Calderón de la Barca
+4. P05 D12 Fácil | F: El Tribunal Constitucional controla la constitucionalidad de las leyes en España. | Q: ¿Qué órgano controla la constitucionalidad de las leyes en España? | R: El Tribunal Constitucional | A: El Tribunal Supremo / El Consejo de Estado / El Defensor del Pueblo
+5. P19 D07 Moderada | F: El primer Premio Nobel de Química fue concedido a Jacobus Henricus van 't Hoff en 1901. | Q: ¿En qué año se concedió el primer Premio Nobel de Química? | R: 1901 | A: 1902 / 1903 / 1904
+6. P13 D28 Moderada | F: Linus Torvalds creó inicialmente el núcleo Linux en 1991. | Q: ¿Quién creó inicialmente el núcleo Linux en 1991? | R: Linus Torvalds | A: Richard Stallman / Ken Thompson / Dennis Ritchie
+7. P20 D30 Moderada | F: En la observación participante, el diario de campo es el instrumento que utiliza el investigador para registrar sistemáticamente sus observaciones y reflexiones durante el trabajo de campo. | Q: ¿Qué instrumento utiliza el investigador en la observación participante para registrar sistemáticamente sus observaciones y reflexiones durante el trabajo de campo? | R: Diario de campo | A: Cuestionario estandarizado / Guía de entrevista / Grabadora de audio
+8. P16 D09 Difícil | F: Para \(|x|<1\), la derivada de \(\arcsin x\) es \(\frac{1}{\sqrt{1-x^2}}\), resultado que se obtiene derivando implícitamente la identidad \(\sin(\arcsin x)=x\) y usando \(\sin^2 u+\cos^2 u=1\). | Q: ¿Cuál de las siguientes identidades constituye el antecedente directo para obtener, mediante derivación implícita, la fórmula \(\frac{d}{dx}(\arcsin x)=\frac{1}{\sqrt{1-x^2}}\)? | R: \(\sin(\arcsin x)=x\) | A: \(\cos(\arccos x)=x\) / \(\tan(\arctan x)=x\) / \(\arcsin(\sin x)=x\)
+9. P01 D16 Difícil | F: La iglesia de San Carlo alle Quattro Fontane, en Roma, fue diseñada por Francesco Borromini. | Q: ¿Quién diseñó la iglesia de San Carlo alle Quattro Fontane, en Roma? | R: Francesco Borromini | A: Gian Lorenzo Bernini / Pietro da Cortona / Guarino Guarini
+10. P02 D05 Extrema | F: La primera exposición impresionista se celebró en el estudio de Nadar, en París, en abril de 1874, después de la guerra franco-prusiana (1870–1871). | Q: ¿Qué acontecimiento artístico se celebró en el estudio de Nadar, en París, en abril de 1874, después de la guerra franco-prusiana (1870–1871)? | R: La primera exposición impresionista | A: El Salón de los Rechazados de 1863 / La segunda exposición impresionista de 1876 / La primera exposición del Salon des Indépendants de 1884
+
+TEST 10/20 — 10 llamadas simultáneas — 11.32 s
+1. P06 D10 Fácil | F: Una depreciación de la moneda nacional frente a otras monedas encarece, en moneda nacional, los bienes importados. | Q: ¿Qué efecto suele producir una depreciación de la moneda nacional frente a otras monedas? | R: El encarecimiento de los bienes importados. | A: El abaratamiento de las exportaciones para los compradores extranjeros. / La reducción del valor de la deuda externa denominada en moneda extranjera. / El abaratamiento de los bienes importados.
+2. P12 D32 Fácil | F: El 6 de junio de 1944, las fuerzas aliadas desembarcaron en las playas de Normandía durante la Segunda Guerra Mundial. | Q: ¿Qué tipo de intervención militar realizaron principalmente las fuerzas aliadas en Normandía? | R: Un desembarco anfibio | A: Un lanzamiento de paracaidistas / Un bombardeo naval / Una operación de engaño estratégico
+3. P08 D25 Fácil | F: La unidad del Sistema Internacional para medir la fuerza es el newton. | Q: ¿Cuál es la unidad del Sistema Internacional para medir la fuerza? | R: Newton | A: Julio / Vatio / Pascal
+4. P15 D14 Fácil | F: Sancho Panza acompaña a Don Quijote como su escudero. | Q: ¿Qué función desempeña Sancho Panza respecto de Don Quijote? | R: Escudero | A: Caballero andante / Cura / Barbero
+5. P20 D21 Moderada | F: En El suicidio (1897), Émile Durkheim sostuvo que las tasas de suicidio se relacionan con el grado de integración y regulación social. | Q: ¿Qué sociólogo sostuvo, en El suicidio (1897), que las tasas de suicidio se relacionan con el grado de integración y regulación social? | R: Émile Durkheim | A: Karl Marx / Max Weber / Georg Simmel
+6. P16 D33 Moderada | F: Si dos triángulos tienen sus tres lados correspondientes iguales, el criterio LLL permite concluir que los triángulos son congruentes. | Q: Si dos triángulos tienen sus tres lados correspondientes iguales, el criterio ___ permite concluir que los triángulos son congruentes. | R: LLL (lado-lado-lado) | A: LAL (lado-ángulo-lado) / ALA (ángulo-lado-ángulo) / AAL (ángulo-ángulo-lado)
+7. P19 D17 Moderada | F: La fórmula química H₂O representa el agua. | Q: ¿Qué fórmula química representa el agua? | R: H₂O | A: CO₂ / H₂O₂ / O₂
+8. P03 D16 Difícil | F: Titán, la mayor luna de Saturno, posee una atmósfera densa rica en nitrógeno y un ciclo meteorológico basado en metano, con nubes, lluvias, ríos y lagos en su superficie. | Q: ¿Qué satélite natural del Sistema Solar posee una atmósfera densa rica en nitrógeno y un ciclo meteorológico basado en metano? | R: Titán | A: Tritón / Ío / Europa
+9. P13 D22 Difícil | F: En 1970, Edgar F. Codd propuso el modelo relacional como una concepción formal para organizar y manipular datos mediante relaciones (tablas). | Q: ¿Qué modelo formal de datos propuso Edgar F. Codd en 1970 para organizar y manipular la información mediante relaciones? | R: El modelo relacional | A: El modelo jerárquico / El modelo de red / El modelo entidad-relación
+10. P17 D15 Extrema | F: En un adulto con ictus isquémico agudo por oclusión proximal de la circulación anterior, con última vez visto bien 8 horas antes, pequeño volumen de infarto establecido y penumbra significativa demostrada por imagen, la terapia de reperfusión con beneficio demostrado es la trombectomía mecánica endovascular, aunque ya esté fuera de la ventana convencional para trombólisis intravenosa. | Q: En un adulto con ictus isquémico agudo por oclusión proximal de la circulación anterior, con última vez visto bien 8 horas antes, pequeño volumen de infarto establecido y penumbra significativa demostrada por imagen, ¿cuál es la terapia de reperfusión con beneficio demostrado? | R: Trombectomía mecánica endovascular | A: Trombólisis intravenosa con alteplasa / Administración inmediata de ácido acetilsalicílico como terapia de reperfusión / Craniectomía descompresiva hemicraniana
+
+TEST 11/20 — ERROR — 22.89 s
+Quiz10LunaPackException: 1 fila(s) fallida(s).
+T11/F6
+P = P03 (Astronomía)
+D = D16
+Dificultad = Moderada
+Etapa = validación
+causa = FormatException: H ya contiene el par factual (F,R).
+
+TEST 12/20 — 10 llamadas simultáneas — 17.59 s
+1. P05 D19 Fácil | F: Thomas Jefferson fue el autor principal de la Declaración de Independencia de los Estados Unidos. | Q: ¿Quién fue el autor principal de la Declaración de Independencia de los Estados Unidos? | R: Thomas Jefferson | A: Benjamin Franklin / John Adams / James Madison
+2. P06 D09 Fácil | F: La inflación de demanda se deriva de un exceso de demanda agregada. | Q: ¿De qué se deriva la inflación de demanda? | R: De un exceso de demanda agregada. | A: De un aumento de los costes de producción. / De una reducción de la oferta monetaria. / De una disminución de los impuestos indirectos.
+3. P13 D07 Fácil | F: Microsoft lanzó Windows 95 el 24 de agosto de 1995. | Q: ¿En qué fecha lanzó Microsoft Windows 95? | R: 24 de agosto de 1995 | A: 25 de junio de 1998 / 25 de octubre de 2001 / 22 de octubre de 2009
+4. P11 D33 Fácil | F: Una alerta de tsunami para una costa indica que las personas deben evacuar las zonas costeras bajas y dirigirse a lugares elevados o tierra adentro. | Q: ¿Qué intervención indica una alerta de tsunami para las personas que se encuentran en zonas costeras bajas? | R: Evacuar las zonas costeras bajas y dirigirse a lugares elevados o tierra adentro. | A: Permanecer en la playa para observar el fenómeno / Esperar confirmación visual de la llegada de las olas antes de actuar / Continuar las actividades normales y mantenerse dentro de la zona costera
+5. P17 D16 Moderada | F: En una sobredosis aguda por opioides con depresión respiratoria, el antagonista competitivo de los receptores opioides utilizado para revertir rápidamente sus efectos es la naloxona. | Q: ¿Qué fármaco se utiliza para revertir rápidamente la depresión respiratoria causada por una sobredosis aguda de opioides? | R: Naloxona | A: Flumazenil / N-acetilcisteína / Atropina
+6. P08 D20 Moderada | F: La constante de Planck se representa convencionalmente por h. | Q: ¿Qué símbolo representa convencionalmente a la constante de Planck? | R: h | A: ħ / k_B / e
+7. P01 D11 Moderada | F: En las catedrales góticas, el arbotante conduce hacia un soporte exterior el empuje lateral de las bóvedas. | Q: ¿Qué elemento arquitectónico conduce hacia un soporte exterior el empuje lateral de las bóvedas góticas? | R: El arbotante | A: La bóveda de crucería / El pináculo / El claristorio
+8. P20 D27 Difícil | F: El experimento de obediencia a la autoridad de Stanley Milgram fue ejecutado en la Universidad de Yale entre 1961 y 1962. | Q: ¿En qué contexto institucional y periodo se ejecutó el experimento de obediencia a la autoridad de Stanley Milgram? | R: Universidad de Yale, New Haven, entre 1961 y 1962 | A: Universidad de Stanford, en 1971, durante el experimento de la prisión de Stanford de Philip Zimbardo / Swarthmore College, en 1951, durante los experimentos de conformidad de Solomon Asch / Universidad de Columbia, en 1964, durante los estudios de influencia social de Stanley Milgram
+9. P03 D01 Difícil | F: Ío posee una atmósfera tenue cuya especie molecular dominante es el dióxido de azufre (SO₂). | Q: ¿Qué satélite galileano posee una atmósfera tenue dominada molecularmente por dióxido de azufre (SO₂)? | R: Ío | A: Europa / Ganímedes / Calisto
+10. P19 D31 Extrema | F: Cuando se añade agua de bromo a una disolución acuosa de fenol, la sustitución electrofílica aromática produce 2,4,6-tribromofenol, que precipita como sólido blanco. | Q: ¿Qué producto principal se forma al añadir agua de bromo a una disolución acuosa de fenol? | R: 2,4,6-tribromofenol | A: 2-bromofenol / 4-bromofenol / 2,4-dibromofenol
+
+TEST 13/20 — ERROR — 19.73 s
+Quiz10LunaPackException: 1 fila(s) fallida(s).
+T13/F4
+P = P14 (Lingüística)
+D = D34
+Dificultad = Fácil
+Etapa = validación
+causa = FormatException: H ya contiene el par factual (F,R).
+
+TEST 14/20 — 10 llamadas simultáneas — 20.70 s
+1. P09 D17 Fácil | F: El sushi es un plato emblemático que representa convencionalmente la gastronomía japonesa. | Q: ¿Qué gastronomía representa convencionalmente el sushi? | R: La gastronomía japonesa | A: La gastronomía china / La gastronomía coreana / La gastronomía tailandesa
+2. P12 D07 Fácil | F: La Constitución española de 1978 fue aprobada por las Cortes Generales. | Q: ¿Cuándo fue aprobada por las Cortes Generales la Constitución española de 1978? | R: 31 de octubre de 1978 | A: 6 de diciembre de 1978 / 27 de diciembre de 1978 / 29 de diciembre de 1978
+3. P19 D23 Fácil | F: El oxígeno tiene número atómico 8, según la información de la tabla periódica. | Q: ¿Cuál es el número atómico del oxígeno? | R: 8 | A: 6 / 7 / 9
+4. P11 D25 Fácil | F: El granito es una roca ígnea intrusiva. | Q: ¿Qué tipo de roca es el granito? | R: Una roca ígnea intrusiva | A: Una roca sedimentaria / Una roca metamórfica / Una roca ígnea extrusiva
+5. P08 D20 Moderada | F: La velocidad de la luz en el vacío se representa convencionalmente por c. | Q: ¿Qué símbolo representa convencionalmente la velocidad de la luz en el vacío? | R: c | A: G / k / e
+6. P01 D33 Moderada | F: En conservación del patrimonio arquitectónico, cuando una fábrica histórica se encuentra estable y presenta únicamente suciedad superficial, el criterio de intervención indica realizar una limpieza superficial no abrasiva. | Q: En conservación del patrimonio arquitectónico, cuando una fábrica histórica se encuentra estable y presenta únicamente suciedad superficial, ¿qué intervención se indica? | R: Realizar una limpieza superficial no abrasiva. | A: Aplicar una consolidación estructural o material. / Reponer las piezas históricas deterioradas. / Reconstruir las partes faltantes del edificio.
+7. P07 D08 Moderada | F: El neopositivismo se desarrolló a partir del positivismo clásico. | Q: ¿Qué corriente filosófica se desarrolló a partir del positivismo clásico? | R: Neopositivismo | A: Pragmatismo / Fenomenología / Existencialismo
+8. P10 D04 Difícil | F: Frank Wild participó, junto con Ernest Shackleton y otros exploradores, en la Expedición Imperial Transantártica de 1914-1917. | Q: ¿Cuál de estas personas participó junto con Ernest Shackleton en la Expedición Imperial Transantártica de 1914-1917? | R: Frank Wild | A: Roald Amundsen / Robert Falcon Scott / Douglas Mawson
+9. P05 D31 Difícil | F: En una compraventa de un local, Marta entregó materialmente a Carlos las llaves y permitió su acceso inmediato, produciendo así que Carlos adquiriera la posesión fáctica del inmueble. | Q: ¿Qué intervención realizada por Marta produjo que Carlos adquiriera la posesión fáctica del inmueble? | R: La entrega material de las llaves y la puesta del local a disposición de Carlos. | A: La firma del contrato privado de compraventa. / El pago íntegro del precio por Carlos. / La inscripción de la compraventa en el Registro de la Propiedad.
+10. P15 D05 Extrema | F: La publicación de La metamorfosis precedió a la muerte de Franz Kafka. | Q: ¿Qué acontecimiento ocurrió antes de la muerte de Franz Kafka? | R: La publicación de La metamorfosis | A: La publicación de El proceso / La publicación de El castillo / La publicación de América
+
+TEST 15/20 — 10 llamadas simultáneas — 13.06 s
+1. P08 D20 Fácil | F: La carga eléctrica se representa convencionalmente por q. | Q: ¿Qué símbolo representa convencionalmente la carga eléctrica? | R: q | A: I / V / E
+2. P02 D17 Fácil | F: El cuadro *Guernica*, de Pablo Picasso, representa el bombardeo de Guernica durante la Guerra Civil española. | Q: ¿Qué hecho representa el cuadro *Guernica*, de Pablo Picasso? | R: El bombardeo de Guernica durante la Guerra Civil española | A: El bombardeo de Madrid durante la Guerra Civil española / La batalla del Ebro durante la Guerra Civil española / La rendición de Barcelona durante la Guerra Civil española
+3. P01 D02 Fácil | F: Las columnas exteriores del Partenón son de orden dórico. | Q: ¿De qué orden arquitectónico son las columnas exteriores del Partenón? | R: Dórico | A: Jónico / Corintio / Toscano
+4. P16 D27 Fácil | F: La regla de tres simple directa se aplica en situaciones de proporcionalidad directa. | Q: ¿En qué tipo de proporcionalidad se aplica la regla de tres simple directa? | R: Proporcionalidad directa | A: Proporcionalidad inversa / Proporcionalidad compuesta / Porcentajes
+5. P14 D12 Moderada | F: En la producción de sonidos orales, el velo del paladar se eleva para cerrar el paso hacia la cavidad nasal. | Q: ¿Qué componente del aparato fonador desempeña la función de cerrar el paso hacia la cavidad nasal durante la producción de sonidos orales? | R: El velo del paladar | A: La lengua / Las cuerdas vocales / Los labios
+6. P12 D26 Moderada | F: Neil Armstrong se convirtió en la primera persona en caminar sobre la Luna durante la misión Apolo 11. | Q: ¿Durante qué misión se convirtió Neil Armstrong en la primera persona en caminar sobre la Luna? | R: Apolo 11 | A: Apolo 12 / Apolo 13 / Apolo 17
+7. P17 D33 Moderada | F: En un paciente con un schwannoma vestibular grande que produce compresión del tronco encefálico e hidrocefalia, está indicada la resección microquirúrgica. | Q: ¿Qué intervención está indicada en un paciente con un schwannoma vestibular grande que produce compresión del tronco encefálico e hidrocefalia? | R: Resección microquirúrgica | A: Observación clínica con seguimiento mediante resonancia magnética / Radiocirugía estereotáctica como tratamiento primario / Radioterapia fraccionada como tratamiento primario
+8. P11 D16 Difícil | F: La discontinuidad de Mohorovičić (Moho) es el límite sísmico entre la corteza terrestre y el manto. | Q: ¿Qué discontinuidad sísmica marca el límite entre la corteza terrestre y el manto? | R: Discontinuidad de Mohorovičić (Moho) | A: Discontinuidad de Conrad / Discontinuidad de Gutenberg / Discontinuidad de Lehmann
+9. P05 D03 Difícil | F: En el juicio de los principales criminales de guerra ante el Tribunal Militar Internacional de Núremberg (1945-1946), Sir Geoffrey Lawrence ocupó la presidencia del tribunal. | Q: ¿Quién presidió el Tribunal Militar Internacional durante el juicio de los principales criminales de guerra nazis en Núremberg? | R: Sir Geoffrey Lawrence | A: Francis Biddle / Henri Donnedieu de Vabres / Norman Birkett
+10. P03 D11 Extrema | F: Las estaciones terrestres se producen principalmente por la inclinación del eje de rotación de la Tierra respecto del plano de su órbita. | Q: ¿Qué condición causal explica principalmente la sucesión de las estaciones terrestres? | R: La inclinación aproximada de 23,5° del eje terrestre respecto del plano orbital, que hace variar durante el año la altura aparente del Sol y la duración del día en cada hemisferio. | A: La variación anual de la distancia entre la Tierra y el Sol debida a la excentricidad de la órbita terrestre. / La rotación diaria de la Tierra sobre su eje. / La atracción gravitatoria de la Luna sobre la Tierra.
+
+TEST 16/20 — 10 llamadas simultáneas — 13.20 s
+1. P11 D13 Fácil | F: La litificación convierte sedimentos sueltos en roca sedimentaria dentro del ciclo de las rocas. | Q: ¿Qué proceso convierte sedimentos sueltos en roca sedimentaria? | R: Litificación | A: Meteorización / Erosión / Metamorfismo
+2. P09 D34 Fácil | F: Añadir levadura a una masa y dejarla fermentar produce dióxido de carbono. | Q: ¿Qué modificación directa produce la fermentación de la levadura en una masa? | R: Producción de dióxido de carbono | A: Formación de gluten / Caramelización de azúcares / Coagulación de proteínas
+3. P01 D14 Fácil | F: Una columna desempeña la función de transmitir las cargas verticales de la estructura hacia la cimentación. | Q: ¿Qué función desempeña una columna respecto de la estructura y la cimentación? | R: Transmitir las cargas verticales de la estructura hacia la cimentación. | A: Delimitar y cerrar los espacios interiores del edificio. / Permitir la entrada de luz y ventilación al interior. / Proteger el interior del edificio frente a la lluvia y otros agentes climáticos.
+4. P17 D24 Fácil | F: En adultos no embarazados, una concentración de hemoglobina glucosilada (HbA1c) ≥6,5 % (48 mmol/mol) es un criterio diagnóstico de diabetes mellitus, generalmente confirmado con una segunda prueba si no existen síntomas inequívocos de hiperglucemia. | Q: ¿Qué valor de HbA1c constituye el umbral diagnóstico de diabetes mellitus en adultos no embarazados? | R: ≥6,5 % (48 mmol/mol) | A: 5,7–6,4 % (39–46 mmol/mol) / <5,7 % (<39 mmol/mol) / ≥6,0 % (42 mmol/mol)
+5. P02 D33 Moderada | F: En la conservación-restauración de una pintura de caballete, la consolidación de la capa pictórica se indica cuando existen levantamientos, desprendimientos o falta de adhesión entre la película pictórica y el soporte. | Q: ¿Qué intervención está indicada cuando una pintura de caballete presenta levantamientos, desprendimientos o falta de adhesión de la capa pictórica al soporte? | R: Consolidación de la capa pictórica | A: Limpieza superficial de la pintura / Aplicación de un barniz protector / Reentelado de la pintura
+6. P08 D04 Moderada | F: James Watson y Francis Crick propusieron conjuntamente el modelo de doble hélice del ADN en 1953. | Q: ¿Quién participó conjuntamente con James Watson en la propuesta del modelo de doble hélice del ADN en 1953? | R: Francis Crick | A: Rosalind Franklin / Maurice Wilkins / Linus Pauling
+7. P07 D17 Moderada | F: En la alegoría de la caverna de Platón, la salida del prisionero representa el proceso de educación filosófica hacia el conocimiento del Bien. | Q: ¿Qué representa la salida del prisionero en la alegoría de la caverna de Platón? | R: El proceso de educación filosófica hacia el conocimiento del Bien. | A: La reminiscencia de las Ideas contempladas antes del nacimiento. / La organización política de la ciudad bajo el gobierno de los filósofos. / La percepción del mundo sensible mediante los sentidos.
+8. P18 D11 Difícil | F: El daño bilateral del hipocampo provoca una marcada amnesia anterógrada, con relativa preservación de la memoria de trabajo y de las habilidades procedimentales. | Q: ¿Qué condición causal provoca este patrón de alteración de la memoria? | R: El daño bilateral del hipocampo | A: El daño bilateral de la amígdala / El daño bilateral de la corteza motora primaria / El daño bilateral de la corteza visual primaria
+9. P03 D05 Difícil | F: El lanzamiento del Apollo 11 ocurrió después del lanzamiento del Apollo 10. | Q: ¿Después del lanzamiento de qué misión ocurrió el lanzamiento del Apollo 11? | R: El lanzamiento del Apollo 10 | A: El lanzamiento del Apollo 12 / El lanzamiento del Apollo 13 / El lanzamiento del Apollo 14
+10. P10 D10 Extrema | F: La corriente fría de Humboldt contribuye causalmente a la extrema aridez de la costa del desierto de Atacama, al reducir la evaporación y la convección atmosférica. | Q: ¿Qué corriente oceánica explica principalmente la extrema aridez de la costa del desierto de Atacama? | R: La corriente de Humboldt (o corriente del Perú). | A: La corriente de Benguela / La corriente de California / La corriente de Canarias
+
+TEST 17/20 — 10 llamadas simultáneas — 15.77 s
+1. P08 D18 Fácil | F: Isaac Newton escribió la obra Philosophiæ Naturalis Principia Mathematica. | Q: ¿Quién escribió la obra Philosophiæ Naturalis Principia Mathematica? | R: Isaac Newton | A: Galileo Galilei / Albert Einstein / Stephen Hawking
+2. P13 D11 Fácil | F: La falta de espacio libre en la memoria RAM puede provocar que el sistema operativo use memoria virtual (paginación). | Q: ¿Qué condición puede provocar que el sistema operativo use memoria virtual (paginación)? | R: La falta de espacio libre en la memoria RAM | A: La falta de espacio de almacenamiento en el disco duro / Una conexión de red lenta / Una CPU con alta frecuencia
+3. P19 D21 Fácil | F: La concepción científica documentada establece que el oxígeno (O₂) constituye aproximadamente el 21 % del volumen de la atmósfera terrestre. | Q: ¿Qué gas constituye aproximadamente el 21 % del volumen de la atmósfera terrestre? | R: Oxígeno (O₂) | A: Nitrógeno (N₂) / Dióxido de carbono (CO₂) / Argón (Ar)
+4. P20 D22 Fácil | F: Émile Durkheim sostuvo en *Las reglas del método sociológico* que los hechos sociales son maneras de actuar, pensar y sentir externas al individuo y dotadas de poder coercitivo. | Q: ¿Qué sostuvo Émile Durkheim sobre los hechos sociales? | R: Que son maneras de actuar, pensar y sentir externas al individuo y dotadas de poder coercitivo. | A: Que son los significados subjetivos que los individuos atribuyen a sus acciones. / Que son principalmente el resultado de las relaciones económicas y de la lucha de clases. / Que son conductas determinadas fundamentalmente por rasgos biológicos innatos.
+5. P11 D29 Moderada | F: En la perforación diamantina, una corona impregnada de diamantes corta el macizo rocoso y permite recuperar testigos cilíndricos continuos de roca del subsuelo. | Q: En la perforación diamantina, ¿qué objeto se recupera como muestra cilíndrica continua del subsuelo? | R: Testigos cilíndricos continuos de roca | A: Ripios o detritos de perforación / Lodo de perforación / Agua subterránea
+6. P12 D04 Moderada | F: Neil Armstrong y Buzz Aldrin caminaron conjuntamente sobre la superficie lunar durante la misión Apolo 11. | Q: ¿Quién participó junto con Neil Armstrong en la actividad de caminar sobre la Luna durante la misión Apolo 11? | R: Buzz Aldrin | A: Michael Collins / Yuri Gagarin / Alan Shepard
+7. P05 D27 Moderada | F: Un agente policial aprehende a una persona inmediatamente después de sorprenderla cometiendo un hurto, mediante una intervención física y sin orden judicial previa. | Q: ¿En qué circunstancia jurídica se realiza la aprehensión descrita? | R: Flagrancia delictiva | A: Cumplimiento de una orden judicial de captura / Detención por fuga o evasión / Detención administrativa preventiva
+8. P07 D31 Difícil | F: La publicación por Immanuel Kant de la primera edición de la Crítica de la razón pura en 1781 reorientó la discusión filosófica sobre la posibilidad del conocimiento metafísico al proponer su «revolución copernicana». | Q: ¿Qué intervención de Kant reorientó en 1781 la discusión sobre la posibilidad del conocimiento metafísico al proponer la «revolución copernicana»? | R: La publicación de la primera edición de la Crítica de la razón pura | A: La publicación de los Prolegómenos a toda metafísica futura en 1783 / La publicación de la segunda edición de la Crítica de la razón pura en 1787 / La publicación de la Crítica de la razón práctica en 1788
+9. P09 D01 Difícil | F: La quinoa se clasifica culinariamente como un pseudocereal. | Q: ¿Cómo se clasifica culinariamente la quinoa? | R: Pseudocereal | A: Cereal / Legumbre / Tubérculo
+10. P10 D02 Extrema | F: El monte Everest posee una elevación oficial de 8.848,86 m sobre el nivel del mar. | Q: ¿Cuál es la elevación oficial del monte Everest sobre el nivel del mar? | R: 8.848,86 m | A: 8.611 m / 8.586 m / 8.516 m
+
+TEST 18/20 — 10 llamadas simultáneas — 13.75 s
+1. P08 D22 Fácil | F: Isaac Newton sostuvo una concepción corpuscular de la luz. | Q: ¿Qué concepción de la luz sostuvo Isaac Newton? | R: Que la luz está compuesta por partículas o corpúsculos. | A: Que la luz es una onda que se propaga mediante vibraciones en un medio. / Que la luz consiste en ondas electromagnéticas. / Que la luz es una perturbación del éter luminífero.
+2. P01 D19 Fácil | F: El Museo Guggenheim Bilbao fue diseñado por Frank Gehry. | Q: ¿Quién diseñó el Museo Guggenheim Bilbao? | R: Frank Gehry | A: Zaha Hadid / Norman Foster / Santiago Calatrava
+3. P17 D28 Fácil | F: Durante una cirugía bajo anestesia general, el anestesiólogo ajusta y controla operativamente los parámetros del ventilador mecánico que proporciona ventilación al paciente. | Q: Durante una cirugía bajo anestesia general, ¿quién ajusta y controla operativamente los parámetros del ventilador mecánico que proporciona ventilación al paciente? | R: El anestesiólogo | A: El cirujano / El enfermero instrumentista / El paciente
+4. P14 D18 Fácil | F: Noam Chomsky es el autor de la obra lingüística «Estructuras sintácticas» (1957). | Q: ¿Quién es el autor de «Estructuras sintácticas»? | R: Noam Chomsky | A: Ferdinand de Saussure / Leonard Bloomfield / Roman Jakobson
+5. P12 D17 Moderada | F: El retrato Athenaeum, pintado por Gilbert Stuart en 1796, representa a George Washington. | Q: ¿A quién representa el retrato Athenaeum pintado por Gilbert Stuart en 1796? | R: George Washington | A: Thomas Jefferson / John Adams / Benjamin Franklin
+6. P13 D31 Moderada | F: En Git, ejecutar `git commit` registra los cambios preparados en un nuevo commit del repositorio local. | Q: ¿Qué comando de Git registra los cambios preparados en un nuevo commit del repositorio local? | R: `git commit` | A: `git add` / `git push` / `git merge`
+7. P20 D03 Moderada | F: Talcott Parsons fue presidente de la American Sociological Association en 1949. | Q: ¿Quién fue presidente de la American Sociological Association en 1949? | R: Talcott Parsons | A: Robert K. Merton / Pitirim Sorokin / Ernest W. Burgess
+8. P10 D11 Difícil | F: La corriente de Humboldt, también llamada corriente del Perú, contribuye a la extrema aridez del desierto de Atacama al transportar aguas frías frente a la costa occidental de Sudamérica. | Q: ¿Qué corriente marina contribuye causalmente a la extrema aridez del desierto de Atacama? | R: La corriente de Humboldt o corriente del Perú | A: La corriente de Benguela / La corriente de California / La corriente de Canarias
+9. P02 D02 Difícil | F: El Retrato de Giovanni Arnolfini y su esposa está realizado sobre una tabla de roble. | Q: ¿Sobre qué soporte está realizado el Retrato de Giovanni Arnolfini y su esposa? | R: Tabla de roble | A: Lienzo / Tabla de álamo / Tabla de cobre
+10. P15 D04 Extrema | F: En 1922, James Joyce colaboró con Sylvia Beach en la preparación y publicación de la primera edición de *Ulysses* por Shakespeare and Company. | Q: ¿Con quién colaboró James Joyce en la preparación y publicación de la primera edición de *Ulysses*? | R: Sylvia Beach | A: Adrienne Monnier / Harriet Shaw Weaver / Ezra Pound
+
+TEST 19/20 — 10 llamadas simultáneas — 19.66 s
+1. P06 D14 Fácil | F: En una economía de mercado, el dinero desempeña la función de medio de intercambio. | Q: En una economía de mercado, ¿qué función desempeña el dinero al facilitar la compra y venta de bienes y servicios? | R: Medio de intercambio | A: Unidad de cuenta / Depósito de valor / Medio de pago diferido
+2. P03 D32 Fácil | F: Yuri Gagarin fue el primer ser humano en viajar al espacio durante la misión Vostok 1. | Q: ¿Quién fue el primer ser humano en viajar al espacio durante la misión Vostok 1? | R: Yuri Gagarin | A: Alan Shepard / John Glenn / Valentina Tereshkova
+3. P01 D01 Fácil | F: El Museo Guggenheim Bilbao posee un revestimiento exterior principal de titanio. | Q: ¿De qué material es el revestimiento exterior principal del Museo Guggenheim Bilbao? | R: titanio | A: acero / vidrio / hormigón
+4. P07 D29 Fácil | F: John Rawls diseña los principios de justicia desde la posición original, bajo el velo de ignorancia. | Q: ¿Qué diseña Rawls desde la posición original y bajo el velo de ignorancia? | R: Los principios de justicia | A: La posición original / El velo de ignorancia / Los bienes primarios
+5. P04 D05 Moderada | F: La implantación del blastocisto en el endometrio ocurre después de la fecundación. | Q: ¿Qué acontecimiento ocurrió antes de la implantación del blastocisto en el endometrio? | R: La fecundación | A: La gastrulación / La neurulación / La organogénesis
+6. P15 D10 Moderada | F: En El viejo y el mar, la sangre del marlín atrae a los tiburones. | Q: En El viejo y el mar, la sangre del marlín atrae a ________. | R: los tiburones | A: los peces voladores / las tortugas / los delfines
+7. P18 D17 Moderada | F: En el modelo de memoria de trabajo de Baddeley, el bucle fonológico representa y mantiene temporalmente información verbal y acústica mediante códigos fonológicos. | Q: ¿Qué componente de la memoria de trabajo representa y mantiene temporalmente la información verbal y acústica? | R: El bucle fonológico | A: La agenda visoespacial / El ejecutivo central / El búfer episódico
+8. P08 D13 Difícil | F: En un motor de corriente continua, el conmutador invierte periódicamente el sentido de la corriente en la bobina del rotor para mantener el par motor en el mismo sentido. | Q: ¿Qué componente de un motor de corriente continua invierte periódicamente el sentido de la corriente en la bobina del rotor? | R: El conmutador o anillo partido. | A: Las escobillas, que mantienen el contacto eléctrico con el conmutador. / La bobina del rotor, por la que circula la corriente y que experimenta la fuerza magnética. / El estator o conjunto de imanes, que genera el campo magnético externo.
+9. P19 D06 Difícil | F: El radio metálico fue aislado por Marie Curie y André-Louis Debierne en 1910. | Q: ¿En qué año se aisló por primera vez el radio en estado metálico? | R: 1910 | A: 1898 / 1902 / 1903
+10. P09 D22 Extrema | F: En Le Guide culinaire (1903), Auguste Escoffier sistematizó la clasificación clásica de cinco salsas madre de la cocina francesa: béchamel, velouté, espagnole, salsa de tomate y salsa holandesa. | Q: Según la sistematización atribuida a Auguste Escoffier en Le Guide culinaire, ¿cuál es el conjunto correcto de sus cinco salsas madre? | R: Béchamel, velouté, espagnole, salsa de tomate y salsa holandesa. | A: Allemande, béchamel, espagnole y velouté; conjunto de cuatro salsas asociado a la clasificación de Carême. / Béchamel, velouté, espagnole, salsa de tomate y demi-glace; combinación que confunde una salsa derivada con una salsa madre. / Béchamel, velouté, espagnole, salsa holandesa y mayonesa; combinación de la clasificación clásica con una salsa emulsionada incluida en algunas ampliaciones modernas.
+
+TEST 20/20 — 10 llamadas simultáneas — 15.94 s
+1. P14 D20 Fácil | F: En el Alfabeto Fonético Internacional, el símbolo [ŋ] representa la consonante nasal velar sonora. | Q: ¿Qué símbolo del Alfabeto Fonético Internacional representa la consonante nasal velar sonora? | R: [ŋ] | A: [ɲ] / [n] / [m]
+2. P19 D28 Fácil | F: En una valoración ácido-base, la bureta añade gradualmente la disolución valorante y permite medir el volumen dispensado. | Q: ¿Qué material de laboratorio añade gradualmente la disolución valorante y permite medir el volumen dispensado en una valoración ácido-base? | R: Bureta | A: Pipeta / Probeta / Matraz aforado
+3. P17 D21 Fácil | F: En la CIE-10, el código D21 corresponde a una neoplasia benigna del tejido conjuntivo y de otros tejidos blandos. | Q: En la CIE-10, ¿qué designa el código D21? | R: Neoplasia benigna del tejido conjuntivo y de otros tejidos blandos | A: Neoplasia maligna del tejido conjuntivo y de otros tejidos blandos / Neoplasia de comportamiento incierto del tejido conjuntivo y de otros tejidos blandos / Neoplasia benigna del hueso y del cartílago articular
+4. P16 D07 Fácil | F: Carl Friedrich Gauss nació en 1777. | Q: ¿En qué año nació Carl Friedrich Gauss? | R: 1777 | A: 1707 / 1736 / 1826
+5. P10 D18 Moderada | F: La proyección de Mercator fue desarrollada por Gerardus Mercator. | Q: ¿Quién desarrolló la proyección de Mercator? | R: Gerardus Mercator | A: Arno Peters / Arthur H. Robinson / Karl Brandan Mollweide
+6. P04 D14 Moderada | F: Las mitocondrias producen ATP mediante la respiración celular en las células eucariotas. | Q: ¿Qué función desempeñan principalmente las mitocondrias en las células eucariotas? | R: Producir ATP mediante la respiración celular. | A: Sintetizar proteínas a partir de la información del ARN mensajero. / Modificar, clasificar y empaquetar proteínas para su transporte celular. / Degradar macromoléculas y componentes celulares mediante enzimas hidrolíticas.
+7. P01 D24 Moderada | F: La Casa Farnsworth fue diseñada por Ludwig Mies van der Rohe. | Q: ¿Qué evidencia respalda la afirmación de que la Casa Farnsworth fue diseñada por Ludwig Mies van der Rohe? | R: La ficha oficial del National Historic Landmark del National Park Service, que identifica a Ludwig Mies van der Rohe como arquitecto de la Casa Farnsworth. | A: La ficha oficial de la Glass House, que identifica a Philip Johnson como su arquitecto. / La documentación de la Eames House, que atribuye su diseño a Charles y Ray Eames. / La ficha histórica de Fallingwater, que identifica a Frank Lloyd Wright como su arquitecto.
+8. P05 D15 Difícil | F: En el sistema constitucional argentino, la Convención Americana sobre Derechos Humanos es uno de los tratados de derechos humanos mencionados expresamente en el artículo 75, inciso 22, de la Constitución Nacional. | Q: ¿Qué jerarquía normativa tiene la Convención Americana sobre Derechos Humanos en el ordenamiento argentino, conforme al artículo 75, inciso 22, de la Constitución Nacional? | R: Tiene jerarquía constitucional en las condiciones de su vigencia; no deroga ningún artículo de la Primera Parte de la Constitución y debe entenderse complementaria de los derechos y garantías reconocidos por ella. | A: Tiene jerarquía superior a las leyes, pero inferior a la Constitución Nacional, como regla aplicable a todos los tratados internacionales no incorporados expresamente al bloque constitucional. / Tiene jerarquía constitucional plena e incondicionada y puede modificar o derogar las disposiciones de la Primera Parte de la Constitución Nacional que resulten incompatibles. / Tiene jerarquía constitucional únicamente cuando una ley del Congreso le reconoce expresamente ese rango con posterioridad a su aprobación internacional.
+9. P15 D25 Difícil | F: En el cuento «Pierre Menard, autor del Quijote», de Jorge Luis Borges, el autor ficticio que intenta producir algunos capítulos del Quijote sin copiarlos es Pierre Menard. | Q: ¿Quién es el autor ficticio que intenta producir algunos capítulos del Quijote sin copiarlos en el cuento de Borges? | R: Pierre Menard | A: Miguel de Cervantes / Jorge Luis Borges / Carlos Argentino Daneri
+10. P09 D30 Extrema | F: En la ceremonia japonesa del té, el anfitrión utiliza un chasen, un batidor de bambú, para incorporar y espumar el polvo de matcha en agua caliente. | Q: En la preparación tradicional del matcha en la ceremonia japonesa del té, ¿qué utensilio utiliza el anfitrión para incorporar y espumar el polvo en el agua caliente? | R: Chasen | A: Chashaku / Natsume / Kama
+
+========== ESTADÍSTICAS FINALES ==========
+Tests: 20 | OK: 18 | Fallidos: 2 | Ítems solicitados: 200.
+Duración total: 396.62 s | media/test: 19.83 s | mediana: 17.43 s | p95: 30.63 s | máxima: 42.84 s.
+Consumo agregado: entrada 69010 | salida 140735 | total 209745 | caché 0 | razonamiento 117825 (83.7% de salida) | salida visible estimada 22910 | uso recuperado en 20/20 packs, 200 llamadas.
+Coste estimado: USD 0.182684 (20/20 tests calculables).
+Duplicados exactos: grupos Q=1 | grupos R=2 | pares (F,R) repetidos dentro del mismo P×D=0.
+La última cifra debe ser 0: H prohíbe reutilizar un mismo par factual (F,R) dentro del mismo cruce P×D; una misma R puede reaparecer si corresponde a otro F.
+
+Frecuencias P (20 valores):
+  P01: 13
+  P02: 9
+  P03: 10
+  P04: 7
+  P05: 10
+  P06: 5
+  P07: 10
+  P08: 12
+  P09: 10
+  P10: 9
+  P11: 7
+  P12: 10
+  P13: 8
+  P14: 7
+  P15: 7
+  P16: 10
+  P17: 10
+  P18: 7
+  P19: 12
+  P20: 7
+
+Frecuencias D (34 valores):
+  D01: 6
+  D02: 7
+  D03: 4
+  D04: 7
+  D05: 5
+  D06: 5
+  D07: 7
+  D08: 3
+  D09: 3
+  D10: 7
+  D11: 8
+  D12: 3
+  D13: 5
+  D14: 8
+  D15: 6
+  D16: 6
+  D17: 7
+  D18: 5
+  D19: 2
+  D20: 5
+  D21: 6
+  D22: 7
+  D23: 2
+  D24: 3
+  D25: 4
+  D26: 5
+  D27: 4
+  D28: 5
+  D29: 5
+  D30: 4
+  D31: 6
+  D32: 6
+  D33: 9
+  D34: 5
+
+Frecuencias dificultad (4 valores):
+  Difícil: 36
+  Extrema: 18
+  Fácil: 72
+  Moderada: 54
+
+ERRORES:
+  2 × Quiz10LunaPackException: Quiz10LunaPackException: 1 fila(s) fallida(s).
+
+No evaluado automáticamente: exactitud factual, equivalencia semántica de F/H y plausibilidad factual de distractores.
