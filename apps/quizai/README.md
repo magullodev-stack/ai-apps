@@ -126,10 +126,11 @@ La posición fija la dificultad de cada unidad:
 parametrizado. Dart materializa una copia independiente para cada posición
 con sus valores de `i`, `P`, `D`, `Dificultad` y `H`.
 
-`H` es el histórico de respuestas de cada P durante la vida del generador.
-Antes de cada pack, cada llamada recibe las R ya utilizadas para su P. Luna
-debe producir una R fuera de H. Cuando las diez unidades del pack son
-válidas, Dart incorpora sus nuevas R al histórico correspondiente.
+`H` es el histórico de respuestas de cada cruce P×D durante la vida del
+generador. Antes de cada pack, cada llamada recibe las R ya utilizadas para
+ese mismo P×D. Luna debe producir una R fuera de H. Cuando las diez unidades
+del pack son válidas, Dart incorpora sus nuevas R al histórico del cruce
+correspondiente.
 
 Cada unidad produce:
 
@@ -151,7 +152,7 @@ Desde la raíz del repositorio:
 `-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez
 llamadas Luna simultáneas; el siguiente pack empieza cuando termina el
 anterior. El auditor registra latencia, tokens, coste, P, D, dificultad,
-Q, R, los tres distractores y duplicados exactos de R por P.
+Q, R, los tres distractores y duplicados exactos de R por cruce P×D.
 
 Terra todavía no está conectada a esta etapa. `-VerifyOnly` verifica la
 generación Q-R-A de Luna, no la validación factual posterior.
