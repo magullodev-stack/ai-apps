@@ -3,6 +3,7 @@ param(
     [string]$CatalogModel = 'gpt-5.6-luna',
     [Alias('TerraModel')]
     [string]$FactualModel = 'gpt-5.6-terra',
+    [string]$Quiz10ReviewModel = 'gpt-5.6-luna',
     [switch]$VerifyOnly,
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
@@ -255,7 +256,7 @@ if ($ProbarQuiz10) {
     $env:AI_APPS_AI_URL = $session.endpoint
     $env:AI_APPS_GAME_TOKEN = $session.token
     $env:AI_APPS_LUNA_MODEL = $CatalogModel
-    $env:AI_APPS_TERRA_MODEL = $FactualModel
+    $env:AI_APPS_QUIZ10_REVIEW_MODEL = $Quiz10ReviewModel
     Push-Location (Join-Path $repo 'apps\quizai')
     try {
         & $dart run tool/verify_quiz10_pipeline.dart --quiz10 --muestras "$Muestras" --semilla "$LunaSemilla"
@@ -401,7 +402,7 @@ try {
                 AI_APPS_GAME_TOKEN = $session.token
                 AI_APPS_CATALOG_MODEL = $CatalogModel
                 AI_APPS_FACTUAL_MODEL = $FactualModel
-                AI_APPS_TERRA_MODEL = $FactualModel
+                AI_APPS_QUIZ10_REVIEW_MODEL = $Quiz10ReviewModel
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $definesFile
             & $flutter run -d $Device "--dart-define-from-file=$definesFile"
             if ($LASTEXITCODE -ne 0) { throw 'Flutter terminó con un error.' }
