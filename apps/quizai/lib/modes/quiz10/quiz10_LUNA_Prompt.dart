@@ -32,11 +32,13 @@ f instancia ρ
 
 Γ(f) = verdadero
 
+F := f
+
 R := π(f)
 
 type(R) ∈ τ
 
-R ∉ H
+(F, R) ∉ H
 
 Formula Q a partir de:
 
@@ -61,17 +63,17 @@ difficulty(Q, R, A | P, D) = Dificultad
 
 ## Salida
 
-| P | D | Q | R | A |
-|---|---|---|---|---|''';
+| P | D | F | Q | R | A |
+|---|---|---|---|---|---|''';
 
-String _historyLiteral(List<String> history) {
+String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
-  return '{${history.map(jsonEncode).join(', ')}}';
+  return '{${history.map((entry) => '(F := ${jsonEncode(entry.fact)}, R := ${jsonEncode(entry.answer)})').join(', ')}}';
 }
 
 String quiz10LunaInput(
   Quiz10Pair slot,
-  List<String> history,
+  List<Quiz10HistoryEntry> history,
 ) {
   return quiz10LunaPrompt
       .replaceAll('{{P}}', slot.pivot.name)
@@ -87,10 +89,11 @@ String quiz10LunaInput(
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['P', 'D', 'Q', 'R', 'A'],
+  'required': ['P', 'D', 'F', 'Q', 'R', 'A'],
   'properties': {
     'P': {'type': 'string'},
     'D': {'type': 'string'},
+    'F': {'type': 'string'},
     'Q': {'type': 'string'},
     'R': {'type': 'string'},
     'A': {
@@ -106,12 +109,14 @@ String _normalized(String text) =>
 class Quiz10LunaRow {
   const Quiz10LunaRow({
     required this.slot,
+    required this.fact,
     required this.question,
     required this.correct,
     required this.distractors,
   });
 
   final Quiz10Pair slot;
+  final String fact;
   final String question;
   final String correct;
   final List<String> distractors;
@@ -120,59 +125,87 @@ class Quiz10LunaRow {
 Quiz10LunaRow parseQuiz10LunaRowOutput(
   String text,
   Quiz10Pair slot, {
-  List<String> history = const [],
+  List<Quiz10HistoryEntry> history = const [],
 }) {
-  const invalid = FormatException(
-    'La respuesta de Luna no cumple el formato de una unidad de Quiz10.',
-  );
+  FormatException invalid(String cause) => FormatException(cause);
 
-  final decoded = jsonDecode(text);
-
-  if (decoded is! Map<String, dynamic> ||
-      decoded['P'] is! String ||
-      decoded['D'] is! String ||
-      decoded['Q'] is! String ||
-      decoded['R'] is! String ||
-      decoded['A'] is! List) {
-    throw invalid;
+  dynamic decoded;
+  try {
+    decoded = jsonDecode(text);
+  } catch (error) {
+    throw invalid('JSON inválido: $error');
   }
+
+  if (decoded is! Map<String, dynamic>) {
+    throw invalid('La salida no es un objeto JSON.');
+  }
+  if (decoded['P'] is! String) throw invalid('P ausente o no textual.');
+  if (decoded['D'] is! String) throw invalid('D ausente o no textual.');
+  if (decoded['F'] is! String) throw invalid('F ausente o no textual.');
+  if (decoded['Q'] is! String) throw invalid('Q ausente o no textual.');
+  if (decoded['R'] is! String) throw invalid('R ausente o no textual.');
+  if (decoded['A'] is! List) throw invalid('A ausente o no es una lista.');
 
   final pivot = (decoded['P'] as String).trim();
   final dimension = (decoded['D'] as String).trim();
+  final fact = (decoded['F'] as String).trim();
   final question = (decoded['Q'] as String).trim();
   final correct = (decoded['R'] as String).trim();
   final rawDistractors = decoded['A'] as List;
 
+  if (_normalized(pivot) != _normalized(slot.pivot.name)) {
+    throw invalid('P devuelta "$pivot" no coincide con ${slot.pivot.name}.');
+  }
+
   final normalizedDimension = _normalized(dimension);
   final normalizedDimensionCode = _normalized(slot.dimension.code);
+  if (normalizedDimension != normalizedDimensionCode &&
+      !normalizedDimension.startsWith('$normalizedDimensionCode[')) {
+    throw invalid(
+      'D devuelta "$dimension" no coincide con ${slot.dimension.code}.',
+    );
+  }
 
-  if (_normalized(pivot) != _normalized(slot.pivot.name) ||
-      (normalizedDimension != normalizedDimensionCode &&
-          !normalizedDimension.startsWith('$normalizedDimensionCode[')) ||
-      question.isEmpty ||
-      correct.isEmpty ||
-      rawDistractors.length != 3 ||
-      rawDistractors.any((value) => value is! String)) {
-    throw invalid;
+  if (fact.isEmpty) throw invalid('F está vacío.');
+  if (question.isEmpty) throw invalid('Q está vacía.');
+  if (correct.isEmpty) throw invalid('R está vacía.');
+  if (rawDistractors.length != 3) {
+    throw invalid(
+      'A contiene ${rawDistractors.length} distractores; se esperaban 3.',
+    );
+  }
+  if (rawDistractors.any((value) => value is! String)) {
+    throw invalid('A contiene un distractor no textual.');
   }
 
   final distractors = [
     for (final value in rawDistractors) (value as String).trim(),
   ];
 
-  if (distractors.any((value) => value.isEmpty) ||
-      distractors.map(_normalized).toSet().length != 3 ||
-      distractors.any(
-        (value) => _normalized(value) == _normalized(correct),
-      ) ||
-      history.any(
-        (value) => _normalized(value) == _normalized(correct),
-      )) {
-    throw invalid;
+  if (distractors.any((value) => value.isEmpty)) {
+    throw invalid('A contiene un distractor vacío.');
+  }
+  if (distractors.map(_normalized).toSet().length != 3) {
+    throw invalid('A contiene distractores duplicados.');
+  }
+  if (distractors.any(
+    (value) => _normalized(value) == _normalized(correct),
+  )) {
+    throw invalid('A contiene la propia R.');
+  }
+
+  final repeatedPair = history.any(
+    (entry) =>
+        _normalized(entry.fact) == _normalized(fact) &&
+        _normalized(entry.answer) == _normalized(correct),
+  );
+  if (repeatedPair) {
+    throw invalid('H ya contiene el par factual (F,R).');
   }
 
   return Quiz10LunaRow(
     slot: slot,
+    fact: fact,
     question: question,
     correct: correct,
     distractors: List.unmodifiable(distractors),
@@ -215,6 +248,34 @@ abstract interface class Quiz10LunaGenerator {
   );
 }
 
+class Quiz10LunaFailure {
+  const Quiz10LunaFailure({
+    required this.slot,
+    required this.stage,
+    required this.cause,
+  });
+
+  final Quiz10Pair slot;
+  final String stage;
+  final Object cause;
+}
+
+class Quiz10LunaPackException implements Exception {
+  const Quiz10LunaPackException({
+    required this.failures,
+    required this.usage,
+    required this.completedCalls,
+  });
+
+  final List<Quiz10LunaFailure> failures;
+  final Map<String, dynamic>? usage;
+  final int completedCalls;
+
+  @override
+  String toString() =>
+      'Quiz10LunaPackException: ${failures.length} fila(s) fallida(s).';
+}
+
 final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   AiQuiz10LunaGenerator({
     required this.client,
@@ -224,8 +285,9 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   final AiAppsClient client;
   final String model;
 
-  // Histórico de respuestas por cruce P×D durante la vida de esta instancia.
-  final Map<Quiz10HistoryKey, List<String>> _historyByPivotDimension = {};
+  // Histórico factual (F,R) por cruce P×D durante la vida de esta instancia.
+  final Map<Quiz10HistoryKey, List<Quiz10HistoryEntry>>
+      _historyByPivotDimension = {};
 
   @override
   Future<List<Quiz10LunaRow>> generate(List<Quiz10Pair> plan) async {
@@ -244,31 +306,71 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
     final histories = [
       for (final slot in plan)
-        List<String>.unmodifiable(
+        List<Quiz10HistoryEntry>.unmodifiable(
           _historyByPivotDimension[quiz10HistoryKey(slot)] ??
-              const <String>[],
+              const <Quiz10HistoryEntry>[],
         ),
     ];
 
-    final calls = await Future.wait([
+    final attempts = await Future.wait([
       for (var i = 0; i < plan.length; i++)
-        _generateRowResponse(plan[i], histories[i]),
+        _attemptRowResponse(plan[i], histories[i]),
     ]);
 
-    final rows = <Quiz10LunaRow>[
-      for (var i = 0; i < plan.length; i++)
-        parseQuiz10LunaRowOutput(
-          calls[i].text,
-          plan[i],
-          history: histories[i],
-        ),
-    ];
+    final calls = <AiGeneration>[];
+    final rows = <Quiz10LunaRow>[];
+    final failures = <Quiz10LunaFailure>[];
+
+    for (var i = 0; i < plan.length; i++) {
+      final attempt = attempts[i];
+      if (attempt.response == null) {
+        failures.add(
+          Quiz10LunaFailure(
+            slot: plan[i],
+            stage: 'llamada',
+            cause: attempt.error ??
+                StateError('La llamada no devolvió respuesta.'),
+          ),
+        );
+        continue;
+      }
+
+      calls.add(attempt.response!);
+      try {
+        rows.add(
+          parseQuiz10LunaRowOutput(
+            attempt.response!.text,
+            plan[i],
+            history: histories[i],
+          ),
+        );
+      } catch (error) {
+        failures.add(
+          Quiz10LunaFailure(
+            slot: plan[i],
+            stage: 'validación',
+            cause: error,
+          ),
+        );
+      }
+    }
+
+    if (failures.isNotEmpty) {
+      throw Quiz10LunaPackException(
+        failures: List.unmodifiable(failures),
+        usage: _aggregateUsage(calls),
+        completedCalls: calls.length,
+      );
+    }
 
     // H solo avanza cuando el pack completo de diez unidades es válido.
     for (final row in rows) {
       _historyByPivotDimension
-          .putIfAbsent(quiz10HistoryKey(row.slot), () => <String>[])
-          .add(row.correct);
+          .putIfAbsent(
+            quiz10HistoryKey(row.slot),
+            () => <Quiz10HistoryEntry>[],
+          )
+          .add((fact: row.fact, answer: row.correct));
     }
 
     return AiGeneration(
@@ -278,6 +380,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
             {
               'P': row.slot.pivot.name,
               'D': row.slot.dimension.code,
+              'F': row.fact,
               'Q': row.question,
               'R': row.correct,
               'A': row.distractors,
@@ -288,9 +391,21 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     );
   }
 
+  Future<({AiGeneration? response, Object? error})> _attemptRowResponse(
+    Quiz10Pair slot,
+    List<Quiz10HistoryEntry> history,
+  ) async {
+    try {
+      final response = await _generateRowResponse(slot, history);
+      return (response: response, error: null);
+    } catch (error) {
+      return (response: null, error: error);
+    }
+  }
+
   Future<AiGeneration> _generateRowResponse(
     Quiz10Pair slot,
-    List<String> history,
+    List<Quiz10HistoryEntry> history,
   ) {
     return client.generate(
       application: 'quiz10',
