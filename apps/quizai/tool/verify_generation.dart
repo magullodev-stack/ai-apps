@@ -234,7 +234,7 @@ int _percentile(List<int> values, double fraction) {
   return sorted[index];
 }
 
-/// Auditoría real: Dart selecciona P×P-D; cada fila usa una llamada Luna lateral, sin Terra.
+/// Auditoría real: Dart selecciona P×P-D; todas las filas de todos los tests solicitados se lanzan lateralmente, sin Terra.
 Future<void> main(List<String> args) async {
   var samples = 1;
   var seed = 20260929;
@@ -313,11 +313,11 @@ Future<void> main(List<String> args) async {
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
       report.writeln('Cruce por fila: P×P con D.');
-      report.writeln('Ejecución: 10 peticiones Luna independientes lanzadas con Future.wait por cada test.');
+      report.writeln('Ejecución: cada test contiene 10 peticiones Luna independientes; todos los tests solicitados se lanzan simultáneamente.');
       report.writeln('Huella del prompt: $promptId (FNV-1a 32 bits, identificador).');
       report.writeln('Huella del catálogo: $catalogId (FNV-1a 32 bits, identificador).');
       report.writeln('Prompt literal:\n$quiz10LunaPrompt');
-      report.writeln('Semilla: $seed | Tests solicitados: $samples | Llamadas Luna: ${samples * 10} (10 simultáneas por test).');
+      report.writeln('Semilla: $seed | Tests solicitados: $samples | Llamadas Luna simultáneas: ${samples * 10}.');
       report.writeln('P: ${quiz10Pivots.length}; D: ${quiz10Dimensions.length}.');
       report.writeln(
         'Tarifas USD/1M tokens: entrada ${inputRate ?? "n/d"}, '
@@ -372,22 +372,58 @@ Future<void> main(List<String> args) async {
       var totalReasoning = 0;
       var costSum = 0.0;
 
+      final plans = [
+        for (var i = 0; i < samples; i++)
+          selectQuiz10Pairs(Random(seed + i)),
+      ];
+
+      final concurrentWatch = Stopwatch()..start();
+      final pendingTests = [
+        for (var i = 0; i < samples; i++)
+          () async {
+            final watch = Stopwatch()..start();
+            final requestWatch = Stopwatch()..start();
+            AiGeneration? raw;
+            Object? failure;
+            try {
+              raw = await luna.generateResponse(plans[i]);
+            } catch (error) {
+              failure = error;
+            } finally {
+              requestWatch.stop();
+              watch.stop();
+            }
+            return (
+              raw: raw,
+              failure: failure,
+              watch: watch,
+              requestWatch: requestWatch,
+            );
+          }(),
+      ];
+      final parallelResults = await Future.wait(pendingTests);
+      concurrentWatch.stop();
+
+      stdout.writeln(
+        'Lote simultáneo: ${samples * 10} llamadas Luna en '
+        '${(concurrentWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s',
+      );
+
       for (var i = 0; i < samples; i++) {
         final call = i + 1;
-        final watch = Stopwatch()..start();
-        final requestWatch = Stopwatch();
+        final plan = plans[i];
+        final parallel = parallelResults[i];
+        final watch = parallel.watch;
+        final requestWatch = parallel.requestWatch;
         final parseWatch = Stopwatch();
-        AiGeneration? raw;
+        AiGeneration? raw = parallel.raw;
         List<Quiz10LunaRow>? rows;
-        Object? failure;
+        Object? failure = parallel.failure;
 
         try {
-          final plan = selectQuiz10Pairs(Random(seed + i));
-          requestWatch.start();
-          raw = await luna.generateResponse(plan);
-          requestWatch.stop();
+          if (failure != null) throw failure!;
           parseWatch.start();
-          rows = parseQuiz10LunaOutput(raw.text, plan);
+          rows = parseQuiz10LunaOutput(raw!.text, plan);
           parseWatch.stop();
           succeeded++;
           final callObservations = <_Question>[];
@@ -571,12 +607,16 @@ Future<void> main(List<String> args) async {
 
       report.writeln('\n========== ESTADÍSTICAS FINALES ==========');
       report.writeln('Modelo: ${luna.model} | Semilla: $seed');
+      report.writeln(
+        'Lote simultáneo: ${samples * 10} llamadas Luna | '
+        '${(concurrentWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s.',
+      );
       report.writeln('Tests: $samples | OK: $succeeded | Fallidos: $failed | Llamadas Luna solicitadas: ${samples * 10}.');
       report.writeln(
         'Q-R válidas: ${observations.length} / ${samples * 10} solicitadas.',
       );
       report.writeln(
-        'Duración total: ${(clock.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
+        'Duración total de auditoría: ${(clock.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
         '| media por test lateral: ${(durations.reduce((a, b) => a + b) / durations.length / 1000).toStringAsFixed(2)} s '
         '| mediana: ${(_percentile(durations, 0.5) / 1000).toStringAsFixed(2)} s '
         '| p95: ${(_percentile(durations, 0.95) / 1000).toStringAsFixed(2)} s '

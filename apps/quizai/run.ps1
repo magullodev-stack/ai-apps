@@ -28,7 +28,7 @@ param(
     [switch]$SaveKeyFromClipboard
 )
 $ErrorActionPreference = 'Stop'
-# Auditoría Luna: un test por defecto; cada test lanza diez llamadas laterales simultáneas.
+# Auditoría Luna: un test por defecto; todos los tests solicitados se lanzan juntos, diez llamadas laterales por test.
 if ($ProbarLuna -and -not $PSBoundParameters.ContainsKey('Muestras')) {
     $Muestras = 1
 }
