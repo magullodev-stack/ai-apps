@@ -76,14 +76,19 @@ List<Quiz10ReviewedItem> applyQuiz10Review(
         switch (change.field) {
           case 'Q':
             question = change.value;
+            break;
           case 'R':
             correct = change.value;
+            break;
           case 'a1':
             distractors[0] = change.value;
+            break;
           case 'a2':
             distractors[1] = change.value;
+            break;
           case 'a3':
             distractors[2] = change.value;
+            break;
         }
       }
     }
