@@ -5,7 +5,7 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 
 // Una unidad de generación = una posición del test.
-// Dart fija P, D e H; Luna devuelve F, Q, R y tres distractores.
+// Dart fija P, D e H; Luna devuelve F, Q, cuatro opciones O y la posición C.
 // Las diez unidades del Quiz10 se ejecutan simultáneamente.
 
 const String quiz10LunaPrompt = r'''## Entrada
@@ -23,25 +23,21 @@ Elige un hecho factual F de P que permita cumplir D.
 
 Formula Q siguiendo la Instrucción D.
 
-R := respuesta factual, concreta, verificable y correcta para Q.
+O := cuatro respuestas distintas para Q, una correcta y tres incorrectas, todas plausibles y del mismo tipo.
+
+C := posición de la respuesta correcta en O.
+
+R := O[C]
 
 Q no contiene R.
 
 (F, R) ∉ H
 
-Genera tres distractores:
-
-A := {a₁, a₂, a₃}
-
-R ∉ A
-
-Cada aᵢ debe ser del mismo tipo que R, plausible para Q y falso.
-
 
 ## Salida
 
-| P | D | F | Q | R | A |
-|---|---|---|---|---|---|''';
+| P | D | F | Q | O | C |
+|---|---|---|---|---|---|'''
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
@@ -62,16 +58,26 @@ String quiz10LunaInput(
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['P', 'D', 'F', 'Q', 'R', 'A'],
+  'required': ['P', 'D', 'F', 'Q', 'O', 'C'],
   'properties': {
     'P': {'type': 'string'},
     'D': {'type': 'string'},
     'F': {'type': 'string'},
     'Q': {'type': 'string'},
-    'R': {'type': 'string'},
-    'A': {
-      'type': 'array',
-      'items': {'type': 'string'},
+    'O': {
+      'type': 'object',
+      'additionalProperties': false,
+      'required': ['o1', 'o2', 'o3', 'o4'],
+      'properties': {
+        'o1': {'type': 'string'},
+        'o2': {'type': 'string'},
+        'o3': {'type': 'string'},
+        'o4': {'type': 'string'},
+      },
+    },
+    'C': {
+      'type': 'integer',
+      'enum': [1, 2, 3, 4],
     },
   },
 };
@@ -83,8 +89,8 @@ class Quiz10LunaRow {
     required this.returnedDimension,
     required this.fact,
     required this.question,
-    required this.correct,
-    required this.distractors,
+    required this.options,
+    required this.correctPosition,
     required this.rawText,
   });
 
@@ -93,9 +99,23 @@ class Quiz10LunaRow {
   final String returnedDimension;
   final String fact;
   final String question;
-  final String correct;
-  final List<String> distractors;
+  final List<String> options;
+  final int correctPosition;
   final String rawText;
+
+  String get correct {
+    final index = correctPosition - 1;
+    if (index < 0 || index >= options.length) return '';
+    return options[index];
+  }
+
+  List<String> get distractors {
+    final index = correctPosition - 1;
+    return List.unmodifiable([
+      for (var i = 0; i < options.length; i++)
+        if (i != index) options[i],
+    ]);
+  }
 }
 
 Quiz10LunaRow parseQuiz10LunaRowOutput(
@@ -116,16 +136,17 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
       decoded['D'] is! String ||
       decoded['F'] is! String ||
       decoded['Q'] is! String ||
-      decoded['R'] is! String ||
-      decoded['A'] is! List) {
+      decoded['O'] is! Map<String, dynamic> ||
+      decoded['C'] is! int) {
     throw const FormatException(
-      'La salida no conserva la estructura P,D,F,Q,R,A esperada.',
+      'La salida no conserva la estructura P,D,F,Q,O,C esperada.',
     );
   }
 
-  final rawDistractors = decoded['A'] as List;
-  if (rawDistractors.any((value) => value is! String)) {
-    throw const FormatException('A contiene un valor no textual.');
+  final rawOptions = decoded['O'] as Map<String, dynamic>;
+  const keys = ['o1', 'o2', 'o3', 'o4'];
+  if (keys.any((key) => rawOptions[key] is! String)) {
+    throw const FormatException('O no contiene cuatro opciones textuales.');
   }
 
   return Quiz10LunaRow(
@@ -134,10 +155,10 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
     returnedDimension: decoded['D'] as String,
     fact: decoded['F'] as String,
     question: decoded['Q'] as String,
-    correct: decoded['R'] as String,
-    distractors: List.unmodifiable([
-      for (final value in rawDistractors) value as String,
+    options: List.unmodifiable([
+      for (final key in keys) rawOptions[key] as String,
     ]),
+    correctPosition: decoded['C'] as int,
     rawText: text,
   );
 }
@@ -290,7 +311,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     }
 
     // Luna no se somete a validación semántica en Dart. Toda fila recibida
-    // con la estructura P,D,F,Q,R,A avanza H tal como fue generada.
+    // con la estructura P,D,F,Q,O,C avanza H usando R := O[C].
     for (final row in rows) {
       _historyByPivotDimension
           .putIfAbsent(
