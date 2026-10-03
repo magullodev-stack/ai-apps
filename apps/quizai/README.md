@@ -108,56 +108,55 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación P × D → F, Q, O, C (Luna)
+## Generación Quiz10: Luna → revisión global → Dart
 
-El catálogo canónico de Quiz10 se encuentra en
-`lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: contiene los 20 pivotes P01–P20
-y las 34 dimensiones D01–D34. Cada dimensión es una instrucción directa en
-lenguaje natural. En cada Quiz10, Dart selecciona diez P distintas y diez D
-distintas y forma diez unidades P-D.
+El catálogo canónico se encuentra en
+`lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34
+dimensiones D01–D34 expresadas como instrucciones directas.
 
-`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene un único prompt oficial
-parametrizado. Dart materializa una copia independiente por posición con
-`P`, `D`, la instrucción de D y `H`. Luna no recibe ninguna dificultad ni
-una descomposición formal de D.
-
-`H` es el histórico factual de cada cruce P×D durante la vida del generador.
-Cada entrada guarda el par `(F,R)`: el hecho factual utilizado y la respuesta.
-Antes de cada pack, cada llamada recibe los pares ya utilizados para ese mismo
-P×D. El prompt pide a Luna no reutilizar el mismo `(F,R)`, pero Dart no
-rechaza la fila si Luna incumple esa regla. Cada fila recibida con la estructura
-P,D,F,Q,O,C actualiza H de forma independiente.
-
-Cada unidad produce:
+Cada Quiz10 selecciona diez P distintas y diez D distintas. Luna recibe diez
+unidades independientes y simultáneas:
 
 ```text
 (P, D, H) -> (F, Q, O, C)
 ```
 
-`F` es el hecho factual interno usado para construir la pregunta. `O` contiene
-cuatro opciones y `C` señala la posición de la correcta; internamente
-`R := O_C`. Dart no valida semánticamente la fila: conserva lo que devuelve
-Luna para H y auditoría. `F` no forma parte de la experiencia visible del jugador. Las diez unidades se
-envían a Luna simultáneamente mediante `Future.wait`. Los packs se ejecutan
-secuencialmente para que H pueda acumularse entre ellos.
+`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene el único prompt de Luna.
+`O` contiene cuatro opciones y `C` señala la correcta; internamente
+`R := O_C`. Luna no recibe dificultad.
 
-Esta etapa no impone ni ordena dificultad. La progresión de dificultad se
-resolverá fuera de Luna a partir de las preguntas ya generadas.
+Cuando terminan las diez llamadas, Dart transforma cada fila en
+`Q, R, a1, a2, a3` y construye un único test `T`.
+`lib/modes/quiz10/quiz10_TERRA_Review.dart` envía ese test al revisor global,
+que devuelve únicamente el orden relativo de dificultad y los campos que
+considere necesario corregir.
 
-Desde la raíz del repositorio:
+Dart aplica esos parches, reordena las diez preguntas y, al final, baraja las
+cuatro opciones de cada pregunta. La posición de la respuesta correcta que
+produjo Luna no llega al jugador.
+
+`H` sigue siendo el histórico factual por cruce P×D. El pipeline completo no
+lo actualiza hasta que la revisión global termina; guarda el par `(F,R)` con
+la respuesta final tras los parches.
+
+La pantalla Quiz10 está conectada al pipeline real. Dentro de una misma sesión,
+`Otra partida` reutiliza la instancia del pipeline y por tanto su H.
+
+Para auditar solo Luna:
 
 ```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -Muestras 5
+.\apps\quizai\run.ps1 -ProbarLuna -Muestras 20
 ```
 
-`-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez llamadas
-Luna simultáneas; el siguiente empieza cuando termina el anterior. El auditor
-registra latencia, tokens, coste, razonamiento y todas las filas recibidas.
-No descarta una fila por contenido: marca incidencias observables como opciones
-duplicadas en O, R := O_C revelada literalmente en Q o reutilización exacta de
-`(F,R)`, y conserva también el JSON de la fila para inspección. Los
-fallos de llamada o de estructura se registran aparte con `Tn/Fm`, P, D,
-etapa, causa y salida bruta cuando existe.
+Para auditar el flujo completo Luna → revisor → Dart:
 
-Terra todavía no está conectada a esta etapa. `-VerifyOnly` verifica la
-generación F-Q-O-C de Luna, no la validación factual posterior.
+```powershell
+.\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
+```
+
+La auditoría completa conserva por test la salida de Luna, la entrada enviada
+al revisor, su salida bruta, el orden, las correcciones, el test resultante y
+las opciones tras el shuffle de Dart, además de latencia, tokens y coste por
+etapa.
+
+`-VerifyOnly` conserva la comprobación aislada de Luna.
