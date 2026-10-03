@@ -62,7 +62,9 @@ int _percentile(List<int> values, double fraction) {
   if (values.isEmpty) return 0;
   final sorted = [...values]..sort();
   final requested = (sorted.length * fraction).ceil() - 1;
-  final index = requested.clamp(0, sorted.length - 1);
+  final index = requested < 0
+      ? 0
+      : (requested >= sorted.length ? sorted.length - 1 : requested);
   return sorted[index];
 }
 
