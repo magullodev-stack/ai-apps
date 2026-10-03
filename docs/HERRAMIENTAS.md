@@ -5,6 +5,7 @@
 | Herramienta | Finalidad | Ubicación | Instrucciones |
 | --- | --- | --- | --- |
 | QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; verificar una partida con `-VerifyOnly` y probar 1–200 generaciones P–D→Q–R de Luna sin U con `-ProbarLuna -Muestras N`; detener el servicio con `-StopService`. | [`apps/quizai/run.ps1`](../apps/quizai/run.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
+| Sincronizar `dev` | Sincronizar bidireccionalmente cualquier proyecto de AI-APPS con `origin/dev` desde cualquier subcarpeta del repositorio. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Sección «Sincronización universal de `dev`» de este documento. |
 
 
 ---
@@ -22,7 +23,7 @@ desde cualquier aplicación o subcarpeta de AI-APPS.
 Se puede ejecutar **desde cualquier carpeta dentro del repositorio**:
 
 ```powershell
-& (Join-Path ((git rev-parse --show-toplevel).Trim()) 'scripts\sync-dev.ps1')
+$root = (git rev-parse --show-toplevel).Trim(); powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'scripts\sync-dev.ps1')
 ```
 
 Ese bloque sí es un comando ejecutable. No hay que pegar el texto explicativo
