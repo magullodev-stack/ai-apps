@@ -123,8 +123,10 @@ La posición fija la dificultad de cada unidad:
 - 10: Extrema
 
 `lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene un único prompt oficial
-parametrizado. Dart materializa una copia independiente para cada posición
-con sus valores de `i`, `P`, `D`, `Dificultad` y `H`.
+parametrizado. Cada dimensión D se define formalmente como `(ρ, π, τ, Γ)`:
+relación factual, proyección de respuesta, tipo esperado y restricciones.
+Dart materializa una copia independiente para cada posición con `P`, `D`,
+`Dificultad`, `H` y los cuatro componentes formales de la dimensión.
 
 `H` es el histórico de respuestas de cada cruce P×D durante la vida del
 generador. Antes de cada pack, cada llamada recibe las R ya utilizadas para
