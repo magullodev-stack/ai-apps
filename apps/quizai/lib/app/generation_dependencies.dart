@@ -25,8 +25,8 @@ final class QuizAiGenerationDependencies {
       defaultValue: 'gpt-5.6-luna',
     ),
     reviewerModel: const String.fromEnvironment(
-      'AI_APPS_TERRA_MODEL',
-      defaultValue: 'gpt-5.6-terra',
+      'AI_APPS_QUIZ10_REVIEW_MODEL',
+      defaultValue: 'gpt-5.6-luna',
     ),
   );
 
