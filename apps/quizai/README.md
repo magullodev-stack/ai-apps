@@ -108,7 +108,7 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación Quiz10: Luna → revisión global → Dart
+## Generación Quiz10: Luna → Luna revisor → Dart
 
 El catálogo canónico se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34
@@ -127,9 +127,9 @@ unidades independientes y simultáneas:
 
 Cuando terminan las diez llamadas, Dart transforma cada fila en
 `Q, R, a1, a2, a3` y construye un único test `T`.
-`lib/modes/quiz10/quiz10_TERRA_Review.dart` envía ese test al revisor global,
-que devuelve únicamente el orden relativo de dificultad y los campos que
-considere necesario corregir.
+`lib/modes/quiz10/quiz10_REVIEW_Prompt.dart` envía ese test al revisor global,
+que por defecto también usa `gpt-5.6-luna` y devuelve únicamente el orden
+relativo de dificultad y los campos que considere necesario corregir.
 
 Dart aplica esos parches, reordena las diez preguntas y, al final, baraja las
 cuatro opciones de cada pregunta. La posición de la respuesta correcta que
