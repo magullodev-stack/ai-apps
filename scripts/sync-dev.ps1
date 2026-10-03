@@ -1,81 +1,127 @@
-# Sincronización segura de la copia local al abrir AI-APPS en VS Code.
-# No modifica cambios pendientes, no crea commits ni fuerza la rama dev.
+# Sincronización bidireccional manual de dev.
+# 1) guarda los cambios locales en un commit,
+# 2) integra origin/dev mediante rebase,
+# 3) publica dev,
+# 4) verifica que local y remoto queden idénticos.
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 
 function Invoke-Git {
-    param([string[]]$Arguments)
-    # Windows PowerShell 5.1 puede convertir stderr de git fetch en
-    # NativeCommandError incluso cuando Git finaliza correctamente.
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+        [switch]$AllowFailure
+    )
+
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
         $output = & git -C $repo @Arguments 2>&1
-        $gitExitCode = $LASTEXITCODE
+        $code = $LASTEXITCODE
     }
     finally {
         $ErrorActionPreference = $previousPreference
     }
-    if ($gitExitCode -ne 0) {
+
+    if (-not $AllowFailure -and $code -ne 0) {
         throw "Git no pudo completar: git $($Arguments -join ' '). $($output | Out-String)"
     }
-    return $output
+
+    return [pscustomobject]@{
+        Code = $code
+        Output = $output
+    }
 }
 
 try {
-    $branch = (Invoke-Git -Arguments @('symbolic-ref', '--quiet', '--short', 'HEAD') | Out-String).Trim()
+    $branch = ((Invoke-Git -Arguments @(
+        'symbolic-ref', '--quiet', '--short', 'HEAD'
+    )).Output | Out-String).Trim()
+
     if ($branch -ne 'dev') {
-        Write-Warning "AI-APPS: rama actual '$branch'. Solo se sincroniza dev; no se modificó nada."
-        exit 2
+        throw "La rama actual es '$branch'. AI-APPS solo sincroniza dev."
     }
 
-    # Fetch primero: permite diagnosticar el estado real del remoto sin tocar archivos.
-    Write-Host 'AI-APPS: consultando origin/dev...'
-    Invoke-Git -Arguments @('fetch', '--no-tags', 'origin', 'dev') | Out-Null
+    Write-Host 'AI-APPS: preparando cambios locales...'
+    Invoke-Git -Arguments @('add', '-A') | Out-Null
 
-    $local = (Invoke-Git -Arguments @('rev-parse', 'HEAD') | Out-String).Trim()
-    $remote = (Invoke-Git -Arguments @('rev-parse', 'refs/remotes/origin/dev') | Out-String).Trim()
+    $experiments = Join-Path $repo '.ai-apps\experimentos-luna-pd'
+    if (Test-Path -LiteralPath $experiments) {
+        Invoke-Git -Arguments @(
+            'add', '-f', '-A', '--', '.ai-apps/experimentos-luna-pd'
+        ) | Out-Null
+    }
 
-    if ($local -eq $remote) {
-        $status = (Invoke-Git -Arguments @('status', '--porcelain', '--untracked-files=normal') | Out-String).Trim()
-        if ($status.Length -gt 0) {
-            Write-Warning 'AI-APPS: commits sincronizados, pero hay archivos locales modificados o sin seguimiento. No se han tocado.'
-            exit 2
+    $staged = ((Invoke-Git -Arguments @(
+        'diff', '--cached', '--name-only'
+    )).Output | Out-String).Trim()
+
+    if ($staged.Length -gt 0) {
+        Write-Host 'AI-APPS: guardando cambios locales...'
+        Invoke-Git -Arguments @(
+            'commit', '-m', 'Sincronizar AI-APPS'
+        ) | Out-Null
+    }
+    else {
+        Write-Host 'AI-APPS: no hay cambios locales nuevos que guardar.'
+    }
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        Write-Host "AI-APPS: integrando origin/dev (intento $attempt/3)..."
+        Invoke-Git -Arguments @(
+            'fetch', '--no-tags', 'origin', 'dev'
+        ) | Out-Null
+
+        $rebase = Invoke-Git -Arguments @(
+            'rebase', 'refs/remotes/origin/dev'
+        ) -AllowFailure
+
+        if ($rebase.Code -ne 0) {
+            Invoke-Git -Arguments @('rebase', '--abort') -AllowFailure | Out-Null
+            throw 'Conflicto al integrar origin/dev. El rebase se ha abortado y no se ha publicado nada.'
         }
-        Write-Host "AI-APPS: local y origin/dev idénticos ($($local.Substring(0, 7)))."
-        exit 0
+
+        $push = Invoke-Git -Arguments @(
+            'push', 'origin', 'dev'
+        ) -AllowFailure
+
+        if ($push.Code -eq 0) {
+            Invoke-Git -Arguments @(
+                'fetch', '--no-tags', 'origin', 'dev'
+            ) | Out-Null
+
+            $local = ((Invoke-Git -Arguments @(
+                'rev-parse', 'HEAD'
+            )).Output | Out-String).Trim()
+
+            $remote = ((Invoke-Git -Arguments @(
+                'rev-parse', 'refs/remotes/origin/dev'
+            )).Output | Out-String).Trim()
+
+            if ($local -eq $remote) {
+                Write-Host "SINCRONIZACION COMPLETADA — dev = origin/dev ($($local.Substring(0, 7)))" -ForegroundColor Green
+                exit 0
+            }
+
+            if ($attempt -lt 3) {
+                continue
+            }
+
+            throw 'El remoto cambió durante la sincronización y no pudo estabilizarse tras tres intentos.'
+        }
+
+        $pushText = ($push.Output | Out-String)
+        if ($attempt -lt 3 -and
+            ($pushText -match 'rejected|fetch first|non-fast-forward')) {
+            continue
+        }
+
+        throw "Error al publicar en GitHub. $pushText"
     }
 
-    # Nunca actualizar automáticamente con archivos modificados o sin seguimiento.
-    $status = (Invoke-Git -Arguments @('status', '--porcelain', '--untracked-files=normal') | Out-String).Trim()
-    if ($status.Length -gt 0) {
-        Write-Warning 'AI-APPS: cambios locales pendientes. No se actualiza automáticamente; revisa git status.'
-        exit 2
-    }
-
-    # El remoto debe contener toda la historia local. En divergencia, no rebase/reset.
-    & git -C $repo merge-base --is-ancestor HEAD refs/remotes/origin/dev
-    $ancestorCode = $LASTEXITCODE
-    if ($ancestorCode -eq 1) {
-        Write-Warning "AI-APPS: dev local ($($local.Substring(0, 7))) y origin/dev ($($remote.Substring(0, 7))) han divergido, o hay commits locales por publicar. Sincronización detenida, sin sobrescribir nada."
-        Write-Host 'Consulta: git log --oneline --left-right --graph dev...origin/dev'
-        exit 2
-    }
-    if ($ancestorCode -ne 0) {
-        throw 'No se pudo comprobar la relación entre dev y origin/dev.'
-    }
-
-    Write-Host "AI-APPS: incorporando origin/dev ($($remote.Substring(0, 7))) mediante fast-forward..."
-    Invoke-Git -Arguments @('merge', '--ff-only', 'refs/remotes/origin/dev') | Out-Null
-
-    $result = (Invoke-Git -Arguments @('rev-parse', 'HEAD') | Out-String).Trim()
-    if ($result -ne $remote) {
-        throw 'El HEAD local no coincide con origin/dev tras el fast-forward.'
-    }
-    Write-Host "AI-APPS: sincronización correcta. dev = origin/dev ($($result.Substring(0, 7)))."
-    exit 0
+    throw 'No se pudo completar la sincronización.'
 }
 catch {
-    Write-Warning "AI-APPS: no se pudo sincronizar: $($_.Exception.Message)"
+    Write-Error "AI-APPS: $($_.Exception.Message)"
     exit 1
 }
