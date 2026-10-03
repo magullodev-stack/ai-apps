@@ -128,19 +128,22 @@ relación factual, proyección de respuesta, tipo esperado y restricciones.
 Dart materializa una copia independiente para cada posición con `P`, `D`,
 `Dificultad`, `H` y los cuatro componentes formales de la dimensión.
 
-`H` es el histórico de respuestas de cada cruce P×D durante la vida del
-generador. Antes de cada pack, cada llamada recibe las R ya utilizadas para
-ese mismo P×D. Luna debe producir una R fuera de H. Cuando las diez unidades
-del pack son válidas, Dart incorpora sus nuevas R al histórico del cruce
-correspondiente.
+`H` es el histórico factual de cada cruce P×D durante la vida del generador.
+Cada entrada guarda el par `(F,R)`: el hecho factual utilizado y la respuesta
+proyectada. Antes de cada pack, cada llamada recibe los pares ya utilizados
+para ese mismo P×D. Luna no puede reutilizar el mismo `(F,R)`, pero una misma
+R puede reaparecer si corresponde a otro hecho F. Cuando las diez unidades
+del pack son válidas, Dart incorpora sus nuevos pares al histórico del cruce.
 
 Cada unidad produce:
 
 ```text
-(P, D, Dificultad, H) -> (Q, R, A)
+(P, D, Dificultad, H) -> (F, Q, R, A)
 ```
 
-donde `A` contiene exactamente tres distractores. Los diez prompts del
+donde `F` es el hecho factual interno usado para construir la pregunta y `A`
+contiene exactamente tres distractores. `F` se conserva para H y auditoría;
+no forma parte de la experiencia visible del jugador. Los diez prompts del
 Quiz10 se envían a Luna simultáneamente mediante `Future.wait`. Los packs
 de Quiz10 se ejecutan secuencialmente, de modo que H puede acumularse entre
 packs.
@@ -153,8 +156,9 @@ Desde la raíz del repositorio:
 
 `-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez
 llamadas Luna simultáneas; el siguiente pack empieza cuando termina el
-anterior. El auditor registra latencia, tokens, coste, P, D, dificultad,
-Q, R, los tres distractores y duplicados exactos de R por cruce P×D.
+anterior. El auditor registra latencia, tokens, coste, razonamiento, P, D, dificultad,
+F, Q, R, los tres distractores y duplicados exactos de `(F,R)` por cruce P×D.
+Si una fila falla, registra `Tn/Fm`, P, D, dificultad, etapa y causa concreta.
 
 Terra todavía no está conectada a esta etapa. `-VerifyOnly` verifica la
-generación Q-R-A de Luna, no la validación factual posterior.
+generación F-Q-R-A de Luna, no la validación factual posterior.
