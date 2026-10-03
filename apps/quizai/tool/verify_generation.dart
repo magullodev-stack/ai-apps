@@ -149,7 +149,11 @@ Future<void> main(List<String> args) async {
     final catalogId = _id([
       for (final pivot in quiz10Pivots) '${pivot.code}:${pivot.name}',
       for (final dimension in quiz10Dimensions)
-        '${dimension.code}:${dimension.instruction}',
+        '${dimension.code}:'
+        '${dimension.relation}|'
+        '${dimension.projection}|'
+        '${dimension.expectedType}|'
+        '${dimension.constraints}',
       'dificultad:4 Fácil|3 Moderada|2 Difícil|1 Extrema',
     ].join('\n'));
 
