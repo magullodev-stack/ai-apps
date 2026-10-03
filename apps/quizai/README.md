@@ -108,7 +108,7 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación P × D → F, Q, R, A (Luna)
+## Generación P × D → F, Q, O, C (Luna)
 
 El catálogo canónico de Quiz10 se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: contiene los 20 pivotes P01–P20
@@ -131,13 +131,13 @@ P,D,F,Q,R,A actualiza H de forma independiente.
 Cada unidad produce:
 
 ```text
-(P, D, H) -> (F, Q, R, A)
+(P, D, H) -> (F, Q, O, C)
 ```
 
-`F` es el hecho factual interno usado para construir la pregunta y el prompt
-pide tres distractores en `A`. Dart no valida semánticamente la fila: conserva
-lo que devuelve Luna para H y auditoría. `F` no forma parte de la experiencia
-visible del jugador. Las diez unidades se
+`F` es el hecho factual interno usado para construir la pregunta. `O` contiene
+cuatro opciones y `C` señala la posición de la correcta; internamente
+`R := O_C`. Dart no valida semánticamente la fila: conserva lo que devuelve
+Luna para H y auditoría. `F` no forma parte de la experiencia visible del jugador. Las diez unidades se
 envían a Luna simultáneamente mediante `Future.wait`. Los packs se ejecutan
 secuencialmente para que H pueda acumularse entre ellos.
 
@@ -153,11 +153,11 @@ Desde la raíz del repositorio:
 `-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez llamadas
 Luna simultáneas; el siguiente empieza cuando termina el anterior. El auditor
 registra latencia, tokens, coste, razonamiento y todas las filas recibidas.
-No descarta una fila por contenido: marca incidencias observables como R dentro
-de A, distractores repetidos, R revelada literalmente en Q o reutilización
-exacta de `(F,R)`, y conserva también el JSON de la fila para inspección. Los
+No descarta una fila por contenido: marca incidencias observables como opciones
+duplicadas en O, R := O_C revelada literalmente en Q o reutilización exacta de
+`(F,R)`, y conserva también el JSON de la fila para inspección. Los
 fallos de llamada o de estructura se registran aparte con `Tn/Fm`, P, D,
 etapa, causa y salida bruta cuando existe.
 
 Terra todavía no está conectada a esta etapa. `-VerifyOnly` verifica la
-generación F-Q-R-A de Luna, no la validación factual posterior.
+generación F-Q-O-C de Luna, no la validación factual posterior.
