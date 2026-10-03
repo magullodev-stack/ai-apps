@@ -76,9 +76,6 @@ Map<String, Object?> quiz10LunaSchema() => {
   },
 };
 
-String _normalized(String text) =>
-    text.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
-
 class Quiz10LunaRow {
   const Quiz10LunaRow({
     required this.slot,
