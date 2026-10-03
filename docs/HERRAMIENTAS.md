@@ -23,11 +23,13 @@ desde cualquier aplicación o subcarpeta de AI-APPS.
 Se puede ejecutar **desde cualquier carpeta dentro del repositorio**:
 
 ```powershell
-$root = (git rev-parse --show-toplevel).Trim(); powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'scripts\sync-dev.ps1')
+$root = (git rev-parse --show-toplevel).Trim(); $sync = Join-Path $root 'scripts\sync-dev.ps1'; powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$sync"
 ```
 
 Ese bloque sí es un comando ejecutable. No hay que pegar el texto explicativo
-de esta documentación en la terminal.
+de esta documentación en la terminal. `scripts/sync-dev.ps1` se mantiene en
+ASCII para que Windows PowerShell 5.1 no dependa de la codificación UTF-8 del
+archivo al analizar comillas y signos.
 
 Desde la raíz del repositorio también sirve la forma corta:
 
