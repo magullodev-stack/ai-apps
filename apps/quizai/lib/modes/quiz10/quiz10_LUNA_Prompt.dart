@@ -313,19 +313,19 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
       }
     }
 
-    if (commitHistory) {
-      commitReviewedAnswers(
-        rows,
-        rows.map((row) => row.correct).toList(growable: false),
-      );
-    }
-
     if (failures.isNotEmpty) {
       throw Quiz10LunaPackException(
         failures: List.unmodifiable(failures),
         rows: List.unmodifiable(rows),
         usage: _aggregateUsage(calls),
         completedCalls: calls.length,
+      );
+    }
+
+    if (commitHistory) {
+      commitReviewedAnswers(
+        rows,
+        rows.map((row) => row.correct).toList(growable: false),
       );
     }
 
