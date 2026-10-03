@@ -340,6 +340,32 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     );
   }
 
+  void reconcileReviewedAnswers(
+    List<Quiz10LunaRow> rows,
+    List<String> reviewedAnswers,
+  ) {
+    if (rows.length != reviewedAnswers.length) {
+      throw ArgumentError('Filas y respuestas revisadas no coinciden.');
+    }
+
+    for (var i = 0; i < rows.length; i++) {
+      final row = rows[i];
+      final reviewedAnswer = reviewedAnswers[i];
+      if (reviewedAnswer == row.correct) continue;
+
+      final history = _historyByPivotDimension[quiz10HistoryKey(row.slot)];
+      if (history == null) continue;
+
+      for (var j = history.length - 1; j >= 0; j--) {
+        final entry = history[j];
+        if (entry.fact == row.fact && entry.answer == row.correct) {
+          history[j] = (fact: entry.fact, answer: reviewedAnswer);
+          break;
+        }
+      }
+    }
+  }
+
   Future<({AiGeneration? response, Object? error})> _attemptRowResponse(
     Quiz10Pair slot,
     List<Quiz10HistoryEntry> history,
