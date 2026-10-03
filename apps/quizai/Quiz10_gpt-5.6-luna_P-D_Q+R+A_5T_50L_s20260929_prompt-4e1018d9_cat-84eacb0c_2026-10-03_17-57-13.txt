@@ -1,0 +1,172 @@
+AUDITORÍA QUIZ10 — LUNA — P-D → Q,R,A
+Fecha: 2026-10-03 17:57:13.114567
+Modelo: gpt-5.6-luna
+Ejecución: cada test = 10 llamadas Luna simultáneas; los tests se ejecutan secuencialmente.
+Dificultad por posición: 1-4 Fácil; 5-7 Moderada; 8-9 Difícil; 10 Extrema.
+H: histórico por P; cada pack recibe las R previas de ese P y H se actualiza solo al validar el pack completo.
+Huella del prompt: 4e1018d9
+Huella del catálogo: 84eacb0c
+Prompt oficial con variables:
+## Entrada
+
+i := {{i}}
+P := {{P}}
+D := {{D}}
+Dificultad := {{Dificultad}}
+
+H := {{H}}
+
+D = ρ[π]
+
+## Generación
+
+Genera una pregunta de cultura general tipo «¿Quién quiere ser millonario?».
+
+Elige un hecho factual f compatible con P y ρ.
+
+R := π(f)
+
+R no puede pertenecer a H.
+
+Formula Q sin utilizar palabras de R.
+
+Genera tres distractores A := {a₁,a₂,a₃}.
+
+Cada distractor debe:
+- ser del mismo tipo que R;
+- ser falso para Q;
+- corresponder a un hecho real del mismo contexto que pueda confundirse con R.
+
+El ítem completo (Q,R,A) debe tener dificultad {{Dificultad}}.
+
+## Salida
+
+P, Q, R, A
+Semilla: 20260929 | Tests: 5 | Llamadas Luna: 50.
+Tarifas USD/1M: entrada 0.2, salida 1.2, caché entrada normal.
+
+TEST 1/5 — 10 llamadas simultáneas — 15.57 s
+1. P07 D15 Fácil | Q: ¿Qué regla lógica afirma que, entre una proposición y su negación, una de las dos debe ser verdadera? | R: Principio del tercero excluido | A: Principio de identidad / Principio de no contradicción / Principio de razón suficiente
+2. P04 D02 Fácil | Q: ¿Qué sustancia produce principalmente el color verde de las hojas? | R: Clorofila | A: Carotenoides / Antocianinas / Melanina
+3. P16 D01 Fácil | Q: ¿Cómo se llama el polígono que tiene exactamente tres lados? | R: triángulo | A: cuadrado / pentágono / hexágono
+4. P08 D04 Fácil | Q: ¿Qué científico compartió el Premio Nobel de Física de 1909 con Guglielmo Marconi? | R: Karl Ferdinand Braun | A: Wilhelm Conrad Röntgen / Max Planck / Albert Einstein
+5. P15 D06 Moderada | Q: ¿Cuánto tiempo transcurrió entre la publicación de la primera y la segunda parte del Quijote de Cervantes? | R: 10 años | A: 8 años / 9 años / 11 años
+6. P14 D09 Moderada | Q: ¿Cuál es la lengua de la que procede, en su mayor parte, el léxico patrimonial del castellano? | R: Latín | A: Árabe / Griego / Germánico
+7. P05 D11 Moderada | Q: En una demanda por perjuicios, ¿qué vínculo debe acreditarse para atribuir jurídicamente el resultado a la actuación de una persona? | R: El nexo causal | A: La antijuridicidad de la conducta / La culpa del agente / La existencia del daño
+8. P09 D10 Difícil | Q: Al calentar juntos azúcares reductores y aminoácidos, ¿cómo se denomina el fenómeno que genera aromas complejos y coloración marrón en los alimentos? | R: Reacción de Maillard | A: Caramelización / Dextrinización / Fermentación láctica
+9. P12 D29 Difícil | Q: ¿Qué acuerdo firmado en 1494 por Castilla y Portugal situó más al oeste la línea pontificia que dividía sus respectivas áreas ultramarinas? | R: Tratado de Tordesillas | A: Tratado de Alcáçovas / Tratado de Zaragoza / Tratado de Madrid de 1750
+10. P03 D26 Extrema | Q: ¿Cuál de los cuatro satélites galileanos de Júpiter presenta la mayor densidad media? | R: Ío | A: Europa / Ganímedes / Calisto
+
+TEST 2/5 — 10 llamadas simultáneas — 14.12 s
+1. P17 D30 Fácil | Q: ¿Qué instrumento se utiliza habitualmente para administrar una inyección? | R: Jeringa | A: Bisturí / Estetoscopio / Termómetro
+2. P13 D07 Fácil | Q: ¿En qué año se lanzó Windows 95? | R: 1995 | A: 1990 / 1998 / 2001
+3. P01 D08 Fácil | Q: ¿Qué edificio australiano, inaugurado en 1973, es famoso por su cubierta formada por grandes conchas blancas? | R: Ópera de Sídney | A: Museo Guggenheim de Bilbao / Centro Pompidou / Ópera de Oslo
+4. P05 D13 Fácil | Q: ¿Qué texto ocupa la posición más alta en la jerarquía normativa de España? | R: La Constitución Española | A: El Código Civil / El Código Penal / El Estatuto de los Trabajadores
+5. P04 D10 Moderada | Q: En las células musculares humanas sometidas a un esfuerzo intenso y con aporte insuficiente de oxígeno, ¿qué proceso permite mantener temporalmente la producción de energía? | R: Fermentación láctica | A: Fermentación alcohólica / Respiración anaerobia / Ciclo de Krebs
+6. P16 D28 Moderada | Q: ¿Qué polígono regular tiene cada ángulo interior de 120°? | R: Hexágono | A: Pentágono / Octágono / Decágono
+7. P19 D04 Moderada | Q: ¿Qué químico compartió con Robert Curl y Richard Smalley el Premio Nobel de Química de 1996 por el descubrimiento de los fullerenos? | R: Harold Kroto | A: James R. Heath / Sean C. O’Brien / Wolfgang Krätschmer
+8. P09 D14 Difícil | Q: En una salsa bechamel, ¿qué transformación fisicoquímica provoca principalmente el espesamiento al calentar la harina en leche? | R: La gelatinización del almidón | A: La dextrinización del almidón / La retrogradación del almidón / La coagulación de las proteínas lácteas
+9. P03 D34 Difícil | Q: ¿Qué satélite natural de Saturno posee un cráter de impacto de unos 130 kilómetros de diámetro, tan desproporcionado respecto a su tamaño que le confiere una apariencia similar a la de la «Estrella de la Muerte»? | R: Mimas | A: Tetis / Jápeto / Rea
+10. P07 D15 Extrema | Q: ¿Qué formulación metafísica, asociada sobre todo a Leibniz, sostiene que ningún hecho carece de una explicación adecuada? | R: Principio de razón suficiente | A: Principio de identidad / Principio de no contradicción / Principio de causalidad
+
+TEST 3/5 — 10 llamadas simultáneas — 12.94 s
+1. P12 D29 Fácil | Q: ¿Cómo se llamó el acuerdo que impuso duras condiciones a Alemania tras la Primera Guerra Mundial? | R: Tratado de Versalles | A: Tratado de Saint-Germain / Tratado de Trianon / Tratado de Neuilly
+2. P01 D26 Fácil | Q: ¿Qué edificio, diseñado por Frank Lloyd Wright, es célebre por su planta circular en espiral? | R: Museo Solomon R. Guggenheim | A: Casa de la Cascada / Casa Robie / Casa Ennis
+3. P02 D07 Fácil | Q: ¿En qué año se estrenó mundialmente la película «Avatar», dirigida por James Cameron? | R: 2009 | A: 1997 / 1986 / 2022
+4. P10 D25 Fácil | Q: ¿Qué cumbre es la más alta del continente africano? | R: Kilimanjaro | A: Monte Kenia / Monte Elgon / Monte Meru
+5. P08 D32 Moderada | Q: ¿Qué físico produjo y detectó experimentalmente, en el laboratorio, las ondas electromagnéticas cuya existencia había sido predicha teóricamente? | R: Heinrich Hertz | A: James Clerk Maxwell / Guglielmo Marconi / Nikola Tesla
+6. P13 D15 Moderada | Q: ¿A qué persona se atribuye habitualmente el diseño de la máquina analítica, uno de los primeros conceptos de computador programable? | R: Charles Babbage | A: Ada Lovelace / Alan Turing / Herman Hollerith
+7. P07 D33 Moderada | Q: En la ética de Kant, ¿qué procedimiento debe aplicarse a una regla de conducta para decidir si es moralmente válida? | R: Someterla a la prueba de universalización. | A: Evaluar las consecuencias globales de seguirla. / Determinar si expresa una virtud del carácter. / Comprobar si coincide con la ley natural.
+8. P05 D13 Difícil | Q: ¿Qué órgano consultivo superior asesora al Ejecutivo español y emite dictámenes preceptivos en las materias previstas por ley? | R: Consejo de Estado | A: Consejo General del Poder Judicial / Tribunal de Cuentas / Consejo Económico y Social
+9. P17 D06 Difícil | Q: ¿En qué fecha se realizó el primer trasplante cardíaco exitoso de humano a humano? | R: 3 de diciembre de 1967 | A: 24 de enero de 1964 / 6 de diciembre de 1967 / 6 de enero de 1968
+10. P18 D02 Extrema | Q: En neuroanatomía, ¿qué estructura se distingue por ser la mayor comisura telencefálica y estar compuesta principalmente por fibras mielinizadas? | R: Cuerpo calloso | A: Comisura anterior / Fórnix / Cápsula interna
+
+TEST 4/5 — 10 llamadas simultáneas — 29.32 s
+1. P19 D33 Fácil | Q: ¿Quién fue la primera persona en recibir dos premios Nobel y obtuvo el de Química por sus investigaciones sobre la radiactividad? | R: Marie Curie | A: Linus Pauling / Frederick Soddy / Henri Becquerel
+2. P02 D22 Fácil | Q: ¿Quién pintó La Gioconda, también conocida como Mona Lisa? | R: Leonardo da Vinci | A: Miguel Ángel / Rafael / Sandro Botticelli
+3. P01 D06 Fácil | Q: ¿Qué edificio fue inaugurado después del Empire State Building? | R: Burj Khalifa | A: Torre Eiffel / Chrysler Building / Edificio Flatiron
+4. P12 D23 Fácil | Q: ¿Cómo se llamó el acuerdo que puso fin a la guerra hispano-estadounidense de 1898? | R: Tratado de París | A: Tratado de Guadalupe Hidalgo / Tratado de San Francisco / Tratado de Portsmouth
+5. P18 D12 Moderada | Q: En psicología social, ¿cómo se denomina el conjunto de conductas esperadas de una persona por ocupar una determinada posición dentro de un grupo? | R: Rol social | A: Estatus social / Norma social / Identidad social
+6. P07 D10 Moderada | Q: En la cosmología del filósofo griego, ¿cuál sería el destino espacial de los objetos de mayor peso cuando nada interfiere en su movimiento? | R: El centro de la Tierra. | A: La superficie de la Luna. / La esfera de las estrellas fijas. / El borde exterior del cosmos.
+7. P06 D21 Moderada | Q: ¿Qué economista publicó en 1936 la obra «La teoría general del empleo, el interés y el dinero»? | R: John Maynard Keynes | A: Adam Smith / David Ricardo / Milton Friedman
+8. P10 D28 Difícil | Q: ¿Quién ejerció el mando supremo aliado durante la Operación Overlord, cuyo desembarco principal tuvo lugar en las playas de Normandía? | R: Dwight D. Eisenhower | A: Bernard Montgomery / Omar Bradley / Bertram Ramsay
+9. P17 D07 Difícil | Q: ¿En qué fecha recibió Margaret Keenan la primera dosis de una vacuna contra la COVID-19 administrada en un programa de inmunización pública? | R: 8 de diciembre de 2020 | A: 2 de diciembre de 2020 / 9 de noviembre de 2020 / 11 de diciembre de 2020
+10. P11 D31 Extrema | Q: ¿Qué actuación humana desencadenó el deslizamiento de aproximadamente 260 millones de m³ que, en 1963, produjo una ola de sobrepaso en un valle alpino italiano? | R: El primer llenado del embalse de Vajont | A: El primer llenado del embalse de Koyna / El primer llenado del embalse de Malpasset / El primer llenado del embalse de St. Francis
+
+TEST 5/5 — 10 llamadas simultáneas — 20.57 s
+1. P06 D13 Fácil | Q: ¿Qué economista es autor de la obra *La riqueza de las naciones*? | R: Adam Smith | A: David Ricardo / Karl Marx / Milton Friedman
+2. P09 D34 Fácil | Q: ¿Cómo se denomina el proceso mediante el cual ciertas bacterias convierten la lactosa de la leche en ácido láctico para elaborar yogur? | R: Fermentación láctica | A: Pasteurización / Coagulación / Homogeneización
+3. P18 D22 Fácil | Q: ¿Qué nombre recibe el tipo de aprendizaje estudiado por Iván Pavlov mediante perros y campanas? | R: Condicionamiento clásico | A: Condicionamiento operante / Aprendizaje observacional / Aprendizaje latente
+4. P16 D10 Fácil | Q: ¿Cuál es el resultado de multiplicar 6 por 7? | R: 42 | A: 36 / 48 / 56
+5. P03 D30 Moderada | Q: ¿Qué instrumento óptico permitió a Galileo observar por primera vez las cuatro lunas mayores de Júpiter? | R: Telescopio | A: Astrolabio / Sextante / Espectroscopio
+6. P01 D01 Moderada | Q: ¿Qué edificio de Barcelona se caracteriza por una fachada ondulante revestida de mosaicos y un tejado que evoca el lomo de un dragón, y es una de las obras más reconocibles del modernismo catalán? | R: Casa Batlló | A: Casa Milà / Casa Vicens / Palau Güell
+7. P10 D18 Moderada | Q: ¿A quién se atribuye la autoría de *Geographia*, tratado que reunió coordenadas y descripciones del mundo conocido en la Antigüedad? | R: Claudio Ptolomeo | A: Estrabón / Eratóstenes / Pomponio Mela
+8. P20 D11 Difícil | Q: En el análisis de Émile Durkheim sobre el suicidio, ¿cómo se denomina la condición social en la que el debilitamiento o la ausencia de normas reguladoras, especialmente durante cambios bruscos, favorece ese fenómeno? | R: Anomia | A: Egoísmo / Altruismo / Fatalismo
+9. P02 D31 Difícil | Q: ¿Qué pareja artística realizó en 1995 la intervención consistente en envolver por completo el Reichstag de Berlín con una tela plateada? | R: Christo y Jeanne-Claude | A: Claes Oldenburg y Coosje van Bruggen / Marina Abramović y Ulay / Gilbert & George
+10. P14 D26 Extrema | Q: En el análisis de la conversación, ¿qué término inglés introdujo Victor Yngve para designar las señales breves del oyente —como «mm-hm»— que indican seguimiento sin reclamar el turno principal? | R: backchannel | A: turn-taking / repair / adjacency pair
+
+========== ESTADÍSTICAS FINALES ==========
+Tests: 5 | OK: 5 | Fallidos: 0 | Ítems solicitados: 50.
+Duración total: 92.53 s | media/test: 18.50 s | mediana: 15.57 s | p95: 29.32 s | máxima: 29.32 s.
+Consumo agregado: entrada 13063 | salida 34554 | total 47617 | caché 0 | razonamiento 30827 (5/5 tests con uso).
+Coste estimado: USD 0.044077 (5/5 tests calculables).
+Duplicados exactos: grupos Q=0 | grupos R=1 | R repetida dentro del mismo P=0.
+La última cifra debe ser 0: H prohíbe reutilizar una R previa para el mismo P.
+
+Frecuencias P (20 valores):
+  P01: 4
+  P02: 3
+  P03: 3
+  P04: 2
+  P05: 3
+  P06: 2
+  P07: 4
+  P08: 2
+  P09: 3
+  P10: 3
+  P11: 1
+  P12: 3
+  P13: 2
+  P14: 2
+  P15: 1
+  P16: 3
+  P17: 3
+  P18: 3
+  P19: 2
+  P20: 1
+
+Frecuencias D (26 valores):
+  D01: 2
+  D02: 2
+  D04: 2
+  D06: 3
+  D07: 3
+  D08: 1
+  D09: 1
+  D10: 4
+  D11: 2
+  D12: 1
+  D13: 3
+  D14: 1
+  D15: 3
+  D18: 1
+  D21: 1
+  D22: 2
+  D23: 1
+  D25: 1
+  D26: 3
+  D28: 2
+  D29: 2
+  D30: 2
+  D31: 2
+  D32: 1
+  D33: 2
+  D34: 2
+
+Frecuencias dificultad (4 valores):
+  Difícil: 10
+  Extrema: 5
+  Fácil: 20
+  Moderada: 15
+
+No evaluado automáticamente: exactitud factual, equivalencia semántica de H y plausibilidad factual de distractores.
