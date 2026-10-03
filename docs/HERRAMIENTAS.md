@@ -10,33 +10,61 @@
 ---
 
 
-## Sincronización de `dev`
+## Sincronización universal de `dev`
 
-La tarea manual `AI-APPS: sincronizar dev` en
-[`.vscode/tasks.json`](../.vscode/tasks.json) ejecuta
-[`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1).
+La herramienta oficial es
+[`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1). No pertenece a QuizAI ni
+a ningún proyecto concreto: trabaja sobre la raíz Git del repositorio y sirve
+desde cualquier aplicación o subcarpeta de AI-APPS.
 
-Es la única operación de sincronización bidireccional entre la copia local
-de VS Code y `origin/dev`:
+### Comando para pegar en PowerShell
 
-1. comprueba que la rama activa sea `dev`;
-2. prepara todos los cambios locales no ignorados;
-3. incluye explícitamente `.ai-apps/experimentos-luna-pd` cuando existe;
-4. crea un commit local solo si hay cambios;
-5. consulta `origin/dev`;
-6. integra los cambios remotos mediante `rebase`;
-7. publica `dev`;
-8. vuelve a consultar el remoto y verifica que `HEAD` y `origin/dev`
-   sean idénticos.
+Se puede ejecutar **desde cualquier carpeta dentro del repositorio**:
+
+```powershell
+& (Join-Path ((git rev-parse --show-toplevel).Trim()) 'scripts\sync-dev.ps1')
+```
+
+Ese bloque sí es un comando ejecutable. No hay que pegar el texto explicativo
+de esta documentación en la terminal.
+
+Desde la raíz del repositorio también sirve la forma corta:
+
+```powershell
+.\scripts\sync-dev.ps1
+```
+
+Y en VS Code puede ejecutarse sin escribir nada mediante:
+
+`Terminal > Run Task > AI-APPS: sincronizar dev`
+
+La tarea de [`.vscode/tasks.json`](../.vscode/tasks.json) llama exactamente
+al mismo script.
+
+### Qué sincroniza
+
+En cada ejecución:
+
+1. comprueba que Git esté disponible y que la rama activa sea `dev`;
+2. localiza automáticamente la raíz del repositorio;
+3. prepara todos los cambios locales no ignorados de cualquier proyecto;
+4. incluye también todas las carpetas `.ai-apps/experimentos-*` que existan,
+   sin depender del nombre de una aplicación o experimento concreto;
+5. crea un commit solo cuando existen cambios;
+6. consulta `origin/dev`;
+7. integra el remoto mediante `rebase`;
+8. publica `dev`;
+9. vuelve a consultar el remoto y exige que `HEAD` y `origin/dev` sean
+   idénticos;
+10. si aparecen archivos nuevos mientras está sincronizando, los recoge y
+    repite el ciclo.
 
 Si el rebase encuentra un conflicto, se aborta automáticamente y no se publica
-nada. Si el remoto cambia durante la publicación, el procedimiento reintenta
-hasta tres veces. Los archivos ignorados siguen sin publicarse salvo la carpeta
-de experimentos indicada expresamente.
+nada. Si `origin/dev` cambia durante la publicación o aparecen cambios locales
+durante la operación, el procedimiento reintenta hasta tres veces.
 
-La tarea ya no se ejecuta automáticamente al abrir VS Code: sincronizar implica
-crear commits y publicar cambios, por lo que se ejecuta de forma explícita desde
-`Terminal > Run Task > AI-APPS: sincronizar dev`.
+Los archivos ignorados continúan sin publicarse, salvo las carpetas genéricas
+`.ai-apps/experimentos-*`, que se incluyen explícitamente.
 
 ---
 
