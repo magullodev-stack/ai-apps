@@ -268,9 +268,9 @@ try {
             $env:AI_APPS_GAME_TOKEN = $session.token
             $env:AI_APPS_LUNA_MODEL = $CatalogModel
             & $dart run tool/verify_generation.dart
-            if ($LASTEXITCODE -ne 0) { throw "La generación F-Q-R-A de Luna no superó la validación. Consulta $logFile" }
+            if ($LASTEXITCODE -ne 0) { throw "La generación F-Q-O-C de Luna no superó la validación. Consulta $logFile" }
             @{
-                model = $CatalogModel; validatedLunaRows = 10; scope = 'Luna F-Q-R-A (sin Terra)'
+                model = $CatalogModel; validatedLunaRows = 10; scope = 'Luna F-Q-O-C (sin Terra)'
                 completedAt = [DateTime]::UtcNow.ToString('o')
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $receipt
         } else {
