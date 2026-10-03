@@ -423,7 +423,7 @@ Future<void> main(List<String> args) async {
         try {
           if (failure != null) throw failure!;
           parseWatch.start();
-          rows = parseQuiz10LunaOutput(raw.text, plan);
+          rows = parseQuiz10LunaOutput(raw!.text, plan);
           parseWatch.stop();
           succeeded++;
           final callObservations = <_Question>[];
