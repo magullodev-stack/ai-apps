@@ -149,12 +149,7 @@ Future<void> main(List<String> args) async {
     final catalogId = _id([
       for (final pivot in quiz10Pivots) '${pivot.code}:${pivot.name}',
       for (final dimension in quiz10Dimensions)
-        '${dimension.code}:'
-        '${dimension.relation}|'
-        '${dimension.projection}|'
-        '${dimension.expectedType}|'
-        '${dimension.constraints}',
-      'dificultad:4 Fácil|3 Moderada|2 Difícil|1 Extrema',
+        '${dimension.code}:${dimension.instruction}',
     ].join('\n'));
 
     final path =
@@ -168,10 +163,6 @@ Future<void> main(List<String> args) async {
       report.writeln(
         'Ejecución: cada test = 10 llamadas Luna simultáneas; '
         'los tests se ejecutan secuencialmente.',
-      );
-      report.writeln(
-        'Dificultad por posición: 1-4 Fácil; 5-7 Moderada; '
-        '8-9 Difícil; 10 Extrema.',
       );
       report.writeln(
         'H: histórico factual por cruce P×D; cada pack recibe los pares (F,R) '
@@ -195,7 +186,6 @@ Future<void> main(List<String> args) async {
       final durations = <int>[];
       final pCounts = <String, int>{};
       final dCounts = <String, int>{};
-      final difficultyCounts = <String, int>{};
       final qCounts = <String, int>{};
       final rCounts = <String, int>{};
       final frByPivotDimensionCounts = <String, int>{};
@@ -238,11 +228,6 @@ Future<void> main(List<String> args) async {
             final d = row.slot.dimension.code;
             pCounts.update(p, (n) => n + 1, ifAbsent: () => 1);
             dCounts.update(d, (n) => n + 1, ifAbsent: () => 1);
-            difficultyCounts.update(
-              row.slot.difficulty,
-              (n) => n + 1,
-              ifAbsent: () => 1,
-            );
             qCounts.update(_key(row.question), (n) => n + 1, ifAbsent: () => 1);
             rCounts.update(_key(row.correct), (n) => n + 1, ifAbsent: () => 1);
             frByPivotDimensionCounts.update(
@@ -252,7 +237,7 @@ Future<void> main(List<String> args) async {
             );
 
             report.writeln(
-              '${row.slot.number}. $p $d ${row.slot.difficulty} | '
+              '${row.slot.number}. $p $d | '
               'F: ${row.fact} | Q: ${row.question} | R: ${row.correct} | '
               'A: ${row.distractors.join(" / ")}',
             );
@@ -338,13 +323,12 @@ Future<void> main(List<String> args) async {
                 report.writeln('T$test/F${slot.number}');
                 report.writeln('P = ${slot.pivot.code} (${slot.pivot.name})');
                 report.writeln('D = ${slot.dimension.code}');
-                report.writeln('Dificultad = ${slot.difficulty}');
                 report.writeln('Etapa = ${item.stage}');
                 report.writeln('causa = ${item.cause}');
                 stdout.writeln(
                   'T$test/F${slot.number} | '
-                  '${slot.pivot.code} ${slot.dimension.code} '
-                  '${slot.difficulty} | ${item.stage}: ${item.cause}',
+                  '${slot.pivot.code} ${slot.dimension.code} | '
+                  '${item.stage}: ${item.cause}',
                 );
               }
             }
@@ -405,7 +389,6 @@ Future<void> main(List<String> args) async {
 
       _distribution(report, 'Frecuencias P', pCounts);
       _distribution(report, 'Frecuencias D', dCounts);
-      _distribution(report, 'Frecuencias dificultad', difficultyCounts);
 
       if (failures.isNotEmpty) {
         report.writeln('\nERRORES:');
