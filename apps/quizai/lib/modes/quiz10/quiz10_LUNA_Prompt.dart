@@ -16,7 +16,12 @@ Dificultad := {{Dificultad}}
 
 H := {{H}}
 
-D → (ρ, π, τ, Γ)
+D → (
+ρ := {{rho}}
+π := {{pi}}
+τ := {{tau}}
+Γ := {{gamma}}
+)
 
 
 ## Generación
@@ -70,12 +75,13 @@ String quiz10LunaInput(
 ) {
   return quiz10LunaPrompt
       .replaceAll('{{P}}', slot.pivot.name)
-      .replaceAll(
-        '{{D}}',
-        '${slot.dimension.code}[${slot.dimension.instruction}]',
-      )
+      .replaceAll('{{D}}', slot.dimension.code)
       .replaceAll('{{Dificultad}}', slot.difficulty)
-      .replaceAll('{{H}}', _historyLiteral(history));
+      .replaceAll('{{H}}', _historyLiteral(history))
+      .replaceAll('{{rho}}', slot.dimension.relation)
+      .replaceAll('{{pi}}', slot.dimension.projection)
+      .replaceAll('{{tau}}', slot.dimension.expectedType)
+      .replaceAll('{{gamma}}', slot.dimension.constraints);
 }
 
 Map<String, Object?> quiz10LunaSchema() => {
