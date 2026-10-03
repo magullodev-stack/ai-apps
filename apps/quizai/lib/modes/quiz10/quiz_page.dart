@@ -1,24 +1,18 @@
 import 'package:flutter/material.dart';
 
-typedef Quiz10Question = ({
-  String pivot,
-  String question,
-  String correct,
-  List<String> options,
-});
+import 'quiz10_pipeline.dart';
 
 class QuizPage extends StatefulWidget {
   const QuizPage({super.key, this.loadQuestions});
 
-  // Recibirá las diez preguntas terminadas por Terra.
-  final Future<List<Quiz10Question>> Function()? loadQuestions;
+  final Future<List<Quiz10FinalQuestion>> Function()? loadQuestions;
 
   @override
   State<QuizPage> createState() => _QuizPageState();
 }
 
 class _QuizPageState extends State<QuizPage> {
-  List<Quiz10Question>? _questions;
+  List<Quiz10FinalQuestion>? _questions;
 
   int _index = 0;
   int _score = 0;
@@ -108,7 +102,7 @@ class _QuizPageState extends State<QuizPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (widget.loadQuestions == null)
-                  const Text('Pendiente conectar Luna → Terra.')
+                  const Text('Generación no disponible.')
 
                 else if (_loading)
                   const Center(child: CircularProgressIndicator())
