@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:quizai/modes/quiz10/quiz10_LUNA_Prompt.dart';
-import 'package:quizai/modes/quiz10/quiz10_TERRA_Review.dart';
+import 'package:quizai/modes/quiz10/quiz10_REVIEW_Prompt.dart';
 import 'package:quizai/modes/quiz10/quiz10_pipeline.dart';
 
 String _key(String text) =>
@@ -105,7 +105,7 @@ Future<void> main(List<String> args) async {
   final pipeline = AiQuiz10Pipeline(
     client: client,
     lunaModel: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
-    reviewerModel: env['AI_APPS_TERRA_MODEL'] ?? 'gpt-5.6-terra',
+    reviewerModel: env['AI_APPS_QUIZ10_REVIEW_MODEL'] ?? 'gpt-5.6-luna',
   );
 
   final lunaRates = _rates(pipeline.luna.model);
