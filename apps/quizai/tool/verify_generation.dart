@@ -153,11 +153,11 @@ Future<void> main(List<String> args) async {
     ].join('\n'));
 
     final path =
-        'Quiz10_${modelLabel}_P-D_F+Q+R+A_${samples}T_${samples * 10}L_s${seed}_prompt-${promptId}_cat-${catalogId}_$timestamp.txt';
+        'Quiz10_${modelLabel}_P-D_F+Q+O+C_${samples}T_${samples * 10}L_s${seed}_prompt-${promptId}_cat-${catalogId}_$timestamp.txt';
     final report = File(path).openWrite();
 
     try {
-      report.writeln('AUDITORÍA QUIZ10 — LUNA — P-D → F,Q,R,A');
+      report.writeln('AUDITORÍA QUIZ10 — LUNA — P-D → F,Q,O,C');
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
       report.writeln(
@@ -230,28 +230,31 @@ Future<void> main(List<String> args) async {
           }
           if (row.fact.trim().isEmpty) issues.add('F vacía');
           if (row.question.trim().isEmpty) issues.add('Q vacía');
-          if (row.correct.trim().isEmpty) issues.add('R vacía');
 
-          final correct = row.correct.trim();
-          if (correct.isNotEmpty && row.question.contains(correct)) {
-            issues.add('Q contiene literalmente R');
-          }
-
-          if (row.distractors.length != 3) {
+          if (row.options.length != 4) {
             issues.add(
-              'A contiene ${row.distractors.length} elementos; se esperaban 3',
+              'O contiene ${row.options.length} opciones; se esperaban 4',
             );
           }
-          final normalizedDistractors =
-              row.distractors.map(_key).toList(growable: false);
-          if (normalizedDistractors.toSet().length !=
-              normalizedDistractors.length) {
-            issues.add('A contiene distractores duplicados');
+          final normalizedOptions =
+              row.options.map(_key).toList(growable: false);
+          if (normalizedOptions.toSet().length != normalizedOptions.length) {
+            issues.add('O contiene opciones duplicadas');
           }
-          if (_key(row.correct).isNotEmpty &&
-              normalizedDistractors.contains(_key(row.correct))) {
-            issues.add('A contiene la propia R');
+          if (row.correctPosition < 1 ||
+              row.correctPosition > row.options.length) {
+            issues.add(
+              'C=${row.correctPosition} no señala una posición válida de O',
+            );
           }
+
+          final correct = row.correct.trim();
+          if (correct.isEmpty) {
+            issues.add('R := O[C] no puede derivarse');
+          } else if (row.question.contains(correct)) {
+            issues.add('Q contiene literalmente R := O[C]');
+          }
+
           if ((frByPivotDimensionCounts[pairKey] ?? 0) > 0) {
             issues.add('H ya contenía el par factual (F,R)');
           }
@@ -259,17 +262,23 @@ Future<void> main(List<String> args) async {
           pCounts.update(p, (n) => n + 1, ifAbsent: () => 1);
           dCounts.update(d, (n) => n + 1, ifAbsent: () => 1);
           qCounts.update(_key(row.question), (n) => n + 1, ifAbsent: () => 1);
-          rCounts.update(_key(row.correct), (n) => n + 1, ifAbsent: () => 1);
-          frByPivotDimensionCounts.update(
-            pairKey,
-            (n) => n + 1,
-            ifAbsent: () => 1,
-          );
+          if (correct.isNotEmpty) {
+            rCounts.update(_key(correct), (n) => n + 1, ifAbsent: () => 1);
+            frByPivotDimensionCounts.update(
+              pairKey,
+              (n) => n + 1,
+              ifAbsent: () => 1,
+            );
+          }
 
           report.writeln(
             '${row.slot.number}. $p $d | '
-            'F: ${row.fact} | Q: ${row.question} | R: ${row.correct} | '
-            'A: ${row.distractors.join(" / ")}',
+            'F: ${row.fact} | Q: ${row.question} | '
+            'O: ${[
+              for (var i = 0; i < row.options.length; i++)
+                "${i + 1}=${row.options[i]}",
+            ].join(" / ")} | '
+            'C: ${row.correctPosition} | R:=O[C]: ${row.correct}',
           );
 
           if (issues.isNotEmpty) {
@@ -484,7 +493,7 @@ Future<void> main(List<String> args) async {
 
       report.writeln(
         '\nNo evaluado automáticamente: exactitud factual, '
-        'equivalencia semántica de F/H y plausibilidad factual de distractores.',
+        'equivalencia semántica de F/H y plausibilidad factual de las opciones.',
       );
 
       await report.flush();
