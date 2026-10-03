@@ -148,15 +148,12 @@ Para auditar solo Luna:
 .\apps\quizai\run.ps1 -ProbarLuna -Muestras 20
 ```
 
-Para auditar el flujo completo Luna → revisor → Dart:
+Para auditar el flujo completo Luna → revisor → Dart (Luna también por defecto):
 
 ```powershell
 .\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
 ```
 
-La auditoría completa conserva por test la salida de Luna, la entrada enviada
-al revisor, su salida bruta, el orden, las correcciones, el test resultante y
-las opciones tras el shuffle de Dart, además de latencia, tokens y coste por
-etapa.
+La auditoría completa usa `gpt-5.6-luna` también como revisor por defecto y conserva por test la salida de Luna, la entrada enviada al revisor, su salida bruta, el orden, las correcciones, el test resultante y las opciones tras el shuffle de Dart, además de latencia, tokens y coste por etapa.
 
 `-VerifyOnly` conserva la comprobación aislada de Luna.
