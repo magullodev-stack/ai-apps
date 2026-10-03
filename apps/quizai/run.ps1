@@ -7,6 +7,7 @@ param(
     [switch]$Pivots,
     [switch]$EvaluarDimensiones,
     [switch]$ProbarLuna,
+    [switch]$ProbarQuiz10,
     # Precios USD por millón de tokens (opcional; nunca se inventan tarifas).
     [string]$PrecioEntradaMillon,
     [string]$PrecioSalidaMillon,
@@ -29,11 +30,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 # Auditoría Luna: un test por defecto; cada test lanza diez unidades P-D simultáneas.
-if ($ProbarLuna -and -not $PSBoundParameters.ContainsKey('Muestras')) {
+if (($ProbarLuna -or $ProbarQuiz10) -and -not $PSBoundParameters.ContainsKey('Muestras')) {
     $Muestras = 1
 }
-if ($ProbarLuna -and $Muestras -gt 20) {
-    throw 'La auditoría de Luna admite un máximo de 20 tests (200 unidades Luna).'
+if (($ProbarLuna -or $ProbarQuiz10) -and $Muestras -gt 20) {
+    throw 'La auditoría de Quiz10 admite un máximo de 20 tests.'
 }
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
@@ -190,7 +191,7 @@ if (-not $session) {
         throw "El servicio Dart no está disponible. Consulta $logFile"
     }
 }
-if (-not $ProbarLuna) { Write-Host "Servicio Dart preparado: $($session.endpoint)" }
+if (-not $ProbarLuna -and -not $ProbarQuiz10) { Write-Host "Servicio Dart preparado: $($session.endpoint)" }
 
 if ($Pivots) {
     Push-Location (Join-Path $repo 'apps\\quizai')
@@ -247,6 +248,19 @@ if ($ProbarLuna) {
             [Environment]::SetEnvironmentVariable($name, $previousLunaEnv[$name], 'Process')
         }
     }
+    return
+}
+
+if ($ProbarQuiz10) {
+    $env:AI_APPS_AI_URL = $session.endpoint
+    $env:AI_APPS_GAME_TOKEN = $session.token
+    $env:AI_APPS_LUNA_MODEL = $CatalogModel
+    $env:AI_APPS_TERRA_MODEL = $FactualModel
+    Push-Location (Join-Path $repo 'apps\quizai')
+    try {
+        & $dart run tool/verify_quiz10_pipeline.dart --quiz10 --muestras "$Muestras" --semilla "$LunaSemilla"
+        if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría completa de Quiz10.' }
+    } finally { Pop-Location }
     return
 }
 
