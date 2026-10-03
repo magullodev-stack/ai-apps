@@ -133,13 +133,12 @@ preguntas terminadas; no utiliza el generador antiguo.
 Desde la raíz del repositorio, `-ProbarLuna` ejecuta únicamente esa etapa
 con el catálogo actual, muestra tiempo, tokens y precio en la terminal, y
 guarda los pares Q–R y las estadísticas en un `.txt` fechado. Un test
-equivale a un Quiz10 y contiene 10 llamadas Luna laterales. Todos los tests
-solicitados se lanzan simultáneamente, de modo que `-Muestras 5` produce
-50 llamadas Luna concurrentes. Por defecto se ejecuta un test; el máximo
-es 20 tests (200 llamadas simultáneas):
+equivale a un Quiz10 y lanza 10 llamadas Luna laterales simultáneas. Por
+defecto se ejecuta un test; `-Muestras N` ejecuta N tests, hasta un máximo
+de 20:
 
 ```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -Muestras 5
+.\apps\quizai\run.ps1 -ProbarLuna -Muestras 1
 ```
 
 `-VerifyOnly` verifica también solo la etapa de Luna, **no** una
