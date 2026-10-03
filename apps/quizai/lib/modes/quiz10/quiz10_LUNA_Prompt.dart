@@ -23,11 +23,11 @@ Elige un hecho factual F de P que permita cumplir D.
 
 Formula Q siguiendo la Instrucción D.
 
-O := cuatro respuestas distintas para Q, una correcta y tres incorrectas, todas plausibles y del mismo tipo.
+O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, una correcta y tres incorrectas, todas plausibles y del mismo tipo.
 
-C := posición de la respuesta correcta en O.
+C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
 
-R := O[C]
+R := O_C
 
 Q no contiene R.
 
@@ -37,7 +37,7 @@ Q no contiene R.
 ## Salida
 
 | P | D | F | Q | O | C |
-|---|---|---|---|---|---|'''
+|---|---|---|---|---|---|''';
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
