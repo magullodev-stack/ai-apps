@@ -2,7 +2,7 @@
 
 Aplicación con la modalidad estándar 🎲 Quiz10: diez preguntas de cultura general generadas mediante IA.
 
-En la modalidad 🎲 se eligen diez áreas distintas y las preguntas siguen esta progresión: cuatro fáciles, tres moderadas, dos difíciles y una muy difícil. Cada pregunta tiene cuatro opciones; cada acierto suma un punto. Al finalizar se muestra el resultado sobre diez.
+En la modalidad 🎲 se eligen diez áreas distintas. Cada pregunta tiene cuatro opciones; cada acierto suma un punto. Al finalizar se muestra el resultado sobre diez.
 
 ## Identidad visual de QuizAI
 
@@ -108,45 +108,40 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación P × D → Q, R, A (Luna)
+## Generación P × D → F, Q, R, A (Luna)
 
 El catálogo canónico de Quiz10 se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: contiene los 20 pivotes P01–P20
-y las 34 dimensiones D01–D34. En cada Quiz10, Dart selecciona diez P
-distintos y diez D distintas y forma diez unidades P-D.
-
-La posición fija la dificultad de cada unidad:
-
-- 1–4: Fácil
-- 5–7: Moderada
-- 8–9: Difícil
-- 10: Extrema
+y las 34 dimensiones D01–D34. Cada dimensión es una instrucción directa en
+lenguaje natural. En cada Quiz10, Dart selecciona diez P distintas y diez D
+distintas y forma diez unidades P-D.
 
 `lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene un único prompt oficial
-parametrizado. Cada dimensión D se define formalmente como `(ρ, π, τ, Γ)`:
-relación factual, proyección de respuesta, tipo esperado y restricciones.
-Dart materializa una copia independiente para cada posición con `P`, `D`,
-`Dificultad`, `H` y los cuatro componentes formales de la dimensión.
+parametrizado. Dart materializa una copia independiente por posición con
+`P`, `D`, la instrucción de D y `H`. Luna no recibe ninguna dificultad ni
+una descomposición formal de D.
 
 `H` es el histórico factual de cada cruce P×D durante la vida del generador.
-Cada entrada guarda el par `(F,R)`: el hecho factual utilizado y la respuesta
-proyectada. Antes de cada pack, cada llamada recibe los pares ya utilizados
-para ese mismo P×D. Luna no puede reutilizar el mismo `(F,R)`, pero una misma
-R puede reaparecer si corresponde a otro hecho F. Cuando las diez unidades
-del pack son válidas, Dart incorpora sus nuevos pares al histórico del cruce.
+Cada entrada guarda el par `(F,R)`: el hecho factual utilizado y la respuesta.
+Antes de cada pack, cada llamada recibe los pares ya utilizados para ese mismo
+P×D. Luna no puede reutilizar el mismo `(F,R)`, pero una misma R puede
+reaparecer si corresponde a otro hecho F. H solo se actualiza cuando el pack
+completo es válido.
 
 Cada unidad produce:
 
 ```text
-(P, D, Dificultad, H) -> (F, Q, R, A)
+(P, D, H) -> (F, Q, R, A)
 ```
 
-donde `F` es el hecho factual interno usado para construir la pregunta y `A`
+`F` es el hecho factual interno usado para construir la pregunta y `A`
 contiene exactamente tres distractores. `F` se conserva para H y auditoría;
-no forma parte de la experiencia visible del jugador. Los diez prompts del
-Quiz10 se envían a Luna simultáneamente mediante `Future.wait`. Los packs
-de Quiz10 se ejecutan secuencialmente, de modo que H puede acumularse entre
-packs.
+no forma parte de la experiencia visible del jugador. Las diez unidades se
+envían a Luna simultáneamente mediante `Future.wait`. Los packs se ejecutan
+secuencialmente para que H pueda acumularse entre ellos.
+
+Esta etapa no impone ni ordena dificultad. La progresión de dificultad se
+resolverá fuera de Luna a partir de las preguntas ya generadas.
 
 Desde la raíz del repositorio:
 
@@ -154,11 +149,11 @@ Desde la raíz del repositorio:
 .\apps\quizai\run.ps1 -ProbarLuna -Muestras 5
 ```
 
-`-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez
-llamadas Luna simultáneas; el siguiente pack empieza cuando termina el
-anterior. El auditor registra latencia, tokens, coste, razonamiento, P, D, dificultad,
-F, Q, R, los tres distractores y duplicados exactos de `(F,R)` por cruce P×D.
-Si una fila falla, registra `Tn/Fm`, P, D, dificultad, etapa y causa concreta.
+`-Muestras 5` ejecuta cinco packs de Quiz10. Cada pack contiene diez llamadas
+Luna simultáneas; el siguiente empieza cuando termina el anterior. El auditor
+registra latencia, tokens, coste, razonamiento, P, D, F, Q, R, los tres
+distractores y duplicados exactos de `(F,R)` por cruce P×D. Si una fila falla,
+registra `Tn/Fm`, P, D, etapa y causa concreta.
 
 Terra todavía no está conectada a esta etapa. `-VerifyOnly` verifica la
 generación F-Q-R-A de Luna, no la validación factual posterior.
