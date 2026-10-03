@@ -158,11 +158,11 @@ Future<void> main(List<String> args) async {
     ].join('\n'));
 
     final path =
-        'Quiz10_${modelLabel}_P-D_Q+R+A_${samples}T_${samples * 10}L_s${seed}_prompt-${promptId}_cat-${catalogId}_$timestamp.txt';
+        'Quiz10_${modelLabel}_P-D_F+Q+R+A_${samples}T_${samples * 10}L_s${seed}_prompt-${promptId}_cat-${catalogId}_$timestamp.txt';
     final report = File(path).openWrite();
 
     try {
-      report.writeln('AUDITORÍA QUIZ10 — LUNA — P-D → Q,R,A');
+      report.writeln('AUDITORÍA QUIZ10 — LUNA — P-D → F,Q,R,A');
       report.writeln('Fecha: ${DateTime.now()}');
       report.writeln('Modelo: ${luna.model}');
       report.writeln(
@@ -174,8 +174,8 @@ Future<void> main(List<String> args) async {
         '8-9 Difícil; 10 Extrema.',
       );
       report.writeln(
-        'H: histórico por cruce P×D; cada pack recibe las R previas de ese cruce '
-        'y H se actualiza solo al validar el pack completo.',
+        'H: histórico factual por cruce P×D; cada pack recibe los pares (F,R) '
+        'previos de ese cruce y H se actualiza solo al validar el pack completo.',
       );
       report.writeln('Huella del prompt: $promptId');
       report.writeln('Huella del catálogo: $catalogId');
@@ -198,7 +198,7 @@ Future<void> main(List<String> args) async {
       final difficultyCounts = <String, int>{};
       final qCounts = <String, int>{};
       final rCounts = <String, int>{};
-      final rByPivotDimensionCounts = <String, int>{};
+      final frByPivotDimensionCounts = <String, int>{};
       final failures = <String, int>{};
 
       var succeeded = 0;
@@ -208,6 +208,7 @@ Future<void> main(List<String> args) async {
       var totalCached = 0;
       var totalReasoning = 0;
       var usageTests = 0;
+      var usageCalls = 0;
       var pricedTests = 0;
       var totalCost = 0.0;
 
@@ -218,6 +219,9 @@ Future<void> main(List<String> args) async {
         AiGeneration? raw;
         List<Quiz10LunaRow>? rows;
         Object? failure;
+        Map<String, dynamic>? failureUsage;
+        var completedCalls = 0;
+        var rowFailures = <Quiz10LunaFailure>[];
 
         try {
           raw = await luna.generateResponse(plan);
@@ -241,18 +245,29 @@ Future<void> main(List<String> args) async {
             );
             qCounts.update(_key(row.question), (n) => n + 1, ifAbsent: () => 1);
             rCounts.update(_key(row.correct), (n) => n + 1, ifAbsent: () => 1);
-            rByPivotDimensionCounts.update(
-              '$p\u001f$d\u001f${_key(row.correct)}',
+            frByPivotDimensionCounts.update(
+              '$p\u001f$d\u001f${_key(row.fact)}\u001f${_key(row.correct)}',
               (n) => n + 1,
               ifAbsent: () => 1,
             );
 
             report.writeln(
               '${row.slot.number}. $p $d ${row.slot.difficulty} | '
-              'Q: ${row.question} | R: ${row.correct} | '
+              'F: ${row.fact} | Q: ${row.question} | R: ${row.correct} | '
               'A: ${row.distractors.join(" / ")}',
             );
           }
+        } on Quiz10LunaPackException catch (error) {
+          failure = error;
+          failed++;
+          failures.update(
+            '${error.runtimeType}: $error',
+            (n) => n + 1,
+            ifAbsent: () => 1,
+          );
+          failureUsage = error.usage;
+          completedCalls = error.completedCalls;
+          rowFailures = error.failures;
         } catch (error) {
           failure = error;
           failed++;
@@ -265,13 +280,15 @@ Future<void> main(List<String> args) async {
           watch.stop();
           durations.add(watch.elapsedMilliseconds);
 
-          final input = _usage(raw?.usage, 'inputTokens');
-          final output = _usage(raw?.usage, 'outputTokens');
-          final cached = _usage(raw?.usage, 'cachedInputTokens');
-          final reasoning = _usage(raw?.usage, 'reasoningTokens');
+          final observedUsage = raw?.usage ?? failureUsage;
+          final input = _usage(observedUsage, 'inputTokens');
+          final output = _usage(observedUsage, 'outputTokens');
+          final cached = _usage(observedUsage, 'cachedInputTokens');
+          final reasoning = _usage(observedUsage, 'reasoningTokens');
 
           if (input != null && output != null) {
             usageTests++;
+            usageCalls += raw != null ? 10 : completedCalls;
             totalInput += input;
             totalOutput += output;
             totalCached += cached ?? 0;
@@ -299,12 +316,38 @@ Future<void> main(List<String> args) async {
           stdout.writeln('Tiempo: $seconds s');
           stdout.writeln('Tokens entrada: ${_known(input)}');
           stdout.writeln('Tokens salida: ${_known(output)}');
-          stdout.writeln('Tokens razonamiento: ${_known(reasoning)}');
+          final reasoningPercent =
+              output != null && output > 0 && reasoning != null
+              ? reasoning * 100 / output
+              : null;
+          final visibleOutput =
+              output != null && reasoning != null ? output - reasoning : null;
+          stdout.writeln(
+            'Tokens razonamiento: ${_known(reasoning)}'
+            '${reasoningPercent == null ? "" : " (${reasoningPercent.toStringAsFixed(1)}% de salida)"}',
+          );
+          stdout.writeln('Salida visible estimada: ${_known(visibleOutput)}');
           stdout.writeln('Precio: ${_usd(price)}');
           if (failure != null) {
             stdout.writeln('ERROR: $failure');
             report.writeln('TEST $test/$samples — ERROR — $seconds s');
             report.writeln('$failure');
+            if (rowFailures.isNotEmpty) {
+              for (final item in rowFailures) {
+                final slot = item.slot;
+                report.writeln('T$test/F${slot.number}');
+                report.writeln('P = ${slot.pivot.code} (${slot.pivot.name})');
+                report.writeln('D = ${slot.dimension.code}');
+                report.writeln('Dificultad = ${slot.difficulty}');
+                report.writeln('Etapa = ${item.stage}');
+                report.writeln('causa = ${item.cause}');
+                stdout.writeln(
+                  'T$test/F${slot.number} | '
+                  '${slot.pivot.code} ${slot.dimension.code} '
+                  '${slot.difficulty} | ${item.stage}: ${item.cause}',
+                );
+              }
+            }
           }
           report.writeln();
           await report.flush();
@@ -317,8 +360,8 @@ Future<void> main(List<String> args) async {
           qCounts.values.where((count) => count > 1).length;
       final repeatedR =
           rCounts.values.where((count) => count > 1).length;
-      final repeatedRForSamePivotDimension =
-          rByPivotDimensionCounts.values.where((count) => count > 1).length;
+      final repeatedFactAnswerForSamePivotDimension =
+          frByPivotDimensionCounts.values.where((count) => count > 1).length;
 
       report.writeln('========== ESTADÍSTICAS FINALES ==========');
       report.writeln(
@@ -334,10 +377,16 @@ Future<void> main(List<String> args) async {
         'p95: ${(_percentile(durations, 0.95) / 1000).toStringAsFixed(2)} s | '
         'máxima: ${(_percentile(durations, 1) / 1000).toStringAsFixed(2)} s.',
       );
+      final aggregateReasoningPercent =
+          totalOutput > 0 ? totalReasoning * 100 / totalOutput : 0.0;
+      final aggregateVisibleOutput = totalOutput - totalReasoning;
       report.writeln(
         'Consumo agregado: entrada $totalInput | salida $totalOutput | '
         'total ${totalInput + totalOutput} | caché $totalCached | '
-        'razonamiento $totalReasoning ($usageTests/$samples tests con uso).',
+        'razonamiento $totalReasoning '
+        '(${aggregateReasoningPercent.toStringAsFixed(1)}% de salida) | '
+        'salida visible estimada $aggregateVisibleOutput | '
+        'uso recuperado en $usageTests/$samples packs, $usageCalls llamadas.',
       );
       report.writeln(
         'Coste estimado: ${_usd(pricedTests == 0 ? null : totalCost)} '
@@ -345,11 +394,13 @@ Future<void> main(List<String> args) async {
       );
       report.writeln(
         'Duplicados exactos: grupos Q=$repeatedQ | grupos R=$repeatedR | '
-        'R repetida dentro del mismo P×D=$repeatedRForSamePivotDimension.',
+        'pares (F,R) repetidos dentro del mismo P×D='
+        '$repeatedFactAnswerForSamePivotDimension.',
       );
       report.writeln(
-        'La última cifra debe ser 0: H prohíbe reutilizar una R previa '
-        'para el mismo cruce P×D.',
+        'La última cifra debe ser 0: H prohíbe reutilizar un mismo par '
+        'factual (F,R) dentro del mismo cruce P×D; una misma R puede '
+        'reaparecer si corresponde a otro F.',
       );
 
       _distribution(report, 'Frecuencias P', pCounts);
@@ -365,7 +416,7 @@ Future<void> main(List<String> args) async {
 
       report.writeln(
         '\nNo evaluado automáticamente: exactitud factual, '
-        'equivalencia semántica de H y plausibilidad factual de distractores.',
+        'equivalencia semántica de F/H y plausibilidad factual de distractores.',
       );
 
       await report.flush();
