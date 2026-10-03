@@ -126,7 +126,7 @@ Cada entrada guarda el par `(F,R)`: el hecho factual utilizado y la respuesta.
 Antes de cada pack, cada llamada recibe los pares ya utilizados para ese mismo
 P×D. El prompt pide a Luna no reutilizar el mismo `(F,R)`, pero Dart no
 rechaza la fila si Luna incumple esa regla. Cada fila recibida con la estructura
-P,D,F,Q,R,A actualiza H de forma independiente.
+P,D,F,Q,O,C actualiza H de forma independiente.
 
 Cada unidad produce:
 
