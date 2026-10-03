@@ -25,11 +25,15 @@ Formula Q siguiendo la Instrucción D.
 
 R := respuesta factual, concreta, verificable y correcta para Q.
 
+Q no contiene R.
+
 (F, R) ∉ H
 
 Genera tres distractores:
 
 A := {a₁, a₂, a₃}
+
+R ∉ A
 
 Cada aᵢ debe ser del mismo tipo que R, plausible para Q y falso.
 
