@@ -1,0 +1,17 @@
+AUDITORÍA QUIZ10 — LUNA — Q+R — 10 LLAMADAS LATERALES
+Fecha: 2026-10-03 16:41:02.542209
+Modelo: gpt-5.6-luna
+Cruce por fila: P×P con D.
+Ejecución: 10 peticiones Luna independientes lanzadas con Future.wait por cada test.
+Huella del prompt: 5cb00640 (FNV-1a 32 bits, identificador).
+Huella del catálogo: 389b6cb9 (FNV-1a 32 bits, identificador).
+Prompt literal:
+Construye Q y R a partir de P[1] × P[2] y D.
+Integra ambos pivotes en la misma pregunta y respuesta.
+R debe ser factual, concreta, verificable y correcta para Q.
+Semilla: 20260929 | Tests solicitados: 5 | Llamadas Luna: 50 (10 simultáneas por test).
+P: 20; D: 34.
+Tarifas USD/1M tokens: entrada 0.2, salida 1.2, entrada en caché tarifa de entrada normal (sin descuento).
+Los importes son ESTIMACIONES, no facturas. Se calculan solo cuando existen tokens y tarifas suficientes. Sin tarifa específica de caché se cobra la entrada en caché como entrada normal en el cálculo (puede sobreestimar el coste). Si el proveedor omite el uso de caché se supone 0. Los tokens de razonamiento ya están incluidos en los de salida.
+Coincidencia textual = mismo texto ignorando mayúsculas y espacios repetidos. Los parecidos léxicos son orientativos.
+
