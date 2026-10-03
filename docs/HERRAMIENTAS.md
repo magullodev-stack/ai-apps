@@ -10,28 +10,33 @@
 ---
 
 
-## Sincronización de `dev` al abrir VS Code
+## Sincronización de `dev`
 
-La tarea `AI-APPS: sincronizar dev al abrir VS Code` en
+La tarea manual `AI-APPS: sincronizar dev` en
 [`.vscode/tasks.json`](../.vscode/tasks.json) ejecuta
-[`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) al abrir la carpeta del proyecto.
-VS Code puede solicitar **una vez** autorización para permitir tareas automáticas
-(Allow Automatic Tasks); mientras no se autoricen, la sincronización no se ejecuta.
-La salida aparece en la terminal de la tarea.
+[`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1).
 
-El procedimiento consulta `origin/dev` mediante `git fetch` y comprueba la
-rama y el estado local. Si `dev` está limpio y es antecesor de `origin/dev`,
-ejecuta exclusivamente `git merge --ff-only origin/dev` y verifica que el
-`HEAD` resultante coincida con el remoto. Si ya coincide, informa de ello.
-Si existen cambios sin confirmar, otra rama activa, commits locales no publicados
-o historias divergentes, informa y **no modifica nada**. Tampoco ejecuta
-`reset --hard`, `rebase`, `push` ni modifica archivos ignorados como
-`.ai-apps/openai-key.dpapi`.
+Es la única operación de sincronización bidireccional entre la copia local
+de VS Code y `origin/dev`:
 
-La tarea solo se ejecuta cuando VS Code abre el proyecto; **no** sincroniza
-continuamente ni se activa mientras el editor permanece abierto. Una rama local
-ya divergente exige intervención manual y respaldo previo; nunca se resuelve
-automáticamente.
+1. comprueba que la rama activa sea `dev`;
+2. prepara todos los cambios locales no ignorados;
+3. incluye explícitamente `.ai-apps/experimentos-luna-pd` cuando existe;
+4. crea un commit local solo si hay cambios;
+5. consulta `origin/dev`;
+6. integra los cambios remotos mediante `rebase`;
+7. publica `dev`;
+8. vuelve a consultar el remoto y verifica que `HEAD` y `origin/dev`
+   sean idénticos.
+
+Si el rebase encuentra un conflicto, se aborta automáticamente y no se publica
+nada. Si el remoto cambia durante la publicación, el procedimiento reintenta
+hasta tres veces. Los archivos ignorados siguen sin publicarse salvo la carpeta
+de experimentos indicada expresamente.
+
+La tarea ya no se ejecuta automáticamente al abrir VS Code: sincronizar implica
+crear commits y publicar cambios, por lo que se ejecuta de forma explícita desde
+`Terminal > Run Task > AI-APPS: sincronizar dev`.
 
 ---
 
@@ -78,27 +83,6 @@ La tarea existente `AI-APPS: ejecutar QuizAI con IA` sigue siendo manual
 y reutiliza Android cuando ya está conectado.
 
 ---
-
-## COMMIT
-
-Set-Location 'C:\Users\Miquelet\repos\ai-apps'
-git add -A
-if ($LASTEXITCODE -ne 0) { throw 'Error al preparar archivos' }
-if (Test-Path '.ai-apps/experimentos-luna-pd') {
-    git add -f -A -- '.ai-apps/experimentos-luna-pd'
-    if ($LASTEXITCODE -ne 0) { throw 'Error en experimentos' }
-}
-$cambios = git diff --cached --name-only
-if ($LASTEXITCODE -ne 0) { throw 'Error al comprobar cambios' }
-if ($cambios) {
-    git commit -m 'Sincronizar AI-APPS'
-    if ($LASTEXITCODE -ne 0) { throw 'Error al guardar cambios' }
-}
-git pull --no-rebase origin dev
-if ($LASTEXITCODE -ne 0) { throw 'Error o conflicto al integrar. No se publica nada.' }
-git push origin dev
-if ($LASTEXITCODE -ne 0) { throw 'Error al publicar en GitHub' }
-Write-Host 'SINCRONIZACION COMPLETADA' -ForegroundColor Green
 
 ---
 
