@@ -37,7 +37,7 @@ Cada aᵢ debe ser del mismo tipo que R, plausible para Q y falso.
 ## Salida
 
 | P | D | F | Q | R | A |
-|---|---|---|---|---|---|'''
+|---|---|---|---|---|---|''';
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
