@@ -39,14 +39,8 @@ class _QuizPageState extends State<QuizPage> {
     try {
       final questions = await load();
 
-      if (questions.length != 10 ||
-          questions.any(
-            (q) =>
-                q.options.length != 4 ||
-                q.options.toSet().length != 4 ||
-                !q.options.contains(q.correct),
-          )) {
-        throw const FormatException('Preguntas inválidas.');
+      if (questions.length != 10) {
+        throw const FormatException('Quiz10 requiere diez preguntas.');
       }
 
       if (!mounted) return;
