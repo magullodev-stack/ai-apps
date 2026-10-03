@@ -81,9 +81,10 @@ String quiz10LunaInput(
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['P', 'Q', 'R', 'A'],
+  'required': ['P', 'D', 'Q', 'R', 'A'],
   'properties': {
     'P': {'type': 'string'},
+    'D': {'type': 'string'},
     'Q': {'type': 'string'},
     'R': {'type': 'string'},
     'A': {
@@ -123,6 +124,7 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
 
   if (decoded is! Map<String, dynamic> ||
       decoded['P'] is! String ||
+      decoded['D'] is! String ||
       decoded['Q'] is! String ||
       decoded['R'] is! String ||
       decoded['A'] is! List) {
@@ -130,11 +132,17 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
   }
 
   final pivot = (decoded['P'] as String).trim();
+  final dimension = (decoded['D'] as String).trim();
   final question = (decoded['Q'] as String).trim();
   final correct = (decoded['R'] as String).trim();
   final rawDistractors = decoded['A'] as List;
 
+  final normalizedDimension = _normalized(dimension);
+  final normalizedDimensionCode = _normalized(slot.dimension.code);
+
   if (_normalized(pivot) != _normalized(slot.pivot.name) ||
+      (normalizedDimension != normalizedDimensionCode &&
+          !normalizedDimension.startsWith('$normalizedDimensionCode[')) ||
       question.isEmpty ||
       correct.isEmpty ||
       rawDistractors.length != 3 ||
@@ -263,6 +271,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
           for (final row in rows)
             {
               'P': row.slot.pivot.name,
+              'D': row.slot.dimension.code,
               'Q': row.question,
               'R': row.correct,
               'A': row.distractors,
