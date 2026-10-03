@@ -250,7 +250,10 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     return parseQuiz10LunaOutput(response.text, plan);
   }
 
-  Future<AiGeneration> generateResponse(List<Quiz10Pair> plan) async {
+  Future<AiGeneration> generateResponse(
+    List<Quiz10Pair> plan, {
+    bool commitHistory = true,
+  }) async {
     if (plan.length != 10) {
       throw ArgumentError('Luna requiere diez unidades P-D.');
     }
@@ -310,15 +313,11 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
       }
     }
 
-    // Luna no se somete a validación semántica en Dart. Toda fila recibida
-    // con la estructura P,D,F,Q,O,C avanza H usando R := O[C].
-    for (final row in rows) {
-      _historyByPivotDimension
-          .putIfAbsent(
-            quiz10HistoryKey(row.slot),
-            () => <Quiz10HistoryEntry>[],
-          )
-          .add((fact: row.fact, answer: row.correct));
+    if (commitHistory) {
+      commitReviewedAnswers(
+        rows,
+        rows.map((row) => row.correct).toList(growable: false),
+      );
     }
 
     if (failures.isNotEmpty) {
@@ -340,7 +339,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     );
   }
 
-  void reconcileReviewedAnswers(
+  void commitReviewedAnswers(
     List<Quiz10LunaRow> rows,
     List<String> reviewedAnswers,
   ) {
@@ -350,19 +349,12 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
     for (var i = 0; i < rows.length; i++) {
       final row = rows[i];
-      final reviewedAnswer = reviewedAnswers[i];
-      if (reviewedAnswer == row.correct) continue;
-
-      final history = _historyByPivotDimension[quiz10HistoryKey(row.slot)];
-      if (history == null) continue;
-
-      for (var j = history.length - 1; j >= 0; j--) {
-        final entry = history[j];
-        if (entry.fact == row.fact && entry.answer == row.correct) {
-          history[j] = (fact: entry.fact, answer: reviewedAnswer);
-          break;
-        }
-      }
+      _historyByPivotDimension
+          .putIfAbsent(
+            quiz10HistoryKey(row.slot),
+            () => <Quiz10HistoryEntry>[],
+          )
+          .add((fact: row.fact, answer: reviewedAnswers[i]));
     }
   }
 
