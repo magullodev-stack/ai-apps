@@ -170,7 +170,7 @@ Future<void> main(List<String> args) async {
         '8-9 Difícil; 10 Extrema.',
       );
       report.writeln(
-        'H: histórico por P; cada pack recibe las R previas de ese P '
+        'H: histórico por cruce P×D; cada pack recibe las R previas de ese cruce '
         'y H se actualiza solo al validar el pack completo.',
       );
       report.writeln('Huella del prompt: $promptId');
@@ -194,7 +194,7 @@ Future<void> main(List<String> args) async {
       final difficultyCounts = <String, int>{};
       final qCounts = <String, int>{};
       final rCounts = <String, int>{};
-      final rByPivotCounts = <String, int>{};
+      final rByPivotDimensionCounts = <String, int>{};
       final failures = <String, int>{};
 
       var succeeded = 0;
@@ -237,8 +237,8 @@ Future<void> main(List<String> args) async {
             );
             qCounts.update(_key(row.question), (n) => n + 1, ifAbsent: () => 1);
             rCounts.update(_key(row.correct), (n) => n + 1, ifAbsent: () => 1);
-            rByPivotCounts.update(
-              '$p\u001f${_key(row.correct)}',
+            rByPivotDimensionCounts.update(
+              '$p\u001f$d\u001f${_key(row.correct)}',
               (n) => n + 1,
               ifAbsent: () => 1,
             );
@@ -313,8 +313,8 @@ Future<void> main(List<String> args) async {
           qCounts.values.where((count) => count > 1).length;
       final repeatedR =
           rCounts.values.where((count) => count > 1).length;
-      final repeatedRForSameP =
-          rByPivotCounts.values.where((count) => count > 1).length;
+      final repeatedRForSamePivotDimension =
+          rByPivotDimensionCounts.values.where((count) => count > 1).length;
 
       report.writeln('========== ESTADÍSTICAS FINALES ==========');
       report.writeln(
@@ -341,11 +341,11 @@ Future<void> main(List<String> args) async {
       );
       report.writeln(
         'Duplicados exactos: grupos Q=$repeatedQ | grupos R=$repeatedR | '
-        'R repetida dentro del mismo P=$repeatedRForSameP.',
+        'R repetida dentro del mismo P×D=$repeatedRForSamePivotDimension.',
       );
       report.writeln(
         'La última cifra debe ser 0: H prohíbe reutilizar una R previa '
-        'para el mismo P.',
+        'para el mismo cruce P×D.',
       );
 
       _distribution(report, 'Frecuencias P', pCounts);
