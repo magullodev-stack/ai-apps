@@ -5,66 +5,39 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 
 // Una unidad de generación = una posición del test.
-// Dart fija P, D, dificultad e H; Luna devuelve F, Q, R y tres distractores.
+// Dart fija P, D e H; Luna devuelve F, Q, R y tres distractores.
 // Las diez unidades del Quiz10 se ejecutan simultáneamente.
 
 const String quiz10LunaPrompt = r'''## Entrada
 
 P := {{P}}
 D := {{D}}
-Dificultad := {{Dificultad}}
+Instrucción D := {{instruction}}
 
 H := {{H}}
-
-D → (
-ρ := {{rho}}
-π := {{pi}}
-τ := {{tau}}
-Γ := {{gamma}}
-)
 
 
 ## Generación
 
-Elige un hecho factual f de P tal que:
+Elige un hecho factual F de P que permita cumplir D.
 
-f instancia ρ
+Formula Q siguiendo la Instrucción D.
 
-Γ(f) = verdadero
-
-F := f
-
-R := π(f)
-
-type(R) ∈ τ
+R := respuesta factual, concreta, verificable y correcta para Q.
 
 (F, R) ∉ H
-
-Formula Q a partir de:
-
-f[π := ?]
 
 Genera tres distractores:
 
 A := {a₁, a₂, a₃}
 
-Para cada aᵢ:
-
-type(aᵢ) ∈ τ
-
-Γ(f[π := aᵢ]) = verdadero
-
-f[π := aᵢ] = falso
-
-aᵢ debe corresponder a un hecho real del mismo contexto que pueda confundirse con R.
-
-difficulty(Q, R, A | P, D) = Dificultad
+Cada aᵢ debe ser del mismo tipo que R, plausible para Q y falso.
 
 
 ## Salida
 
 | P | D | F | Q | R | A |
-|---|---|---|---|---|---|''';
+|---|---|---|---|---|---|'''
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
@@ -78,12 +51,8 @@ String quiz10LunaInput(
   return quiz10LunaPrompt
       .replaceAll('{{P}}', slot.pivot.name)
       .replaceAll('{{D}}', slot.dimension.code)
-      .replaceAll('{{Dificultad}}', slot.difficulty)
-      .replaceAll('{{H}}', _historyLiteral(history))
-      .replaceAll('{{rho}}', slot.dimension.relation)
-      .replaceAll('{{pi}}', slot.dimension.projection)
-      .replaceAll('{{tau}}', slot.dimension.expectedType)
-      .replaceAll('{{gamma}}', slot.dimension.constraints);
+      .replaceAll('{{instruction}}', slot.dimension.instruction)
+      .replaceAll('{{H}}', _historyLiteral(history));
 }
 
 Map<String, Object?> quiz10LunaSchema() => {
@@ -157,10 +126,7 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
     throw invalid('P devuelta "$pivot" no coincide con ${slot.pivot.name}.');
   }
 
-  final normalizedDimension = _normalized(dimension);
-  final normalizedDimensionCode = _normalized(slot.dimension.code);
-  if (normalizedDimension != normalizedDimensionCode &&
-      !normalizedDimension.startsWith('$normalizedDimensionCode[')) {
+  if (_normalized(dimension) != _normalized(slot.dimension.code)) {
     throw invalid(
       'D devuelta "$dimension" no coincide con ${slot.dimension.code}.',
     );
