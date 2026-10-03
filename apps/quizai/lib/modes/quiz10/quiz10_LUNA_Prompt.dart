@@ -5,44 +5,59 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 
 // Una unidad de generación = una posición del test.
-// Dart fija i, P, D, dificultad e H; Luna devuelve Q, R y tres distractores.
+// Dart fija P, D, dificultad e H; Luna devuelve Q, R y tres distractores.
 // Las diez unidades del Quiz10 se ejecutan simultáneamente.
 
 const String quiz10LunaPrompt = r'''## Entrada
 
-i := {{i}}
 P := {{P}}
 D := {{D}}
 Dificultad := {{Dificultad}}
 
 H := {{H}}
 
-D = ρ[π]
+D → (ρ, π, τ, Γ)
+
 
 ## Generación
 
-Genera una pregunta de cultura general tipo «¿Quién quiere ser millonario?».
+Elige un hecho factual f de P tal que:
 
-Elige un hecho factual f compatible con P y ρ.
+f instancia ρ
+
+Γ(f) = verdadero
 
 R := π(f)
 
-R no puede pertenecer a H.
+type(R) ∈ τ
 
-Formula Q sin utilizar palabras de R.
+R ∉ H
 
-Genera tres distractores A := {a₁,a₂,a₃}.
+Formula Q a partir de:
 
-Cada distractor debe:
-- ser del mismo tipo que R;
-- ser falso para Q;
-- corresponder a un hecho real del mismo contexto que pueda confundirse con R.
+f[π := ?]
 
-El ítem completo (Q,R,A) debe tener dificultad {{Dificultad}}.
+Genera tres distractores:
+
+A := {a₁, a₂, a₃}
+
+Para cada aᵢ:
+
+type(aᵢ) ∈ τ
+
+Γ(f[π := aᵢ]) = verdadero
+
+f[π := aᵢ] = falso
+
+aᵢ debe corresponder a un hecho real del mismo contexto que pueda confundirse con R.
+
+difficulty(Q, R, A | P, D) = Dificultad
+
 
 ## Salida
 
-P, Q, R, A''';
+| P | D | Q | R | A |
+|---|---|---|---|---|''';
 
 String _historyLiteral(List<String> history) {
   if (history.isEmpty) return '∅';
@@ -54,7 +69,6 @@ String quiz10LunaInput(
   List<String> history,
 ) {
   return quiz10LunaPrompt
-      .replaceAll('{{i}}', slot.number.toString())
       .replaceAll('{{P}}', slot.pivot.name)
       .replaceAll(
         '{{D}}',
