@@ -148,7 +148,10 @@ final class AiQuiz10Pipeline {
     final plan = selectQuiz10Pairs(planRandom ?? Random());
 
     final lunaWatch = Stopwatch()..start();
-    final lunaGeneration = await luna.generateResponse(plan);
+    final lunaGeneration = await luna.generateResponse(
+      plan,
+      commitHistory: false,
+    );
     lunaWatch.stop();
     final lunaRows = parseQuiz10LunaOutput(lunaGeneration.text, plan);
 
@@ -159,7 +162,7 @@ final class AiQuiz10Pipeline {
 
     final reviewedItems = applyQuiz10Review(lunaRows, review);
 
-    luna.reconcileReviewedAnswers(
+    luna.commitReviewedAnswers(
       reviewedItems.map((item) => item.source).toList(growable: false),
       reviewedItems.map((item) => item.correct).toList(growable: false),
     );
