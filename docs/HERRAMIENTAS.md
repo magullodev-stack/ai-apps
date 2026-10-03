@@ -114,9 +114,3 @@ La tarea existente `AI-APPS: ejecutar QuizAI con IA` sigue siendo manual
 y reutiliza Android cuando ya está conectado.
 
 ---
-
----
-
-# GENERAR PIVOTES
-
-.\generar-pivotes.ps1 -Ruta
