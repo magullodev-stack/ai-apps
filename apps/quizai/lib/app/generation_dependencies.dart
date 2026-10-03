@@ -1,6 +1,7 @@
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 import '../modes/estudio/estudio_generation.dart';
+import '../modes/quiz10/quiz10_pipeline.dart';
 import '../semantic_catalog/pivot_catalog.dart';
 
 final class QuizAiGenerationDependencies {
@@ -16,6 +17,18 @@ final class QuizAiGenerationDependencies {
       );
 
   final AiAppsClient _client;
+
+  late final AiQuiz10Pipeline quiz10Pipeline = AiQuiz10Pipeline(
+    client: _client,
+    lunaModel: const String.fromEnvironment(
+      'AI_APPS_CATALOG_MODEL',
+      defaultValue: 'gpt-5.6-luna',
+    ),
+    reviewerModel: const String.fromEnvironment(
+      'AI_APPS_TERRA_MODEL',
+      defaultValue: 'gpt-5.6-terra',
+    ),
+  );
 
   PivotCatalogGenerator get catalogGenerator => AiPivotCatalogGenerator(
     client: _client,
