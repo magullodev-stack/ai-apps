@@ -82,103 +82,66 @@ String _normalized(String text) =>
 class Quiz10LunaRow {
   const Quiz10LunaRow({
     required this.slot,
+    required this.returnedPivot,
+    required this.returnedDimension,
     required this.fact,
     required this.question,
     required this.correct,
     required this.distractors,
+    required this.rawText,
   });
 
   final Quiz10Pair slot;
+  final String returnedPivot;
+  final String returnedDimension;
   final String fact;
   final String question;
   final String correct;
   final List<String> distractors;
+  final String rawText;
 }
 
 Quiz10LunaRow parseQuiz10LunaRowOutput(
   String text,
-  Quiz10Pair slot, {
-  List<Quiz10HistoryEntry> history = const [],
-}) {
-  FormatException invalid(String cause) => FormatException(cause);
-
+  Quiz10Pair slot,
+) {
   dynamic decoded;
   try {
     decoded = jsonDecode(text);
   } catch (error) {
-    throw invalid('JSON inválido: $error');
+    throw FormatException('JSON inválido: $error');
   }
 
   if (decoded is! Map<String, dynamic>) {
-    throw invalid('La salida no es un objeto JSON.');
+    throw const FormatException('La salida no es un objeto JSON.');
   }
-  if (decoded['P'] is! String) throw invalid('P ausente o no textual.');
-  if (decoded['D'] is! String) throw invalid('D ausente o no textual.');
-  if (decoded['F'] is! String) throw invalid('F ausente o no textual.');
-  if (decoded['Q'] is! String) throw invalid('Q ausente o no textual.');
-  if (decoded['R'] is! String) throw invalid('R ausente o no textual.');
-  if (decoded['A'] is! List) throw invalid('A ausente o no es una lista.');
+  if (decoded['P'] is! String ||
+      decoded['D'] is! String ||
+      decoded['F'] is! String ||
+      decoded['Q'] is! String ||
+      decoded['R'] is! String ||
+      decoded['A'] is! List) {
+    throw const FormatException(
+      'La salida no conserva la estructura P,D,F,Q,R,A esperada.',
+    );
+  }
 
-  final pivot = (decoded['P'] as String).trim();
-  final dimension = (decoded['D'] as String).trim();
-  final fact = (decoded['F'] as String).trim();
-  final question = (decoded['Q'] as String).trim();
-  final correct = (decoded['R'] as String).trim();
   final rawDistractors = decoded['A'] as List;
-
-  if (_normalized(pivot) != _normalized(slot.pivot.name)) {
-    throw invalid('P devuelta "$pivot" no coincide con ${slot.pivot.name}.');
-  }
-
-  if (_normalized(dimension) != _normalized(slot.dimension.code)) {
-    throw invalid(
-      'D devuelta "$dimension" no coincide con ${slot.dimension.code}.',
-    );
-  }
-
-  if (fact.isEmpty) throw invalid('F está vacío.');
-  if (question.isEmpty) throw invalid('Q está vacía.');
-  if (correct.isEmpty) throw invalid('R está vacía.');
-  if (rawDistractors.length != 3) {
-    throw invalid(
-      'A contiene ${rawDistractors.length} distractores; se esperaban 3.',
-    );
-  }
   if (rawDistractors.any((value) => value is! String)) {
-    throw invalid('A contiene un distractor no textual.');
-  }
-
-  final distractors = [
-    for (final value in rawDistractors) (value as String).trim(),
-  ];
-
-  if (distractors.any((value) => value.isEmpty)) {
-    throw invalid('A contiene un distractor vacío.');
-  }
-  if (distractors.map(_normalized).toSet().length != 3) {
-    throw invalid('A contiene distractores duplicados.');
-  }
-  if (distractors.any(
-    (value) => _normalized(value) == _normalized(correct),
-  )) {
-    throw invalid('A contiene la propia R.');
-  }
-
-  final repeatedPair = history.any(
-    (entry) =>
-        _normalized(entry.fact) == _normalized(fact) &&
-        _normalized(entry.answer) == _normalized(correct),
-  );
-  if (repeatedPair) {
-    throw invalid('H ya contiene el par factual (F,R).');
+    throw const FormatException('A contiene un valor no textual.');
   }
 
   return Quiz10LunaRow(
     slot: slot,
-    fact: fact,
-    question: question,
-    correct: correct,
-    distractors: List.unmodifiable(distractors),
+    returnedPivot: decoded['P'] as String,
+    returnedDimension: decoded['D'] as String,
+    fact: decoded['F'] as String,
+    question: decoded['Q'] as String,
+    correct: decoded['R'] as String,
+    distractors: List.unmodifiable([
+      for (final value in rawDistractors) value as String,
+    ]),
+    rawText: text,
   );
 }
 
@@ -223,21 +186,25 @@ class Quiz10LunaFailure {
     required this.slot,
     required this.stage,
     required this.cause,
+    this.rawText,
   });
 
   final Quiz10Pair slot;
   final String stage;
   final Object cause;
+  final String? rawText;
 }
 
 class Quiz10LunaPackException implements Exception {
   const Quiz10LunaPackException({
     required this.failures,
+    required this.rows,
     required this.usage,
     required this.completedCalls,
   });
 
   final List<Quiz10LunaFailure> failures;
+  final List<Quiz10LunaRow> rows;
   final Map<String, dynamic>? usage;
   final int completedCalls;
 
@@ -311,29 +278,22 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
           parseQuiz10LunaRowOutput(
             attempt.response!.text,
             plan[i],
-            history: histories[i],
           ),
         );
       } catch (error) {
         failures.add(
           Quiz10LunaFailure(
             slot: plan[i],
-            stage: 'validación',
+            stage: 'estructura',
             cause: error,
+            rawText: attempt.response!.text,
           ),
         );
       }
     }
 
-    if (failures.isNotEmpty) {
-      throw Quiz10LunaPackException(
-        failures: List.unmodifiable(failures),
-        usage: _aggregateUsage(calls),
-        completedCalls: calls.length,
-      );
-    }
-
-    // H solo avanza cuando el pack completo de diez unidades es válido.
+    // Luna no se somete a validación semántica en Dart. Toda fila recibida
+    // con la estructura P,D,F,Q,R,A avanza H tal como fue generada.
     for (final row in rows) {
       _historyByPivotDimension
           .putIfAbsent(
@@ -343,18 +303,19 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
           .add((fact: row.fact, answer: row.correct));
     }
 
+    if (failures.isNotEmpty) {
+      throw Quiz10LunaPackException(
+        failures: List.unmodifiable(failures),
+        rows: List.unmodifiable(rows),
+        usage: _aggregateUsage(calls),
+        completedCalls: calls.length,
+      );
+    }
+
     return AiGeneration(
       text: jsonEncode({
         'preguntas': [
-          for (final row in rows)
-            {
-              'P': row.slot.pivot.name,
-              'D': row.slot.dimension.code,
-              'F': row.fact,
-              'Q': row.question,
-              'R': row.correct,
-              'A': row.distractors,
-            },
+          for (final row in rows) jsonDecode(row.rawText),
         ],
       }),
       usage: _aggregateUsage(calls),
