@@ -28,12 +28,12 @@ param(
     [switch]$SaveKeyFromClipboard
 )
 $ErrorActionPreference = 'Stop'
-# Auditoría Luna: un test por defecto; cada test lanza diez llamadas laterales simultáneas.
+# Auditoría Luna: un test por defecto; cada test lanza diez unidades P-D simultáneas.
 if ($ProbarLuna -and -not $PSBoundParameters.ContainsKey('Muestras')) {
     $Muestras = 1
 }
 if ($ProbarLuna -and $Muestras -gt 20) {
-    throw 'La auditoría de Luna admite un máximo de 20 tests (200 llamadas Luna).'
+    throw 'La auditoría de Luna admite un máximo de 20 tests (200 unidades Luna).'
 }
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
@@ -240,7 +240,7 @@ if ($ProbarLuna) {
         try {
             $lunaArgs = @('run', 'tool/verify_generation.dart', '--luna', '--muestras', "$Muestras", '--semilla', "$LunaSemilla")
             & $dart @lunaArgs
-            if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría Luna P×P-D lateral.' }
+            if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría Luna P-D lateral.' }
         } finally { Pop-Location }
     } finally {
         foreach ($name in $previousLunaEnv.Keys) {
@@ -268,9 +268,9 @@ try {
             $env:AI_APPS_GAME_TOKEN = $session.token
             $env:AI_APPS_LUNA_MODEL = $CatalogModel
             & $dart run tool/verify_generation.dart
-            if ($LASTEXITCODE -ne 0) { throw "La generación Q-R de Luna no superó la validación. Consulta $logFile" }
+            if ($LASTEXITCODE -ne 0) { throw "La generación Q-R-A de Luna no superó la validación. Consulta $logFile" }
             @{
-                model = $CatalogModel; validatedLunaRows = 10; scope = 'Luna Q-R (sin Terra)'
+                model = $CatalogModel; validatedLunaRows = 10; scope = 'Luna Q-R-A (sin Terra)'
                 completedAt = [DateTime]::UtcNow.ToString('o')
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $receipt
         } else {
