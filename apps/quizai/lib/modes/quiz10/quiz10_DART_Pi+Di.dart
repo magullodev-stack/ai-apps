@@ -10,6 +10,16 @@ typedef Quiz10Pair = ({
   String difficulty,
 });
 
+typedef Quiz10HistoryKey = ({
+  String pivotCode,
+  String dimensionCode,
+});
+
+Quiz10HistoryKey quiz10HistoryKey(Quiz10Pair slot) => (
+  pivotCode: slot.pivot.code,
+  dimensionCode: slot.dimension.code,
+);
+
 const quiz10Pivots = <Quiz10Pivot>[
   (code: 'P01', name: 'Arquitectura'),
   (code: 'P02', name: 'Arte'),
