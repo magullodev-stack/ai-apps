@@ -7,69 +7,8 @@
 | QuizAI con IA | Iniciar o reutilizar el servicio Dart, conectar el emulador y ejecutar QuizAI; verificar una partida con `-VerifyOnly` y probar 1–200 generaciones P–D→Q–R de Luna sin U con `-ProbarLuna -Muestras N`; detener el servicio con `-StopService`. | [`apps/quizai/run.ps1`](../apps/quizai/run.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
 | Sincronizar `dev` | Sincronizar bidireccionalmente cualquier proyecto de AI-APPS con `origin/dev` desde cualquier subcarpeta del repositorio. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Sección «Sincronización universal de `dev`» de este documento. |
 
-
 ---
 
-
-## Sincronización universal de `dev`
-
-La herramienta oficial es
-[`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1). No pertenece a QuizAI ni
-a ningún proyecto concreto: trabaja sobre la raíz Git del repositorio y sirve
-desde cualquier aplicación o subcarpeta de AI-APPS.
-
-### Comando para pegar en PowerShell
-
-Se puede ejecutar **desde cualquier carpeta dentro del repositorio**:
-
-```powershell
-$root = (git rev-parse --show-toplevel).Trim(); $sync = Join-Path $root 'scripts\sync-dev.ps1'; powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$sync"
-```
-
-Ese bloque sí es un comando ejecutable. No hay que pegar el texto explicativo
-de esta documentación en la terminal. `scripts/sync-dev.ps1` se mantiene en
-ASCII para que Windows PowerShell 5.1 no dependa de la codificación UTF-8 del
-archivo al analizar comillas y signos.
-
-Desde la raíz del repositorio también sirve la forma corta:
-
-```powershell
-.\scripts\sync-dev.ps1
-```
-
-Y en VS Code puede ejecutarse sin escribir nada mediante:
-
-`Terminal > Run Task > AI-APPS: sincronizar dev`
-
-La tarea de [`.vscode/tasks.json`](../.vscode/tasks.json) llama exactamente
-al mismo script.
-
-### Qué sincroniza
-
-En cada ejecución:
-
-1. comprueba que Git esté disponible y que la rama activa sea `dev`;
-2. localiza automáticamente la raíz del repositorio;
-3. prepara todos los cambios locales no ignorados de cualquier proyecto;
-4. incluye también todas las carpetas `.ai-apps/experimentos-*` que existan,
-   sin depender del nombre de una aplicación o experimento concreto;
-5. crea un commit solo cuando existen cambios;
-6. consulta `origin/dev`;
-7. integra el remoto mediante `rebase`;
-8. publica `dev`;
-9. vuelve a consultar el remoto y exige que `HEAD` y `origin/dev` sean
-   idénticos;
-10. si aparecen archivos nuevos mientras está sincronizando, los recoge y
-    repite el ciclo.
-
-Si el rebase encuentra un conflicto, se aborta automáticamente y no se publica
-nada. Si `origin/dev` cambia durante la publicación o aparecen cambios locales
-durante la operación, el procedimiento reintenta hasta tres veces.
-
-Los archivos ignorados continúan sin publicarse, salvo las carpetas genéricas
-`.ai-apps/experimentos-*`, que se incluyen explícitamente.
-
----
 
 ## Emulador Android compartido
 
@@ -114,3 +53,7 @@ La tarea existente `AI-APPS: ejecutar QuizAI con IA` sigue siendo manual
 y reutiliza Android cuando ya está conectado.
 
 ---
+
+# COMMIT
+
+.\scripts\sync-dev.ps1
