@@ -5,7 +5,7 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 
 // Una unidad de generación = una posición del test.
-// Dart fija P, D, dificultad e H; Luna devuelve Q, R y tres distractores.
+// Dart fija P, D, dificultad e H; Luna devuelve F, Q, R y tres distractores.
 // Las diez unidades del Quiz10 se ejecutan simultáneamente.
 
 const String quiz10LunaPrompt = r'''## Entrada
@@ -417,6 +417,8 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   }
 
   Map<String, dynamic>? _aggregateUsage(List<AiGeneration> calls) {
+    if (calls.isEmpty) return null;
+
     const keys = [
       'inputTokens',
       'outputTokens',
