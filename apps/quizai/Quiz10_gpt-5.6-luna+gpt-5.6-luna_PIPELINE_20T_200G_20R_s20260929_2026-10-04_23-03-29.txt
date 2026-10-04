@@ -1,0 +1,164 @@
+AUDITORÍA QUIZ10 — PIPELINE G → R → DART
+Fecha: 2026-10-04 23:03:29.066894
+G: gpt-5.6-luna
+R: gpt-5.6-luna
+Ejecución por test: 10 llamadas G simultáneas, 1 llamada R que revisa los 10 ítems y los ordena por dificultad, aplicación de orden y shuffle en Dart.
+Semilla: 20260929 | Tests: 20 | Llamadas G: 200 | Llamadas R: 20.
+
+========== TEST 1/20 — 16.72 s (G 10.01 s + R 6.71 s) ==========
+
+--- SALIDA G ---
+1. P07 D15 | F: En la periodización habitual de la filosofía occidental, la filosofía moderna sucede inmediatamente a la filosofía medieval. | Q: En la periodización habitual de la filosofía occidental, ¿qué etapa sucede inmediatamente a la filosofía medieval? | O: 1=Filosofía antigua / 2=Filosofía medieval / 3=Filosofía moderna / 4=Filosofía contemporánea | C: 3 | R: Filosofía moderna
+2. P04 D02 | F: El corazón humano está dividido en cuatro cavidades que participan en la circulación de la sangre. | Q: ¿Cuántas cavidades tiene el corazón humano? | O: 1=Dos / 2=Tres / 3=Cuatro / 4=Cinco | C: 3 | R: Cuatro
+3. P16 D01 | F: Un cuadrado tiene cuatro lados de igual longitud y cuatro ángulos rectos. | Q: ¿Qué figura plana posee cuatro lados de igual longitud y cuatro ángulos rectos? | O: 1=Triángulo / 2=Rectángulo / 3=Cuadrado / 4=Pentágono | C: 3 | R: Cuadrado
+4. P08 D04 | F: El electrón es una partícula elemental con carga eléctrica negativa. | Q: ¿A qué grupo de partículas pertenece el electrón? | O: 1=Leptón / 2=Quark / 3=Bosón / 4=Hadrón | C: 1 | R: Leptón
+5. P15 D06 | F: Don Quijote de la Mancha es una obra fundamental de la literatura universal. | Q: ¿Cuál de las siguientes obras se considera generalmente la primera novela moderna? | O: 1=La Celestina / 2=Gargantúa y Pantagruel / 3=Don Quijote de la Mancha / 4=Pamela | C: 3 | R: Don Quijote de la Mancha
+6. P14 D09 | F: Morris Halle coescribió con Noam Chomsky el libro The Sound Pattern of English, publicado en 1968. | Q: ¿Quién coescribió The Sound Pattern of English junto con Noam Chomsky? | O: 1=Roman Jakobson / 2=Edward Sapir / 3=Leonard Bloomfield / 4=Morris Halle | C: 4 | R: Morris Halle
+7. P05 D11 | F: El Tribunal Europeo de Derechos Humanos tiene su sede en Estrasburgo, Francia. | Q: ¿Qué institución judicial tiene su sede en Estrasburgo? | O: 1=Tribunal Europeo de Derechos Humanos / 2=Corte Internacional de Justicia / 3=Tribunal Penal Internacional / 4=Tribunal de Justicia de la Unión Europea | C: 1 | R: Tribunal Europeo de Derechos Humanos
+8. P09 D10 | F: El sushi es una preparación culinaria originaria de Japón. | Q: ¿En qué país se originó el sushi? | O: 1=China / 2=Japón / 3=Corea del Sur / 4=Tailandia | C: 2 | R: Japón
+9. P12 D29 | F: Nicolás Maquiavelo sostuvo que la capacidad política permite afrontar las variaciones de la fortuna. | Q: ¿Qué concepción de la fortuna y la capacidad política expone Nicolás Maquiavelo en *El príncipe*? | O: 1=La fortuna determina por completo el destino de los Estados y vuelve inútil toda acción humana. / 2=La fortuna es una ilusión causada por la ignorancia de leyes naturales inmutables. / 3=La fortuna condiciona los acontecimientos, pero la capacidad política permite resistirla y aprovechar sus cambios. / 4=La fortuna solo beneficia a quienes gobiernan conforme a principios religiosos establecidos. | C: 3 | R: La fortuna condiciona los acontecimientos, pero la capacidad política permite resistirla y aprovechar sus cambios.
+10. P03 D26 | F: Galileo Galilei publicó Sidereus Nuncius en 1610. | Q: ¿Qué obra publicó Galileo Galilei en 1610? | O: 1=De revolutionibus orbium coelestium / 2=Sidereus Nuncius / 3=Principia Mathematica / 4=Cosmos | C: 2 | R: Sidereus Nuncius
+
+--- ENTRADA R (1 LLAMADA, 10 ÍTEMS) ---
+T := [1]
+Q: En la periodización habitual de la filosofía occidental, ¿qué etapa sucede inmediatamente a la filosofía medieval?
+R: Filosofía moderna
+d1: Filosofía antigua
+d2: Filosofía medieval
+d3: Filosofía contemporánea
+
+[2]
+Q: ¿Cuántas cavidades tiene el corazón humano?
+R: Cuatro
+d1: Dos
+d2: Tres
+d3: Cinco
+
+[3]
+Q: ¿Qué figura plana posee cuatro lados de igual longitud y cuatro ángulos rectos?
+R: Cuadrado
+d1: Triángulo
+d2: Rectángulo
+d3: Pentágono
+
+[4]
+Q: ¿A qué grupo de partículas pertenece el electrón?
+R: Leptón
+d1: Quark
+d2: Bosón
+d3: Hadrón
+
+[5]
+Q: ¿Cuál de las siguientes obras se considera generalmente la primera novela moderna?
+R: Don Quijote de la Mancha
+d1: La Celestina
+d2: Gargantúa y Pantagruel
+d3: Pamela
+
+[6]
+Q: ¿Quién coescribió The Sound Pattern of English junto con Noam Chomsky?
+R: Morris Halle
+d1: Roman Jakobson
+d2: Edward Sapir
+d3: Leonard Bloomfield
+
+[7]
+Q: ¿Qué institución judicial tiene su sede en Estrasburgo?
+R: Tribunal Europeo de Derechos Humanos
+d1: Corte Internacional de Justicia
+d2: Tribunal Penal Internacional
+d3: Tribunal de Justicia de la Unión Europea
+
+[8]
+Q: ¿En qué país se originó el sushi?
+R: Japón
+d1: China
+d2: Corea del Sur
+d3: Tailandia
+
+[9]
+Q: ¿Qué concepción de la fortuna y la capacidad política expone Nicolás Maquiavelo en *El príncipe*?
+R: La fortuna condiciona los acontecimientos, pero la capacidad política permite resistirla y aprovechar sus cambios.
+d1: La fortuna determina por completo el destino de los Estados y vuelve inútil toda acción humana.
+d2: La fortuna es una ilusión causada por la ignorancia de leyes naturales inmutables.
+d3: La fortuna solo beneficia a quienes gobiernan conforme a principios religiosos establecidos.
+
+[10]
+Q: ¿Qué obra publicó Galileo Galilei en 1610?
+R: Sidereus Nuncius
+d1: De revolutionibus orbium coelestium
+d2: Principia Mathematica
+d3: Cosmos
+
+∀i ∈ {1,...,10}:
+
+Oᵢ := {Rᵢ,d1ᵢ,d2ᵢ,d3ᵢ}
+
+Cᵢ := {o ∈ Oᵢ : o responde correctamente a Qᵢ}
+
+Aᵢ := {a ∈ Qᵢ : a requiere un referente contextual y referente(a,Qᵢ,Oᵢ) = ∅}
+
+Cᵢ = {Rᵢ} ⇒ Δᵢ = ∅
+
+Cᵢ ≠ {Rᵢ} ⇒ Δᵢ contiene únicamente correcciones de Rᵢ,d1ᵢ,d2ᵢ,d3ᵢ necesarias para que Cᵢ = {Rᵢ}.
+
+Aᵢ = ∅ ⇒ Qᵢ' = Qᵢ
+
+Aᵢ ≠ ∅ ⇒ Qᵢ' difiere de Qᵢ únicamente en sustituir cada a ∈ Aᵢ por un referente explícito inferido de Qᵢ,Oᵢ,Rᵢ.
+
+Cualquier otra modificación de Qᵢ está prohibida.
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+Pr(acierto(n₁) | generalista) ≥ ... ≥ Pr(acierto(n₁₀) | generalista)
+
+
+--- SALIDA R RAW ---
+{"correcciones":[],"Orden":[2,3,8,1,7,5,10,4,6,9]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: En la periodización habitual de la filosofía occidental, ¿qué etapa sucede inmediatamente a la filosofía medieval? | R: Filosofía moderna | d1: Filosofía antigua | d2: Filosofía medieval | d3: Filosofía contemporánea
+2. Q: ¿Cuántas cavidades tiene el corazón humano? | R: Cuatro | d1: Dos | d2: Tres | d3: Cinco
+3. Q: ¿Qué figura plana posee cuatro lados de igual longitud y cuatro ángulos rectos? | R: Cuadrado | d1: Triángulo | d2: Rectángulo | d3: Pentágono
+4. Q: ¿A qué grupo de partículas pertenece el electrón? | R: Leptón | d1: Quark | d2: Bosón | d3: Hadrón
+5. Q: ¿Cuál de las siguientes obras se considera generalmente la primera novela moderna? | R: Don Quijote de la Mancha | d1: La Celestina | d2: Gargantúa y Pantagruel | d3: Pamela
+6. Q: ¿Quién coescribió The Sound Pattern of English junto con Noam Chomsky? | R: Morris Halle | d1: Roman Jakobson | d2: Edward Sapir | d3: Leonard Bloomfield
+7. Q: ¿Qué institución judicial tiene su sede en Estrasburgo? | R: Tribunal Europeo de Derechos Humanos | d1: Corte Internacional de Justicia | d2: Tribunal Penal Internacional | d3: Tribunal de Justicia de la Unión Europea
+8. Q: ¿En qué país se originó el sushi? | R: Japón | d1: China | d2: Corea del Sur | d3: Tailandia
+9. Q: ¿Qué concepción de la fortuna y la capacidad política expone Nicolás Maquiavelo en *El príncipe*? | R: La fortuna condiciona los acontecimientos, pero la capacidad política permite resistirla y aprovechar sus cambios. | d1: La fortuna determina por completo el destino de los Estados y vuelve inútil toda acción humana. | d2: La fortuna es una ilusión causada por la ignorancia de leyes naturales inmutables. | d3: La fortuna solo beneficia a quienes gobiernan conforme a principios religiosos establecidos.
+10. Q: ¿Qué obra publicó Galileo Galilei en 1610? | R: Sidereus Nuncius | d1: De revolutionibus orbium coelestium | d2: Principia Mathematica | d3: Cosmos
+
+--- ORDEN R ---
+[2, 3, 8, 1, 7, 5, 10, 4, 6, 9]
+
+--- TEST TRAS R Y ORDEN ---
+1. [original 2] Q: ¿Cuántas cavidades tiene el corazón humano? | R: Cuatro | d1: Dos | d2: Tres | d3: Cinco
+2. [original 3] Q: ¿Qué figura plana posee cuatro lados de igual longitud y cuatro ángulos rectos? | R: Cuadrado | d1: Triángulo | d2: Rectángulo | d3: Pentágono
+3. [original 8] Q: ¿En qué país se originó el sushi? | R: Japón | d1: China | d2: Corea del Sur | d3: Tailandia
+4. [original 1] Q: En la periodización habitual de la filosofía occidental, ¿qué etapa sucede inmediatamente a la filosofía medieval? | R: Filosofía moderna | d1: Filosofía antigua | d2: Filosofía medieval | d3: Filosofía contemporánea
+5. [original 7] Q: ¿Qué institución judicial tiene su sede en Estrasburgo? | R: Tribunal Europeo de Derechos Humanos | d1: Corte Internacional de Justicia | d2: Tribunal Penal Internacional | d3: Tribunal de Justicia de la Unión Europea
+6. [original 5] Q: ¿Cuál de las siguientes obras se considera generalmente la primera novela moderna? | R: Don Quijote de la Mancha | d1: La Celestina | d2: Gargantúa y Pantagruel | d3: Pamela
+7. [original 10] Q: ¿Qué obra publicó Galileo Galilei en 1610? | R: Sidereus Nuncius | d1: De revolutionibus orbium coelestium | d2: Principia Mathematica | d3: Cosmos
+8. [original 4] Q: ¿A qué grupo de partículas pertenece el electrón? | R: Leptón | d1: Quark | d2: Bosón | d3: Hadrón
+9. [original 6] Q: ¿Quién coescribió The Sound Pattern of English junto con Noam Chomsky? | R: Morris Halle | d1: Roman Jakobson | d2: Edward Sapir | d3: Leonard Bloomfield
+10. [original 9] Q: ¿Qué concepción de la fortuna y la capacidad política expone Nicolás Maquiavelo en *El príncipe*? | R: La fortuna condiciona los acontecimientos, pero la capacidad política permite resistirla y aprovechar sus cambios. | d1: La fortuna determina por completo el destino de los Estados y vuelve inútil toda acción humana. | d2: La fortuna es una ilusión causada por la ignorancia de leyes naturales inmutables. | d3: La fortuna solo beneficia a quienes gobiernan conforme a principios religiosos establecidos.
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Cuántas cavidades tiene el corazón humano? | R: Cuatro | O: Cinco / Cuatro / Tres / Dos
+2. ¿Qué figura plana posee cuatro lados de igual longitud y cuatro ángulos rectos? | R: Cuadrado | O: Pentágono / Triángulo / Rectángulo / Cuadrado
+3. ¿En qué país se originó el sushi? | R: Japón | O: China / Corea del Sur / Japón / Tailandia
+4. En la periodización habitual de la filosofía occidental, ¿qué etapa sucede inmediatamente a la filosofía medieval? | R: Filosofía moderna | O: Filosofía medieval / Filosofía contemporánea / Filosofía antigua / Filosofía moderna
+5. ¿Qué institución judicial tiene su sede en Estrasburgo? | R: Tribunal Europeo de Derechos Humanos | O: Corte Internacional de Justicia / Tribunal de Justicia de la Unión Europea / Tribunal Europeo de Derechos Humanos / Tribunal Penal Internacional
+6. ¿Cuál de las siguientes obras se considera generalmente la primera novela moderna? | R: Don Quijote de la Mancha | O: Don Quijote de la Mancha / Gargantúa y Pantagruel / Pamela / La Celestina
+7. ¿Qué obra publicó Galileo Galilei en 1610? | R: Sidereus Nuncius | O: Principia Mathematica / Sidereus Nuncius / Cosmos / De revolutionibus orbium coelestium
+8. ¿A qué grupo de partículas pertenece el electrón? | R: Leptón | O: Bosón / Hadrón / Quark / Leptón
+9. ¿Quién coescribió The Sound Pattern of English junto con Noam Chomsky? | R: Morris Halle | O: Roman Jakobson / Morris Halle / Leonard Bloomfield / Edward Sapir
+10. ¿Qué concepción de la fortuna y la capacidad política expone Nicolás Maquiavelo en *El príncipe*? | R: La fortuna condiciona los acontecimientos, pero la capacidad política permite resistirla y aprovechar sus cambios. | O: La fortuna es una ilusión causada por la ignorancia de leyes naturales inmutables. / La fortuna condiciona los acontecimientos, pero la capacidad política permite resistirla y aprovechar sus cambios. / La fortuna solo beneficia a quienes gobiernan conforme a principios religiosos establecidos. / La fortuna determina por completo el destino de los Estados y vuelve inútil toda acción humana.
+
+USO TEST 1 | G: entrada 3555, salida 5018, razonamiento 3960, coste USD 0.006733 | R: entrada 970, salida 403, razonamiento 363, coste USD 0.000678
+
