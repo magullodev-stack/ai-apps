@@ -192,7 +192,7 @@ Future<void> main(List<String> args) async {
       final dCounts = <String, int>{};
       final qCounts = <String, int>{};
       final rCounts = <String, int>{};
-      final frByPivotDimensionCounts = <String, int>{};
+      final qrByPivotDimensionCounts = <String, int>{};
       final failures = <String, int>{};
       final auditIssues = <String, int>{};
 
@@ -215,7 +215,7 @@ Future<void> main(List<String> args) async {
           final p = row.slot.pivot.code;
           final d = row.slot.dimension.code;
           final pairKey =
-              '$p\u001f$d\u001f${_key(row.fact)}\u001f${_key(row.correct)}';
+              '$p\u001f$d\u001f${_key(row.question)}\u001f${_key(row.correct)}';
           final issues = <String>[];
 
           if (_key(row.returnedPivot) != _key(row.slot.pivot.name)) {
@@ -228,7 +228,6 @@ Future<void> main(List<String> args) async {
               'D devuelta "${row.returnedDimension}" != ${row.slot.dimension.code}',
             );
           }
-          if (row.fact.trim().isEmpty) issues.add('F vacía');
           if (row.question.trim().isEmpty) issues.add('Q vacía');
 
           if (row.options.length != 4) {
@@ -255,8 +254,8 @@ Future<void> main(List<String> args) async {
             issues.add('Q contiene literalmente R := O[C]');
           }
 
-          if ((frByPivotDimensionCounts[pairKey] ?? 0) > 0) {
-            issues.add('H ya contenía el par factual (F,R)');
+          if ((qrByPivotDimensionCounts[pairKey] ?? 0) > 0) {
+            issues.add('H ya contenía el par (Q,R)');
           }
 
           pCounts.update(p, (n) => n + 1, ifAbsent: () => 1);
@@ -264,7 +263,7 @@ Future<void> main(List<String> args) async {
           qCounts.update(_key(row.question), (n) => n + 1, ifAbsent: () => 1);
           if (correct.isNotEmpty) {
             rCounts.update(_key(correct), (n) => n + 1, ifAbsent: () => 1);
-            frByPivotDimensionCounts.update(
+            qrByPivotDimensionCounts.update(
               pairKey,
               (n) => n + 1,
               ifAbsent: () => 1,
@@ -273,7 +272,7 @@ Future<void> main(List<String> args) async {
 
           report.writeln(
             '${row.slot.number}. $p $d | '
-            'F: ${row.fact} | Q: ${row.question} | '
+            'Q: ${row.question} | '
             'O: ${[
               for (var i = 0; i < row.options.length; i++)
                 "${i + 1}=${row.options[i]}",
@@ -432,7 +431,7 @@ Future<void> main(List<String> args) async {
       final repeatedR =
           rCounts.values.where((count) => count > 1).length;
       final repeatedFactAnswerForSamePivotDimension =
-          frByPivotDimensionCounts.values.where((count) => count > 1).length;
+          qrByPivotDimensionCounts.values.where((count) => count > 1).length;
 
       report.writeln('========== ESTADÍSTICAS FINALES ==========');
       report.writeln(
