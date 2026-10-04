@@ -78,9 +78,9 @@ String _formatPatch(
   for (final change in patch.changes) {
     buffer.writeln('${patch.number}.${change.field}');
     buffer.writeln(
-      '  Antes: ${_originalReviewValue(row, change.field)}',
+      '  G: ${_originalReviewValue(row, change.field)}',
     );
-    buffer.writeln('  Después: ${change.value}');
+    buffer.writeln('  R: ${change.value}');
   }
 
   return buffer.toString().trimRight();
