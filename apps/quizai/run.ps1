@@ -26,6 +26,8 @@ param(
     [string]$PivotModel = 'gpt-5.6-luna',
     [ValidateRange(1, 200)]
     [int]$Muestras = 1,
+    [ValidateRange(1, 200)]
+    [int]$Usuarios = 1,
     [switch]$StopService,
     [switch]$SaveKeyFromClipboard
 )
@@ -37,8 +39,8 @@ if (($ProbarLuna -or $ProbarQuiz10) -and -not $PSBoundParameters.ContainsKey('Mu
 if ($ProbarLuna -and $Muestras -gt 20) {
     throw 'La auditoría Luna admite un máximo de 20 tests.'
 }
-if ($ProbarQuiz10 -and $Muestras -gt 200) {
-    throw 'La auditoría de Quiz10 admite un máximo de 200 tests.'
+if ($ProbarQuiz10 -and ($Muestras * $Usuarios) -gt 200) {
+    throw 'La auditoría de Quiz10 admite un máximo de 200 packs totales (Usuarios × Muestras).'
 }
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
@@ -262,7 +264,7 @@ if ($ProbarQuiz10) {
     $env:AI_APPS_QUIZ10_REVIEW_MODEL = $Quiz10ReviewModel
     Push-Location (Join-Path $repo 'apps\quizai')
     try {
-        & $dart run tool/verify_quiz10_pipeline.dart --quiz10 --muestras "$Muestras" --semilla "$LunaSemilla"
+        & $dart run tool/verify_quiz10_pipeline.dart --quiz10 --muestras "$Muestras" --usuarios "$Usuarios" --semilla "$LunaSemilla"
         if ($LASTEXITCODE -ne 0) { throw 'Falló la auditoría completa de Quiz10.' }
     } finally { Pop-Location }
     return
