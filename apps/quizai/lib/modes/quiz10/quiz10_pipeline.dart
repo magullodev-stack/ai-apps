@@ -5,6 +5,7 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 import 'Quiz10_PROMPT_G.dart';
 import 'Quiz10_PROMPT_R.dart';
+import 'Quiz10_PROMPT_S.dart';
 
 typedef Quiz10FinalQuestion = ({
   String pivot,
@@ -32,23 +33,29 @@ class Quiz10PipelineResult {
     required this.plan,
     required this.lunaRows,
     required this.lunaGeneration,
-    required this.reviewInput,
     required this.review,
+    required this.correctedItems,
+    required this.sortInput,
+    required this.sort,
     required this.reviewedItems,
     required this.questions,
     required this.lunaDuration,
     required this.reviewDuration,
+    required this.sortDuration,
   });
 
   final List<Quiz10Pair> plan;
   final List<Quiz10LunaRow> lunaRows;
   final AiGeneration lunaGeneration;
-  final String reviewInput;
   final Quiz10ReviewResult review;
+  final List<Quiz10ReviewedItem> correctedItems;
+  final String sortInput;
+  final Quiz10SortResult sort;
   final List<Quiz10ReviewedItem> reviewedItems;
   final List<Quiz10FinalQuestion> questions;
   final Duration lunaDuration;
   final Duration reviewDuration;
+  final Duration sortDuration;
 }
 
 List<Quiz10ReviewedItem> applyQuiz10Review(
@@ -62,47 +69,78 @@ List<Quiz10ReviewedItem> applyQuiz10Review(
   final patchesByNumber = {
     for (final patch in review.patches) patch.number: patch,
   };
-  final byNumber = <int, Quiz10ReviewedItem>{};
 
-  for (var i = 0; i < rows.length; i++) {
-    final row = rows[i];
-    var question = row.question;
-    var correct = row.correct;
-    final distractors = [...row.distractors];
+  return List.unmodifiable([
+    for (var i = 0; i < rows.length; i++)
+      _applyReviewPatch(
+        rows[i],
+        patchesByNumber[i + 1],
+      ),
+  ]);
+}
 
-    final patch = patchesByNumber[i + 1];
-    if (patch != null) {
-      for (final change in patch.changes) {
-        switch (change.field) {
-          case 'Q':
-            question = change.value;
-            break;
-          case 'R':
-            correct = change.value;
-            break;
-          case 'd1':
-            distractors[0] = change.value;
-            break;
-          case 'd2':
-            distractors[1] = change.value;
-            break;
-          case 'd3':
-            distractors[2] = change.value;
-            break;
-        }
+Quiz10ReviewedItem _applyReviewPatch(
+  Quiz10LunaRow row,
+  Quiz10ReviewPatch? patch,
+) {
+  var question = row.question;
+  var correct = row.correct;
+  final distractors = [...row.distractors];
+
+  if (patch != null) {
+    for (final change in patch.changes) {
+      switch (change.field) {
+        case 'Q':
+          question = change.value;
+          break;
+        case 'R':
+          correct = change.value;
+          break;
+        case 'd1':
+          distractors[0] = change.value;
+          break;
+        case 'd2':
+          distractors[1] = change.value;
+          break;
+        case 'd3':
+          distractors[2] = change.value;
+          break;
       }
     }
+  }
 
-    byNumber[i + 1] = Quiz10ReviewedItem(
-      source: row,
-      question: question,
-      correct: correct,
-      distractors: List.unmodifiable(distractors),
-    );
+  return Quiz10ReviewedItem(
+    source: row,
+    question: question,
+    correct: correct,
+    distractors: List.unmodifiable(distractors),
+  );
+}
+
+List<Quiz10SortItem> buildQuiz10SortItems(
+  List<Quiz10ReviewedItem> items,
+) => List.unmodifiable([
+  for (final item in items)
+    Quiz10SortItem(
+      question: item.question,
+      correct: item.correct,
+      distractors: item.distractors,
+    ),
+]);
+
+List<Quiz10ReviewedItem> applyQuiz10Order(
+  List<Quiz10ReviewedItem> items,
+  List<int> order,
+) {
+  if (items.length != 10 ||
+      order.length != 10 ||
+      order.toSet().length != 10 ||
+      order.any((value) => value < 1 || value > 10)) {
+    throw ArgumentError('Quiz10 requiere una permutación de 1 a 10.');
   }
 
   return List.unmodifiable([
-    for (final number in review.order) byNumber[number]!,
+    for (final number in order) items[number - 1],
   ]);
 }
 
@@ -129,6 +167,7 @@ final class AiQuiz10Pipeline {
     required AiAppsClient client,
     required String lunaModel,
     required String reviewerModel,
+    String? sorterModel,
   }) : luna = AiQuiz10LunaGenerator(
          client: client,
          model: lunaModel,
@@ -136,10 +175,15 @@ final class AiQuiz10Pipeline {
        reviewer = AiQuiz10Reviewer(
          client: client,
          model: reviewerModel,
+       ),
+       sorter = AiQuiz10Sorter(
+         client: client,
+         model: sorterModel ?? reviewerModel,
        );
 
   final AiQuiz10LunaGenerator luna;
   final AiQuiz10Reviewer reviewer;
+  final AiQuiz10Sorter sorter;
 
   Future<List<Quiz10FinalQuestion>> generate() async {
     final result = await generateDetailed();
@@ -160,17 +204,27 @@ final class AiQuiz10Pipeline {
     lunaWatch.stop();
     final lunaRows = parseQuiz10LunaOutput(lunaGeneration.text, plan);
 
-    final reviewInput = quiz10ReviewInput(lunaRows);
     final reviewWatch = Stopwatch()..start();
     final review = await reviewer.review(lunaRows);
     reviewWatch.stop();
 
-    final reviewedItems = applyQuiz10Review(lunaRows, review);
+    final correctedItems = applyQuiz10Review(lunaRows, review);
+
+    final sortItems = buildQuiz10SortItems(correctedItems);
+    final sortInput = quiz10SortInput(sortItems);
+    final sortWatch = Stopwatch()..start();
+    final sort = await sorter.sort(sortItems);
+    sortWatch.stop();
+
+    final reviewedItems = applyQuiz10Order(
+      correctedItems,
+      sort.order,
+    );
 
     luna.commitReviewedQuestions(
-      reviewedItems.map((item) => item.source).toList(growable: false),
-      reviewedItems.map((item) => item.question).toList(growable: false),
-      reviewedItems.map((item) => item.correct).toList(growable: false),
+      correctedItems.map((item) => item.source).toList(growable: false),
+      correctedItems.map((item) => item.question).toList(growable: false),
+      correctedItems.map((item) => item.correct).toList(growable: false),
     );
 
     final questions = buildQuiz10FinalQuestions(
@@ -182,12 +236,15 @@ final class AiQuiz10Pipeline {
       plan: List.unmodifiable(plan),
       lunaRows: List.unmodifiable(lunaRows),
       lunaGeneration: lunaGeneration,
-      reviewInput: reviewInput,
       review: review,
+      correctedItems: correctedItems,
+      sortInput: sortInput,
+      sort: sort,
       reviewedItems: reviewedItems,
       questions: questions,
       lunaDuration: lunaWatch.elapsed,
       reviewDuration: reviewWatch.elapsed,
+      sortDuration: sortWatch.elapsed,
     );
   }
 }
