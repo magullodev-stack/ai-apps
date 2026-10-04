@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:quizai/modes/quiz10/Quiz10_PROMPT_G.dart';
 import 'package:quizai/modes/quiz10/Quiz10_PROMPT_R.dart';
-import 'package:quizai/modes/quiz10/Quiz10_PROMPT_S.dart';
 import 'package:quizai/modes/quiz10/quiz10_pipeline.dart';
 
 String _key(String text) =>
@@ -194,12 +193,10 @@ Future<void> main(List<String> args) async {
     client: client,
     lunaModel: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
     reviewerModel: reviewModel,
-    sorterModel: env['AI_APPS_QUIZ10_SORT_MODEL'] ?? reviewModel,
   );
 
   final lunaRates = _rates(pipeline.luna.model);
   final reviewRates = _rates(pipeline.reviewer.model);
-  final sortRates = _rates(pipeline.sorter.model);
 
   final timestamp = DateTime.now()
       .toIso8601String()
@@ -209,9 +206,8 @@ Future<void> main(List<String> args) async {
 
   final path =
       'Quiz10_${_modelLabel(pipeline.luna.model)}+'
-      '${_modelLabel(pipeline.reviewer.model)}+'
-      '${_modelLabel(pipeline.sorter.model)}_PIPELINE_'
-      '${samples}T_${samples * 10}G_${samples}R_${samples}S_'
+      '${_modelLabel(pipeline.reviewer.model)}_PIPELINE_'
+      '${samples}T_${samples * 10}G_${samples}R_'
       's${seed}_$timestamp.txt';
 
   final report = File(path).openWrite();
@@ -219,7 +215,6 @@ Future<void> main(List<String> args) async {
   final totalDurations = <int>[];
   final lunaDurations = <int>[];
   final reviewDurations = <int>[];
-  final sortDurations = <int>[];
 
   var completeTests = 0;
   var failedTests = 0;
@@ -237,22 +232,16 @@ Future<void> main(List<String> args) async {
   var reviewInput = 0;
   var reviewOutput = 0;
   var reviewReasoning = 0;
-  var sortInput = 0;
-  var sortOutput = 0;
-  var sortReasoning = 0;
   var lunaUsageTests = 0;
   var reviewUsageTests = 0;
-  var sortUsageTests = 0;
 
   var totalCost = 0.0;
   var lunaCostTotal = 0.0;
   var reviewerCostTotal = 0.0;
-  var sorterCostTotal = 0.0;
   var completePackCostTotal = 0.0;
   var fullyPricedPacks = 0;
   var lunaPricedTests = 0;
   var reviewerPricedTests = 0;
-  var sorterPricedTests = 0;
   var pricedStages = 0;
 
   try {
