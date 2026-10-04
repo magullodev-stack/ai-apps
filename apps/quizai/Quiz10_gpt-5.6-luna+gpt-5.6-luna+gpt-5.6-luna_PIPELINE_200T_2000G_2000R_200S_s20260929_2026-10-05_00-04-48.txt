@@ -1,0 +1,8 @@
+AUDITORÍA QUIZ10 — PIPELINE G → R → S → DART
+Fecha: 2026-10-05 00:04:48.559534
+G: gpt-5.6-luna
+R: gpt-5.6-luna
+S: gpt-5.6-luna
+Ejecución por test: 10 llamadas G simultáneas, 10 revisiones R simultáneas, 1 ordenación global S, aplicación de orden y shuffle en Dart.
+Semilla: 20260929 | Tests: 200 | Llamadas G: 2000 | Llamadas R: 2000 | Llamadas S: 200.
+
