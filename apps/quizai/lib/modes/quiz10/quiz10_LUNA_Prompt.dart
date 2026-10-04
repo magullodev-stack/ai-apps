@@ -8,7 +8,9 @@ import 'quiz10_DART_Pi+Di.dart';
 // Dart fija P, D e H; Luna devuelve F, Q, cuatro opciones O y la posición C.
 // Las diez unidades del Quiz10 se ejecutan simultáneamente.
 
-const String quiz10LunaPrompt = r'''## Entrada
+const String quiz10LunaPrompt = r'''# PROMPT 1
+
+## Entrada
 
 P := {{P}}
 D := {{D}}
@@ -19,7 +21,7 @@ H := {{H}}
 
 ## Generación
 
-Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado o técnico del área, que permita cumplir D y contenga toda la información factual necesaria para determinar la respuesta correcta.
+Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y contenga toda la información factual necesaria para determinar la respuesta correcta.
 Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
 
 O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
@@ -28,7 +30,7 @@ C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
 
 R := O_C
 
-Q no contiene R.
+Q no contiene R ni proporciona una pista léxica evidente que permita inferir R por su forma, raíz, derivación o semejanza verbal.
 
 (F, R) ∉ H
 
@@ -36,8 +38,7 @@ Q no contiene R.
 ## Salida
 
 | P | D | F | Q | O | C |
-|---|---|---|---|---|---|
-''';
+|---|---|---|---|---|---|''';
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
