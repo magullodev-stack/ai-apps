@@ -28,7 +28,7 @@ Orden := (n₁,...,n₁₀)
 
 Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
 
-para un concursante generalista de cultura general.
+Pr(acierto(n₁) | generalista) ≥ ... ≥ Pr(acierto(n₁₀) | generalista)
 ''';
 
 String quiz10ReviewItemLiteral(int number, Quiz10LunaRow row) => [
