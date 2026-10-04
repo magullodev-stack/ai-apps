@@ -187,7 +187,7 @@ const quiz10Dimensions = <Quiz10Dimension>[
     code: 'D34',
     instruction: 'Pregunta con qué instrumento o medio se ejecuta una intervención.',
   ),
-]
+];
 
 /// Diez P distintos y diez D distintas por Quiz10.
 List<Quiz10Pair> selectQuiz10Pairs(Random random) {
