@@ -21,8 +21,9 @@ H := {{H}}
 
 ## Generación
 
-Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y contenga toda la información factual necesaria para determinar la respuesta correcta.
-Si H ≠ ∅, F debe tratar un hecho o conocimiento materialmente distinto de todos los ya usados en H; no reutilices, reformules, parafrasees ni preguntes desde otro ángulo sobre ninguno de ellos.
+Elige un núcleo de conocimiento K de P, propio de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D. K identifica de forma breve qué conocimiento se pone a prueba, sin incluir la respuesta R ni enumerar opciones, evidencias o datos auxiliares.
+Si H ≠ ∅, K debe ser materialmente distinto de todos los núcleos ya usados en H; no reutilices, reformules, parafrasees ni preguntes desde otro ángulo sobre ninguno de ellos.
+Construye una base factual F sobre K que contenga toda la información necesaria para determinar la respuesta correcta.
 Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
 
 O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
@@ -37,8 +38,8 @@ Q no contiene R ni proporciona una pista léxica evidente que permita inferir R 
 
 ## Salida
 
-| P | D | F | Q | O | C |
-|---|---|---|---|---|---|''';
+| P | D | K | F | Q | O | C |
+|---|---|---|---|---|---|---|''';
 
 String _historyLiteral(List<String> history) {
   if (history.isEmpty) return '∅';
@@ -59,10 +60,11 @@ String quiz10LunaInput(
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['P', 'D', 'F', 'Q', 'O', 'C'],
+  'required': ['P', 'D', 'K', 'F', 'Q', 'O', 'C'],
   'properties': {
     'P': {'type': 'string'},
     'D': {'type': 'string'},
+    'K': {'type': 'string'},
     'F': {'type': 'string'},
     'Q': {'type': 'string'},
     'O': {
@@ -88,6 +90,7 @@ class Quiz10LunaRow {
     required this.slot,
     required this.returnedPivot,
     required this.returnedDimension,
+    required this.knowledge,
     required this.fact,
     required this.question,
     required this.options,
@@ -98,6 +101,7 @@ class Quiz10LunaRow {
   final Quiz10Pair slot;
   final String returnedPivot;
   final String returnedDimension;
+  final String knowledge;
   final String fact;
   final String question;
   final List<String> options;
@@ -135,12 +139,13 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
   }
   if (decoded['P'] is! String ||
       decoded['D'] is! String ||
+      decoded['K'] is! String ||
       decoded['F'] is! String ||
       decoded['Q'] is! String ||
       decoded['O'] is! Map<String, dynamic> ||
       decoded['C'] is! int) {
     throw const FormatException(
-      'La salida no conserva la estructura P,D,F,Q,O,C esperada.',
+      'La salida no conserva la estructura P,D,K,F,Q,O,C esperada.',
     );
   }
 
@@ -154,6 +159,7 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
     slot: slot,
     returnedPivot: decoded['P'] as String,
     returnedDimension: decoded['D'] as String,
+    knowledge: decoded['K'] as String,
     fact: decoded['F'] as String,
     question: decoded['Q'] as String,
     options: List.unmodifiable([
@@ -241,7 +247,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   final AiAppsClient client;
   final String model;
 
-  // Hechos ya usados por cruce P×D durante la vida de esta instancia.
+  // Núcleos de conocimiento ya usados por cruce P×D durante la vida de esta instancia.
   final Map<Quiz10HistoryKey, List<String>> _historyByPivotDimension = {};
 
   @override
@@ -323,7 +329,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     }
 
     if (commitHistory) {
-      commitFacts(rows);
+      commitKnowledge(rows);
     }
 
     return AiGeneration(
@@ -336,14 +342,14 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     );
   }
 
-  void commitFacts(List<Quiz10LunaRow> rows) {
+  void commitKnowledge(List<Quiz10LunaRow> rows) {
     for (final row in rows) {
       _historyByPivotDimension
           .putIfAbsent(
             quiz10HistoryKey(row.slot),
             () => <String>[],
           )
-          .add(row.fact);
+          .add(row.knowledge);
     }
   }
 
