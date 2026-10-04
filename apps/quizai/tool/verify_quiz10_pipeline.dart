@@ -243,21 +243,19 @@ Future<void> main(List<String> args) async {
   var pricedStages = 0;
 
   try {
-    report.writeln('AUDITORÍA QUIZ10 — PIPELINE G → R → S → DART');
+    report.writeln('AUDITORÍA QUIZ10 — PIPELINE G → R → DART');
     report.writeln('Fecha: ${DateTime.now()}');
     report.writeln('G: ${pipeline.luna.model}');
     report.writeln('R: ${pipeline.reviewer.model}');
-    report.writeln('S: ${pipeline.sorter.model}');
     report.writeln(
       'Ejecución por test: 10 llamadas G simultáneas, '
-      '1 revisión R de los 10 ítems, 1 ordenación global S, '
+      '1 llamada R que revisa los 10 ítems y los ordena por dificultad, '
       'aplicación de orden y shuffle en Dart.',
     );
     report.writeln(
       'Semilla: $seed | Tests: $samples | '
       'Llamadas G: ${samples * 10} | '
-      'Llamadas R: $samples | '
-      'Llamadas S: $samples.',
+      'Llamadas R: $samples.',
     );
     report.writeln();
 
@@ -276,11 +274,8 @@ Future<void> main(List<String> args) async {
         totalDurations.add(totalWatch.elapsedMilliseconds);
         lunaDurations.add(result.lunaDuration.inMilliseconds);
         reviewDurations.add(result.reviewDuration.inMilliseconds);
-        sortDurations.add(result.sortDuration.inMilliseconds);
-
         final lunaUsage = result.lunaGeneration.usage;
         final reviewerUsage = result.review.usage;
-        final sorterUsage = result.sort.usage;
 
         final li = _usage(lunaUsage, 'inputTokens');
         final lo = _usage(lunaUsage, 'outputTokens');
@@ -302,16 +297,6 @@ Future<void> main(List<String> args) async {
           reviewReasoning += rr ?? 0;
         }
 
-        final si = _usage(sorterUsage, 'inputTokens');
-        final so = _usage(sorterUsage, 'outputTokens');
-        final sr = _usage(sorterUsage, 'reasoningTokens');
-        if (si != null && so != null) {
-          sortUsageTests++;
-          sortInput += si;
-          sortOutput += so;
-          sortReasoning += sr ?? 0;
-        }
-
         final lunaCost = _cost(
           lunaUsage,
           inputRate: lunaRates.input,
@@ -322,12 +307,6 @@ Future<void> main(List<String> args) async {
           inputRate: reviewRates.input,
           outputRate: reviewRates.output,
         );
-        final sorterCost = _cost(
-          sorterUsage,
-          inputRate: sortRates.input,
-          outputRate: sortRates.output,
-        );
-
         if (lunaCost != null) {
           totalCost += lunaCost;
           lunaCostTotal += lunaCost;
@@ -340,16 +319,9 @@ Future<void> main(List<String> args) async {
           reviewerPricedTests++;
           pricedStages++;
         }
-        if (sorterCost != null) {
-          totalCost += sorterCost;
-          sorterCostTotal += sorterCost;
-          sorterPricedTests++;
-          pricedStages++;
-        }
-
         final packCost =
-            lunaCost != null && reviewerCost != null && sorterCost != null
-                ? lunaCost + reviewerCost + sorterCost
+            lunaCost != null && reviewerCost != null
+                ? lunaCost + reviewerCost
                 : null;
         if (packCost != null) {
           completePackCostTotal += packCost;
