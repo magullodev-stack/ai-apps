@@ -40,7 +40,6 @@ String quiz10ReviewTestLiteral(List<Quiz10LunaRow> rows) {
         '${i + 1}.',
         'P: ${rows[i].returnedPivot}',
         'Instrucción D: ${rows[i].slot.dimension.instruction}',
-        'F: ${rows[i].fact}',
         'Q: ${rows[i].question}',
         'R: ${rows[i].correct}',
         'd1: ${rows[i].distractors[0]}',
