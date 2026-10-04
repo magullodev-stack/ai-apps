@@ -17,6 +17,11 @@ typedef Quiz10HistoryKey = ({
   String dimensionCode,
 });
 
+typedef Quiz10HistoryEntry = ({
+  String question,
+  String answer,
+});
+
 Quiz10HistoryKey quiz10HistoryKey(Quiz10Pair slot) => (
   pivotCode: slot.pivot.code,
   dimensionCode: slot.dimension.code,
