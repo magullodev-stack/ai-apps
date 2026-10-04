@@ -22,6 +22,7 @@ H := {{H}}
 ## Generación
 
 Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y contenga toda la información factual necesaria para determinar la respuesta correcta.
+Si H ≠ ∅, F debe tratar un hecho o conocimiento materialmente distinto de todos los ya usados en H; no reutilices, reformules, parafrasees ni preguntes desde otro ángulo sobre ninguno de ellos.
 Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
 
 O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
@@ -32,7 +33,6 @@ R := O_C
 
 Q no contiene R ni proporciona una pista léxica evidente que permita inferir R por su forma, raíz, derivación o semejanza verbal.
 
-(F, R) ∉ H
 
 
 ## Salida
@@ -40,14 +40,14 @@ Q no contiene R ni proporciona una pista léxica evidente que permita inferir R 
 | P | D | F | Q | O | C |
 |---|---|---|---|---|---|''';
 
-String _historyLiteral(List<Quiz10HistoryEntry> history) {
+String _historyLiteral(List<String> history) {
   if (history.isEmpty) return '∅';
-  return '{${history.map((entry) => '(F := ${jsonEncode(entry.fact)}, R := ${jsonEncode(entry.answer)})').join(', ')}}';
+  return '[${history.map(jsonEncode).join(', ')}]';
 }
 
 String quiz10LunaInput(
   Quiz10Pair slot,
-  List<Quiz10HistoryEntry> history,
+  List<String> history,
 ) {
   return quiz10LunaPrompt
       .replaceAll('{{P}}', slot.pivot.name)
@@ -241,9 +241,8 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   final AiAppsClient client;
   final String model;
 
-  // Histórico factual (F,R) por cruce P×D durante la vida de esta instancia.
-  final Map<Quiz10HistoryKey, List<Quiz10HistoryEntry>>
-      _historyByPivotDimension = {};
+  // Hechos ya usados por cruce P×D durante la vida de esta instancia.
+  final Map<Quiz10HistoryKey, List<String>> _historyByPivotDimension = {};
 
   @override
   Future<List<Quiz10LunaRow>> generate(List<Quiz10Pair> plan) async {
@@ -265,9 +264,9 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
     final histories = [
       for (final slot in plan)
-        List<Quiz10HistoryEntry>.unmodifiable(
+        List<String>.unmodifiable(
           _historyByPivotDimension[quiz10HistoryKey(slot)] ??
-              const <Quiz10HistoryEntry>[],
+              const <String>[],
         ),
     ];
 
@@ -324,10 +323,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     }
 
     if (commitHistory) {
-      commitReviewedAnswers(
-        rows,
-        rows.map((row) => row.correct).toList(growable: false),
-      );
+      commitFacts(rows);
     }
 
     return AiGeneration(
@@ -340,28 +336,20 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     );
   }
 
-  void commitReviewedAnswers(
-    List<Quiz10LunaRow> rows,
-    List<String> reviewedAnswers,
-  ) {
-    if (rows.length != reviewedAnswers.length) {
-      throw ArgumentError('Filas y respuestas revisadas no coinciden.');
-    }
-
-    for (var i = 0; i < rows.length; i++) {
-      final row = rows[i];
+  void commitFacts(List<Quiz10LunaRow> rows) {
+    for (final row in rows) {
       _historyByPivotDimension
           .putIfAbsent(
             quiz10HistoryKey(row.slot),
-            () => <Quiz10HistoryEntry>[],
+            () => <String>[],
           )
-          .add((fact: row.fact, answer: reviewedAnswers[i]));
+          .add(row.fact);
     }
   }
 
   Future<({AiGeneration? response, Object? error})> _attemptRowResponse(
     Quiz10Pair slot,
-    List<Quiz10HistoryEntry> history,
+    List<String> history,
   ) async {
     try {
       final response = await _generateRowResponse(slot, history);
@@ -373,7 +361,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
   Future<AiGeneration> _generateRowResponse(
     Quiz10Pair slot,
-    List<Quiz10HistoryEntry> history,
+    List<String> history,
   ) {
     return client.generate(
       application: 'quiz10',
