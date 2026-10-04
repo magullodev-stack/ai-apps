@@ -34,8 +34,11 @@ $ErrorActionPreference = 'Stop'
 if (($ProbarLuna -or $ProbarQuiz10) -and -not $PSBoundParameters.ContainsKey('Muestras')) {
     $Muestras = 1
 }
-if (($ProbarLuna -or $ProbarQuiz10) -and $Muestras -gt 20) {
-    throw 'La auditoría de Quiz10 admite un máximo de 20 tests.'
+if ($ProbarLuna -and $Muestras -gt 20) {
+    throw 'La auditoría Luna admite un máximo de 20 tests.'
+}
+if ($ProbarQuiz10 -and $Muestras -gt 200) {
+    throw 'La auditoría de Quiz10 admite un máximo de 200 tests.'
 }
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
