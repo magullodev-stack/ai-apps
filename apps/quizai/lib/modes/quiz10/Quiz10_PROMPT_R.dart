@@ -7,19 +7,12 @@ import 'Quiz10_PROMPT_G.dart';
 const String quiz10ReviewPrompt = r'''t := {{ITEM}}
 
 O := {R,d1,d2,d3}
-Δ := correcciones
 
-v₁ := {o ∈ O : o responde correctamente a Q} ≠ {R}
+C := {o ∈ O : o responde correctamente a Q}
 
-v₂ := existe algún referente contextual de Q sin antecedente en Q u O
+C = {R} ⇒ Δ = ∅
 
-v₃ := Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
-
-¬v₁ ∧ ¬v₂ ∧ ¬v₃ ⇒ Δ = ∅
-
-v₁ ∨ v₂ ∨ v₃ ⇒ Δ contiene únicamente correcciones necesarias para hacer falsas las violaciones verdaderas.
-
-Una modificación que no elimina una violación verdadera en t está prohibida.
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
 ''';
 
 String quiz10ReviewItemLiteral(Quiz10LunaRow row) => [
