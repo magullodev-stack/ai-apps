@@ -161,7 +161,7 @@ const quiz10Dimensions = <Quiz10Dimension>[
   ),
   (
     code: 'D28',
-    instruction: 'Pregunta sobre qué objeto o fenómeno trata una concepción documentada sostenida por alguien.',
+    instruction: 'Pregunta qué objeto, fenómeno o cuestión aborda o explica una teoría, modelo, hipótesis o concepción.',
   ),
   (
     code: 'D29',
@@ -169,7 +169,7 @@ const quiz10Dimensions = <Quiz10Dimension>[
   ),
   (
     code: 'D30',
-    instruction: 'Pregunta qué afirmación se contrasta mediante un procedimiento y unas evidencias concretas.',
+    instruction: 'Pregunta qué afirmación o hipótesis fue apoyada, refutada o puesta a prueba mediante unas evidencias o un procedimiento concreto.',
   ),
   (
     code: 'D31',
@@ -177,7 +177,7 @@ const quiz10Dimensions = <Quiz10Dimension>[
   ),
   (
     code: 'D32',
-    instruction: 'Pregunta ante qué estímulo, conducta, solicitud o contenido responde un sistema o una persona de una forma determinada.',
+    instruction: 'Pregunta qué estímulo, acción, situación o condición provoca una respuesta determinada.',
   ),
   (
     code: 'D33',
