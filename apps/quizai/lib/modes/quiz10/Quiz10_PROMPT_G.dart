@@ -5,7 +5,7 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 
 // Una unidad de generación = una posición del test.
-// Dart fija P, D e H; G devuelve F, Q, cuatro opciones O y la posición C.
+// Dart fija P, D e H; G devuelve Q, cuatro opciones O y la posición C.
 // Las diez unidades de G del Quiz10 se ejecutan simultáneamente.
 
 const String quiz10LunaPrompt = r'''## Entrada
