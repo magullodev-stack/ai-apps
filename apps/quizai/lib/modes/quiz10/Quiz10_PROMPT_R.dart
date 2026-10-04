@@ -4,35 +4,26 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 import 'Quiz10_PROMPT_G.dart';
 
-const String quiz10ReviewPrompt = r'''T := {{TEST}}
+const String quiz10ReviewPrompt = r'''t := {{ITEM}}
 
-∀i ∈ {1,...,10}:
+O := {R,d1,d2,d3}
 
-Oᵢ := {Rᵢ,d1ᵢ,d2ᵢ,d3ᵢ}
+C := {o ∈ O : o responde correctamente a Q}
 
-Cᵢ := {o ∈ Oᵢ : o responde correctamente a Qᵢ}
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
 
-Aᵢ := {a ∈ Qᵢ : a requiere un referente contextual y referente(a,Qᵢ,Oᵢ) = ∅}
+C = {R} ⇒ Δ = ∅
 
-Cᵢ = {Rᵢ} ⇒ Δᵢ = ∅
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
 
-Cᵢ ≠ {Rᵢ} ⇒ Δᵢ contiene únicamente correcciones de Rᵢ,d1ᵢ,d2ᵢ,d3ᵢ necesarias para que Cᵢ = {Rᵢ}.
+A = ∅ ⇒ Q' = Q
 
-Aᵢ = ∅ ⇒ Qᵢ' = Qᵢ
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
 
-Aᵢ ≠ ∅ ⇒ Qᵢ' difiere de Qᵢ únicamente en sustituir cada a ∈ Aᵢ por un referente explícito inferido de Qᵢ,Oᵢ,Rᵢ.
-
-Cualquier otra modificación de Qᵢ está prohibida.
-
-Orden := (n₁,...,n₁₀)
-
-Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
-
-Pr(acierto(n₁) | generalista) ≥ ... ≥ Pr(acierto(n₁₀) | generalista)
+Cualquier otra modificación de Q está prohibida.
 ''';
 
-String quiz10ReviewItemLiteral(int number, Quiz10LunaRow row) => [
-  '[$number]',
+String quiz10ReviewItemLiteral(Quiz10LunaRow row) => [
   'Q: ${row.question}',
   'R: ${row.correct}',
   'd1: ${row.distractors[0]}',
@@ -40,45 +31,27 @@ String quiz10ReviewItemLiteral(int number, Quiz10LunaRow row) => [
   'd3: ${row.distractors[2]}',
 ].join('\n');
 
-String quiz10ReviewInput(List<Quiz10LunaRow> rows) =>
-    quiz10ReviewPrompt.replaceAll(
-      '{{TEST}}',
-      [
-        for (var i = 0; i < rows.length; i++)
-          quiz10ReviewItemLiteral(i + 1, rows[i]),
-      ].join('\n\n'),
-    );
+String quiz10ReviewInput(Quiz10LunaRow row) =>
+    quiz10ReviewPrompt.replaceAll('{{ITEM}}', quiz10ReviewItemLiteral(row));
 
 Map<String, Object?> quiz10ReviewSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['correcciones', 'Orden'],
+  'required': ['correcciones'],
   'properties': {
     'correcciones': {
       'type': 'array',
       'items': {
         'type': 'object',
         'additionalProperties': false,
-        'required': ['n', 'campo', 'valor'],
+        'required': ['campo', 'valor'],
         'properties': {
-          'n': {
-            'type': 'integer',
-            'minimum': 1,
-            'maximum': 10,
-          },
           'campo': {
             'type': 'string',
             'enum': ['Q', 'R', 'd1', 'd2', 'd3'],
           },
           'valor': {'type': 'string'},
         },
-      },
-    },
-    'Orden': {
-      'type': 'array',
-      'items': {
-        'type': 'integer',
-        'enum': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
     },
   },
@@ -106,34 +79,33 @@ class Quiz10ReviewPatch {
 
 class Quiz10ReviewCall {
   const Quiz10ReviewCall({
+    required this.number,
     required this.input,
     required this.rawText,
-    required this.patches,
+    required this.changes,
     required this.usage,
   });
 
+  final int number;
   final String input;
   final String rawText;
-  final List<Quiz10ReviewPatch> patches;
+  final List<Quiz10ReviewChange> changes;
   final Map<String, dynamic>? usage;
 }
 
 class Quiz10ReviewResult {
   const Quiz10ReviewResult({
     required this.patches,
-    required this.order,
     required this.calls,
     required this.usage,
   });
 
   final List<Quiz10ReviewPatch> patches;
-  final List<int> order;
   final List<Quiz10ReviewCall> calls;
   final Map<String, dynamic>? usage;
 }
 
-({List<Quiz10ReviewPatch> patches, List<int> order})
-parseQuiz10ReviewOutput(String text) {
+List<Quiz10ReviewChange> parseQuiz10ReviewItemOutput(String text) {
   dynamic decoded;
   try {
     decoded = jsonDecode(text);
@@ -142,73 +114,39 @@ parseQuiz10ReviewOutput(String text) {
   }
 
   if (decoded is! Map<String, dynamic> ||
-      decoded['correcciones'] is! List ||
-      decoded['Orden'] is! List) {
+      decoded['correcciones'] is! List) {
     throw const FormatException(
-      'La revisión no conserva correcciones y Orden.',
+      'La revisión no conserva la estructura correcciones.',
     );
   }
 
-  final byNumber = <int, List<Quiz10ReviewChange>>{};
-  final seen = <String>{};
+  final changes = <Quiz10ReviewChange>[];
+  final seenFields = <String>{};
 
   for (final rawChange in decoded['correcciones'] as List) {
     if (rawChange is! Map<String, dynamic> ||
-        rawChange['n'] is! int ||
         rawChange['campo'] is! String ||
         rawChange['valor'] is! String) {
       throw const FormatException('Corrección estructuralmente inválida.');
     }
 
-    final number = rawChange['n'] as int;
     final field = rawChange['campo'] as String;
-    final key = '$number:$field';
-
-    if (number < 1 ||
-        number > 10 ||
-        !const {'Q', 'R', 'd1', 'd2', 'd3'}.contains(field) ||
-        !seen.add(key)) {
+    if (!const {'Q', 'R', 'd1', 'd2', 'd3'}.contains(field) ||
+        !seenFields.add(field)) {
       throw const FormatException(
-        'Cada campo revisable de cada ítem puede corregirse una sola vez.',
+        'Cada campo revisable puede corregirse una sola vez.',
       );
     }
 
-    byNumber
-        .putIfAbsent(number, () => <Quiz10ReviewChange>[])
-        .add(
-          Quiz10ReviewChange(
-            field: field,
-            value: rawChange['valor'] as String,
-          ),
-        );
-  }
-
-  final rawOrder = decoded['Orden'] as List;
-  if (rawOrder.length != 10 || rawOrder.any((value) => value is! int)) {
-    throw const FormatException('Orden debe contener diez números.');
-  }
-
-  final order = [for (final value in rawOrder) value as int];
-  if (order.toSet().length != 10 ||
-      order.any((value) => value < 1 || value > 10)) {
-    throw const FormatException(
-      'Orden debe ser una permutación de 1 a 10.',
+    changes.add(
+      Quiz10ReviewChange(
+        field: field,
+        value: rawChange['valor'] as String,
+      ),
     );
   }
 
-  final numbers = byNumber.keys.toList()..sort();
-  final patches = List<Quiz10ReviewPatch>.unmodifiable([
-    for (final number in numbers)
-      Quiz10ReviewPatch(
-        number: number,
-        changes: List.unmodifiable(byNumber[number]!),
-      ),
-  ]);
-
-  return (
-    patches: patches,
-    order: List<int>.unmodifiable(order),
-  );
+  return List.unmodifiable(changes);
 }
 
 final class AiQuiz10Reviewer {
@@ -225,30 +163,79 @@ final class AiQuiz10Reviewer {
       throw ArgumentError('La revisión requiere diez filas de G.');
     }
 
-    final input = quiz10ReviewInput(rows);
+    final calls = await Future.wait([
+      for (var i = 0; i < rows.length; i++)
+        _reviewOne(i + 1, rows[i]),
+    ]);
+
+    final patches = [
+      for (final call in calls)
+        if (call.changes.isNotEmpty)
+          Quiz10ReviewPatch(
+            number: call.number,
+            changes: call.changes,
+          ),
+    ];
+
+    return Quiz10ReviewResult(
+      patches: List.unmodifiable(patches),
+      calls: List.unmodifiable(calls),
+      usage: _aggregateUsage(calls),
+    );
+  }
+
+  Future<Quiz10ReviewCall> _reviewOne(
+    int number,
+    Quiz10LunaRow row,
+  ) async {
+    final input = quiz10ReviewInput(row);
     final response = await client
         .generate(
           application: 'quiz10-review',
           model: model,
           input: input,
-          schemaName: 'quiz10_review_batch',
+          schemaName: 'quiz10_review_item',
           schema: quiz10ReviewSchema(),
         )
         .timeout(const Duration(seconds: 120));
 
-    final parsed = parseQuiz10ReviewOutput(response.text);
-    final call = Quiz10ReviewCall(
+    return Quiz10ReviewCall(
+      number: number,
       input: input,
       rawText: response.text,
-      patches: parsed.patches,
+      changes: parseQuiz10ReviewItemOutput(response.text),
       usage: response.usage,
     );
+  }
 
-    return Quiz10ReviewResult(
-      patches: parsed.patches,
-      order: parsed.order,
-      calls: List.unmodifiable([call]),
-      usage: response.usage,
-    );
+  Map<String, dynamic>? _aggregateUsage(List<Quiz10ReviewCall> calls) {
+    if (calls.isEmpty) return null;
+
+    const keys = [
+      'inputTokens',
+      'outputTokens',
+      'totalTokens',
+      'reasoningTokens',
+      'cachedInputTokens',
+    ];
+    final result = <String, dynamic>{};
+
+    for (final key in keys) {
+      var sum = 0;
+      var complete = true;
+
+      for (final call in calls) {
+        final value = call.usage?[key];
+        if (value is! int || value < 0) {
+          complete = false;
+          break;
+        }
+        sum += value;
+      }
+
+      if (complete) result[key] = sum;
+    }
+
+    return result.isEmpty ? null : result;
   }
 }

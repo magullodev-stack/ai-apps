@@ -5,6 +5,7 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 import 'Quiz10_PROMPT_G.dart';
 import 'Quiz10_PROMPT_R.dart';
+import 'Quiz10_PROMPT_S.dart';
 
 typedef Quiz10FinalQuestion = ({
   String pivot,
@@ -34,10 +35,13 @@ class Quiz10PipelineResult {
     required this.lunaGeneration,
     required this.review,
     required this.correctedItems,
+    required this.sortInput,
+    required this.sort,
     required this.reviewedItems,
     required this.questions,
     required this.lunaDuration,
     required this.reviewDuration,
+    required this.sortDuration,
   });
 
   final List<Quiz10Pair> plan;
@@ -45,10 +49,13 @@ class Quiz10PipelineResult {
   final AiGeneration lunaGeneration;
   final Quiz10ReviewResult review;
   final List<Quiz10ReviewedItem> correctedItems;
+  final String sortInput;
+  final Quiz10SortResult sort;
   final List<Quiz10ReviewedItem> reviewedItems;
   final List<Quiz10FinalQuestion> questions;
   final Duration lunaDuration;
   final Duration reviewDuration;
+  final Duration sortDuration;
 }
 
 List<Quiz10ReviewedItem> applyQuiz10Review(
@@ -110,6 +117,17 @@ Quiz10ReviewedItem _applyReviewPatch(
   );
 }
 
+List<Quiz10SortItem> buildQuiz10SortItems(
+  List<Quiz10ReviewedItem> items,
+) => List.unmodifiable([
+  for (final item in items)
+    Quiz10SortItem(
+      question: item.question,
+      correct: item.correct,
+      distractors: item.distractors,
+    ),
+]);
+
 List<Quiz10ReviewedItem> applyQuiz10Order(
   List<Quiz10ReviewedItem> items,
   List<int> order,
@@ -149,6 +167,7 @@ final class AiQuiz10Pipeline {
     required AiAppsClient client,
     required String lunaModel,
     required String reviewerModel,
+    String? sorterModel,
   }) : luna = AiQuiz10LunaGenerator(
          client: client,
          model: lunaModel,
@@ -156,10 +175,15 @@ final class AiQuiz10Pipeline {
        reviewer = AiQuiz10Reviewer(
          client: client,
          model: reviewerModel,
+       ),
+       sorter = AiQuiz10Sorter(
+         client: client,
+         model: sorterModel ?? reviewerModel,
        );
 
   final AiQuiz10LunaGenerator luna;
   final AiQuiz10Reviewer reviewer;
+  final AiQuiz10Sorter sorter;
 
   Future<List<Quiz10FinalQuestion>> generate() async {
     final result = await generateDetailed();
@@ -186,9 +210,15 @@ final class AiQuiz10Pipeline {
 
     final correctedItems = applyQuiz10Review(lunaRows, review);
 
+    final sortItems = buildQuiz10SortItems(correctedItems);
+    final sortInput = quiz10SortInput(sortItems);
+    final sortWatch = Stopwatch()..start();
+    final sort = await sorter.sort(sortItems);
+    sortWatch.stop();
+
     final reviewedItems = applyQuiz10Order(
       correctedItems,
-      review.order,
+      sort.order,
     );
 
     luna.commitReviewedQuestions(
@@ -208,10 +238,13 @@ final class AiQuiz10Pipeline {
       lunaGeneration: lunaGeneration,
       review: review,
       correctedItems: correctedItems,
+      sortInput: sortInput,
+      sort: sort,
       reviewedItems: reviewedItems,
       questions: questions,
       lunaDuration: lunaWatch.elapsed,
       reviewDuration: reviewWatch.elapsed,
+      sortDuration: sortWatch.elapsed,
     );
   }
 }
