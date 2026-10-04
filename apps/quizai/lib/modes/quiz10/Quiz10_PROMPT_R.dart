@@ -20,14 +20,9 @@ Ordena las 10 preguntas de menor a mayor dificultad para un concursante generali
 
 Orden: [n₁, n₂, n₃, n₄, n₅, n₆, n₇, n₈, n₉, n₁₀]
 
-Después, únicamente las correcciones:
+Después, únicamente los campos modificados:
 
-n.
-Q: ...
-R: ...
-d1: ...
-d2: ...
-d3: ...''';
+n.campo: nuevo valor''';
 
 String quiz10ReviewTestLiteral(List<Quiz10LunaRow> rows) {
   if (rows.length != 10) {
@@ -69,27 +64,17 @@ Map<String, Object?> quiz10ReviewSchema() => {
       'items': {
         'type': 'object',
         'additionalProperties': false,
-        'required': ['n', 'cambios'],
+        'required': ['n', 'campo', 'valor'],
         'properties': {
           'n': {
             'type': 'integer',
             'enum': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
           },
-          'cambios': {
-            'type': 'array',
-            'items': {
-              'type': 'object',
-              'additionalProperties': false,
-              'required': ['campo', 'valor'],
-              'properties': {
-                'campo': {
-                  'type': 'string',
-                  'enum': ['Q', 'R', 'd1', 'd2', 'd3'],
-                },
-                'valor': {'type': 'string'},
-              },
-            },
+          'campo': {
+            'type': 'string',
+            'enum': ['Q', 'R', 'd1', 'd2', 'd3'],
           },
+          'valor': {'type': 'string'},
         },
       },
     },
@@ -161,60 +146,98 @@ Quiz10ReviewResult parseQuiz10ReviewOutput(
     );
   }
 
-  final patches = <Quiz10ReviewPatch>[];
-  final seenNumbers = <int>{};
-  for (final rawPatch in decoded['correcciones'] as List) {
-    if (rawPatch is! Map<String, dynamic> ||
-        rawPatch['n'] is! int ||
-        rawPatch['cambios'] is! List) {
+  final changesByNumber = <int, List<Quiz10ReviewChange>>{};
+  final seenCorrections = <String>{};
+
+  for (final rawChange in decoded['correcciones'] as List) {
+    if (rawChange is! Map<String, dynamic> ||
+        rawChange['n'] is! int ||
+        rawChange['campo'] is! String ||
+        rawChange['valor'] is! String) {
       throw const FormatException('Corrección estructuralmente inválida.');
     }
 
-    final number = rawPatch['n'] as int;
-    if (number < 1 || number > 10 || !seenNumbers.add(number)) {
+    final number = rawChange['n'] as int;
+    final field = rawChange['campo'] as String;
+    if (number < 1 ||
+        number > 10 ||
+        !const {'Q', 'R', 'd1', 'd2', 'd3'}.contains(field) ||
+        !seenCorrections.add('$number\u001f$field')) {
       throw const FormatException(
-        'Cada pregunta corregida debe aparecer una sola vez.',
+        'Cada campo de cada pregunta puede corregirse una sola vez.',
       );
     }
 
-    final changes = <Quiz10ReviewChange>[];
-    final seenFields = <String>{};
-    for (final rawChange in rawPatch['cambios'] as List) {
-      if (rawChange is! Map<String, dynamic> ||
-          rawChange['campo'] is! String ||
-          rawChange['valor'] is! String) {
-        throw const FormatException('Cambio estructuralmente inválido.');
-      }
-
-      final field = rawChange['campo'] as String;
-      if (!const {'Q', 'R', 'd1', 'd2', 'd3'}.contains(field) ||
-          !seenFields.add(field)) {
-        throw const FormatException(
-          'Cada campo corregido debe aparecer una sola vez.',
+    changesByNumber
+        .putIfAbsent(number, () => <Quiz10ReviewChange>[])
+        .add(
+          Quiz10ReviewChange(
+            field: field,
+            value: rawChange['valor'] as String,
+          ),
         );
-      }
-
-      changes.add(
-        Quiz10ReviewChange(
-          field: field,
-          value: rawChange['valor'] as String,
-        ),
-      );
-    }
-
-    patches.add(
-      Quiz10ReviewPatch(
-        number: number,
-        changes: List.unmodifiable(changes),
-      ),
-    );
   }
+
+  final patches = [
+    for (final entry in changesByNumber.entries)
+      Quiz10ReviewPatch(
+        number: entry.key,
+        changes: List.unmodifiable(entry.value),
+      ),
+  ];
 
   return Quiz10ReviewResult(
     order: List.unmodifiable(order),
     patches: List.unmodifiable(patches),
     rawText: text,
     usage: usage,
+  );
+}
+
+String _reviewedSourceValue(
+  Quiz10LunaRow row,
+  String field,
+) {
+  return switch (field) {
+    'Q' => row.question,
+    'R' => row.correct,
+    'd1' => row.distractors[0],
+    'd2' => row.distractors[1],
+    'd3' => row.distractors[2],
+    _ => throw ArgumentError.value(field, 'field'),
+  };
+}
+
+Quiz10ReviewResult _withoutNoOpChanges(
+  Quiz10ReviewResult review,
+  List<Quiz10LunaRow> rows,
+) {
+  final patches = <Quiz10ReviewPatch>[];
+
+  for (final patch in review.patches) {
+    final row = rows[patch.number - 1];
+    final changes = [
+      for (final change in patch.changes)
+        if (change.value.trim() !=
+            _reviewedSourceValue(row, change.field).trim())
+          change,
+    ];
+
+    if (changes.isNotEmpty) {
+      patches.add(
+        Quiz10ReviewPatch(
+          number: patch.number,
+          changes: List.unmodifiable(changes),
+        ),
+      );
+    }
+  }
+
+  return Quiz10ReviewResult(
+    order: review.order,
+    patches: List.unmodifiable(patches),
+    rawText: review.rawText,
+    usage: review.usage,
   );
 }
 
@@ -238,9 +261,10 @@ final class AiQuiz10Reviewer {
         )
         .timeout(const Duration(seconds: 120));
 
-    return parseQuiz10ReviewOutput(
+    final review = parseQuiz10ReviewOutput(
       response.text,
       usage: response.usage,
     );
+    return _withoutNoOpChanges(review, rows);
   }
 }
