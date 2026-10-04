@@ -43,9 +43,9 @@ String quiz10ReviewTestLiteral(List<Quiz10LunaRow> rows) {
         'F: ${rows[i].fact}',
         'Q: ${rows[i].question}',
         'R: ${rows[i].correct}',
-        'a1: ${rows[i].distractors[0]}',
-        'a2: ${rows[i].distractors[1]}',
-        'a3: ${rows[i].distractors[2]}',
+        'd1: ${rows[i].distractors[0]}',
+        'd2: ${rows[i].distractors[1]}',
+        'd3: ${rows[i].distractors[2]}',
       ].join('\n'),
   ].join('\n\n');
 }
@@ -85,7 +85,7 @@ Map<String, Object?> quiz10ReviewSchema() => {
               'properties': {
                 'campo': {
                   'type': 'string',
-                  'enum': ['Q', 'R', 'a1', 'a2', 'a3'],
+                  'enum': ['Q', 'R', 'd1', 'd2', 'd3'],
                 },
                 'valor': {'type': 'string'},
               },
@@ -188,7 +188,7 @@ Quiz10ReviewResult parseQuiz10ReviewOutput(
       }
 
       final field = rawChange['campo'] as String;
-      if (!const {'Q', 'R', 'a1', 'a2', 'a3'}.contains(field) ||
+      if (!const {'Q', 'R', 'd1', 'd2', 'd3'}.contains(field) ||
           !seenFields.add(field)) {
         throw const FormatException(
           'Cada campo corregido debe aparecer una sola vez.',
