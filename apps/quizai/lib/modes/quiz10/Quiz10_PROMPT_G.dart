@@ -14,7 +14,7 @@ P := {{P}}
 D := {{D}}
 Instrucción D := {{instruction}}
 
-H := {(Q₁, R₁), ..., (Qₙ, Rₙ)}
+H := {{H}}
 
 
 ## Generación
@@ -42,14 +42,14 @@ R ∉ {R₁, ..., Rₙ}
 |---|---|---|---|---|
 ''';
 
-String _historyLiteral(List<String> history) {
+String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
-  return '[${history.map(jsonEncode).join(', ')}]';
+  return '{${history.map((entry) => '(Q := ${jsonEncode(entry.question)}, R := ${jsonEncode(entry.answer)})').join(', ')}}';
 }
 
 String quiz10LunaInput(
   Quiz10Pair slot,
-  List<String> history,
+  List<Quiz10HistoryEntry> history,
 ) {
   return quiz10LunaPrompt
       .replaceAll('{{P}}', slot.pivot.name)
@@ -61,12 +61,10 @@ String quiz10LunaInput(
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['P', 'D', 'K', 'F', 'Q', 'O', 'C'],
+  'required': ['P', 'D', 'Q', 'O', 'C'],
   'properties': {
     'P': {'type': 'string'},
     'D': {'type': 'string'},
-    'K': {'type': 'string'},
-    'F': {'type': 'string'},
     'Q': {'type': 'string'},
     'O': {
       'type': 'object',
@@ -91,8 +89,6 @@ class Quiz10LunaRow {
     required this.slot,
     required this.returnedPivot,
     required this.returnedDimension,
-    required this.knowledge,
-    required this.fact,
     required this.question,
     required this.options,
     required this.correctPosition,
@@ -102,8 +98,6 @@ class Quiz10LunaRow {
   final Quiz10Pair slot;
   final String returnedPivot;
   final String returnedDimension;
-  final String knowledge;
-  final String fact;
   final String question;
   final List<String> options;
   final int correctPosition;
@@ -140,13 +134,11 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
   }
   if (decoded['P'] is! String ||
       decoded['D'] is! String ||
-      decoded['K'] is! String ||
-      decoded['F'] is! String ||
       decoded['Q'] is! String ||
       decoded['O'] is! Map<String, dynamic> ||
       decoded['C'] is! int) {
     throw const FormatException(
-      'La salida no conserva la estructura P,D,K,F,Q,O,C esperada.',
+      'La salida no conserva la estructura P,D,Q,O,C esperada.',
     );
   }
 
@@ -160,8 +152,6 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
     slot: slot,
     returnedPivot: decoded['P'] as String,
     returnedDimension: decoded['D'] as String,
-    knowledge: decoded['K'] as String,
-    fact: decoded['F'] as String,
     question: decoded['Q'] as String,
     options: List.unmodifiable([
       for (final key in keys) rawOptions[key] as String,
@@ -248,8 +238,9 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
   final AiAppsClient client;
   final String model;
 
-  // Núcleos de conocimiento ya usados por cruce P×D durante la vida de esta instancia.
-  final Map<Quiz10HistoryKey, List<String>> _historyByPivotDimension = {};
+  // Preguntas y respuestas finales ya usadas por cruce P×D.
+  final Map<Quiz10HistoryKey, List<Quiz10HistoryEntry>>
+      _historyByPivotDimension = {};
 
   @override
   Future<List<Quiz10LunaRow>> generate(List<Quiz10Pair> plan) async {
@@ -271,9 +262,9 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
     final histories = [
       for (final slot in plan)
-        List<String>.unmodifiable(
+        List<Quiz10HistoryEntry>.unmodifiable(
           _historyByPivotDimension[quiz10HistoryKey(slot)] ??
-              const <String>[],
+              const <Quiz10HistoryEntry>[],
         ),
     ];
 
@@ -330,7 +321,11 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     }
 
     if (commitHistory) {
-      commitKnowledge(rows);
+      commitReviewedQuestions(
+        rows,
+        rows.map((row) => row.question).toList(growable: false),
+        rows.map((row) => row.correct).toList(growable: false),
+      );
     }
 
     return AiGeneration(
@@ -343,20 +338,33 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
     );
   }
 
-  void commitKnowledge(List<Quiz10LunaRow> rows) {
-    for (final row in rows) {
+  void commitReviewedQuestions(
+    List<Quiz10LunaRow> rows,
+    List<String> reviewedQuestions,
+    List<String> reviewedAnswers,
+  ) {
+    if (rows.length != reviewedQuestions.length ||
+        rows.length != reviewedAnswers.length) {
+      throw ArgumentError('Filas, preguntas y respuestas revisadas no coinciden.');
+    }
+
+    for (var i = 0; i < rows.length; i++) {
+      final row = rows[i];
       _historyByPivotDimension
           .putIfAbsent(
             quiz10HistoryKey(row.slot),
-            () => <String>[],
+            () => <Quiz10HistoryEntry>[],
           )
-          .add(row.knowledge);
+          .add((
+            question: reviewedQuestions[i],
+            answer: reviewedAnswers[i],
+          ));
     }
   }
 
   Future<({AiGeneration? response, Object? error})> _attemptRowResponse(
     Quiz10Pair slot,
-    List<String> history,
+    List<Quiz10HistoryEntry> history,
   ) async {
     try {
       final response = await _generateRowResponse(slot, history);
@@ -368,7 +376,7 @@ final class AiQuiz10LunaGenerator implements Quiz10LunaGenerator {
 
   Future<AiGeneration> _generateRowResponse(
     Quiz10Pair slot,
-    List<String> history,
+    List<Quiz10HistoryEntry> history,
   ) {
     return client.generate(
       application: 'quiz10',
