@@ -894,6 +894,12 @@ Future<void> main(List<String> args) async {
     stdout.writeln('RESULTADO');
     _printResultTable([
       ('Métrica', 'Valor'),
+      ('Usuarios', '$users'),
+      ('Partidas / usuario', '$samples'),
+      (
+        'Tiempo real auditoría',
+        _seconds(auditWatch.elapsedMilliseconds / 1000),
+      ),
       ('Tests completos', '$completeTests/$totalTests'),
       ('Tests fallidos', '$failedTests'),
       ('Tests con correcciones', '$correctedTests/$completeTests'),
