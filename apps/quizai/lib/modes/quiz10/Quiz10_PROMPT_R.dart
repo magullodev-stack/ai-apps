@@ -16,8 +16,6 @@ C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para
 ''';
 
 String quiz10ReviewItemLiteral(Quiz10LunaRow row) => [
-  'P: ${row.returnedPivot}',
-  'I_D: ${row.slot.dimension.instruction}',
   'Q: ${row.question}',
   'R: ${row.correct}',
   'd1: ${row.distractors[0]}',
@@ -42,7 +40,7 @@ Map<String, Object?> quiz10ReviewSchema() => {
         'properties': {
           'campo': {
             'type': 'string',
-            'enum': ['Q', 'R', 'd1', 'd2', 'd3'],
+            'enum': ['R', 'd1', 'd2', 'd3'],
           },
           'valor': {'type': 'string'},
         },
@@ -125,10 +123,10 @@ List<Quiz10ReviewChange> parseQuiz10ReviewItemOutput(String text) {
     }
 
     final field = rawChange['campo'] as String;
-    if (!const {'Q', 'R', 'd1', 'd2', 'd3'}.contains(field) ||
+    if (!const {'R', 'd1', 'd2', 'd3'}.contains(field) ||
         !seenFields.add(field)) {
       throw const FormatException(
-        'Cada campo de la pregunta puede corregirse una sola vez.',
+        'Cada campo revisable puede corregirse una sola vez.',
       );
     }
 
