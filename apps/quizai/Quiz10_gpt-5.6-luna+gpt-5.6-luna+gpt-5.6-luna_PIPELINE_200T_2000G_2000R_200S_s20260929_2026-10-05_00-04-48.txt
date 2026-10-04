@@ -35809,3 +35809,3935 @@ para un concursante generalista de cultura general.
 
 USO TEST 91 | G: entrada 3885, salida 5115, razonamiento 4062, coste USD 0.006915 | R: entrada 2632, salida 855, razonamiento 675, coste USD 0.001552 | S: entrada 636, salida 403, razonamiento 369, coste USD 0.000611
 
+========== TEST 92/200 — 17.95 s (G 9.20 s + R 2.61 s + S 6.14 s) ==========
+
+--- SALIDA G ---
+1. P20 D08 | F: La sociología estudia las relaciones, instituciones y procesos de la vida en sociedad. | Q: ¿Qué profesión corresponde a quien investiga de manera sistemática las relaciones, instituciones y dinámicas de los grupos humanos? | O: 1=Psicólogo / 2=Sociólogo / 3=Economista / 4=Historiador | C: 2 | R: Sociólogo
+2. P08 D07 | F: La Luna es el satélite natural de la Tierra. | Q: ¿Qué cuerpo celeste orbita la Tierra? | O: 1=La Luna / 2=Marte / 3=Venus / 4=Júpiter | C: 1 | R: La Luna
+3. P04 D19 | F: La fermentación láctica regenera NAD+ en las células musculares cuando escasea el oxígeno. | Q: ¿Qué proceso permite a las células musculares mantener brevemente la producción de ATP cuando el oxígeno es escaso? | O: 1=Respiración aeróbica / 2=Fermentación láctica / 3=Fotosíntesis / 4=Replicación del ADN | C: 2 | R: Fermentación láctica
+4. P10 D30 | F: La meseta del Tíbet es la más alta del mundo. | Q: Un mapa físico representa, al norte del Himalaya, una extensa superficie elevada que supera los 4.000 metros de altitud media. ¿Qué afirmación queda respaldada por esa evidencia? | O: 1=La meseta del Tíbet es la más alta del mundo. / 2=La meseta de Anatolia es la más alta del mundo. / 3=La meseta de Deccan es la más alta del mundo. / 4=La meseta de Colorado es la más alta del mundo. | C: 1 | R: La meseta del Tíbet es la más alta del mundo.
+5. P19 D12 | F: Dmitri Mendeléyev publicó la primera tabla periódica de los elementos en 1869. | Q: ¿En qué año publicó Dmitri Mendeléyev la primera tabla periódica de los elementos? | O: 1=1859 / 2=1869 / 3=1879 / 4=1889 | C: 2 | R: 1869
+6. P13 D09 | F: Steve Jobs y Steve Wozniak fundaron Apple en 1976. | Q: ¿Quién fundó Apple junto con Steve Wozniak? | O: 1=Steve Jobs / 2=Bill Gates / 3=Michael Dell / 4=Larry Ellison | C: 1 | R: Steve Jobs
+7. P07 D04 | F: La epistemología estudia el origen, la naturaleza y los límites del conocimiento. | Q: ¿A qué rama de la filosofía corresponde el estudio del origen, la naturaleza y los límites del conocimiento? | O: 1=Ética / 2=Epistemología / 3=Estética / 4=Metafísica | C: 2 | R: Epistemología
+8. P03 D25 | F: Júpiter es el planeta más grande del sistema solar. | Q: ¿Cuál es el símbolo astronómico convencional del Sol? | O: 1=☉ / 2=☽ / 3=♀ / 4=♃ | C: 1 | R: ☉
+9. P01 D02 | F: La arquitectura renacentista recuperó principios formales de la Antigüedad clásica. | Q: ¿Qué rasgo es característico de la arquitectura renacentista? | O: 1=La recuperación de proporciones y elementos clásicos / 2=El predominio de estructuras metálicas expuestas / 3=La construcción de torres defensivas aisladas / 4=El empleo de fachadas completamente acristaladas | C: 1 | R: La recuperación de proporciones y elementos clásicos
+10. P16 D10 | F: Machu Picchu se encuentra en Perú. | Q: ¿En qué país se encuentra Machu Picchu? | O: 1=Perú / 2=Bolivia / 3=Ecuador / 4=Chile | C: 1 | R: Perú
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿Qué profesión corresponde a quien investiga de manera sistemática las relaciones, instituciones y dinámicas de los grupos humanos?
+R: Sociólogo
+d1: Psicólogo
+d2: Economista
+d3: Historiador
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Qué cuerpo celeste orbita la Tierra?
+R: La Luna
+d1: Marte
+d2: Venus
+d3: Júpiter
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿Qué proceso permite a las células musculares mantener brevemente la producción de ATP cuando el oxígeno es escaso?
+R: Fermentación láctica
+d1: Respiración aeróbica
+d2: Fotosíntesis
+d3: Replicación del ADN
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: Un mapa físico representa, al norte del Himalaya, una extensa superficie elevada que supera los 4.000 metros de altitud media. ¿Qué afirmación queda respaldada por esa evidencia?
+R: La meseta del Tíbet es la más alta del mundo.
+d1: La meseta de Anatolia es la más alta del mundo.
+d2: La meseta de Deccan es la más alta del mundo.
+d3: La meseta de Colorado es la más alta del mundo.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿En qué año publicó Dmitri Mendeléyev la primera tabla periódica de los elementos?
+R: 1869
+d1: 1859
+d2: 1879
+d3: 1889
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Quién fundó Apple junto con Steve Wozniak?
+R: Steve Jobs
+d1: Bill Gates
+d2: Michael Dell
+d3: Larry Ellison
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿A qué rama de la filosofía corresponde el estudio del origen, la naturaleza y los límites del conocimiento?
+R: Epistemología
+d1: Ética
+d2: Estética
+d3: Metafísica
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿Cuál es el símbolo astronómico convencional del Sol?
+R: ☉
+d1: ☽
+d2: ♀
+d3: ♃
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Qué rasgo es característico de la arquitectura renacentista?
+R: La recuperación de proporciones y elementos clásicos
+d1: El predominio de estructuras metálicas expuestas
+d2: La construcción de torres defensivas aisladas
+d3: El empleo de fachadas completamente acristaladas
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿En qué país se encuentra Machu Picchu?
+R: Perú
+d1: Bolivia
+d2: Ecuador
+d3: Chile
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: ¿Qué profesión corresponde a quien investiga de manera sistemática las relaciones, instituciones y dinámicas de los grupos humanos? | R: Sociólogo | d1: Psicólogo | d2: Economista | d3: Historiador
+2. Q: ¿Qué cuerpo celeste orbita la Tierra? | R: La Luna | d1: Marte | d2: Venus | d3: Júpiter
+3. Q: ¿Qué proceso permite a las células musculares mantener brevemente la producción de ATP cuando el oxígeno es escaso? | R: Fermentación láctica | d1: Respiración aeróbica | d2: Fotosíntesis | d3: Replicación del ADN
+4. Q: Un mapa físico representa, al norte del Himalaya, una extensa superficie elevada que supera los 4.000 metros de altitud media. ¿Qué afirmación queda respaldada por esa evidencia? | R: La meseta del Tíbet es la más alta del mundo. | d1: La meseta de Anatolia es la más alta del mundo. | d2: La meseta de Deccan es la más alta del mundo. | d3: La meseta de Colorado es la más alta del mundo.
+5. Q: ¿En qué año publicó Dmitri Mendeléyev la primera tabla periódica de los elementos? | R: 1869 | d1: 1859 | d2: 1879 | d3: 1889
+6. Q: ¿Quién fundó Apple junto con Steve Wozniak? | R: Steve Jobs | d1: Bill Gates | d2: Michael Dell | d3: Larry Ellison
+7. Q: ¿A qué rama de la filosofía corresponde el estudio del origen, la naturaleza y los límites del conocimiento? | R: Epistemología | d1: Ética | d2: Estética | d3: Metafísica
+8. Q: ¿Cuál es el símbolo astronómico convencional del Sol? | R: ☉ | d1: ☽ | d2: ♀ | d3: ♃
+9. Q: ¿Qué rasgo es característico de la arquitectura renacentista? | R: La recuperación de proporciones y elementos clásicos | d1: El predominio de estructuras metálicas expuestas | d2: La construcción de torres defensivas aisladas | d3: El empleo de fachadas completamente acristaladas
+10. Q: ¿En qué país se encuentra Machu Picchu? | R: Perú | d1: Bolivia | d2: Ecuador | d3: Chile
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué profesión corresponde a quien investiga de manera sistemática las relaciones, instituciones y dinámicas de los grupos humanos?
+R: Sociólogo
+d1: Psicólogo
+d2: Economista
+d3: Historiador
+
+2.
+Q: ¿Qué cuerpo celeste orbita la Tierra?
+R: La Luna
+d1: Marte
+d2: Venus
+d3: Júpiter
+
+3.
+Q: ¿Qué proceso permite a las células musculares mantener brevemente la producción de ATP cuando el oxígeno es escaso?
+R: Fermentación láctica
+d1: Respiración aeróbica
+d2: Fotosíntesis
+d3: Replicación del ADN
+
+4.
+Q: Un mapa físico representa, al norte del Himalaya, una extensa superficie elevada que supera los 4.000 metros de altitud media. ¿Qué afirmación queda respaldada por esa evidencia?
+R: La meseta del Tíbet es la más alta del mundo.
+d1: La meseta de Anatolia es la más alta del mundo.
+d2: La meseta de Deccan es la más alta del mundo.
+d3: La meseta de Colorado es la más alta del mundo.
+
+5.
+Q: ¿En qué año publicó Dmitri Mendeléyev la primera tabla periódica de los elementos?
+R: 1869
+d1: 1859
+d2: 1879
+d3: 1889
+
+6.
+Q: ¿Quién fundó Apple junto con Steve Wozniak?
+R: Steve Jobs
+d1: Bill Gates
+d2: Michael Dell
+d3: Larry Ellison
+
+7.
+Q: ¿A qué rama de la filosofía corresponde el estudio del origen, la naturaleza y los límites del conocimiento?
+R: Epistemología
+d1: Ética
+d2: Estética
+d3: Metafísica
+
+8.
+Q: ¿Cuál es el símbolo astronómico convencional del Sol?
+R: ☉
+d1: ☽
+d2: ♀
+d3: ♃
+
+9.
+Q: ¿Qué rasgo es característico de la arquitectura renacentista?
+R: La recuperación de proporciones y elementos clásicos
+d1: El predominio de estructuras metálicas expuestas
+d2: La construcción de torres defensivas aisladas
+d3: El empleo de fachadas completamente acristaladas
+
+10.
+Q: ¿En qué país se encuentra Machu Picchu?
+R: Perú
+d1: Bolivia
+d2: Ecuador
+d3: Chile
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[2,6,10,4,1,7,9,3,8,5]}
+
+--- ORDEN S ---
+[2, 6, 10, 4, 1, 7, 9, 3, 8, 5]
+
+--- TEST TRAS R Y S ---
+1. [original 2] Q: ¿Qué cuerpo celeste orbita la Tierra? | R: La Luna | d1: Marte | d2: Venus | d3: Júpiter
+2. [original 6] Q: ¿Quién fundó Apple junto con Steve Wozniak? | R: Steve Jobs | d1: Bill Gates | d2: Michael Dell | d3: Larry Ellison
+3. [original 10] Q: ¿En qué país se encuentra Machu Picchu? | R: Perú | d1: Bolivia | d2: Ecuador | d3: Chile
+4. [original 4] Q: Un mapa físico representa, al norte del Himalaya, una extensa superficie elevada que supera los 4.000 metros de altitud media. ¿Qué afirmación queda respaldada por esa evidencia? | R: La meseta del Tíbet es la más alta del mundo. | d1: La meseta de Anatolia es la más alta del mundo. | d2: La meseta de Deccan es la más alta del mundo. | d3: La meseta de Colorado es la más alta del mundo.
+5. [original 1] Q: ¿Qué profesión corresponde a quien investiga de manera sistemática las relaciones, instituciones y dinámicas de los grupos humanos? | R: Sociólogo | d1: Psicólogo | d2: Economista | d3: Historiador
+6. [original 7] Q: ¿A qué rama de la filosofía corresponde el estudio del origen, la naturaleza y los límites del conocimiento? | R: Epistemología | d1: Ética | d2: Estética | d3: Metafísica
+7. [original 9] Q: ¿Qué rasgo es característico de la arquitectura renacentista? | R: La recuperación de proporciones y elementos clásicos | d1: El predominio de estructuras metálicas expuestas | d2: La construcción de torres defensivas aisladas | d3: El empleo de fachadas completamente acristaladas
+8. [original 3] Q: ¿Qué proceso permite a las células musculares mantener brevemente la producción de ATP cuando el oxígeno es escaso? | R: Fermentación láctica | d1: Respiración aeróbica | d2: Fotosíntesis | d3: Replicación del ADN
+9. [original 8] Q: ¿Cuál es el símbolo astronómico convencional del Sol? | R: ☉ | d1: ☽ | d2: ♀ | d3: ♃
+10. [original 5] Q: ¿En qué año publicó Dmitri Mendeléyev la primera tabla periódica de los elementos? | R: 1869 | d1: 1859 | d2: 1879 | d3: 1889
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué cuerpo celeste orbita la Tierra? | R: La Luna | O: La Luna / Marte / Venus / Júpiter
+2. ¿Quién fundó Apple junto con Steve Wozniak? | R: Steve Jobs | O: Steve Jobs / Larry Ellison / Bill Gates / Michael Dell
+3. ¿En qué país se encuentra Machu Picchu? | R: Perú | O: Bolivia / Ecuador / Perú / Chile
+4. Un mapa físico representa, al norte del Himalaya, una extensa superficie elevada que supera los 4.000 metros de altitud media. ¿Qué afirmación queda respaldada por esa evidencia? | R: La meseta del Tíbet es la más alta del mundo. | O: La meseta de Anatolia es la más alta del mundo. / La meseta del Tíbet es la más alta del mundo. / La meseta de Colorado es la más alta del mundo. / La meseta de Deccan es la más alta del mundo.
+5. ¿Qué profesión corresponde a quien investiga de manera sistemática las relaciones, instituciones y dinámicas de los grupos humanos? | R: Sociólogo | O: Historiador / Economista / Sociólogo / Psicólogo
+6. ¿A qué rama de la filosofía corresponde el estudio del origen, la naturaleza y los límites del conocimiento? | R: Epistemología | O: Metafísica / Estética / Epistemología / Ética
+7. ¿Qué rasgo es característico de la arquitectura renacentista? | R: La recuperación de proporciones y elementos clásicos | O: El predominio de estructuras metálicas expuestas / El empleo de fachadas completamente acristaladas / La recuperación de proporciones y elementos clásicos / La construcción de torres defensivas aisladas
+8. ¿Qué proceso permite a las células musculares mantener brevemente la producción de ATP cuando el oxígeno es escaso? | R: Fermentación láctica | O: Fotosíntesis / Fermentación láctica / Replicación del ADN / Respiración aeróbica
+9. ¿Cuál es el símbolo astronómico convencional del Sol? | R: ☉ | O: ☉ / ♃ / ☽ / ♀
+10. ¿En qué año publicó Dmitri Mendeléyev la primera tabla periódica de los elementos? | R: 1869 | O: 1859 / 1869 / 1879 / 1889
+
+USO TEST 92 | G: entrada 3974, salida 4477, razonamiento 3444, coste USD 0.006167 | R: entrada 2640, salida 793, razonamiento 613, coste USD 0.001480 | S: entrada 644, salida 550, razonamiento 516, coste USD 0.000789
+
+========== TEST 93/200 — 16.21 s (G 9.73 s + R 2.74 s + S 3.74 s) ==========
+
+--- SALIDA G ---
+1. P10 D04 | F: La Antártida es el continente situado alrededor del Polo Sur. | Q: ¿A qué categoría de gran división terrestre pertenece la Antártida? | O: 1=Continente / 2=Isla / 3=Península / 4=Océano | C: 1 | R: Continente
+2. P17 D27 | F: Louis Pasteur desarrolló la primera vacuna eficaz contra la rabia. | Q: ¿Quién desarrolló la primera vacuna eficaz contra la rabia? | O: 1=Louis Pasteur / 2=Edward Jenner / 3=Robert Koch / 4=Joseph Lister | C: 1 | R: Louis Pasteur
+3. P11 D07 | F: El manto terrestre se sitúa entre la corteza y el núcleo. | Q: ¿Qué capa de la Tierra se encuentra entre la corteza y el núcleo? | O: 1=Corteza / 2=Manto / 3=Núcleo externo / 4=Núcleo interno | C: 2 | R: Manto
+4. P16 D18 | F: El número cero es el elemento neutro de la suma. | Q: ¿Qué resultado se obtiene al sumar cero a cualquier número? | O: 1=El número original / 2=Su doble / 3=Su opuesto / 4=El número uno | C: 1 | R: El número original
+5. P02 D20 | F: La perspectiva lineal crea sensación de profundidad mediante la convergencia de líneas hacia puntos de fuga. | Q: En una cámara fotográfica, ¿qué componente regula la cantidad de luz que llega al sensor? | O: 1=Obturador / 2=Diafragma / 3=Visor / 4=Trípode | C: 2 | R: Diafragma
+6. P01 D28 | F: El racionalismo arquitectónico prioriza la función y la claridad estructural sobre la ornamentación. | Q: ¿Qué corriente del diseño prioriza la función y la claridad estructural sobre la ornamentación? | O: 1=Racionalismo arquitectónico / 2=Barroco / 3=Art nouveau / 4=Neoclasicismo | C: 1 | R: Racionalismo arquitectónico
+7. P14 D10 | F: Marrakech es una ciudad de Marruecos. | Q: ¿En qué país se encuentra Marrakech? | O: 1=Argelia / 2=Túnez / 3=Egipto / 4=Marruecos | C: 4 | R: Marruecos
+8. P15 D12 | F: Virginia Woolf escribió la novela «La señora Dalloway». | Q: ¿En qué año se publicó por primera vez «La señora Dalloway»? | O: 1=1923 / 2=1925 / 3=1927 / 4=1931 | C: 2 | R: 1925
+9. P20 D05 | F: Max Weber distinguió cuatro tipos de acción social. | Q: ¿Cuántos tipos de acción social distinguió Max Weber? | O: 1=Tres / 2=Cuatro / 3=Cinco / 4=Seis | C: 2 | R: Cuatro
+10. P03 D15 | F: Apolo 14 sucedió inmediatamente a Apolo 13 en el programa Apolo. | Q: ¿Qué misión tripulada del programa Apolo sucedió inmediatamente a Apolo 13? | O: 1=Apolo 14 / 2=Apolo 15 / 3=Apolo 16 / 4=Apolo 17 | C: 1 | R: Apolo 14
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿A qué categoría de gran división terrestre pertenece la Antártida?
+R: Continente
+d1: Isla
+d2: Península
+d3: Océano
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Quién desarrolló la primera vacuna eficaz contra la rabia?
+R: Louis Pasteur
+d1: Edward Jenner
+d2: Robert Koch
+d3: Joseph Lister
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿Qué capa de la Tierra se encuentra entre la corteza y el núcleo?
+R: Manto
+d1: Corteza
+d2: Núcleo externo
+d3: Núcleo interno
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Qué resultado se obtiene al sumar cero a cualquier número?
+R: El número original
+d1: Su doble
+d2: Su opuesto
+d3: El número uno
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: En una cámara fotográfica, ¿qué componente regula la cantidad de luz que llega al sensor?
+R: Diafragma
+d1: Obturador
+d2: Visor
+d3: Trípode
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Qué corriente del diseño prioriza la función y la claridad estructural sobre la ornamentación?
+R: Racionalismo arquitectónico
+d1: Barroco
+d2: Art nouveau
+d3: Neoclasicismo
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿En qué país se encuentra Marrakech?
+R: Marruecos
+d1: Argelia
+d2: Túnez
+d3: Egipto
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿En qué año se publicó por primera vez «La señora Dalloway»?
+R: 1925
+d1: 1923
+d2: 1927
+d3: 1931
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Cuántos tipos de acción social distinguió Max Weber?
+R: Cuatro
+d1: Tres
+d2: Cinco
+d3: Seis
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Qué misión tripulada del programa Apolo sucedió inmediatamente a Apolo 13?
+R: Apolo 14
+d1: Apolo 15
+d2: Apolo 16
+d3: Apolo 17
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: ¿A qué categoría de gran división terrestre pertenece la Antártida? | R: Continente | d1: Isla | d2: Península | d3: Océano
+2. Q: ¿Quién desarrolló la primera vacuna eficaz contra la rabia? | R: Louis Pasteur | d1: Edward Jenner | d2: Robert Koch | d3: Joseph Lister
+3. Q: ¿Qué capa de la Tierra se encuentra entre la corteza y el núcleo? | R: Manto | d1: Corteza | d2: Núcleo externo | d3: Núcleo interno
+4. Q: ¿Qué resultado se obtiene al sumar cero a cualquier número? | R: El número original | d1: Su doble | d2: Su opuesto | d3: El número uno
+5. Q: En una cámara fotográfica, ¿qué componente regula la cantidad de luz que llega al sensor? | R: Diafragma | d1: Obturador | d2: Visor | d3: Trípode
+6. Q: ¿Qué corriente del diseño prioriza la función y la claridad estructural sobre la ornamentación? | R: Racionalismo arquitectónico | d1: Barroco | d2: Art nouveau | d3: Neoclasicismo
+7. Q: ¿En qué país se encuentra Marrakech? | R: Marruecos | d1: Argelia | d2: Túnez | d3: Egipto
+8. Q: ¿En qué año se publicó por primera vez «La señora Dalloway»? | R: 1925 | d1: 1923 | d2: 1927 | d3: 1931
+9. Q: ¿Cuántos tipos de acción social distinguió Max Weber? | R: Cuatro | d1: Tres | d2: Cinco | d3: Seis
+10. Q: ¿Qué misión tripulada del programa Apolo sucedió inmediatamente a Apolo 13? | R: Apolo 14 | d1: Apolo 15 | d2: Apolo 16 | d3: Apolo 17
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿A qué categoría de gran división terrestre pertenece la Antártida?
+R: Continente
+d1: Isla
+d2: Península
+d3: Océano
+
+2.
+Q: ¿Quién desarrolló la primera vacuna eficaz contra la rabia?
+R: Louis Pasteur
+d1: Edward Jenner
+d2: Robert Koch
+d3: Joseph Lister
+
+3.
+Q: ¿Qué capa de la Tierra se encuentra entre la corteza y el núcleo?
+R: Manto
+d1: Corteza
+d2: Núcleo externo
+d3: Núcleo interno
+
+4.
+Q: ¿Qué resultado se obtiene al sumar cero a cualquier número?
+R: El número original
+d1: Su doble
+d2: Su opuesto
+d3: El número uno
+
+5.
+Q: En una cámara fotográfica, ¿qué componente regula la cantidad de luz que llega al sensor?
+R: Diafragma
+d1: Obturador
+d2: Visor
+d3: Trípode
+
+6.
+Q: ¿Qué corriente del diseño prioriza la función y la claridad estructural sobre la ornamentación?
+R: Racionalismo arquitectónico
+d1: Barroco
+d2: Art nouveau
+d3: Neoclasicismo
+
+7.
+Q: ¿En qué país se encuentra Marrakech?
+R: Marruecos
+d1: Argelia
+d2: Túnez
+d3: Egipto
+
+8.
+Q: ¿En qué año se publicó por primera vez «La señora Dalloway»?
+R: 1925
+d1: 1923
+d2: 1927
+d3: 1931
+
+9.
+Q: ¿Cuántos tipos de acción social distinguió Max Weber?
+R: Cuatro
+d1: Tres
+d2: Cinco
+d3: Seis
+
+10.
+Q: ¿Qué misión tripulada del programa Apolo sucedió inmediatamente a Apolo 13?
+R: Apolo 14
+d1: Apolo 15
+d2: Apolo 16
+d3: Apolo 17
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[4,7,1,3,2,10,5,8,9,6]}
+
+--- ORDEN S ---
+[4, 7, 1, 3, 2, 10, 5, 8, 9, 6]
+
+--- TEST TRAS R Y S ---
+1. [original 4] Q: ¿Qué resultado se obtiene al sumar cero a cualquier número? | R: El número original | d1: Su doble | d2: Su opuesto | d3: El número uno
+2. [original 7] Q: ¿En qué país se encuentra Marrakech? | R: Marruecos | d1: Argelia | d2: Túnez | d3: Egipto
+3. [original 1] Q: ¿A qué categoría de gran división terrestre pertenece la Antártida? | R: Continente | d1: Isla | d2: Península | d3: Océano
+4. [original 3] Q: ¿Qué capa de la Tierra se encuentra entre la corteza y el núcleo? | R: Manto | d1: Corteza | d2: Núcleo externo | d3: Núcleo interno
+5. [original 2] Q: ¿Quién desarrolló la primera vacuna eficaz contra la rabia? | R: Louis Pasteur | d1: Edward Jenner | d2: Robert Koch | d3: Joseph Lister
+6. [original 10] Q: ¿Qué misión tripulada del programa Apolo sucedió inmediatamente a Apolo 13? | R: Apolo 14 | d1: Apolo 15 | d2: Apolo 16 | d3: Apolo 17
+7. [original 5] Q: En una cámara fotográfica, ¿qué componente regula la cantidad de luz que llega al sensor? | R: Diafragma | d1: Obturador | d2: Visor | d3: Trípode
+8. [original 8] Q: ¿En qué año se publicó por primera vez «La señora Dalloway»? | R: 1925 | d1: 1923 | d2: 1927 | d3: 1931
+9. [original 9] Q: ¿Cuántos tipos de acción social distinguió Max Weber? | R: Cuatro | d1: Tres | d2: Cinco | d3: Seis
+10. [original 6] Q: ¿Qué corriente del diseño prioriza la función y la claridad estructural sobre la ornamentación? | R: Racionalismo arquitectónico | d1: Barroco | d2: Art nouveau | d3: Neoclasicismo
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué resultado se obtiene al sumar cero a cualquier número? | R: El número original | O: Su opuesto / Su doble / El número original / El número uno
+2. ¿En qué país se encuentra Marrakech? | R: Marruecos | O: Argelia / Túnez / Egipto / Marruecos
+3. ¿A qué categoría de gran división terrestre pertenece la Antártida? | R: Continente | O: Península / Océano / Continente / Isla
+4. ¿Qué capa de la Tierra se encuentra entre la corteza y el núcleo? | R: Manto | O: Corteza / Núcleo interno / Manto / Núcleo externo
+5. ¿Quién desarrolló la primera vacuna eficaz contra la rabia? | R: Louis Pasteur | O: Edward Jenner / Robert Koch / Joseph Lister / Louis Pasteur
+6. ¿Qué misión tripulada del programa Apolo sucedió inmediatamente a Apolo 13? | R: Apolo 14 | O: Apolo 17 / Apolo 16 / Apolo 15 / Apolo 14
+7. En una cámara fotográfica, ¿qué componente regula la cantidad de luz que llega al sensor? | R: Diafragma | O: Obturador / Visor / Trípode / Diafragma
+8. ¿En qué año se publicó por primera vez «La señora Dalloway»? | R: 1925 | O: 1923 / 1927 / 1925 / 1931
+9. ¿Cuántos tipos de acción social distinguió Max Weber? | R: Cuatro | O: Cinco / Cuatro / Tres / Seis
+10. ¿Qué corriente del diseño prioriza la función y la claridad estructural sobre la ornamentación? | R: Racionalismo arquitectónico | O: Racionalismo arquitectónico / Neoclasicismo / Art nouveau / Barroco
+
+USO TEST 93 | G: entrada 3762, salida 4734, razonamiento 3803, coste USD 0.006433 | R: entrada 2547, salida 724, razonamiento 544, coste USD 0.001378 | S: entrada 551, salida 229, razonamiento 195, coste USD 0.000385
+
+========== TEST 94/200 — 12.80 s (G 7.49 s + R 2.36 s + S 2.95 s) ==========
+
+--- SALIDA G ---
+1. P15 D30 | F: En Don Quijote, el narrador presenta parte de la historia como una traducción de un manuscrito atribuido a Cide Hamete Benengeli. | Q: ¿Qué afirmación queda respaldada por que el narrador presente la historia como una traducción de un manuscrito hallado? | O: 1=La obra muestra conciencia de su propia construcción narrativa. / 2=La obra reconstruye fielmente la sociedad medieval. / 3=La obra defiende la transmisión oral de las aventuras. / 4=La obra mantiene una narración completamente objetiva. | C: 1 | R: La obra muestra conciencia de su propia construcción narrativa.
+2. P02 D10 | F: La Sagrada Familia se encuentra en Barcelona. | Q: ¿En qué ciudad se encuentra la basílica de la Sagrada Familia? | O: 1=Barcelona / 2=Sevilla / 3=Valencia / 4=Zaragoza | C: 1 | R: Barcelona
+3. P14 D18 | F: En español, dos vocales contiguas pueden integrarse en una sola sílaba cuando una es cerrada átona y la otra es abierta. | Q: Cuando dos vocales contiguas se articulan dentro de una misma sílaba, ¿qué fenómeno se produce? | O: 1=Diptongo / 2=Triptongo / 3=Sinalefa / 4=Metátesis | C: 1 | R: Diptongo
+4. P20 D27 | F: La obra «La ética protestante y el espíritu del capitalismo» fue escrita por Max Weber. | Q: ¿Quién escribió la obra «La ética protestante y el espíritu del capitalismo»? | O: 1=Karl Marx / 2=Max Weber / 3=Auguste Comte / 4=Herbert Spencer | C: 2 | R: Max Weber
+5. P04 D28 | F: La teoría celular es uno de los fundamentos de la biología moderna. | Q: ¿Qué cuestión aborda principalmente la teoría celular? | O: 1=La composición de los seres vivos a partir de unidades celulares / 2=La transmisión de los caracteres durante la reproducción / 3=La clasificación de los organismos según su parentesco / 4=La transformación de la energía luminosa en energía química | C: 1 | R: La composición de los seres vivos a partir de unidades celulares
+6. P18 D12 | F: La caída del Muro de Berlín ocurrió a finales del siglo XX. | Q: ¿En qué año cayó el Muro de Berlín? | O: 1=1979 / 2=1989 / 3=1999 / 4=2009 | C: 2 | R: 1989
+7. P10 D14 | F: El lago Titicaca se encuentra en la frontera entre Perú y Bolivia. | Q: ¿Cuál de estos países obtuvo su independencia más recientemente? | O: 1=Namibia / 2=Zimbabue / 3=Botsuana / 4=Zambia | C: 1 | R: Namibia
+8. P17 D34 | F: La piel actúa como una barrera protectora frente a numerosos agentes externos. | Q: ¿Con qué instrumento se mide la presión arterial? | O: 1=Termómetro / 2=Estetoscopio / 3=Esfigmomanómetro / 4=Otoscopio | C: 3 | R: Esfigmomanómetro
+9. P03 D08 | F: Marte es conocido popularmente como el planeta rojo. | Q: ¿Qué planeta recibe el título de planeta rojo? | O: 1=Venus / 2=Marte / 3=Júpiter / 4=Saturno | C: 2 | R: Marte
+10. P07 D07 | F: En el método cartesiano, la duda metódica precede a la búsqueda de una certeza indudable. | Q: ¿Qué procedimiento precede a la búsqueda de una certeza indudable en el método cartesiano? | O: 1=La duda metódica / 2=La contemplación estética / 3=La demostración geométrica / 4=La observación empírica | C: 1 | R: La duda metódica
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿Qué afirmación queda respaldada por que el narrador presente la historia como una traducción de un manuscrito hallado?
+R: La obra muestra conciencia de su propia construcción narrativa.
+d1: La obra reconstruye fielmente la sociedad medieval.
+d2: La obra defiende la transmisión oral de las aventuras.
+d3: La obra mantiene una narración completamente objetiva.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿En qué ciudad se encuentra la basílica de la Sagrada Familia?
+R: Barcelona
+d1: Sevilla
+d2: Valencia
+d3: Zaragoza
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: Cuando dos vocales contiguas se articulan dentro de una misma sílaba, ¿qué fenómeno se produce?
+R: Diptongo
+d1: Triptongo
+d2: Sinalefa
+d3: Metátesis
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Quién escribió la obra «La ética protestante y el espíritu del capitalismo»?
+R: Max Weber
+d1: Karl Marx
+d2: Auguste Comte
+d3: Herbert Spencer
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿Qué cuestión aborda principalmente la teoría celular?
+R: La composición de los seres vivos a partir de unidades celulares
+d1: La transmisión de los caracteres durante la reproducción
+d2: La clasificación de los organismos según su parentesco
+d3: La transformación de la energía luminosa en energía química
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿En qué año cayó el Muro de Berlín?
+R: 1989
+d1: 1979
+d2: 1999
+d3: 2009
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿Cuál de estos países obtuvo su independencia más recientemente?
+R: Namibia
+d1: Zimbabue
+d2: Botsuana
+d3: Zambia
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿Con qué instrumento se mide la presión arterial?
+R: Esfigmomanómetro
+d1: Termómetro
+d2: Estetoscopio
+d3: Otoscopio
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Qué planeta recibe el título de planeta rojo?
+R: Marte
+d1: Venus
+d2: Júpiter
+d3: Saturno
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Qué procedimiento precede a la búsqueda de una certeza indudable en el método cartesiano?
+R: La duda metódica
+d1: La contemplación estética
+d2: La demostración geométrica
+d3: La observación empírica
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: ¿Qué afirmación queda respaldada por que el narrador presente la historia como una traducción de un manuscrito hallado? | R: La obra muestra conciencia de su propia construcción narrativa. | d1: La obra reconstruye fielmente la sociedad medieval. | d2: La obra defiende la transmisión oral de las aventuras. | d3: La obra mantiene una narración completamente objetiva.
+2. Q: ¿En qué ciudad se encuentra la basílica de la Sagrada Familia? | R: Barcelona | d1: Sevilla | d2: Valencia | d3: Zaragoza
+3. Q: Cuando dos vocales contiguas se articulan dentro de una misma sílaba, ¿qué fenómeno se produce? | R: Diptongo | d1: Triptongo | d2: Sinalefa | d3: Metátesis
+4. Q: ¿Quién escribió la obra «La ética protestante y el espíritu del capitalismo»? | R: Max Weber | d1: Karl Marx | d2: Auguste Comte | d3: Herbert Spencer
+5. Q: ¿Qué cuestión aborda principalmente la teoría celular? | R: La composición de los seres vivos a partir de unidades celulares | d1: La transmisión de los caracteres durante la reproducción | d2: La clasificación de los organismos según su parentesco | d3: La transformación de la energía luminosa en energía química
+6. Q: ¿En qué año cayó el Muro de Berlín? | R: 1989 | d1: 1979 | d2: 1999 | d3: 2009
+7. Q: ¿Cuál de estos países obtuvo su independencia más recientemente? | R: Namibia | d1: Zimbabue | d2: Botsuana | d3: Zambia
+8. Q: ¿Con qué instrumento se mide la presión arterial? | R: Esfigmomanómetro | d1: Termómetro | d2: Estetoscopio | d3: Otoscopio
+9. Q: ¿Qué planeta recibe el título de planeta rojo? | R: Marte | d1: Venus | d2: Júpiter | d3: Saturno
+10. Q: ¿Qué procedimiento precede a la búsqueda de una certeza indudable en el método cartesiano? | R: La duda metódica | d1: La contemplación estética | d2: La demostración geométrica | d3: La observación empírica
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué afirmación queda respaldada por que el narrador presente la historia como una traducción de un manuscrito hallado?
+R: La obra muestra conciencia de su propia construcción narrativa.
+d1: La obra reconstruye fielmente la sociedad medieval.
+d2: La obra defiende la transmisión oral de las aventuras.
+d3: La obra mantiene una narración completamente objetiva.
+
+2.
+Q: ¿En qué ciudad se encuentra la basílica de la Sagrada Familia?
+R: Barcelona
+d1: Sevilla
+d2: Valencia
+d3: Zaragoza
+
+3.
+Q: Cuando dos vocales contiguas se articulan dentro de una misma sílaba, ¿qué fenómeno se produce?
+R: Diptongo
+d1: Triptongo
+d2: Sinalefa
+d3: Metátesis
+
+4.
+Q: ¿Quién escribió la obra «La ética protestante y el espíritu del capitalismo»?
+R: Max Weber
+d1: Karl Marx
+d2: Auguste Comte
+d3: Herbert Spencer
+
+5.
+Q: ¿Qué cuestión aborda principalmente la teoría celular?
+R: La composición de los seres vivos a partir de unidades celulares
+d1: La transmisión de los caracteres durante la reproducción
+d2: La clasificación de los organismos según su parentesco
+d3: La transformación de la energía luminosa en energía química
+
+6.
+Q: ¿En qué año cayó el Muro de Berlín?
+R: 1989
+d1: 1979
+d2: 1999
+d3: 2009
+
+7.
+Q: ¿Cuál de estos países obtuvo su independencia más recientemente?
+R: Namibia
+d1: Zimbabue
+d2: Botsuana
+d3: Zambia
+
+8.
+Q: ¿Con qué instrumento se mide la presión arterial?
+R: Esfigmomanómetro
+d1: Termómetro
+d2: Estetoscopio
+d3: Otoscopio
+
+9.
+Q: ¿Qué planeta recibe el título de planeta rojo?
+R: Marte
+d1: Venus
+d2: Júpiter
+d3: Saturno
+
+10.
+Q: ¿Qué procedimiento precede a la búsqueda de una certeza indudable en el método cartesiano?
+R: La duda metódica
+d1: La contemplación estética
+d2: La demostración geométrica
+d3: La observación empírica
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[9,2,6,4,5,3,10,8,7,1]}
+
+--- ORDEN S ---
+[9, 2, 6, 4, 5, 3, 10, 8, 7, 1]
+
+--- TEST TRAS R Y S ---
+1. [original 9] Q: ¿Qué planeta recibe el título de planeta rojo? | R: Marte | d1: Venus | d2: Júpiter | d3: Saturno
+2. [original 2] Q: ¿En qué ciudad se encuentra la basílica de la Sagrada Familia? | R: Barcelona | d1: Sevilla | d2: Valencia | d3: Zaragoza
+3. [original 6] Q: ¿En qué año cayó el Muro de Berlín? | R: 1989 | d1: 1979 | d2: 1999 | d3: 2009
+4. [original 4] Q: ¿Quién escribió la obra «La ética protestante y el espíritu del capitalismo»? | R: Max Weber | d1: Karl Marx | d2: Auguste Comte | d3: Herbert Spencer
+5. [original 5] Q: ¿Qué cuestión aborda principalmente la teoría celular? | R: La composición de los seres vivos a partir de unidades celulares | d1: La transmisión de los caracteres durante la reproducción | d2: La clasificación de los organismos según su parentesco | d3: La transformación de la energía luminosa en energía química
+6. [original 3] Q: Cuando dos vocales contiguas se articulan dentro de una misma sílaba, ¿qué fenómeno se produce? | R: Diptongo | d1: Triptongo | d2: Sinalefa | d3: Metátesis
+7. [original 10] Q: ¿Qué procedimiento precede a la búsqueda de una certeza indudable en el método cartesiano? | R: La duda metódica | d1: La contemplación estética | d2: La demostración geométrica | d3: La observación empírica
+8. [original 8] Q: ¿Con qué instrumento se mide la presión arterial? | R: Esfigmomanómetro | d1: Termómetro | d2: Estetoscopio | d3: Otoscopio
+9. [original 7] Q: ¿Cuál de estos países obtuvo su independencia más recientemente? | R: Namibia | d1: Zimbabue | d2: Botsuana | d3: Zambia
+10. [original 1] Q: ¿Qué afirmación queda respaldada por que el narrador presente la historia como una traducción de un manuscrito hallado? | R: La obra muestra conciencia de su propia construcción narrativa. | d1: La obra reconstruye fielmente la sociedad medieval. | d2: La obra defiende la transmisión oral de las aventuras. | d3: La obra mantiene una narración completamente objetiva.
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué planeta recibe el título de planeta rojo? | R: Marte | O: Venus / Marte / Saturno / Júpiter
+2. ¿En qué ciudad se encuentra la basílica de la Sagrada Familia? | R: Barcelona | O: Valencia / Zaragoza / Barcelona / Sevilla
+3. ¿En qué año cayó el Muro de Berlín? | R: 1989 | O: 2009 / 1989 / 1999 / 1979
+4. ¿Quién escribió la obra «La ética protestante y el espíritu del capitalismo»? | R: Max Weber | O: Max Weber / Herbert Spencer / Karl Marx / Auguste Comte
+5. ¿Qué cuestión aborda principalmente la teoría celular? | R: La composición de los seres vivos a partir de unidades celulares | O: La transmisión de los caracteres durante la reproducción / La clasificación de los organismos según su parentesco / La composición de los seres vivos a partir de unidades celulares / La transformación de la energía luminosa en energía química
+6. Cuando dos vocales contiguas se articulan dentro de una misma sílaba, ¿qué fenómeno se produce? | R: Diptongo | O: Diptongo / Sinalefa / Triptongo / Metátesis
+7. ¿Qué procedimiento precede a la búsqueda de una certeza indudable en el método cartesiano? | R: La duda metódica | O: La duda metódica / La demostración geométrica / La contemplación estética / La observación empírica
+8. ¿Con qué instrumento se mide la presión arterial? | R: Esfigmomanómetro | O: Estetoscopio / Termómetro / Esfigmomanómetro / Otoscopio
+9. ¿Cuál de estos países obtuvo su independencia más recientemente? | R: Namibia | O: Zambia / Botsuana / Namibia / Zimbabue
+10. ¿Qué afirmación queda respaldada por que el narrador presente la historia como una traducción de un manuscrito hallado? | R: La obra muestra conciencia de su propia construcción narrativa. | O: La obra defiende la transmisión oral de las aventuras. / La obra muestra conciencia de su propia construcción narrativa. / La obra reconstruye fielmente la sociedad medieval. / La obra mantiene una narración completamente objetiva.
+
+USO TEST 94 | G: entrada 3882, salida 4137, razonamiento 3104, coste USD 0.005741 | R: entrada 2607, salida 788, razonamiento 608, coste USD 0.001467 | S: entrada 611, salida 218, razonamiento 184, coste USD 0.000384
+
+========== TEST 95/200 — 22.82 s (G 13.78 s + R 3.73 s + S 5.30 s) ==========
+
+--- SALIDA G ---
+1. P16 D18 | F: El producto de dos números negativos es positivo. | Q: ¿Qué signo tiene el producto de dos números negativos? | O: 1=Positivo / 2=Negativo / 3=Cero / 4=No se puede determinar | C: 1 | R: Positivo
+2. P08 D13 | F: En 1687 Isaac Newton publicó su obra *Philosophiae Naturalis Principia Mathematica*. | Q: ¿Qué acontecimiento de la física ocurrió en 1687? | O: 1=La publicación de los Principia de Newton / 2=La formulación de la ley de Ohm / 3=La presentación de la teoría cuántica / 4=La invención del ciclotrón | C: 1 | R: La publicación de los Principia de Newton
+3. P10 D24 | F: Las curvas de nivel unen puntos que tienen la misma altitud. | Q: En un mapa topográfico, ¿qué representan las curvas de nivel? | O: 1=Límites entre países vecinos / 2=Líneas que unen puntos de igual altitud / 3=Rutas principales de transporte / 4=Zonas con la misma densidad de población | C: 2 | R: Líneas que unen puntos de igual altitud
+4. P15 D01 | F: La Odisea es un poema épico griego atribuido tradicionalmente a Homero. | Q: ¿Qué obra narra el regreso de un héroe griego a su patria tras la guerra de Troya? | O: 1=La Ilíada / 2=La Odisea / 3=La Eneida / 4=Las Argonáuticas | C: 2 | R: La Odisea
+5. P04 D34 | F: Las vacunas pueden administrarse mediante inyección intramuscular. | Q: ¿Con qué instrumento se administra habitualmente una vacuna por vía intramuscular? | O: 1=Jeringa / 2=Estetoscopio / 3=Microscopio / 4=Termómetro | C: 1 | R: Jeringa
+6. P12 D02 | F: El feudalismo europeo se caracterizó por una sociedad jerarquizada y relaciones de dependencia entre señores y vasallos. | Q: ¿Qué rasgo caracterizaba al feudalismo europeo? | O: 1=Una jerarquía social basada en vínculos de dependencia / 2=La elección directa de todos los gobernantes / 3=La igualdad jurídica entre todos los habitantes / 4=La concentración de la población en grandes ciudades industriales | C: 1 | R: Una jerarquía social basada en vínculos de dependencia
+7. P20 D11 | F: La Organización Internacional del Trabajo tiene su sede principal en Ginebra. | Q: ¿Qué organización internacional tiene su sede principal en Ginebra? | O: 1=Organización Internacional del Trabajo / 2=Organización Mundial de la Salud / 3=Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura / 4=Organización de las Naciones Unidas para la Alimentación y la Agricultura | C: 1 | R: Organización Internacional del Trabajo
+8. P03 D31 | F: Un eclipse solar ocurre cuando la Luna se interpone entre la Tierra y el Sol. | Q: ¿Qué conjunto de observaciones permitiría contrastar la afirmación de que un eclipse solar ocurre cuando la Luna se interpone entre la Tierra y el Sol? | O: 1=Registros de mareas y de fases lunares durante varios meses. / 2=Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes. / 3=Espectros de estrellas observadas en distintas estaciones del año. / 4=Mapas de cráteres lunares y mediciones de la actividad solar. | C: 2 | R: Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes.
+9. P07 D15 | F: La filosofía clásica siguió inmediatamente a la filosofía presocrática. | Q: ¿Qué etapa siguió inmediatamente a la filosofía presocrática? | O: 1=Filosofía medieval / 2=Filosofía clásica / 3=Filosofía moderna / 4=Filosofía contemporánea | C: 2 | R: Filosofía clásica
+10. P05 D06 | F: La organización jurisdiccional ordinaria española se articula en distintos niveles y tiene al Tribunal Supremo como órgano de cierre. | Q: En la organización jurisdiccional ordinaria española, ¿qué órgano encabeza la estructura? | O: 1=Tribunal Supremo / 2=Audiencia Nacional / 3=Tribunales Superiores de Justicia / 4=Juzgados de Primera Instancia | C: 1 | R: Tribunal Supremo
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿Qué signo tiene el producto de dos números negativos?
+R: Positivo
+d1: Negativo
+d2: Cero
+d3: No se puede determinar
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Qué acontecimiento de la física ocurrió en 1687?
+R: La publicación de los Principia de Newton
+d1: La formulación de la ley de Ohm
+d2: La presentación de la teoría cuántica
+d3: La invención del ciclotrón
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: En un mapa topográfico, ¿qué representan las curvas de nivel?
+R: Líneas que unen puntos de igual altitud
+d1: Límites entre países vecinos
+d2: Rutas principales de transporte
+d3: Zonas con la misma densidad de población
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Qué obra narra el regreso de un héroe griego a su patria tras la guerra de Troya?
+R: La Odisea
+d1: La Ilíada
+d2: La Eneida
+d3: Las Argonáuticas
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿Con qué instrumento se administra habitualmente una vacuna por vía intramuscular?
+R: Jeringa
+d1: Estetoscopio
+d2: Microscopio
+d3: Termómetro
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Qué rasgo caracterizaba al feudalismo europeo?
+R: Una jerarquía social basada en vínculos de dependencia
+d1: La elección directa de todos los gobernantes
+d2: La igualdad jurídica entre todos los habitantes
+d3: La concentración de la población en grandes ciudades industriales
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿Qué organización internacional tiene su sede principal en Ginebra?
+R: Organización Internacional del Trabajo
+d1: Organización Mundial de la Salud
+d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura
+d3: Organización de las Naciones Unidas para la Alimentación y la Agricultura
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿Qué conjunto de observaciones permitiría contrastar la afirmación de que un eclipse solar ocurre cuando la Luna se interpone entre la Tierra y el Sol?
+R: Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes.
+d1: Registros de mareas y de fases lunares durante varios meses.
+d2: Espectros de estrellas observadas en distintas estaciones del año.
+d3: Mapas de cráteres lunares y mediciones de la actividad solar.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Qué etapa siguió inmediatamente a la filosofía presocrática?
+R: Filosofía clásica
+d1: Filosofía medieval
+d2: Filosofía moderna
+d3: Filosofía contemporánea
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: En la organización jurisdiccional ordinaria española, ¿qué órgano encabeza la estructura?
+R: Tribunal Supremo
+d1: Audiencia Nacional
+d2: Tribunales Superiores de Justicia
+d3: Juzgados de Primera Instancia
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[{"campo":"d1","valor":"Organización de las Naciones Unidas"}]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+7.d1
+  G: Organización Mundial de la Salud
+  R: Organización de las Naciones Unidas
+
+--- TEST TRAS R ---
+1. Q: ¿Qué signo tiene el producto de dos números negativos? | R: Positivo | d1: Negativo | d2: Cero | d3: No se puede determinar
+2. Q: ¿Qué acontecimiento de la física ocurrió en 1687? | R: La publicación de los Principia de Newton | d1: La formulación de la ley de Ohm | d2: La presentación de la teoría cuántica | d3: La invención del ciclotrón
+3. Q: En un mapa topográfico, ¿qué representan las curvas de nivel? | R: Líneas que unen puntos de igual altitud | d1: Límites entre países vecinos | d2: Rutas principales de transporte | d3: Zonas con la misma densidad de población
+4. Q: ¿Qué obra narra el regreso de un héroe griego a su patria tras la guerra de Troya? | R: La Odisea | d1: La Ilíada | d2: La Eneida | d3: Las Argonáuticas
+5. Q: ¿Con qué instrumento se administra habitualmente una vacuna por vía intramuscular? | R: Jeringa | d1: Estetoscopio | d2: Microscopio | d3: Termómetro
+6. Q: ¿Qué rasgo caracterizaba al feudalismo europeo? | R: Una jerarquía social basada en vínculos de dependencia | d1: La elección directa de todos los gobernantes | d2: La igualdad jurídica entre todos los habitantes | d3: La concentración de la población en grandes ciudades industriales
+7. Q: ¿Qué organización internacional tiene su sede principal en Ginebra? | R: Organización Internacional del Trabajo | d1: Organización de las Naciones Unidas | d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura | d3: Organización de las Naciones Unidas para la Alimentación y la Agricultura
+8. Q: ¿Qué conjunto de observaciones permitiría contrastar la afirmación de que un eclipse solar ocurre cuando la Luna se interpone entre la Tierra y el Sol? | R: Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes. | d1: Registros de mareas y de fases lunares durante varios meses. | d2: Espectros de estrellas observadas en distintas estaciones del año. | d3: Mapas de cráteres lunares y mediciones de la actividad solar.
+9. Q: ¿Qué etapa siguió inmediatamente a la filosofía presocrática? | R: Filosofía clásica | d1: Filosofía medieval | d2: Filosofía moderna | d3: Filosofía contemporánea
+10. Q: En la organización jurisdiccional ordinaria española, ¿qué órgano encabeza la estructura? | R: Tribunal Supremo | d1: Audiencia Nacional | d2: Tribunales Superiores de Justicia | d3: Juzgados de Primera Instancia
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué signo tiene el producto de dos números negativos?
+R: Positivo
+d1: Negativo
+d2: Cero
+d3: No se puede determinar
+
+2.
+Q: ¿Qué acontecimiento de la física ocurrió en 1687?
+R: La publicación de los Principia de Newton
+d1: La formulación de la ley de Ohm
+d2: La presentación de la teoría cuántica
+d3: La invención del ciclotrón
+
+3.
+Q: En un mapa topográfico, ¿qué representan las curvas de nivel?
+R: Líneas que unen puntos de igual altitud
+d1: Límites entre países vecinos
+d2: Rutas principales de transporte
+d3: Zonas con la misma densidad de población
+
+4.
+Q: ¿Qué obra narra el regreso de un héroe griego a su patria tras la guerra de Troya?
+R: La Odisea
+d1: La Ilíada
+d2: La Eneida
+d3: Las Argonáuticas
+
+5.
+Q: ¿Con qué instrumento se administra habitualmente una vacuna por vía intramuscular?
+R: Jeringa
+d1: Estetoscopio
+d2: Microscopio
+d3: Termómetro
+
+6.
+Q: ¿Qué rasgo caracterizaba al feudalismo europeo?
+R: Una jerarquía social basada en vínculos de dependencia
+d1: La elección directa de todos los gobernantes
+d2: La igualdad jurídica entre todos los habitantes
+d3: La concentración de la población en grandes ciudades industriales
+
+7.
+Q: ¿Qué organización internacional tiene su sede principal en Ginebra?
+R: Organización Internacional del Trabajo
+d1: Organización de las Naciones Unidas
+d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura
+d3: Organización de las Naciones Unidas para la Alimentación y la Agricultura
+
+8.
+Q: ¿Qué conjunto de observaciones permitiría contrastar la afirmación de que un eclipse solar ocurre cuando la Luna se interpone entre la Tierra y el Sol?
+R: Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes.
+d1: Registros de mareas y de fases lunares durante varios meses.
+d2: Espectros de estrellas observadas en distintas estaciones del año.
+d3: Mapas de cráteres lunares y mediciones de la actividad solar.
+
+9.
+Q: ¿Qué etapa siguió inmediatamente a la filosofía presocrática?
+R: Filosofía clásica
+d1: Filosofía medieval
+d2: Filosofía moderna
+d3: Filosofía contemporánea
+
+10.
+Q: En la organización jurisdiccional ordinaria española, ¿qué órgano encabeza la estructura?
+R: Tribunal Supremo
+d1: Audiencia Nacional
+d2: Tribunales Superiores de Justicia
+d3: Juzgados de Primera Instancia
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[1,5,3,4,2,9,6,10,7,8]}
+
+--- ORDEN S ---
+[1, 5, 3, 4, 2, 9, 6, 10, 7, 8]
+
+--- TEST TRAS R Y S ---
+1. [original 1] Q: ¿Qué signo tiene el producto de dos números negativos? | R: Positivo | d1: Negativo | d2: Cero | d3: No se puede determinar
+2. [original 5] Q: ¿Con qué instrumento se administra habitualmente una vacuna por vía intramuscular? | R: Jeringa | d1: Estetoscopio | d2: Microscopio | d3: Termómetro
+3. [original 3] Q: En un mapa topográfico, ¿qué representan las curvas de nivel? | R: Líneas que unen puntos de igual altitud | d1: Límites entre países vecinos | d2: Rutas principales de transporte | d3: Zonas con la misma densidad de población
+4. [original 4] Q: ¿Qué obra narra el regreso de un héroe griego a su patria tras la guerra de Troya? | R: La Odisea | d1: La Ilíada | d2: La Eneida | d3: Las Argonáuticas
+5. [original 2] Q: ¿Qué acontecimiento de la física ocurrió en 1687? | R: La publicación de los Principia de Newton | d1: La formulación de la ley de Ohm | d2: La presentación de la teoría cuántica | d3: La invención del ciclotrón
+6. [original 9] Q: ¿Qué etapa siguió inmediatamente a la filosofía presocrática? | R: Filosofía clásica | d1: Filosofía medieval | d2: Filosofía moderna | d3: Filosofía contemporánea
+7. [original 6] Q: ¿Qué rasgo caracterizaba al feudalismo europeo? | R: Una jerarquía social basada en vínculos de dependencia | d1: La elección directa de todos los gobernantes | d2: La igualdad jurídica entre todos los habitantes | d3: La concentración de la población en grandes ciudades industriales
+8. [original 10] Q: En la organización jurisdiccional ordinaria española, ¿qué órgano encabeza la estructura? | R: Tribunal Supremo | d1: Audiencia Nacional | d2: Tribunales Superiores de Justicia | d3: Juzgados de Primera Instancia
+9. [original 7] Q: ¿Qué organización internacional tiene su sede principal en Ginebra? | R: Organización Internacional del Trabajo | d1: Organización de las Naciones Unidas | d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura | d3: Organización de las Naciones Unidas para la Alimentación y la Agricultura
+10. [original 8] Q: ¿Qué conjunto de observaciones permitiría contrastar la afirmación de que un eclipse solar ocurre cuando la Luna se interpone entre la Tierra y el Sol? | R: Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes. | d1: Registros de mareas y de fases lunares durante varios meses. | d2: Espectros de estrellas observadas en distintas estaciones del año. | d3: Mapas de cráteres lunares y mediciones de la actividad solar.
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué signo tiene el producto de dos números negativos? | R: Positivo | O: No se puede determinar / Positivo / Cero / Negativo
+2. ¿Con qué instrumento se administra habitualmente una vacuna por vía intramuscular? | R: Jeringa | O: Termómetro / Microscopio / Jeringa / Estetoscopio
+3. En un mapa topográfico, ¿qué representan las curvas de nivel? | R: Líneas que unen puntos de igual altitud | O: Zonas con la misma densidad de población / Líneas que unen puntos de igual altitud / Límites entre países vecinos / Rutas principales de transporte
+4. ¿Qué obra narra el regreso de un héroe griego a su patria tras la guerra de Troya? | R: La Odisea | O: La Odisea / Las Argonáuticas / La Ilíada / La Eneida
+5. ¿Qué acontecimiento de la física ocurrió en 1687? | R: La publicación de los Principia de Newton | O: La formulación de la ley de Ohm / La publicación de los Principia de Newton / La invención del ciclotrón / La presentación de la teoría cuántica
+6. ¿Qué etapa siguió inmediatamente a la filosofía presocrática? | R: Filosofía clásica | O: Filosofía medieval / Filosofía contemporánea / Filosofía clásica / Filosofía moderna
+7. ¿Qué rasgo caracterizaba al feudalismo europeo? | R: Una jerarquía social basada en vínculos de dependencia | O: La igualdad jurídica entre todos los habitantes / Una jerarquía social basada en vínculos de dependencia / La concentración de la población en grandes ciudades industriales / La elección directa de todos los gobernantes
+8. En la organización jurisdiccional ordinaria española, ¿qué órgano encabeza la estructura? | R: Tribunal Supremo | O: Audiencia Nacional / Tribunal Supremo / Tribunales Superiores de Justicia / Juzgados de Primera Instancia
+9. ¿Qué organización internacional tiene su sede principal en Ginebra? | R: Organización Internacional del Trabajo | O: Organización de las Naciones Unidas para la Alimentación y la Agricultura / Organización Internacional del Trabajo / Organización de las Naciones Unidas / Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura
+10. ¿Qué conjunto de observaciones permitiría contrastar la afirmación de que un eclipse solar ocurre cuando la Luna se interpone entre la Tierra y el Sol? | R: Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes. | O: Espectros de estrellas observadas en distintas estaciones del año. / Secuencias temporales de imágenes del Sol y la Luna, junto con sus posiciones aparentes. / Mapas de cráteres lunares y mediciones de la actividad solar. / Registros de mareas y de fases lunares durante varios meses.
+
+USO TEST 95 | G: entrada 3930, salida 5304, razonamiento 4168, coste USD 0.007151 | R: entrada 2722, salida 1045, razonamiento 850, coste USD 0.001798 | S: entrada 726, salida 427, razonamiento 393, coste USD 0.000658
+
+========== TEST 96/200 — 18.65 s (G 12.24 s + R 2.24 s + S 4.17 s) ==========
+
+--- SALIDA G ---
+1. P15 D08 | F: Samuel Langhorne Clemens utilizó el seudónimo literario Mark Twain. | Q: ¿Qué nombre real correspondía al seudónimo literario Mark Twain? | O: 1=Charles Dickens / 2=Samuel Langhorne Clemens / 3=Oscar Wilde / 4=Robert Louis Stevenson | C: 2 | R: Samuel Langhorne Clemens
+2. P19 D24 | F: La fórmula molecular del dióxido de carbono es CO₂. | Q: ¿Qué información comunica la fórmula molecular CO₂? | O: 1=La carga eléctrica neta de cada entidad / 2=La proporción de átomos de cada elemento en una entidad / 3=La disposición tridimensional exacta de los átomos / 4=La velocidad de reacción con oxígeno | C: 2 | R: La proporción de átomos de cada elemento en una entidad
+3. P12 D15 | F: La dinastía Tudor gobernó Inglaterra desde 1485 hasta 1603. | Q: ¿Qué dinastía ocupó el trono inglés inmediatamente después de los Tudor? | O: 1=Plantagenet / 2=Estuardo / 3=Hannover / 4=Windsor | C: 2 | R: Estuardo
+4. P04 D20 | F: La fotosíntesis transforma la energía luminosa en energía química almacenada en moléculas orgánicas. | Q: ¿Qué estructura celular regula el intercambio de sustancias entre la célula y su entorno? | O: 1=Núcleo / 2=Membrana plasmática / 3=Ribosoma / 4=Lisosoma | C: 2 | R: Membrana plasmática
+5. P02 D07 | F: La forma sonata clásica suele organizarse en exposición, desarrollo y reexposición. | Q: En la forma sonata, ¿qué sección suele situarse entre la exposición y la reexposición? | O: 1=Coda / 2=Desarrollo / 3=Exposición / 4=Reexposición | C: 2 | R: Desarrollo
+6. P01 D31 | F: Andrea Palladio diseñó la Villa Rotonda. | Q: ¿Qué procedimiento permitiría contrastar mejor la afirmación de que Andrea Palladio diseñó la Villa Rotonda? | O: 1=Comparar fotografías actuales con edificios diseñados por otros arquitectos del mismo periodo. / 2=Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda. / 3=Consultar una guía turística moderna sobre las villas del Véneto. / 4=Recoger opiniones de visitantes sobre el estilo arquitectónico del edificio. | C: 2 | R: Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda.
+7. P05 D23 | F: El derecho privado se basa principalmente en la autonomía de la voluntad y la coordinación entre sujetos jurídicamente iguales. | Q: ¿En qué ámbito jurídico se encuadran principalmente las relaciones entre particulares? | O: 1=Derecho público / 2=Derecho procesal / 3=Derecho privado / 4=Derecho internacional público | C: 3 | R: Derecho privado
+8. P16 D05 | F: El sistema solar está compuesto por ocho planetas. | Q: ¿Cuántos planetas componen el sistema solar? | O: 1=Seis / 2=Siete / 3=Ocho / 4=Nueve | C: 3 | R: Ocho
+9. P13 D10 | F: La sede mundial de Apple se encuentra en Cupertino. | Q: ¿Dónde se encuentra la sede mundial de Apple? | O: 1=Cupertino / 2=Austin / 3=Seattle / 4=San José | C: 1 | R: Cupertino
+10. P03 D25 | F: La Tierra se representa convencionalmente en astronomía con el símbolo ♁. | Q: ¿Cuál es el símbolo astronómico convencional de la Tierra? | O: 1=♁ / 2=♂ / 3=♃ / 4=☿ | C: 1 | R: ♁
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿Qué nombre real correspondía al seudónimo literario Mark Twain?
+R: Samuel Langhorne Clemens
+d1: Charles Dickens
+d2: Oscar Wilde
+d3: Robert Louis Stevenson
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Qué información comunica la fórmula molecular CO₂?
+R: La proporción de átomos de cada elemento en una entidad
+d1: La carga eléctrica neta de cada entidad
+d2: La disposición tridimensional exacta de los átomos
+d3: La velocidad de reacción con oxígeno
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿Qué dinastía ocupó el trono inglés inmediatamente después de los Tudor?
+R: Estuardo
+d1: Plantagenet
+d2: Hannover
+d3: Windsor
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Qué estructura celular regula el intercambio de sustancias entre la célula y su entorno?
+R: Membrana plasmática
+d1: Núcleo
+d2: Ribosoma
+d3: Lisosoma
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: En la forma sonata, ¿qué sección suele situarse entre la exposición y la reexposición?
+R: Desarrollo
+d1: Coda
+d2: Exposición
+d3: Reexposición
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Qué procedimiento permitiría contrastar mejor la afirmación de que Andrea Palladio diseñó la Villa Rotonda?
+R: Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda.
+d1: Comparar fotografías actuales con edificios diseñados por otros arquitectos del mismo periodo.
+d2: Consultar una guía turística moderna sobre las villas del Véneto.
+d3: Recoger opiniones de visitantes sobre el estilo arquitectónico del edificio.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿En qué ámbito jurídico se encuadran principalmente las relaciones entre particulares?
+R: Derecho privado
+d1: Derecho público
+d2: Derecho procesal
+d3: Derecho internacional público
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿Cuántos planetas componen el sistema solar?
+R: Ocho
+d1: Seis
+d2: Siete
+d3: Nueve
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Dónde se encuentra la sede mundial de Apple?
+R: Cupertino
+d1: Austin
+d2: Seattle
+d3: San José
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Cuál es el símbolo astronómico convencional de la Tierra?
+R: ♁
+d1: ♂
+d2: ♃
+d3: ☿
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: ¿Qué nombre real correspondía al seudónimo literario Mark Twain? | R: Samuel Langhorne Clemens | d1: Charles Dickens | d2: Oscar Wilde | d3: Robert Louis Stevenson
+2. Q: ¿Qué información comunica la fórmula molecular CO₂? | R: La proporción de átomos de cada elemento en una entidad | d1: La carga eléctrica neta de cada entidad | d2: La disposición tridimensional exacta de los átomos | d3: La velocidad de reacción con oxígeno
+3. Q: ¿Qué dinastía ocupó el trono inglés inmediatamente después de los Tudor? | R: Estuardo | d1: Plantagenet | d2: Hannover | d3: Windsor
+4. Q: ¿Qué estructura celular regula el intercambio de sustancias entre la célula y su entorno? | R: Membrana plasmática | d1: Núcleo | d2: Ribosoma | d3: Lisosoma
+5. Q: En la forma sonata, ¿qué sección suele situarse entre la exposición y la reexposición? | R: Desarrollo | d1: Coda | d2: Exposición | d3: Reexposición
+6. Q: ¿Qué procedimiento permitiría contrastar mejor la afirmación de que Andrea Palladio diseñó la Villa Rotonda? | R: Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda. | d1: Comparar fotografías actuales con edificios diseñados por otros arquitectos del mismo periodo. | d2: Consultar una guía turística moderna sobre las villas del Véneto. | d3: Recoger opiniones de visitantes sobre el estilo arquitectónico del edificio.
+7. Q: ¿En qué ámbito jurídico se encuadran principalmente las relaciones entre particulares? | R: Derecho privado | d1: Derecho público | d2: Derecho procesal | d3: Derecho internacional público
+8. Q: ¿Cuántos planetas componen el sistema solar? | R: Ocho | d1: Seis | d2: Siete | d3: Nueve
+9. Q: ¿Dónde se encuentra la sede mundial de Apple? | R: Cupertino | d1: Austin | d2: Seattle | d3: San José
+10. Q: ¿Cuál es el símbolo astronómico convencional de la Tierra? | R: ♁ | d1: ♂ | d2: ♃ | d3: ☿
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué nombre real correspondía al seudónimo literario Mark Twain?
+R: Samuel Langhorne Clemens
+d1: Charles Dickens
+d2: Oscar Wilde
+d3: Robert Louis Stevenson
+
+2.
+Q: ¿Qué información comunica la fórmula molecular CO₂?
+R: La proporción de átomos de cada elemento en una entidad
+d1: La carga eléctrica neta de cada entidad
+d2: La disposición tridimensional exacta de los átomos
+d3: La velocidad de reacción con oxígeno
+
+3.
+Q: ¿Qué dinastía ocupó el trono inglés inmediatamente después de los Tudor?
+R: Estuardo
+d1: Plantagenet
+d2: Hannover
+d3: Windsor
+
+4.
+Q: ¿Qué estructura celular regula el intercambio de sustancias entre la célula y su entorno?
+R: Membrana plasmática
+d1: Núcleo
+d2: Ribosoma
+d3: Lisosoma
+
+5.
+Q: En la forma sonata, ¿qué sección suele situarse entre la exposición y la reexposición?
+R: Desarrollo
+d1: Coda
+d2: Exposición
+d3: Reexposición
+
+6.
+Q: ¿Qué procedimiento permitiría contrastar mejor la afirmación de que Andrea Palladio diseñó la Villa Rotonda?
+R: Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda.
+d1: Comparar fotografías actuales con edificios diseñados por otros arquitectos del mismo periodo.
+d2: Consultar una guía turística moderna sobre las villas del Véneto.
+d3: Recoger opiniones de visitantes sobre el estilo arquitectónico del edificio.
+
+7.
+Q: ¿En qué ámbito jurídico se encuadran principalmente las relaciones entre particulares?
+R: Derecho privado
+d1: Derecho público
+d2: Derecho procesal
+d3: Derecho internacional público
+
+8.
+Q: ¿Cuántos planetas componen el sistema solar?
+R: Ocho
+d1: Seis
+d2: Siete
+d3: Nueve
+
+9.
+Q: ¿Dónde se encuentra la sede mundial de Apple?
+R: Cupertino
+d1: Austin
+d2: Seattle
+d3: San José
+
+10.
+Q: ¿Cuál es el símbolo astronómico convencional de la Tierra?
+R: ♁
+d1: ♂
+d2: ♃
+d3: ☿
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[8,1,4,9,2,3,6,7,5,10]}
+
+--- ORDEN S ---
+[8, 1, 4, 9, 2, 3, 6, 7, 5, 10]
+
+--- TEST TRAS R Y S ---
+1. [original 8] Q: ¿Cuántos planetas componen el sistema solar? | R: Ocho | d1: Seis | d2: Siete | d3: Nueve
+2. [original 1] Q: ¿Qué nombre real correspondía al seudónimo literario Mark Twain? | R: Samuel Langhorne Clemens | d1: Charles Dickens | d2: Oscar Wilde | d3: Robert Louis Stevenson
+3. [original 4] Q: ¿Qué estructura celular regula el intercambio de sustancias entre la célula y su entorno? | R: Membrana plasmática | d1: Núcleo | d2: Ribosoma | d3: Lisosoma
+4. [original 9] Q: ¿Dónde se encuentra la sede mundial de Apple? | R: Cupertino | d1: Austin | d2: Seattle | d3: San José
+5. [original 2] Q: ¿Qué información comunica la fórmula molecular CO₂? | R: La proporción de átomos de cada elemento en una entidad | d1: La carga eléctrica neta de cada entidad | d2: La disposición tridimensional exacta de los átomos | d3: La velocidad de reacción con oxígeno
+6. [original 3] Q: ¿Qué dinastía ocupó el trono inglés inmediatamente después de los Tudor? | R: Estuardo | d1: Plantagenet | d2: Hannover | d3: Windsor
+7. [original 6] Q: ¿Qué procedimiento permitiría contrastar mejor la afirmación de que Andrea Palladio diseñó la Villa Rotonda? | R: Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda. | d1: Comparar fotografías actuales con edificios diseñados por otros arquitectos del mismo periodo. | d2: Consultar una guía turística moderna sobre las villas del Véneto. | d3: Recoger opiniones de visitantes sobre el estilo arquitectónico del edificio.
+8. [original 7] Q: ¿En qué ámbito jurídico se encuadran principalmente las relaciones entre particulares? | R: Derecho privado | d1: Derecho público | d2: Derecho procesal | d3: Derecho internacional público
+9. [original 5] Q: En la forma sonata, ¿qué sección suele situarse entre la exposición y la reexposición? | R: Desarrollo | d1: Coda | d2: Exposición | d3: Reexposición
+10. [original 10] Q: ¿Cuál es el símbolo astronómico convencional de la Tierra? | R: ♁ | d1: ♂ | d2: ♃ | d3: ☿
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Cuántos planetas componen el sistema solar? | R: Ocho | O: Nueve / Ocho / Seis / Siete
+2. ¿Qué nombre real correspondía al seudónimo literario Mark Twain? | R: Samuel Langhorne Clemens | O: Robert Louis Stevenson / Oscar Wilde / Samuel Langhorne Clemens / Charles Dickens
+3. ¿Qué estructura celular regula el intercambio de sustancias entre la célula y su entorno? | R: Membrana plasmática | O: Membrana plasmática / Lisosoma / Núcleo / Ribosoma
+4. ¿Dónde se encuentra la sede mundial de Apple? | R: Cupertino | O: Cupertino / Seattle / Austin / San José
+5. ¿Qué información comunica la fórmula molecular CO₂? | R: La proporción de átomos de cada elemento en una entidad | O: La velocidad de reacción con oxígeno / La disposición tridimensional exacta de los átomos / La proporción de átomos de cada elemento en una entidad / La carga eléctrica neta de cada entidad
+6. ¿Qué dinastía ocupó el trono inglés inmediatamente después de los Tudor? | R: Estuardo | O: Estuardo / Plantagenet / Hannover / Windsor
+7. ¿Qué procedimiento permitiría contrastar mejor la afirmación de que Andrea Palladio diseñó la Villa Rotonda? | R: Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda. | O: Recoger opiniones de visitantes sobre el estilo arquitectónico del edificio. / Examinar planos, correspondencia y documentos del encargo vinculados con la Villa Rotonda. / Comparar fotografías actuales con edificios diseñados por otros arquitectos del mismo periodo. / Consultar una guía turística moderna sobre las villas del Véneto.
+8. ¿En qué ámbito jurídico se encuadran principalmente las relaciones entre particulares? | R: Derecho privado | O: Derecho internacional público / Derecho público / Derecho privado / Derecho procesal
+9. En la forma sonata, ¿qué sección suele situarse entre la exposición y la reexposición? | R: Desarrollo | O: Exposición / Coda / Desarrollo / Reexposición
+10. ¿Cuál es el símbolo astronómico convencional de la Tierra? | R: ♁ | O: ♃ / ♂ / ☿ / ♁
+
+USO TEST 96 | G: entrada 3940, salida 5244, razonamiento 4238, coste USD 0.007081 | R: entrada 2614, salida 858, razonamiento 678, coste USD 0.001552 | S: entrada 618, salida 312, razonamiento 278, coste USD 0.000498
+
+========== TEST 97/200 — 13.85 s (G 7.21 s + R 2.27 s + S 4.36 s) ==========
+
+--- SALIDA G ---
+1. P07 D20 | F: La lógica aristotélica analiza las proposiciones categóricas mediante componentes que desempeñan funciones diferentes. | Q: En una proposición categórica, ¿qué componente cumple la función de aquello sobre lo que se afirma o se niega algo? | O: 1=El predicado / 2=La cópula / 3=El sujeto / 4=El cuantificador | C: 3 | R: El sujeto
+2. P11 D11 | F: El monte Elbrús pertenece a la cordillera del Cáucaso. | Q: ¿En qué cordillera se encuentra el monte Elbrús? | O: 1=Los Alpes / 2=El Cáucaso / 3=Los Cárpatos / 4=Los Urales | C: 2 | R: El Cáucaso
+3. P19 D10 | F: La fermentación láctica tiene lugar en el citoplasma celular. | Q: ¿En qué compartimento celular se produce la fermentación láctica? | O: 1=Núcleo / 2=Citoplasma / 3=Mitocondria / 4=Cloroplasto | C: 2 | R: Citoplasma
+4. P12 D21 | F: En el Imperio inca, los quipus se utilizaban para registrar y transmitir información numérica y administrativa. | Q: ¿Qué función cumplían los quipus en el Imperio inca? | O: 1=Registrar información contable y administrativa / 2=Entrenar a los guerreros del ejército / 3=Celebrar ceremonias dedicadas al Sol / 4=Construir caminos y puentes de piedra | C: 1 | R: Registrar información contable y administrativa
+5. P01 D33 | F: Las cubiertas vegetales proporcionan aislamiento térmico a los edificios. | Q: Ante la instalación de vegetación sobre una cubierta, ¿qué efecto puede producir en el interior del edificio? | O: 1=Aumenta la entrada de radiación solar / 2=Disminuye el calentamiento interior / 3=Elimina la necesidad de ventilación / 4=Incrementa la humedad de todas las habitaciones | C: 2 | R: Disminuye el calentamiento interior
+6. P15 D34 | F: La imprenta de tipos móviles fue perfeccionada en Europa por Johannes Gutenberg. | Q: ¿Con qué medio se reproducen tradicionalmente muchas obras literarias impresas? | O: 1=Un micrófono / 2=Una imprenta / 3=Un pincel / 4=Un telescopio | C: 2 | R: Una imprenta
+7. P14 D17 | F: El léxico del español incluye préstamos procedentes de diversas lenguas amerindias. | Q: ¿De qué lengua procede inmediatamente «canoa» en español? | O: 1=Taíno / 2=Quechua / 3=Náhuatl / 4=Guaraní | C: 1 | R: Taíno
+8. P06 D04 | F: La agricultura pertenece al sector primario de la economía. | Q: ¿A qué sector económico pertenece la agricultura? | O: 1=Sector primario / 2=Sector secundario / 3=Sector terciario / 4=Sector financiero | C: 1 | R: Sector primario
+9. P17 D13 | F: El primer nacimiento humano logrado mediante fecundación in vitro ocurrió en 1978. | Q: ¿En qué año nació la primera persona concebida mediante fecundación in vitro? | O: 1=1968 / 2=1973 / 3=1978 / 4=1984 | C: 3 | R: 1978
+10. P04 D01 | F: El xilema es el tejido vegetal que transporta agua y sales minerales desde las raíces hacia otras partes de la planta. | Q: ¿Qué tejido vegetal transporta agua y sales minerales desde la raíz hacia el resto de la planta? | O: 1=Xilema / 2=Floema / 3=Epidermis / 4=Meristemo | C: 1 | R: Xilema
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: En una proposición categórica, ¿qué componente cumple la función de aquello sobre lo que se afirma o se niega algo?
+R: El sujeto
+d1: El predicado
+d2: La cópula
+d3: El cuantificador
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿En qué cordillera se encuentra el monte Elbrús?
+R: El Cáucaso
+d1: Los Alpes
+d2: Los Cárpatos
+d3: Los Urales
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿En qué compartimento celular se produce la fermentación láctica?
+R: Citoplasma
+d1: Núcleo
+d2: Mitocondria
+d3: Cloroplasto
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Qué función cumplían los quipus en el Imperio inca?
+R: Registrar información contable y administrativa
+d1: Entrenar a los guerreros del ejército
+d2: Celebrar ceremonias dedicadas al Sol
+d3: Construir caminos y puentes de piedra
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: Ante la instalación de vegetación sobre una cubierta, ¿qué efecto puede producir en el interior del edificio?
+R: Disminuye el calentamiento interior
+d1: Aumenta la entrada de radiación solar
+d2: Elimina la necesidad de ventilación
+d3: Incrementa la humedad de todas las habitaciones
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Con qué medio se reproducen tradicionalmente muchas obras literarias impresas?
+R: Una imprenta
+d1: Un micrófono
+d2: Un pincel
+d3: Un telescopio
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿De qué lengua procede inmediatamente «canoa» en español?
+R: Taíno
+d1: Quechua
+d2: Náhuatl
+d3: Guaraní
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿A qué sector económico pertenece la agricultura?
+R: Sector primario
+d1: Sector secundario
+d2: Sector terciario
+d3: Sector financiero
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿En qué año nació la primera persona concebida mediante fecundación in vitro?
+R: 1978
+d1: 1968
+d2: 1973
+d3: 1984
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Qué tejido vegetal transporta agua y sales minerales desde la raíz hacia el resto de la planta?
+R: Xilema
+d1: Floema
+d2: Epidermis
+d3: Meristemo
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: En una proposición categórica, ¿qué componente cumple la función de aquello sobre lo que se afirma o se niega algo? | R: El sujeto | d1: El predicado | d2: La cópula | d3: El cuantificador
+2. Q: ¿En qué cordillera se encuentra el monte Elbrús? | R: El Cáucaso | d1: Los Alpes | d2: Los Cárpatos | d3: Los Urales
+3. Q: ¿En qué compartimento celular se produce la fermentación láctica? | R: Citoplasma | d1: Núcleo | d2: Mitocondria | d3: Cloroplasto
+4. Q: ¿Qué función cumplían los quipus en el Imperio inca? | R: Registrar información contable y administrativa | d1: Entrenar a los guerreros del ejército | d2: Celebrar ceremonias dedicadas al Sol | d3: Construir caminos y puentes de piedra
+5. Q: Ante la instalación de vegetación sobre una cubierta, ¿qué efecto puede producir en el interior del edificio? | R: Disminuye el calentamiento interior | d1: Aumenta la entrada de radiación solar | d2: Elimina la necesidad de ventilación | d3: Incrementa la humedad de todas las habitaciones
+6. Q: ¿Con qué medio se reproducen tradicionalmente muchas obras literarias impresas? | R: Una imprenta | d1: Un micrófono | d2: Un pincel | d3: Un telescopio
+7. Q: ¿De qué lengua procede inmediatamente «canoa» en español? | R: Taíno | d1: Quechua | d2: Náhuatl | d3: Guaraní
+8. Q: ¿A qué sector económico pertenece la agricultura? | R: Sector primario | d1: Sector secundario | d2: Sector terciario | d3: Sector financiero
+9. Q: ¿En qué año nació la primera persona concebida mediante fecundación in vitro? | R: 1978 | d1: 1968 | d2: 1973 | d3: 1984
+10. Q: ¿Qué tejido vegetal transporta agua y sales minerales desde la raíz hacia el resto de la planta? | R: Xilema | d1: Floema | d2: Epidermis | d3: Meristemo
+
+--- ENTRADA S ---
+T := 1.
+Q: En una proposición categórica, ¿qué componente cumple la función de aquello sobre lo que se afirma o se niega algo?
+R: El sujeto
+d1: El predicado
+d2: La cópula
+d3: El cuantificador
+
+2.
+Q: ¿En qué cordillera se encuentra el monte Elbrús?
+R: El Cáucaso
+d1: Los Alpes
+d2: Los Cárpatos
+d3: Los Urales
+
+3.
+Q: ¿En qué compartimento celular se produce la fermentación láctica?
+R: Citoplasma
+d1: Núcleo
+d2: Mitocondria
+d3: Cloroplasto
+
+4.
+Q: ¿Qué función cumplían los quipus en el Imperio inca?
+R: Registrar información contable y administrativa
+d1: Entrenar a los guerreros del ejército
+d2: Celebrar ceremonias dedicadas al Sol
+d3: Construir caminos y puentes de piedra
+
+5.
+Q: Ante la instalación de vegetación sobre una cubierta, ¿qué efecto puede producir en el interior del edificio?
+R: Disminuye el calentamiento interior
+d1: Aumenta la entrada de radiación solar
+d2: Elimina la necesidad de ventilación
+d3: Incrementa la humedad de todas las habitaciones
+
+6.
+Q: ¿Con qué medio se reproducen tradicionalmente muchas obras literarias impresas?
+R: Una imprenta
+d1: Un micrófono
+d2: Un pincel
+d3: Un telescopio
+
+7.
+Q: ¿De qué lengua procede inmediatamente «canoa» en español?
+R: Taíno
+d1: Quechua
+d2: Náhuatl
+d3: Guaraní
+
+8.
+Q: ¿A qué sector económico pertenece la agricultura?
+R: Sector primario
+d1: Sector secundario
+d2: Sector terciario
+d3: Sector financiero
+
+9.
+Q: ¿En qué año nació la primera persona concebida mediante fecundación in vitro?
+R: 1978
+d1: 1968
+d2: 1973
+d3: 1984
+
+10.
+Q: ¿Qué tejido vegetal transporta agua y sales minerales desde la raíz hacia el resto de la planta?
+R: Xilema
+d1: Floema
+d2: Epidermis
+d3: Meristemo
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[8,6,4,2,10,3,5,1,7,9]}
+
+--- ORDEN S ---
+[8, 6, 4, 2, 10, 3, 5, 1, 7, 9]
+
+--- TEST TRAS R Y S ---
+1. [original 8] Q: ¿A qué sector económico pertenece la agricultura? | R: Sector primario | d1: Sector secundario | d2: Sector terciario | d3: Sector financiero
+2. [original 6] Q: ¿Con qué medio se reproducen tradicionalmente muchas obras literarias impresas? | R: Una imprenta | d1: Un micrófono | d2: Un pincel | d3: Un telescopio
+3. [original 4] Q: ¿Qué función cumplían los quipus en el Imperio inca? | R: Registrar información contable y administrativa | d1: Entrenar a los guerreros del ejército | d2: Celebrar ceremonias dedicadas al Sol | d3: Construir caminos y puentes de piedra
+4. [original 2] Q: ¿En qué cordillera se encuentra el monte Elbrús? | R: El Cáucaso | d1: Los Alpes | d2: Los Cárpatos | d3: Los Urales
+5. [original 10] Q: ¿Qué tejido vegetal transporta agua y sales minerales desde la raíz hacia el resto de la planta? | R: Xilema | d1: Floema | d2: Epidermis | d3: Meristemo
+6. [original 3] Q: ¿En qué compartimento celular se produce la fermentación láctica? | R: Citoplasma | d1: Núcleo | d2: Mitocondria | d3: Cloroplasto
+7. [original 5] Q: Ante la instalación de vegetación sobre una cubierta, ¿qué efecto puede producir en el interior del edificio? | R: Disminuye el calentamiento interior | d1: Aumenta la entrada de radiación solar | d2: Elimina la necesidad de ventilación | d3: Incrementa la humedad de todas las habitaciones
+8. [original 1] Q: En una proposición categórica, ¿qué componente cumple la función de aquello sobre lo que se afirma o se niega algo? | R: El sujeto | d1: El predicado | d2: La cópula | d3: El cuantificador
+9. [original 7] Q: ¿De qué lengua procede inmediatamente «canoa» en español? | R: Taíno | d1: Quechua | d2: Náhuatl | d3: Guaraní
+10. [original 9] Q: ¿En qué año nació la primera persona concebida mediante fecundación in vitro? | R: 1978 | d1: 1968 | d2: 1973 | d3: 1984
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿A qué sector económico pertenece la agricultura? | R: Sector primario | O: Sector secundario / Sector financiero / Sector terciario / Sector primario
+2. ¿Con qué medio se reproducen tradicionalmente muchas obras literarias impresas? | R: Una imprenta | O: Una imprenta / Un pincel / Un micrófono / Un telescopio
+3. ¿Qué función cumplían los quipus en el Imperio inca? | R: Registrar información contable y administrativa | O: Registrar información contable y administrativa / Entrenar a los guerreros del ejército / Celebrar ceremonias dedicadas al Sol / Construir caminos y puentes de piedra
+4. ¿En qué cordillera se encuentra el monte Elbrús? | R: El Cáucaso | O: Los Cárpatos / Los Urales / Los Alpes / El Cáucaso
+5. ¿Qué tejido vegetal transporta agua y sales minerales desde la raíz hacia el resto de la planta? | R: Xilema | O: Floema / Xilema / Epidermis / Meristemo
+6. ¿En qué compartimento celular se produce la fermentación láctica? | R: Citoplasma | O: Cloroplasto / Citoplasma / Núcleo / Mitocondria
+7. Ante la instalación de vegetación sobre una cubierta, ¿qué efecto puede producir en el interior del edificio? | R: Disminuye el calentamiento interior | O: Disminuye el calentamiento interior / Incrementa la humedad de todas las habitaciones / Elimina la necesidad de ventilación / Aumenta la entrada de radiación solar
+8. En una proposición categórica, ¿qué componente cumple la función de aquello sobre lo que se afirma o se niega algo? | R: El sujeto | O: El sujeto / El cuantificador / El predicado / La cópula
+9. ¿De qué lengua procede inmediatamente «canoa» en español? | R: Taíno | O: Náhuatl / Guaraní / Taíno / Quechua
+10. ¿En qué año nació la primera persona concebida mediante fecundación in vitro? | R: 1978 | O: 1968 / 1984 / 1973 / 1978
+
+USO TEST 97 | G: entrada 3940, salida 4635, razonamiento 3614, coste USD 0.006350 | R: entrada 2614, salida 824, razonamiento 644, coste USD 0.001512 | S: entrada 618, salida 378, razonamiento 344, coste USD 0.000577
+
+========== TEST 98/200 — 18.83 s (G 11.01 s + R 2.90 s + S 4.92 s) ==========
+
+--- SALIDA G ---
+1. P08 D32 | F: La fricción puede transformar parte de la energía mecánica en energía térmica. | Q: ¿Qué puede provocar que un objeto que se desliza aumente su temperatura? | O: 1=La fricción con una superficie / 2=La flotación en un líquido / 3=La reflexión de la luz / 4=La formación de una sombra | C: 1 | R: La fricción con una superficie
+2. P05 D22 | F: La Constitución ocupa la posición normativa superior en el ordenamiento jurídico de un Estado. | Q: ¿Cuál de las siguientes reglas describe correctamente la relación entre normas de distinto rango? | O: 1=Una norma de rango inferior puede dejar sin efecto cualquier norma superior si es posterior. / 2=Una norma de rango inferior debe respetar lo establecido por otra de rango superior. / 3=Toda norma posterior prevalece sobre otra anterior aunque tenga rango menor. / 4=Las normas de igual rango nunca pueden modificar ni sustituir a otras anteriores. | C: 2 | R: Una norma de rango inferior debe respetar lo establecido por otra de rango superior.
+3. P11 D18 | F: La eliminación de la cubierta vegetal en una ladera suele intensificar la erosión del suelo. | Q: ¿Qué efecto suele producir la eliminación de la cubierta vegetal en una ladera? | O: 1=Disminución de la erosión superficial / 2=Aumento de la erosión superficial / 3=Formación de magma profundo / 4=Estabilización de las pendientes | C: 2 | R: Aumento de la erosión superficial
+4. P03 D01 | F: Júpiter posee el período de rotación más corto entre los planetas del sistema solar. | Q: ¿Qué planeta posee el período de rotación más corto del sistema solar? | O: 1=Júpiter / 2=Saturno / 3=Marte / 4=Neptuno | C: 1 | R: Júpiter
+5. P09 D27 | F: La ensalada César suele prepararse con lechuga romana, queso parmesano y un aderezo emulsionado. | Q: ¿A quién se atribuye tradicionalmente la creación de la ensalada César? | O: 1=César Cardini / 2=Auguste Escoffier / 3=Fernand Point / 4=Paul Bocuse | C: 1 | R: César Cardini
+6. P14 D07 | F: En la sintaxis tradicional, el predicado suele organizarse en torno a un núcleo que expresa una acción, proceso o estado. | Q: ¿Qué categoría suele ocupar el núcleo de un grupo de palabras que funciona como predicado? | O: 1=Sustantivo / 2=Adjetivo / 3=Adverbio / 4=Verbo | C: 4 | R: Verbo
+7. P17 D10 | F: La insulina se produce en el páncreas. | Q: ¿En qué órgano se produce principalmente la insulina? | O: 1=Páncreas / 2=Hígado / 3=Tiroides / 4=Glándula suprarrenal | C: 1 | R: Páncreas
+8. P07 D08 | F: Cicerón fue elegido cónsul de la República romana en el año 63 a. C. | Q: ¿Qué cargo ocupó Cicerón en la República romana? | O: 1=Senador / 2=Cónsul / 3=Censor / 4=Tribuno | C: 2 | R: Cónsul
+9. P20 D33 | F: En muchas sociedades, las personas tienden a ajustar su conducta a las normas del grupo al que pertenecen. | Q: ¿Cómo suele actuar una persona ante una norma ampliamente aceptada por el grupo al que pertenece? | O: 1=Ajusta su conducta para respetarla. / 2=La ignora de manera sistemática. / 3=La reemplaza por una decisión individual. / 4=Suspende toda interacción con el grupo. | C: 1 | R: Ajusta su conducta para respetarla.
+10. P01 D30 | F: En los teatros griegos, la orchestra era el espacio destinado a las actuaciones del coro. | Q: ¿Qué afirmación sobre la función de un espacio circular situado entre las gradas y la escena en un teatro griego queda respaldada por su forma y ubicación? | O: 1=Que servía exclusivamente para acomodar a los espectadores. / 2=Que era el espacio de actuación del coro. / 3=Que funcionaba como almacén de decorados. / 4=Que constituía la entrada principal del teatro. | C: 2 | R: Que era el espacio de actuación del coro.
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿Qué puede provocar que un objeto que se desliza aumente su temperatura?
+R: La fricción con una superficie
+d1: La flotación en un líquido
+d2: La reflexión de la luz
+d3: La formación de una sombra
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Cuál de las siguientes reglas describe correctamente la relación entre normas de distinto rango?
+R: Una norma de rango inferior debe respetar lo establecido por otra de rango superior.
+d1: Una norma de rango inferior puede dejar sin efecto cualquier norma superior si es posterior.
+d2: Toda norma posterior prevalece sobre otra anterior aunque tenga rango menor.
+d3: Las normas de igual rango nunca pueden modificar ni sustituir a otras anteriores.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿Qué efecto suele producir la eliminación de la cubierta vegetal en una ladera?
+R: Aumento de la erosión superficial
+d1: Disminución de la erosión superficial
+d2: Formación de magma profundo
+d3: Estabilización de las pendientes
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Qué planeta posee el período de rotación más corto del sistema solar?
+R: Júpiter
+d1: Saturno
+d2: Marte
+d3: Neptuno
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿A quién se atribuye tradicionalmente la creación de la ensalada César?
+R: César Cardini
+d1: Auguste Escoffier
+d2: Fernand Point
+d3: Paul Bocuse
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Qué categoría suele ocupar el núcleo de un grupo de palabras que funciona como predicado?
+R: Verbo
+d1: Sustantivo
+d2: Adjetivo
+d3: Adverbio
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿En qué órgano se produce principalmente la insulina?
+R: Páncreas
+d1: Hígado
+d2: Tiroides
+d3: Glándula suprarrenal
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿Qué cargo ocupó Cicerón en la República romana?
+R: Cónsul
+d1: Senador
+d2: Censor
+d3: Tribuno
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Cómo suele actuar una persona ante una norma ampliamente aceptada por el grupo al que pertenece?
+R: Ajusta su conducta para respetarla.
+d1: La ignora de manera sistemática.
+d2: La reemplaza por una decisión individual.
+d3: Suspende toda interacción con el grupo.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Qué afirmación sobre la función de un espacio circular situado entre las gradas y la escena en un teatro griego queda respaldada por su forma y ubicación?
+R: Que era el espacio de actuación del coro.
+d1: Que servía exclusivamente para acomodar a los espectadores.
+d2: Que funcionaba como almacén de decorados.
+d3: Que constituía la entrada principal del teatro.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: ¿Qué puede provocar que un objeto que se desliza aumente su temperatura? | R: La fricción con una superficie | d1: La flotación en un líquido | d2: La reflexión de la luz | d3: La formación de una sombra
+2. Q: ¿Cuál de las siguientes reglas describe correctamente la relación entre normas de distinto rango? | R: Una norma de rango inferior debe respetar lo establecido por otra de rango superior. | d1: Una norma de rango inferior puede dejar sin efecto cualquier norma superior si es posterior. | d2: Toda norma posterior prevalece sobre otra anterior aunque tenga rango menor. | d3: Las normas de igual rango nunca pueden modificar ni sustituir a otras anteriores.
+3. Q: ¿Qué efecto suele producir la eliminación de la cubierta vegetal en una ladera? | R: Aumento de la erosión superficial | d1: Disminución de la erosión superficial | d2: Formación de magma profundo | d3: Estabilización de las pendientes
+4. Q: ¿Qué planeta posee el período de rotación más corto del sistema solar? | R: Júpiter | d1: Saturno | d2: Marte | d3: Neptuno
+5. Q: ¿A quién se atribuye tradicionalmente la creación de la ensalada César? | R: César Cardini | d1: Auguste Escoffier | d2: Fernand Point | d3: Paul Bocuse
+6. Q: ¿Qué categoría suele ocupar el núcleo de un grupo de palabras que funciona como predicado? | R: Verbo | d1: Sustantivo | d2: Adjetivo | d3: Adverbio
+7. Q: ¿En qué órgano se produce principalmente la insulina? | R: Páncreas | d1: Hígado | d2: Tiroides | d3: Glándula suprarrenal
+8. Q: ¿Qué cargo ocupó Cicerón en la República romana? | R: Cónsul | d1: Senador | d2: Censor | d3: Tribuno
+9. Q: ¿Cómo suele actuar una persona ante una norma ampliamente aceptada por el grupo al que pertenece? | R: Ajusta su conducta para respetarla. | d1: La ignora de manera sistemática. | d2: La reemplaza por una decisión individual. | d3: Suspende toda interacción con el grupo.
+10. Q: ¿Qué afirmación sobre la función de un espacio circular situado entre las gradas y la escena en un teatro griego queda respaldada por su forma y ubicación? | R: Que era el espacio de actuación del coro. | d1: Que servía exclusivamente para acomodar a los espectadores. | d2: Que funcionaba como almacén de decorados. | d3: Que constituía la entrada principal del teatro.
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué puede provocar que un objeto que se desliza aumente su temperatura?
+R: La fricción con una superficie
+d1: La flotación en un líquido
+d2: La reflexión de la luz
+d3: La formación de una sombra
+
+2.
+Q: ¿Cuál de las siguientes reglas describe correctamente la relación entre normas de distinto rango?
+R: Una norma de rango inferior debe respetar lo establecido por otra de rango superior.
+d1: Una norma de rango inferior puede dejar sin efecto cualquier norma superior si es posterior.
+d2: Toda norma posterior prevalece sobre otra anterior aunque tenga rango menor.
+d3: Las normas de igual rango nunca pueden modificar ni sustituir a otras anteriores.
+
+3.
+Q: ¿Qué efecto suele producir la eliminación de la cubierta vegetal en una ladera?
+R: Aumento de la erosión superficial
+d1: Disminución de la erosión superficial
+d2: Formación de magma profundo
+d3: Estabilización de las pendientes
+
+4.
+Q: ¿Qué planeta posee el período de rotación más corto del sistema solar?
+R: Júpiter
+d1: Saturno
+d2: Marte
+d3: Neptuno
+
+5.
+Q: ¿A quién se atribuye tradicionalmente la creación de la ensalada César?
+R: César Cardini
+d1: Auguste Escoffier
+d2: Fernand Point
+d3: Paul Bocuse
+
+6.
+Q: ¿Qué categoría suele ocupar el núcleo de un grupo de palabras que funciona como predicado?
+R: Verbo
+d1: Sustantivo
+d2: Adjetivo
+d3: Adverbio
+
+7.
+Q: ¿En qué órgano se produce principalmente la insulina?
+R: Páncreas
+d1: Hígado
+d2: Tiroides
+d3: Glándula suprarrenal
+
+8.
+Q: ¿Qué cargo ocupó Cicerón en la República romana?
+R: Cónsul
+d1: Senador
+d2: Censor
+d3: Tribuno
+
+9.
+Q: ¿Cómo suele actuar una persona ante una norma ampliamente aceptada por el grupo al que pertenece?
+R: Ajusta su conducta para respetarla.
+d1: La ignora de manera sistemática.
+d2: La reemplaza por una decisión individual.
+d3: Suspende toda interacción con el grupo.
+
+10.
+Q: ¿Qué afirmación sobre la función de un espacio circular situado entre las gradas y la escena en un teatro griego queda respaldada por su forma y ubicación?
+R: Que era el espacio de actuación del coro.
+d1: Que servía exclusivamente para acomodar a los espectadores.
+d2: Que funcionaba como almacén de decorados.
+d3: Que constituía la entrada principal del teatro.
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[1,7,4,3,6,9,8,10,5,2]}
+
+--- ORDEN S ---
+[1, 7, 4, 3, 6, 9, 8, 10, 5, 2]
+
+--- TEST TRAS R Y S ---
+1. [original 1] Q: ¿Qué puede provocar que un objeto que se desliza aumente su temperatura? | R: La fricción con una superficie | d1: La flotación en un líquido | d2: La reflexión de la luz | d3: La formación de una sombra
+2. [original 7] Q: ¿En qué órgano se produce principalmente la insulina? | R: Páncreas | d1: Hígado | d2: Tiroides | d3: Glándula suprarrenal
+3. [original 4] Q: ¿Qué planeta posee el período de rotación más corto del sistema solar? | R: Júpiter | d1: Saturno | d2: Marte | d3: Neptuno
+4. [original 3] Q: ¿Qué efecto suele producir la eliminación de la cubierta vegetal en una ladera? | R: Aumento de la erosión superficial | d1: Disminución de la erosión superficial | d2: Formación de magma profundo | d3: Estabilización de las pendientes
+5. [original 6] Q: ¿Qué categoría suele ocupar el núcleo de un grupo de palabras que funciona como predicado? | R: Verbo | d1: Sustantivo | d2: Adjetivo | d3: Adverbio
+6. [original 9] Q: ¿Cómo suele actuar una persona ante una norma ampliamente aceptada por el grupo al que pertenece? | R: Ajusta su conducta para respetarla. | d1: La ignora de manera sistemática. | d2: La reemplaza por una decisión individual. | d3: Suspende toda interacción con el grupo.
+7. [original 8] Q: ¿Qué cargo ocupó Cicerón en la República romana? | R: Cónsul | d1: Senador | d2: Censor | d3: Tribuno
+8. [original 10] Q: ¿Qué afirmación sobre la función de un espacio circular situado entre las gradas y la escena en un teatro griego queda respaldada por su forma y ubicación? | R: Que era el espacio de actuación del coro. | d1: Que servía exclusivamente para acomodar a los espectadores. | d2: Que funcionaba como almacén de decorados. | d3: Que constituía la entrada principal del teatro.
+9. [original 5] Q: ¿A quién se atribuye tradicionalmente la creación de la ensalada César? | R: César Cardini | d1: Auguste Escoffier | d2: Fernand Point | d3: Paul Bocuse
+10. [original 2] Q: ¿Cuál de las siguientes reglas describe correctamente la relación entre normas de distinto rango? | R: Una norma de rango inferior debe respetar lo establecido por otra de rango superior. | d1: Una norma de rango inferior puede dejar sin efecto cualquier norma superior si es posterior. | d2: Toda norma posterior prevalece sobre otra anterior aunque tenga rango menor. | d3: Las normas de igual rango nunca pueden modificar ni sustituir a otras anteriores.
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué puede provocar que un objeto que se desliza aumente su temperatura? | R: La fricción con una superficie | O: La flotación en un líquido / La fricción con una superficie / La formación de una sombra / La reflexión de la luz
+2. ¿En qué órgano se produce principalmente la insulina? | R: Páncreas | O: Tiroides / Hígado / Glándula suprarrenal / Páncreas
+3. ¿Qué planeta posee el período de rotación más corto del sistema solar? | R: Júpiter | O: Júpiter / Marte / Neptuno / Saturno
+4. ¿Qué efecto suele producir la eliminación de la cubierta vegetal en una ladera? | R: Aumento de la erosión superficial | O: Disminución de la erosión superficial / Aumento de la erosión superficial / Estabilización de las pendientes / Formación de magma profundo
+5. ¿Qué categoría suele ocupar el núcleo de un grupo de palabras que funciona como predicado? | R: Verbo | O: Sustantivo / Verbo / Adjetivo / Adverbio
+6. ¿Cómo suele actuar una persona ante una norma ampliamente aceptada por el grupo al que pertenece? | R: Ajusta su conducta para respetarla. | O: Ajusta su conducta para respetarla. / Suspende toda interacción con el grupo. / La reemplaza por una decisión individual. / La ignora de manera sistemática.
+7. ¿Qué cargo ocupó Cicerón en la República romana? | R: Cónsul | O: Senador / Tribuno / Censor / Cónsul
+8. ¿Qué afirmación sobre la función de un espacio circular situado entre las gradas y la escena en un teatro griego queda respaldada por su forma y ubicación? | R: Que era el espacio de actuación del coro. | O: Que era el espacio de actuación del coro. / Que funcionaba como almacén de decorados. / Que constituía la entrada principal del teatro. / Que servía exclusivamente para acomodar a los espectadores.
+9. ¿A quién se atribuye tradicionalmente la creación de la ensalada César? | R: César Cardini | O: Paul Bocuse / Fernand Point / Auguste Escoffier / César Cardini
+10. ¿Cuál de las siguientes reglas describe correctamente la relación entre normas de distinto rango? | R: Una norma de rango inferior debe respetar lo establecido por otra de rango superior. | O: Las normas de igual rango nunca pueden modificar ni sustituir a otras anteriores. / Una norma de rango inferior puede dejar sin efecto cualquier norma superior si es posterior. / Toda norma posterior prevalece sobre otra anterior aunque tenga rango menor. / Una norma de rango inferior debe respetar lo establecido por otra de rango superior.
+
+USO TEST 98 | G: entrada 3997, salida 5144, razonamiento 4015, coste USD 0.006972 | R: entrada 2690, salida 697, razonamiento 517, coste USD 0.001374 | S: entrada 694, salida 426, razonamiento 392, coste USD 0.000650
+
+========== TEST 99/200 — 12.92 s (G 6.58 s + R 2.02 s + S 4.32 s) ==========
+
+--- SALIDA G ---
+1. P04 D16 | F: La respiración celular es el proceso mediante el cual las células obtienen energía utilizable a partir de nutrientes. | Q: ¿Qué se obtiene principalmente mediante la respiración celular? | O: 1=Glucosa / 2=ATP / 3=Oxígeno / 4=Dióxido de carbono | C: 2 | R: ATP
+2. P08 D31 | F: La aceleración de la gravedad cerca de la superficie terrestre es aproximadamente 9,8 m/s². | Q: ¿Qué registro experimental permite contrastar directamente que un objeto en caída libre, cerca de la superficie terrestre, tiene una aceleración aproximadamente constante de 9,8 m/s²? | O: 1=La masa del objeto medida antes y después del movimiento. / 2=Las posiciones del objeto registradas en instantes sucesivos. / 3=La temperatura ambiente registrada una sola vez. / 4=El color del objeto observado durante la caída. | C: 2 | R: Las posiciones del objeto registradas en instantes sucesivos.
+3. P03 D33 | F: La Luna ejerce una influencia gravitatoria medible sobre los océanos terrestres. | Q: ¿Cómo responde el nivel del mar a la influencia gravitatoria de la Luna? | O: 1=Permanece completamente inmóvil / 2=Se congela de manera permanente / 3=Experimenta ascensos y descensos periódicos / 4=Desaparece bajo la superficie terrestre | C: 3 | R: Experimenta ascensos y descensos periódicos
+4. P17 D18 | F: Los antibióticos combaten bacterias, pero no virus. | Q: ¿Qué puede ocurrir si se utiliza un antibiótico para tratar una infección viral? | O: 1=La infección puede continuar sin mejorar / 2=El virus se transforma inmediatamente en bacteria / 3=La persona queda protegida frente a futuros virus / 4=Se produce siempre una alergia grave | C: 1 | R: La infección puede continuar sin mejorar
+5. P15 D23 | F: El soneto clásico está compuesto por catorce versos endecasílabos, distribuidos habitualmente en dos cuartetos y dos tercetos. | Q: ¿En qué ámbito es válida la afirmación de que el soneto clásico consta de catorce versos endecasílabos? | O: 1=Teoría narrativa / 2=Métrica y versificación / 3=Crítica genética / 4=Historia editorial | C: 2 | R: Métrica y versificación
+6. P10 D14 | F: Zimbabue obtuvo su independencia del Reino Unido en 1980. | Q: ¿Cuál de estos países obtuvo su independencia más recientemente? | O: 1=India / 2=Indonesia / 3=Mozambique / 4=Zimbabue | C: 4 | R: Zimbabue
+7. P01 D24 | F: El alzado arquitectónico representa la apariencia exterior de un edificio vista de frente. | Q: ¿Qué información muestra principalmente un alzado arquitectónico? | O: 1=La apariencia exterior del edificio / 2=La distribución horizontal de los espacios / 3=La resistencia de los materiales estructurales / 4=La secuencia de ejecución de la obra | C: 1 | R: La apariencia exterior del edificio
+8. P12 D09 | F: Tenzing Norgay acompañó a Edmund Hillary en la primera ascensión al Everest. | Q: ¿Quién alcanzó junto con Edmund Hillary la cima del Everest por primera vez? | O: 1=Tenzing Norgay / 2=Reinhold Messner / 3=Junko Tabei / 4=Maurice Herzog | C: 1 | R: Tenzing Norgay
+9. P16 D07 | F: En un triángulo, cada vértice es el punto donde se encuentran dos de sus lados. | Q: En un triángulo, ¿qué relación tiene cada vértice con sus lados? | O: 1=Es el punto medio de un lado / 2=Es el punto donde se encuentran dos lados / 3=Es una línea paralela a un lado / 4=Es la región interior del triángulo | C: 2 | R: Es el punto donde se encuentran dos lados
+10. P07 D28 | F: La concepción del contrato social explica el origen de la autoridad política mediante un acuerdo entre individuos. | Q: ¿Qué cuestión aborda la concepción del contrato social? | O: 1=El origen y la legitimidad del poder político / 2=La naturaleza de la percepción sensible / 3=La estructura formal de los razonamientos / 4=El criterio para distinguir belleza y fealdad | C: 1 | R: El origen y la legitimidad del poder político
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿Qué se obtiene principalmente mediante la respiración celular?
+R: ATP
+d1: Glucosa
+d2: Oxígeno
+d3: Dióxido de carbono
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Qué registro experimental permite contrastar directamente que un objeto en caída libre, cerca de la superficie terrestre, tiene una aceleración aproximadamente constante de 9,8 m/s²?
+R: Las posiciones del objeto registradas en instantes sucesivos.
+d1: La masa del objeto medida antes y después del movimiento.
+d2: La temperatura ambiente registrada una sola vez.
+d3: El color del objeto observado durante la caída.
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿Cómo responde el nivel del mar a la influencia gravitatoria de la Luna?
+R: Experimenta ascensos y descensos periódicos
+d1: Permanece completamente inmóvil
+d2: Se congela de manera permanente
+d3: Desaparece bajo la superficie terrestre
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Qué puede ocurrir si se utiliza un antibiótico para tratar una infección viral?
+R: La infección puede continuar sin mejorar
+d1: El virus se transforma inmediatamente en bacteria
+d2: La persona queda protegida frente a futuros virus
+d3: Se produce siempre una alergia grave
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿En qué ámbito es válida la afirmación de que el soneto clásico consta de catorce versos endecasílabos?
+R: Métrica y versificación
+d1: Teoría narrativa
+d2: Crítica genética
+d3: Historia editorial
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Cuál de estos países obtuvo su independencia más recientemente?
+R: Zimbabue
+d1: India
+d2: Indonesia
+d3: Mozambique
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿Qué información muestra principalmente un alzado arquitectónico?
+R: La apariencia exterior del edificio
+d1: La distribución horizontal de los espacios
+d2: La resistencia de los materiales estructurales
+d3: La secuencia de ejecución de la obra
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿Quién alcanzó junto con Edmund Hillary la cima del Everest por primera vez?
+R: Tenzing Norgay
+d1: Reinhold Messner
+d2: Junko Tabei
+d3: Maurice Herzog
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: En un triángulo, ¿qué relación tiene cada vértice con sus lados?
+R: Es el punto donde se encuentran dos lados
+d1: Es el punto medio de un lado
+d2: Es una línea paralela a un lado
+d3: Es la región interior del triángulo
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Qué cuestión aborda la concepción del contrato social?
+R: El origen y la legitimidad del poder político
+d1: La naturaleza de la percepción sensible
+d2: La estructura formal de los razonamientos
+d3: El criterio para distinguir belleza y fealdad
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: ¿Qué se obtiene principalmente mediante la respiración celular? | R: ATP | d1: Glucosa | d2: Oxígeno | d3: Dióxido de carbono
+2. Q: ¿Qué registro experimental permite contrastar directamente que un objeto en caída libre, cerca de la superficie terrestre, tiene una aceleración aproximadamente constante de 9,8 m/s²? | R: Las posiciones del objeto registradas en instantes sucesivos. | d1: La masa del objeto medida antes y después del movimiento. | d2: La temperatura ambiente registrada una sola vez. | d3: El color del objeto observado durante la caída.
+3. Q: ¿Cómo responde el nivel del mar a la influencia gravitatoria de la Luna? | R: Experimenta ascensos y descensos periódicos | d1: Permanece completamente inmóvil | d2: Se congela de manera permanente | d3: Desaparece bajo la superficie terrestre
+4. Q: ¿Qué puede ocurrir si se utiliza un antibiótico para tratar una infección viral? | R: La infección puede continuar sin mejorar | d1: El virus se transforma inmediatamente en bacteria | d2: La persona queda protegida frente a futuros virus | d3: Se produce siempre una alergia grave
+5. Q: ¿En qué ámbito es válida la afirmación de que el soneto clásico consta de catorce versos endecasílabos? | R: Métrica y versificación | d1: Teoría narrativa | d2: Crítica genética | d3: Historia editorial
+6. Q: ¿Cuál de estos países obtuvo su independencia más recientemente? | R: Zimbabue | d1: India | d2: Indonesia | d3: Mozambique
+7. Q: ¿Qué información muestra principalmente un alzado arquitectónico? | R: La apariencia exterior del edificio | d1: La distribución horizontal de los espacios | d2: La resistencia de los materiales estructurales | d3: La secuencia de ejecución de la obra
+8. Q: ¿Quién alcanzó junto con Edmund Hillary la cima del Everest por primera vez? | R: Tenzing Norgay | d1: Reinhold Messner | d2: Junko Tabei | d3: Maurice Herzog
+9. Q: En un triángulo, ¿qué relación tiene cada vértice con sus lados? | R: Es el punto donde se encuentran dos lados | d1: Es el punto medio de un lado | d2: Es una línea paralela a un lado | d3: Es la región interior del triángulo
+10. Q: ¿Qué cuestión aborda la concepción del contrato social? | R: El origen y la legitimidad del poder político | d1: La naturaleza de la percepción sensible | d2: La estructura formal de los razonamientos | d3: El criterio para distinguir belleza y fealdad
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué se obtiene principalmente mediante la respiración celular?
+R: ATP
+d1: Glucosa
+d2: Oxígeno
+d3: Dióxido de carbono
+
+2.
+Q: ¿Qué registro experimental permite contrastar directamente que un objeto en caída libre, cerca de la superficie terrestre, tiene una aceleración aproximadamente constante de 9,8 m/s²?
+R: Las posiciones del objeto registradas en instantes sucesivos.
+d1: La masa del objeto medida antes y después del movimiento.
+d2: La temperatura ambiente registrada una sola vez.
+d3: El color del objeto observado durante la caída.
+
+3.
+Q: ¿Cómo responde el nivel del mar a la influencia gravitatoria de la Luna?
+R: Experimenta ascensos y descensos periódicos
+d1: Permanece completamente inmóvil
+d2: Se congela de manera permanente
+d3: Desaparece bajo la superficie terrestre
+
+4.
+Q: ¿Qué puede ocurrir si se utiliza un antibiótico para tratar una infección viral?
+R: La infección puede continuar sin mejorar
+d1: El virus se transforma inmediatamente en bacteria
+d2: La persona queda protegida frente a futuros virus
+d3: Se produce siempre una alergia grave
+
+5.
+Q: ¿En qué ámbito es válida la afirmación de que el soneto clásico consta de catorce versos endecasílabos?
+R: Métrica y versificación
+d1: Teoría narrativa
+d2: Crítica genética
+d3: Historia editorial
+
+6.
+Q: ¿Cuál de estos países obtuvo su independencia más recientemente?
+R: Zimbabue
+d1: India
+d2: Indonesia
+d3: Mozambique
+
+7.
+Q: ¿Qué información muestra principalmente un alzado arquitectónico?
+R: La apariencia exterior del edificio
+d1: La distribución horizontal de los espacios
+d2: La resistencia de los materiales estructurales
+d3: La secuencia de ejecución de la obra
+
+8.
+Q: ¿Quién alcanzó junto con Edmund Hillary la cima del Everest por primera vez?
+R: Tenzing Norgay
+d1: Reinhold Messner
+d2: Junko Tabei
+d3: Maurice Herzog
+
+9.
+Q: En un triángulo, ¿qué relación tiene cada vértice con sus lados?
+R: Es el punto donde se encuentran dos lados
+d1: Es el punto medio de un lado
+d2: Es una línea paralela a un lado
+d3: Es la región interior del triángulo
+
+10.
+Q: ¿Qué cuestión aborda la concepción del contrato social?
+R: El origen y la legitimidad del poder político
+d1: La naturaleza de la percepción sensible
+d2: La estructura formal de los razonamientos
+d3: El criterio para distinguir belleza y fealdad
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[1,9,8,4,3,7,6,5,10,2]}
+
+--- ORDEN S ---
+[1, 9, 8, 4, 3, 7, 6, 5, 10, 2]
+
+--- TEST TRAS R Y S ---
+1. [original 1] Q: ¿Qué se obtiene principalmente mediante la respiración celular? | R: ATP | d1: Glucosa | d2: Oxígeno | d3: Dióxido de carbono
+2. [original 9] Q: En un triángulo, ¿qué relación tiene cada vértice con sus lados? | R: Es el punto donde se encuentran dos lados | d1: Es el punto medio de un lado | d2: Es una línea paralela a un lado | d3: Es la región interior del triángulo
+3. [original 8] Q: ¿Quién alcanzó junto con Edmund Hillary la cima del Everest por primera vez? | R: Tenzing Norgay | d1: Reinhold Messner | d2: Junko Tabei | d3: Maurice Herzog
+4. [original 4] Q: ¿Qué puede ocurrir si se utiliza un antibiótico para tratar una infección viral? | R: La infección puede continuar sin mejorar | d1: El virus se transforma inmediatamente en bacteria | d2: La persona queda protegida frente a futuros virus | d3: Se produce siempre una alergia grave
+5. [original 3] Q: ¿Cómo responde el nivel del mar a la influencia gravitatoria de la Luna? | R: Experimenta ascensos y descensos periódicos | d1: Permanece completamente inmóvil | d2: Se congela de manera permanente | d3: Desaparece bajo la superficie terrestre
+6. [original 7] Q: ¿Qué información muestra principalmente un alzado arquitectónico? | R: La apariencia exterior del edificio | d1: La distribución horizontal de los espacios | d2: La resistencia de los materiales estructurales | d3: La secuencia de ejecución de la obra
+7. [original 6] Q: ¿Cuál de estos países obtuvo su independencia más recientemente? | R: Zimbabue | d1: India | d2: Indonesia | d3: Mozambique
+8. [original 5] Q: ¿En qué ámbito es válida la afirmación de que el soneto clásico consta de catorce versos endecasílabos? | R: Métrica y versificación | d1: Teoría narrativa | d2: Crítica genética | d3: Historia editorial
+9. [original 10] Q: ¿Qué cuestión aborda la concepción del contrato social? | R: El origen y la legitimidad del poder político | d1: La naturaleza de la percepción sensible | d2: La estructura formal de los razonamientos | d3: El criterio para distinguir belleza y fealdad
+10. [original 2] Q: ¿Qué registro experimental permite contrastar directamente que un objeto en caída libre, cerca de la superficie terrestre, tiene una aceleración aproximadamente constante de 9,8 m/s²? | R: Las posiciones del objeto registradas en instantes sucesivos. | d1: La masa del objeto medida antes y después del movimiento. | d2: La temperatura ambiente registrada una sola vez. | d3: El color del objeto observado durante la caída.
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué se obtiene principalmente mediante la respiración celular? | R: ATP | O: ATP / Oxígeno / Glucosa / Dióxido de carbono
+2. En un triángulo, ¿qué relación tiene cada vértice con sus lados? | R: Es el punto donde se encuentran dos lados | O: Es la región interior del triángulo / Es el punto donde se encuentran dos lados / Es el punto medio de un lado / Es una línea paralela a un lado
+3. ¿Quién alcanzó junto con Edmund Hillary la cima del Everest por primera vez? | R: Tenzing Norgay | O: Reinhold Messner / Tenzing Norgay / Maurice Herzog / Junko Tabei
+4. ¿Qué puede ocurrir si se utiliza un antibiótico para tratar una infección viral? | R: La infección puede continuar sin mejorar | O: La persona queda protegida frente a futuros virus / La infección puede continuar sin mejorar / Se produce siempre una alergia grave / El virus se transforma inmediatamente en bacteria
+5. ¿Cómo responde el nivel del mar a la influencia gravitatoria de la Luna? | R: Experimenta ascensos y descensos periódicos | O: Desaparece bajo la superficie terrestre / Permanece completamente inmóvil / Experimenta ascensos y descensos periódicos / Se congela de manera permanente
+6. ¿Qué información muestra principalmente un alzado arquitectónico? | R: La apariencia exterior del edificio | O: La apariencia exterior del edificio / La distribución horizontal de los espacios / La resistencia de los materiales estructurales / La secuencia de ejecución de la obra
+7. ¿Cuál de estos países obtuvo su independencia más recientemente? | R: Zimbabue | O: Indonesia / Zimbabue / Mozambique / India
+8. ¿En qué ámbito es válida la afirmación de que el soneto clásico consta de catorce versos endecasílabos? | R: Métrica y versificación | O: Métrica y versificación / Teoría narrativa / Historia editorial / Crítica genética
+9. ¿Qué cuestión aborda la concepción del contrato social? | R: El origen y la legitimidad del poder político | O: El origen y la legitimidad del poder político / La estructura formal de los razonamientos / La naturaleza de la percepción sensible / El criterio para distinguir belleza y fealdad
+10. ¿Qué registro experimental permite contrastar directamente que un objeto en caída libre, cerca de la superficie terrestre, tiene una aceleración aproximadamente constante de 9,8 m/s²? | R: Las posiciones del objeto registradas en instantes sucesivos. | O: La temperatura ambiente registrada una sola vez. / La masa del objeto medida antes y después del movimiento. / Las posiciones del objeto registradas en instantes sucesivos. / El color del objeto observado durante la caída.
+
+USO TEST 99 | G: entrada 4131, salida 5090, razonamiento 3965, coste USD 0.006934 | R: entrada 2694, salida 722, razonamiento 542, coste USD 0.001405 | S: entrada 698, salida 296, razonamiento 262, coste USD 0.000495
+
+========== TEST 100/200 — 16.67 s (G 9.40 s + R 2.64 s + S 4.63 s) ==========
+
+--- SALIDA G ---
+1. P10 D34 | F: La presión atmosférica se mide mediante un barómetro. | Q: ¿Con qué instrumento se mide la presión atmosférica? | O: 1=Barómetro / 2=Termómetro / 3=Higrómetro / 4=Pluviómetro | C: 1 | R: Barómetro
+2. P03 D04 | F: La Vía Láctea es una galaxia espiral barrada. | Q: ¿A qué tipo de galaxia pertenece la Vía Láctea? | O: 1=Galaxia elíptica / 2=Galaxia irregular / 3=Galaxia espiral barrada / 4=Galaxia lenticular | C: 3 | R: Galaxia espiral barrada
+3. P12 D25 | F: La Revolución francesa comenzó en 1789. | Q: ¿Qué símbolo representa convencionalmente la moneda euro? | O: 1=$ / 2=¥ / 3=£ / 4=€ | C: 4 | R: €
+4. P15 D23 | F: El Romanticismo español se desarrolló principalmente durante la primera mitad del siglo XIX. | Q: ¿En qué ámbito es válida la afirmación de que el Romanticismo español se desarrolló principalmente durante la primera mitad del siglo XIX? | O: 1=Historia literaria / 2=Teoría de la ficción / 3=Métrica y versificación / 4=Crítica textual | C: 1 | R: Historia literaria
+5. P11 D18 | F: El agua de lluvia ligeramente ácida puede reaccionar con los minerales de las rocas. | Q: ¿Qué proceso suele intensificarse cuando el agua de lluvia ligeramente ácida reacciona con los minerales de las rocas? | O: 1=Meteorización química / 2=Sedimentación fluvial / 3=Metamorfismo regional / 4=Cristalización magmática | C: 1 | R: Meteorización química
+6. P04 D29 | F: La teoría de la selección natural explica la adaptación de las poblaciones al ambiente. | Q: ¿Qué sostiene la teoría de la selección natural sobre el cambio de las poblaciones? | O: 1=Que las variantes heredables favorables tienden a volverse más frecuentes / 2=Que los individuos adquieren durante su vida rasgos que siempre heredan sus descendientes / 3=Que el ambiente transforma directamente a todos los organismos de la misma manera / 4=Que las poblaciones permanecen invariables aunque cambien las condiciones ambientales | C: 1 | R: Que las variantes heredables favorables tienden a volverse más frecuentes
+7. P16 D24 | F: El símbolo ∈ indica que un elemento forma parte de un conjunto. | Q: ¿Qué significa la expresión 5 ∈ ℕ? | O: 1=Que 5 es un número natural / 2=Que 5 es mayor que todos los números naturales / 3=Que 5 es divisible entre todos los números naturales / 4=Que 5 no puede expresarse como fracción | C: 1 | R: Que 5 es un número natural
+8. P14 D03 | F: Algunas palabras reproducen o imitan sonidos de la realidad. | Q: ¿Qué término designa una palabra o expresión que imita un sonido natural, como «tic-tac» o «miau»? | O: 1=Onomatopeya / 2=Eufemismo / 3=Neologismo / 4=Arcaísmo | C: 1 | R: Onomatopeya
+9. P19 D09 | F: Marie Curie y André Debierne aislaron conjuntamente el radio metálico. | Q: ¿Quién participó junto con Marie Curie en el aislamiento del radio metálico? | O: 1=André Debierne / 2=Henri Becquerel / 3=Ernest Rutherford / 4=Dmitri Mendeléyev | C: 1 | R: André Debierne
+10. P13 D10 | F: Google tiene su sede mundial en Mountain View, California. | Q: ¿Dónde se encuentra la sede mundial de Google? | O: 1=Mountain View / 2=Seattle / 3=Austin / 4=Boston | C: 1 | R: Mountain View
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: ¿Con qué instrumento se mide la presión atmosférica?
+R: Barómetro
+d1: Termómetro
+d2: Higrómetro
+d3: Pluviómetro
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿A qué tipo de galaxia pertenece la Vía Láctea?
+R: Galaxia espiral barrada
+d1: Galaxia elíptica
+d2: Galaxia irregular
+d3: Galaxia lenticular
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿Qué símbolo representa convencionalmente la moneda euro?
+R: €
+d1: $
+d2: ¥
+d3: £
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿En qué ámbito es válida la afirmación de que el Romanticismo español se desarrolló principalmente durante la primera mitad del siglo XIX?
+R: Historia literaria
+d1: Teoría de la ficción
+d2: Métrica y versificación
+d3: Crítica textual
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿Qué proceso suele intensificarse cuando el agua de lluvia ligeramente ácida reacciona con los minerales de las rocas?
+R: Meteorización química
+d1: Sedimentación fluvial
+d2: Metamorfismo regional
+d3: Cristalización magmática
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Qué sostiene la teoría de la selección natural sobre el cambio de las poblaciones?
+R: Que las variantes heredables favorables tienden a volverse más frecuentes
+d1: Que los individuos adquieren durante su vida rasgos que siempre heredan sus descendientes
+d2: Que el ambiente transforma directamente a todos los organismos de la misma manera
+d3: Que las poblaciones permanecen invariables aunque cambien las condiciones ambientales
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿Qué significa la expresión 5 ∈ ℕ?
+R: Que 5 es un número natural
+d1: Que 5 es mayor que todos los números naturales
+d2: Que 5 es divisible entre todos los números naturales
+d3: Que 5 no puede expresarse como fracción
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿Qué término designa una palabra o expresión que imita un sonido natural, como «tic-tac» o «miau»?
+R: Onomatopeya
+d1: Eufemismo
+d2: Neologismo
+d3: Arcaísmo
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Quién participó junto con Marie Curie en el aislamiento del radio metálico?
+R: André Debierne
+d1: Henri Becquerel
+d2: Ernest Rutherford
+d3: Dmitri Mendeléyev
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Dónde se encuentra la sede mundial de Google?
+R: Mountain View
+d1: Seattle
+d2: Austin
+d3: Boston
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: ¿Con qué instrumento se mide la presión atmosférica? | R: Barómetro | d1: Termómetro | d2: Higrómetro | d3: Pluviómetro
+2. Q: ¿A qué tipo de galaxia pertenece la Vía Láctea? | R: Galaxia espiral barrada | d1: Galaxia elíptica | d2: Galaxia irregular | d3: Galaxia lenticular
+3. Q: ¿Qué símbolo representa convencionalmente la moneda euro? | R: € | d1: $ | d2: ¥ | d3: £
+4. Q: ¿En qué ámbito es válida la afirmación de que el Romanticismo español se desarrolló principalmente durante la primera mitad del siglo XIX? | R: Historia literaria | d1: Teoría de la ficción | d2: Métrica y versificación | d3: Crítica textual
+5. Q: ¿Qué proceso suele intensificarse cuando el agua de lluvia ligeramente ácida reacciona con los minerales de las rocas? | R: Meteorización química | d1: Sedimentación fluvial | d2: Metamorfismo regional | d3: Cristalización magmática
+6. Q: ¿Qué sostiene la teoría de la selección natural sobre el cambio de las poblaciones? | R: Que las variantes heredables favorables tienden a volverse más frecuentes | d1: Que los individuos adquieren durante su vida rasgos que siempre heredan sus descendientes | d2: Que el ambiente transforma directamente a todos los organismos de la misma manera | d3: Que las poblaciones permanecen invariables aunque cambien las condiciones ambientales
+7. Q: ¿Qué significa la expresión 5 ∈ ℕ? | R: Que 5 es un número natural | d1: Que 5 es mayor que todos los números naturales | d2: Que 5 es divisible entre todos los números naturales | d3: Que 5 no puede expresarse como fracción
+8. Q: ¿Qué término designa una palabra o expresión que imita un sonido natural, como «tic-tac» o «miau»? | R: Onomatopeya | d1: Eufemismo | d2: Neologismo | d3: Arcaísmo
+9. Q: ¿Quién participó junto con Marie Curie en el aislamiento del radio metálico? | R: André Debierne | d1: Henri Becquerel | d2: Ernest Rutherford | d3: Dmitri Mendeléyev
+10. Q: ¿Dónde se encuentra la sede mundial de Google? | R: Mountain View | d1: Seattle | d2: Austin | d3: Boston
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Con qué instrumento se mide la presión atmosférica?
+R: Barómetro
+d1: Termómetro
+d2: Higrómetro
+d3: Pluviómetro
+
+2.
+Q: ¿A qué tipo de galaxia pertenece la Vía Láctea?
+R: Galaxia espiral barrada
+d1: Galaxia elíptica
+d2: Galaxia irregular
+d3: Galaxia lenticular
+
+3.
+Q: ¿Qué símbolo representa convencionalmente la moneda euro?
+R: €
+d1: $
+d2: ¥
+d3: £
+
+4.
+Q: ¿En qué ámbito es válida la afirmación de que el Romanticismo español se desarrolló principalmente durante la primera mitad del siglo XIX?
+R: Historia literaria
+d1: Teoría de la ficción
+d2: Métrica y versificación
+d3: Crítica textual
+
+5.
+Q: ¿Qué proceso suele intensificarse cuando el agua de lluvia ligeramente ácida reacciona con los minerales de las rocas?
+R: Meteorización química
+d1: Sedimentación fluvial
+d2: Metamorfismo regional
+d3: Cristalización magmática
+
+6.
+Q: ¿Qué sostiene la teoría de la selección natural sobre el cambio de las poblaciones?
+R: Que las variantes heredables favorables tienden a volverse más frecuentes
+d1: Que los individuos adquieren durante su vida rasgos que siempre heredan sus descendientes
+d2: Que el ambiente transforma directamente a todos los organismos de la misma manera
+d3: Que las poblaciones permanecen invariables aunque cambien las condiciones ambientales
+
+7.
+Q: ¿Qué significa la expresión 5 ∈ ℕ?
+R: Que 5 es un número natural
+d1: Que 5 es mayor que todos los números naturales
+d2: Que 5 es divisible entre todos los números naturales
+d3: Que 5 no puede expresarse como fracción
+
+8.
+Q: ¿Qué término designa una palabra o expresión que imita un sonido natural, como «tic-tac» o «miau»?
+R: Onomatopeya
+d1: Eufemismo
+d2: Neologismo
+d3: Arcaísmo
+
+9.
+Q: ¿Quién participó junto con Marie Curie en el aislamiento del radio metálico?
+R: André Debierne
+d1: Henri Becquerel
+d2: Ernest Rutherford
+d3: Dmitri Mendeléyev
+
+10.
+Q: ¿Dónde se encuentra la sede mundial de Google?
+R: Mountain View
+d1: Seattle
+d2: Austin
+d3: Boston
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[3,1,8,10,7,2,6,5,4,9]}
+
+--- ORDEN S ---
+[3, 1, 8, 10, 7, 2, 6, 5, 4, 9]
+
+--- TEST TRAS R Y S ---
+1. [original 3] Q: ¿Qué símbolo representa convencionalmente la moneda euro? | R: € | d1: $ | d2: ¥ | d3: £
+2. [original 1] Q: ¿Con qué instrumento se mide la presión atmosférica? | R: Barómetro | d1: Termómetro | d2: Higrómetro | d3: Pluviómetro
+3. [original 8] Q: ¿Qué término designa una palabra o expresión que imita un sonido natural, como «tic-tac» o «miau»? | R: Onomatopeya | d1: Eufemismo | d2: Neologismo | d3: Arcaísmo
+4. [original 10] Q: ¿Dónde se encuentra la sede mundial de Google? | R: Mountain View | d1: Seattle | d2: Austin | d3: Boston
+5. [original 7] Q: ¿Qué significa la expresión 5 ∈ ℕ? | R: Que 5 es un número natural | d1: Que 5 es mayor que todos los números naturales | d2: Que 5 es divisible entre todos los números naturales | d3: Que 5 no puede expresarse como fracción
+6. [original 2] Q: ¿A qué tipo de galaxia pertenece la Vía Láctea? | R: Galaxia espiral barrada | d1: Galaxia elíptica | d2: Galaxia irregular | d3: Galaxia lenticular
+7. [original 6] Q: ¿Qué sostiene la teoría de la selección natural sobre el cambio de las poblaciones? | R: Que las variantes heredables favorables tienden a volverse más frecuentes | d1: Que los individuos adquieren durante su vida rasgos que siempre heredan sus descendientes | d2: Que el ambiente transforma directamente a todos los organismos de la misma manera | d3: Que las poblaciones permanecen invariables aunque cambien las condiciones ambientales
+8. [original 5] Q: ¿Qué proceso suele intensificarse cuando el agua de lluvia ligeramente ácida reacciona con los minerales de las rocas? | R: Meteorización química | d1: Sedimentación fluvial | d2: Metamorfismo regional | d3: Cristalización magmática
+9. [original 4] Q: ¿En qué ámbito es válida la afirmación de que el Romanticismo español se desarrolló principalmente durante la primera mitad del siglo XIX? | R: Historia literaria | d1: Teoría de la ficción | d2: Métrica y versificación | d3: Crítica textual
+10. [original 9] Q: ¿Quién participó junto con Marie Curie en el aislamiento del radio metálico? | R: André Debierne | d1: Henri Becquerel | d2: Ernest Rutherford | d3: Dmitri Mendeléyev
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué símbolo representa convencionalmente la moneda euro? | R: € | O: ¥ / $ / € / £
+2. ¿Con qué instrumento se mide la presión atmosférica? | R: Barómetro | O: Pluviómetro / Barómetro / Higrómetro / Termómetro
+3. ¿Qué término designa una palabra o expresión que imita un sonido natural, como «tic-tac» o «miau»? | R: Onomatopeya | O: Arcaísmo / Onomatopeya / Neologismo / Eufemismo
+4. ¿Dónde se encuentra la sede mundial de Google? | R: Mountain View | O: Boston / Mountain View / Austin / Seattle
+5. ¿Qué significa la expresión 5 ∈ ℕ? | R: Que 5 es un número natural | O: Que 5 es mayor que todos los números naturales / Que 5 es un número natural / Que 5 no puede expresarse como fracción / Que 5 es divisible entre todos los números naturales
+6. ¿A qué tipo de galaxia pertenece la Vía Láctea? | R: Galaxia espiral barrada | O: Galaxia lenticular / Galaxia elíptica / Galaxia espiral barrada / Galaxia irregular
+7. ¿Qué sostiene la teoría de la selección natural sobre el cambio de las poblaciones? | R: Que las variantes heredables favorables tienden a volverse más frecuentes | O: Que las variantes heredables favorables tienden a volverse más frecuentes / Que las poblaciones permanecen invariables aunque cambien las condiciones ambientales / Que el ambiente transforma directamente a todos los organismos de la misma manera / Que los individuos adquieren durante su vida rasgos que siempre heredan sus descendientes
+8. ¿Qué proceso suele intensificarse cuando el agua de lluvia ligeramente ácida reacciona con los minerales de las rocas? | R: Meteorización química | O: Cristalización magmática / Meteorización química / Metamorfismo regional / Sedimentación fluvial
+9. ¿En qué ámbito es válida la afirmación de que el Romanticismo español se desarrolló principalmente durante la primera mitad del siglo XIX? | R: Historia literaria | O: Teoría de la ficción / Historia literaria / Crítica textual / Métrica y versificación
+10. ¿Quién participó junto con Marie Curie en el aislamiento del radio metálico? | R: André Debierne | O: Henri Becquerel / Ernest Rutherford / André Debierne / Dmitri Mendeléyev
+
+USO TEST 100 | G: entrada 4004, salida 5447, razonamiento 4400, coste USD 0.007337 | R: entrada 2666, salida 838, razonamiento 658, coste USD 0.001539 | S: entrada 670, salida 346, razonamiento 312, coste USD 0.000549
+
+========== TEST 101/200 — 15.31 s (G 7.63 s + R 2.06 s + S 5.63 s) ==========
+
+--- SALIDA G ---
+1. P10 D22 | F: La cordillera de los Andes se extiende a lo largo del borde occidental de América del Sur. | Q: En la orientación convencional de los mapas, ¿qué punto cardinal suele situarse en la parte superior? | O: 1=Norte / 2=Sur / 3=Este / 4=Oeste | C: 1 | R: Norte
+2. P06 D25 | F: El euro es la moneda oficial de varios países de la Unión Europea. | Q: ¿Qué símbolo monetario identifica convencionalmente al euro? | O: 1=$ / 2=¥ / 3=€ / 4=£ | C: 3 | R: €
+3. P15 D04 | F: Romeo y Julieta es una tragedia de William Shakespeare. | Q: ¿A qué clase de obra literaria pertenece Romeo y Julieta? | O: 1=Comedia / 2=Tragedia / 3=Epopeya / 4=Fábula | C: 2 | R: Tragedia
+4. P19 D06 | F: El flúor es el elemento más electronegativo de la tabla periódica. | Q: ¿Cuál de los siguientes elementos tiene la electronegatividad más alta? | O: 1=Oxígeno / 2=Cloro / 3=Flúor / 4=Nitrógeno | C: 3 | R: Flúor
+5. P17 D27 | F: La poliomielitis es una enfermedad viral que puede causar parálisis. | Q: ¿Quién desarrolló la primera vacuna eficaz contra la poliomielitis? | O: 1=Albert Sabin / 2=Jonas Salk / 3=Edward Jenner / 4=Maurice Hilleman | C: 2 | R: Jonas Salk
+6. P09 D21 | F: La levadura transforma azúcares en dióxido de carbono durante la fermentación de masas panarias. | Q: ¿Qué función desempeña la levadura en la elaboración del pan? | O: 1=Aportar el color tostado de la corteza / 2=Liberar gas que esponja la masa / 3=Reducir la acidez de la preparación / 4=Evitar la evaporación de líquidos | C: 2 | R: Liberar gas que esponja la masa
+7. P07 D20 | F: La lógica formal analiza la validez de los razonamientos atendiendo a su estructura. | Q: En un argumento, ¿qué componente proporciona las razones que apoyan la tesis? | O: 1=Las premisas / 2=La conclusión / 3=El predicado / 4=La definición | C: 1 | R: Las premisas
+8. P08 D12 | F: La ley de gravitación universal de Newton se publicó en 1687. | Q: ¿En qué año se publicó la ley de gravitación universal de Newton? | O: 1=1665 / 2=1702 / 3=1687 / 4=1648 | C: 3 | R: 1687
+9. P01 D18 | F: Los arbotantes son elementos exteriores que transmiten al suelo los empujes laterales de las bóvedas góticas. | Q: ¿Qué efecto produce el uso de arbotantes en la arquitectura gótica? | O: 1=Permite abrir ventanales más amplios en los muros / 2=Elimina la necesidad de cimentaciones profundas / 3=Convierte las cubiertas inclinadas en terrazas planas / 4=Sustituye las bóvedas por techos de madera | C: 1 | R: Permite abrir ventanales más amplios en los muros
+10. P05 D34 | F: En el proceso civil, la demanda suele dar inicio al procedimiento judicial. | Q: ¿Qué escrito presenta normalmente una persona para iniciar un proceso civil ante un tribunal? | O: 1=La demanda / 2=La sentencia / 3=La contestación / 4=El recurso de apelación | C: 1 | R: La demanda
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: En la orientación convencional de los mapas, ¿qué punto cardinal suele situarse en la parte superior?
+R: Norte
+d1: Sur
+d2: Este
+d3: Oeste
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Qué símbolo monetario identifica convencionalmente al euro?
+R: €
+d1: $
+d2: ¥
+d3: £
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿A qué clase de obra literaria pertenece Romeo y Julieta?
+R: Tragedia
+d1: Comedia
+d2: Epopeya
+d3: Fábula
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿Cuál de los siguientes elementos tiene la electronegatividad más alta?
+R: Flúor
+d1: Oxígeno
+d2: Cloro
+d3: Nitrógeno
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿Quién desarrolló la primera vacuna eficaz contra la poliomielitis?
+R: Jonas Salk
+d1: Albert Sabin
+d2: Edward Jenner
+d3: Maurice Hilleman
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Qué función desempeña la levadura en la elaboración del pan?
+R: Liberar gas que esponja la masa
+d1: Aportar el color tostado de la corteza
+d2: Reducir la acidez de la preparación
+d3: Evitar la evaporación de líquidos
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: En un argumento, ¿qué componente proporciona las razones que apoyan la tesis?
+R: Las premisas
+d1: La conclusión
+d2: El predicado
+d3: La definición
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿En qué año se publicó la ley de gravitación universal de Newton?
+R: 1687
+d1: 1665
+d2: 1702
+d3: 1648
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: ¿Qué efecto produce el uso de arbotantes en la arquitectura gótica?
+R: Permite abrir ventanales más amplios en los muros
+d1: Elimina la necesidad de cimentaciones profundas
+d2: Convierte las cubiertas inclinadas en terrazas planas
+d3: Sustituye las bóvedas por techos de madera
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Qué escrito presenta normalmente una persona para iniciar un proceso civil ante un tribunal?
+R: La demanda
+d1: La sentencia
+d2: La contestación
+d3: El recurso de apelación
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+(ninguna)
+
+--- TEST TRAS R ---
+1. Q: En la orientación convencional de los mapas, ¿qué punto cardinal suele situarse en la parte superior? | R: Norte | d1: Sur | d2: Este | d3: Oeste
+2. Q: ¿Qué símbolo monetario identifica convencionalmente al euro? | R: € | d1: $ | d2: ¥ | d3: £
+3. Q: ¿A qué clase de obra literaria pertenece Romeo y Julieta? | R: Tragedia | d1: Comedia | d2: Epopeya | d3: Fábula
+4. Q: ¿Cuál de los siguientes elementos tiene la electronegatividad más alta? | R: Flúor | d1: Oxígeno | d2: Cloro | d3: Nitrógeno
+5. Q: ¿Quién desarrolló la primera vacuna eficaz contra la poliomielitis? | R: Jonas Salk | d1: Albert Sabin | d2: Edward Jenner | d3: Maurice Hilleman
+6. Q: ¿Qué función desempeña la levadura en la elaboración del pan? | R: Liberar gas que esponja la masa | d1: Aportar el color tostado de la corteza | d2: Reducir la acidez de la preparación | d3: Evitar la evaporación de líquidos
+7. Q: En un argumento, ¿qué componente proporciona las razones que apoyan la tesis? | R: Las premisas | d1: La conclusión | d2: El predicado | d3: La definición
+8. Q: ¿En qué año se publicó la ley de gravitación universal de Newton? | R: 1687 | d1: 1665 | d2: 1702 | d3: 1648
+9. Q: ¿Qué efecto produce el uso de arbotantes en la arquitectura gótica? | R: Permite abrir ventanales más amplios en los muros | d1: Elimina la necesidad de cimentaciones profundas | d2: Convierte las cubiertas inclinadas en terrazas planas | d3: Sustituye las bóvedas por techos de madera
+10. Q: ¿Qué escrito presenta normalmente una persona para iniciar un proceso civil ante un tribunal? | R: La demanda | d1: La sentencia | d2: La contestación | d3: El recurso de apelación
+
+--- ENTRADA S ---
+T := 1.
+Q: En la orientación convencional de los mapas, ¿qué punto cardinal suele situarse en la parte superior?
+R: Norte
+d1: Sur
+d2: Este
+d3: Oeste
+
+2.
+Q: ¿Qué símbolo monetario identifica convencionalmente al euro?
+R: €
+d1: $
+d2: ¥
+d3: £
+
+3.
+Q: ¿A qué clase de obra literaria pertenece Romeo y Julieta?
+R: Tragedia
+d1: Comedia
+d2: Epopeya
+d3: Fábula
+
+4.
+Q: ¿Cuál de los siguientes elementos tiene la electronegatividad más alta?
+R: Flúor
+d1: Oxígeno
+d2: Cloro
+d3: Nitrógeno
+
+5.
+Q: ¿Quién desarrolló la primera vacuna eficaz contra la poliomielitis?
+R: Jonas Salk
+d1: Albert Sabin
+d2: Edward Jenner
+d3: Maurice Hilleman
+
+6.
+Q: ¿Qué función desempeña la levadura en la elaboración del pan?
+R: Liberar gas que esponja la masa
+d1: Aportar el color tostado de la corteza
+d2: Reducir la acidez de la preparación
+d3: Evitar la evaporación de líquidos
+
+7.
+Q: En un argumento, ¿qué componente proporciona las razones que apoyan la tesis?
+R: Las premisas
+d1: La conclusión
+d2: El predicado
+d3: La definición
+
+8.
+Q: ¿En qué año se publicó la ley de gravitación universal de Newton?
+R: 1687
+d1: 1665
+d2: 1702
+d3: 1648
+
+9.
+Q: ¿Qué efecto produce el uso de arbotantes en la arquitectura gótica?
+R: Permite abrir ventanales más amplios en los muros
+d1: Elimina la necesidad de cimentaciones profundas
+d2: Convierte las cubiertas inclinadas en terrazas planas
+d3: Sustituye las bóvedas por techos de madera
+
+10.
+Q: ¿Qué escrito presenta normalmente una persona para iniciar un proceso civil ante un tribunal?
+R: La demanda
+d1: La sentencia
+d2: La contestación
+d3: El recurso de apelación
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[1,2,3,6,7,10,5,4,8,9]}
+
+--- ORDEN S ---
+[1, 2, 3, 6, 7, 10, 5, 4, 8, 9]
+
+--- TEST TRAS R Y S ---
+1. [original 1] Q: En la orientación convencional de los mapas, ¿qué punto cardinal suele situarse en la parte superior? | R: Norte | d1: Sur | d2: Este | d3: Oeste
+2. [original 2] Q: ¿Qué símbolo monetario identifica convencionalmente al euro? | R: € | d1: $ | d2: ¥ | d3: £
+3. [original 3] Q: ¿A qué clase de obra literaria pertenece Romeo y Julieta? | R: Tragedia | d1: Comedia | d2: Epopeya | d3: Fábula
+4. [original 6] Q: ¿Qué función desempeña la levadura en la elaboración del pan? | R: Liberar gas que esponja la masa | d1: Aportar el color tostado de la corteza | d2: Reducir la acidez de la preparación | d3: Evitar la evaporación de líquidos
+5. [original 7] Q: En un argumento, ¿qué componente proporciona las razones que apoyan la tesis? | R: Las premisas | d1: La conclusión | d2: El predicado | d3: La definición
+6. [original 10] Q: ¿Qué escrito presenta normalmente una persona para iniciar un proceso civil ante un tribunal? | R: La demanda | d1: La sentencia | d2: La contestación | d3: El recurso de apelación
+7. [original 5] Q: ¿Quién desarrolló la primera vacuna eficaz contra la poliomielitis? | R: Jonas Salk | d1: Albert Sabin | d2: Edward Jenner | d3: Maurice Hilleman
+8. [original 4] Q: ¿Cuál de los siguientes elementos tiene la electronegatividad más alta? | R: Flúor | d1: Oxígeno | d2: Cloro | d3: Nitrógeno
+9. [original 8] Q: ¿En qué año se publicó la ley de gravitación universal de Newton? | R: 1687 | d1: 1665 | d2: 1702 | d3: 1648
+10. [original 9] Q: ¿Qué efecto produce el uso de arbotantes en la arquitectura gótica? | R: Permite abrir ventanales más amplios en los muros | d1: Elimina la necesidad de cimentaciones profundas | d2: Convierte las cubiertas inclinadas en terrazas planas | d3: Sustituye las bóvedas por techos de madera
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. En la orientación convencional de los mapas, ¿qué punto cardinal suele situarse en la parte superior? | R: Norte | O: Este / Sur / Norte / Oeste
+2. ¿Qué símbolo monetario identifica convencionalmente al euro? | R: € | O: € / ¥ / $ / £
+3. ¿A qué clase de obra literaria pertenece Romeo y Julieta? | R: Tragedia | O: Tragedia / Comedia / Epopeya / Fábula
+4. ¿Qué función desempeña la levadura en la elaboración del pan? | R: Liberar gas que esponja la masa | O: Evitar la evaporación de líquidos / Reducir la acidez de la preparación / Aportar el color tostado de la corteza / Liberar gas que esponja la masa
+5. En un argumento, ¿qué componente proporciona las razones que apoyan la tesis? | R: Las premisas | O: La definición / El predicado / La conclusión / Las premisas
+6. ¿Qué escrito presenta normalmente una persona para iniciar un proceso civil ante un tribunal? | R: La demanda | O: La sentencia / La demanda / El recurso de apelación / La contestación
+7. ¿Quién desarrolló la primera vacuna eficaz contra la poliomielitis? | R: Jonas Salk | O: Jonas Salk / Edward Jenner / Albert Sabin / Maurice Hilleman
+8. ¿Cuál de los siguientes elementos tiene la electronegatividad más alta? | R: Flúor | O: Cloro / Flúor / Oxígeno / Nitrógeno
+9. ¿En qué año se publicó la ley de gravitación universal de Newton? | R: 1687 | O: 1665 / 1702 / 1648 / 1687
+10. ¿Qué efecto produce el uso de arbotantes en la arquitectura gótica? | R: Permite abrir ventanales más amplios en los muros | O: Sustituye las bóvedas por techos de madera / Permite abrir ventanales más amplios en los muros / Convierte las cubiertas inclinadas en terrazas planas / Elimina la necesidad de cimentaciones profundas
+
+USO TEST 101 | G: entrada 3745, salida 4339, razonamiento 3331, coste USD 0.005956 | R: entrada 2596, salida 647, razonamiento 467, coste USD 0.001296 | S: entrada 600, salida 463, razonamiento 429, coste USD 0.000676
+
