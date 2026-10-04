@@ -5,7 +5,8 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 
 // Una unidad de generación = una posición del test.
-// Dart fija P, D e H; G devuelve Q, cuatro opciones O y la posición C.
+// Dart fija P, D e H; G devuelve F, Q, cuatro opciones O y la posición C.
+// F es un andamiaje factual efímero de G: no entra en H, R ni en el test final.
 // Las diez unidades de G del Quiz10 se ejecutan simultáneamente.
 
 const String quiz10LunaPrompt = r'''## Entrada
@@ -19,9 +20,12 @@ H := {{H}}
 
 ## Generación
 
-Antes de formular Q, establece la base factual necesaria sobre P, propia de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y determinar la respuesta correcta.
+F := una afirmación factual autónoma, o el mínimo conjunto de afirmaciones factuales estrechamente relacionadas, sobre P, propia de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y determine de forma unívoca el conocimiento que Q debe preguntar.
 
-Formula después una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin necesidad de conocer esa base factual.
+F se establece antes de Q y O; no contiene alternativas de respuesta, distractores ni enumeraciones de candidatos, ni información introducida únicamente para construir O.
+
+Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
+
 O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
 
 C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
@@ -39,8 +43,8 @@ R ∉ {R₁, ..., Rₙ}
 
 ## Salida
 
-| P | D | Q | O | C |
-|---|---|---|---|---|
+| P | D | F | Q | O | C |
+|---|---|---|---|---|---|
 ''';
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
@@ -62,10 +66,11 @@ String quiz10LunaInput(
 Map<String, Object?> quiz10LunaSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['P', 'D', 'Q', 'O', 'C'],
+  'required': ['P', 'D', 'F', 'Q', 'O', 'C'],
   'properties': {
     'P': {'type': 'string'},
     'D': {'type': 'string'},
+    'F': {'type': 'string'},
     'Q': {'type': 'string'},
     'O': {
       'type': 'object',
@@ -90,6 +95,7 @@ class Quiz10LunaRow {
     required this.slot,
     required this.returnedPivot,
     required this.returnedDimension,
+    required this.fact,
     required this.question,
     required this.options,
     required this.correctPosition,
@@ -99,6 +105,7 @@ class Quiz10LunaRow {
   final Quiz10Pair slot;
   final String returnedPivot;
   final String returnedDimension;
+  final String fact;
   final String question;
   final List<String> options;
   final int correctPosition;
@@ -135,11 +142,12 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
   }
   if (decoded['P'] is! String ||
       decoded['D'] is! String ||
+      decoded['F'] is! String ||
       decoded['Q'] is! String ||
       decoded['O'] is! Map<String, dynamic> ||
       decoded['C'] is! int) {
     throw const FormatException(
-      'La salida no conserva la estructura P,D,Q,O,C esperada.',
+      'La salida no conserva la estructura P,D,F,Q,O,C esperada.',
     );
   }
 
@@ -153,6 +161,7 @@ Quiz10LunaRow parseQuiz10LunaRowOutput(
     slot: slot,
     returnedPivot: decoded['P'] as String,
     returnedDimension: decoded['D'] as String,
+    fact: decoded['F'] as String,
     question: decoded['Q'] as String,
     options: List.unmodifiable([
       for (final key in keys) rawOptions[key] as String,
