@@ -25,7 +25,7 @@ Q' no contiene R' ni una pista léxica evidente de R' por forma, raíz, abreviac
 
 String quiz10ReviewItemLiteral(Quiz10LunaRow row) => [
   'P: ${row.returnedPivot}',
-  'Instrucción D: ${row.slot.dimension.instruction}',
+  'I_D: ${row.slot.dimension.instruction}',
   'Q: ${row.question}',
   'R: ${row.correct}',
   'd1: ${row.distractors[0]}',
