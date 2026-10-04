@@ -186,15 +186,9 @@ final class AiQuiz10Pipeline {
 
     final correctedItems = applyQuiz10Review(lunaRows, review);
 
-    final sortItems = buildQuiz10SortItems(correctedItems);
-    final sortInput = quiz10SortInput(sortItems);
-    final sortWatch = Stopwatch()..start();
-    final sort = await sorter.sort(sortItems);
-    sortWatch.stop();
-
     final reviewedItems = applyQuiz10Order(
       correctedItems,
-      sort.order,
+      review.order,
     );
 
     luna.commitReviewedQuestions(
@@ -214,13 +208,10 @@ final class AiQuiz10Pipeline {
       lunaGeneration: lunaGeneration,
       review: review,
       correctedItems: correctedItems,
-      sortInput: sortInput,
-      sort: sort,
       reviewedItems: reviewedItems,
       questions: questions,
       lunaDuration: lunaWatch.elapsed,
       reviewDuration: reviewWatch.elapsed,
-      sortDuration: sortWatch.elapsed,
     );
   }
 }
