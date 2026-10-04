@@ -22,7 +22,11 @@ F: afirmación factual autónoma mínima de cultura general generalista, no espe
 
 I_D define la relación semántica que Q debe realizar, no su redacción.
 
-Q es concisa, realiza I_D y todo referente necesario aparece explícitamente en Q.
+Q es concisa y realiza I_D.
+
+F no forma parte del contexto disponible al responder Q.
+
+Todo referente contextual de Q se resuelve en Q u O, nunca en F.
 
 O := {o₁,o₂,o₃,o₄}, opciones distintas, plausibles, homogéneas y concisas.
 

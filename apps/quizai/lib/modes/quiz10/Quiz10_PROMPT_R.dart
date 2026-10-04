@@ -11,16 +11,15 @@ O := {R,d1,d2,d3}
 
 V := {
   {o ∈ O : o responde correctamente a Q} ≠ {R},
-  Q no realiza la relación semántica definida por I_D,
-  algún referente necesario para interpretar Q no aparece explícitamente en Q,
+  algún referente contextual de Q carece de antecedente en Q u O,
   Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
 }
 
-V se evalúa como pregunta de concurso para un concursante generalista de cultura general; una reformulación equivalente o una mayor precisión técnica no constituye una violación.
+Una diferencia de estilo, tecnicidad o precisión no constituye V salvo que altere una condición anterior.
 
 V = ∅ ⇒ Δ = ∅
 
-V ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅ y Δ contiene únicamente los campos necesarios para eliminar V.
+V ≠ ∅ ⇒ Δ := mínimo conjunto de correcciones que elimina V.
 
 ∀(campo,valor) ∈ Δ, valor ≠ t[campo].
 ''';
