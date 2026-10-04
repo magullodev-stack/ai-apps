@@ -10,9 +10,17 @@ O := {R,d1,d2,d3}
 
 C := {o ∈ O : o responde correctamente a Q}
 
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
 C = {R} ⇒ Δ = ∅
 
 C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
 ''';
 
 String quiz10ReviewItemLiteral(Quiz10LunaRow row) => [
