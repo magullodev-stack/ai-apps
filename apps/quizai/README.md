@@ -134,9 +134,9 @@ Dart aplica esos parches, reordena las diez preguntas y, al final, baraja las
 cuatro opciones de cada pregunta. La posición de la respuesta correcta que
 produjo G no llega al jugador.
 
-`H` es el histórico de hechos ya usados por cruce P×D. El pipeline completo no
-lo actualiza hasta que la revisión global termina; guarda únicamente `F` y G
-debe elegir un hecho o conocimiento materialmente distinto de los ya presentes.
+`H` es el histórico de pares `(Q,R)` ya usados por cruce P×D. El pipeline completo no
+lo actualiza hasta que la revisión global termina; guarda la pregunta y la respuesta
+finales tras los parches para impedir reutilizar el mismo conocimiento.
 
 La pantalla Quiz10 está conectada al pipeline real. Dentro de una misma sesión,
 `Otra partida` reutiliza la instancia del pipeline y por tanto su H.
