@@ -150,37 +150,50 @@ String _seconds(double value) => '${value.toStringAsFixed(2)} s';
 
 Future<void> main(List<String> args) async {
   var samples = 1;
+  var users = 1;
   var seed = 20260929;
 
   if (args.isNotEmpty) {
-    if (args.length != 5 ||
+    if (args.length != 7 ||
         args[0] != '--quiz10' ||
         args[1] != '--muestras' ||
-        args[3] != '--semilla') {
+        args[3] != '--usuarios' ||
+        args[5] != '--semilla') {
       stderr.writeln(
         'Uso: verify_quiz10_pipeline.dart '
-        '[--quiz10 --muestras 1-200 --semilla N]',
+        '[--quiz10 --muestras 1-200 --usuarios 1-200 --semilla N]',
       );
       exitCode = 64;
       return;
     }
 
     final parsedSamples = int.tryParse(args[2]);
-    final parsedSeed = int.tryParse(args[4]);
+    final parsedUsers = int.tryParse(args[4]);
+    final parsedSeed = int.tryParse(args[6]);
     if (parsedSamples == null ||
         parsedSamples < 1 ||
         parsedSamples > 200 ||
+        parsedUsers == null ||
+        parsedUsers < 1 ||
+        parsedUsers > 200 ||
+        parsedSamples * parsedUsers > 200 ||
         parsedSeed == null ||
         parsedSeed < 0 ||
         parsedSeed > 1000000000) {
-      stderr.writeln('Muestras 1-200 y semilla 0-1000000000.');
+      stderr.writeln(
+        'Usuarios y muestras 1-200; Usuarios × Muestras <= 200; '
+        'semilla 0-1000000000.',
+      );
       exitCode = 64;
       return;
     }
 
     samples = parsedSamples;
+    users = parsedUsers;
     seed = parsedSeed;
   }
+
+  final totalTests = samples * users;
 
   final env = Platform.environment;
   final client = AiAppsClient(
@@ -188,14 +201,22 @@ Future<void> main(List<String> args) async {
     authorization: env['AI_APPS_GAME_TOKEN'] ?? '',
   );
 
+  final lunaModel = env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna';
   final reviewModel =
       env['AI_APPS_QUIZ10_REVIEW_MODEL'] ?? 'gpt-5.6-luna';
-  final pipeline = AiQuiz10Pipeline(
+  final sorterModel = env['AI_APPS_QUIZ10_SORT_MODEL'] ?? reviewModel;
+
+  AiQuiz10Pipeline createPipeline() => AiQuiz10Pipeline(
     client: client,
-    lunaModel: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
+    lunaModel: lunaModel,
     reviewerModel: reviewModel,
-    sorterModel: env['AI_APPS_QUIZ10_SORT_MODEL'] ?? reviewModel,
+    sorterModel: sorterModel,
   );
+
+  final pipelines = [
+    for (var user = 0; user < users; user++) createPipeline(),
+  ];
+  final pipeline = pipelines.first;
 
   final lunaRates = _rates(pipeline.luna.model);
   final reviewRates = _rates(pipeline.reviewer.model);
@@ -211,7 +232,8 @@ Future<void> main(List<String> args) async {
       'Quiz10_${_modelLabel(pipeline.luna.model)}+'
       '${_modelLabel(pipeline.reviewer.model)}+'
       '${_modelLabel(pipeline.sorter.model)}_PIPELINE_'
-      '${samples}T_${samples * 10}G_${samples * 10}R_${samples}S_'
+      '${users}U_${samples}P_${totalTests}T_'
+      '${totalTests * 10}G_${totalTests * 10}R_${totalTests}S_'
       's${seed}_$timestamp.txt';
 
   final report = File(path).openWrite();
@@ -267,26 +289,28 @@ Future<void> main(List<String> args) async {
       'aplicación de orden y shuffle en Dart.',
     );
     report.writeln(
-      'Semilla: $seed | Tests: $samples | '
-      'Llamadas G: ${samples * 10} | '
-      'Llamadas R: ${samples * 10} | '
-      'Llamadas S: $samples.',
+      'Semilla: $seed | Usuarios: $users | '
+      'partidas por usuario: $samples | Tests: $totalTests | '
+      'Llamadas G: ${totalTests * 10} | '
+      'Llamadas R: ${totalTests * 10} | '
+      'Llamadas S: $totalTests.',
+    );
+    report.writeln(
+      'Cada usuario posee su propio pipeline e H; '
+      'los usuarios se ejecutan concurrentemente y las partidas de '
+      'cada usuario secuencialmente.',
     );
     report.writeln();
 
-    for (var i = 0; i < samples; i++) {
-      final test = i + 1;
-      final totalWatch = Stopwatch()..start();
-
-      try {
-        final result = await pipeline.generateDetailed(
-          planRandom: Random(seed + i),
-          optionRandom: Random(seed + 100000 + i),
-        );
-        totalWatch.stop();
-
+    Future<void> processSuccess({
+      required int user,
+      required int game,
+      required int test,
+      required int elapsedMilliseconds,
+      required Quiz10PipelineResult result,
+    }) async {
         completeTests++;
-        totalDurations.add(totalWatch.elapsedMilliseconds);
+        totalDurations.add(elapsedMilliseconds);
         lunaDurations.add(result.lunaDuration.inMilliseconds);
         reviewDurations.add(result.reviewDuration.inMilliseconds);
         sortDurations.add(result.sortDuration.inMilliseconds);
@@ -419,8 +443,8 @@ Future<void> main(List<String> args) async {
             : 'n/d';
 
         report.writeln(
-          '========== TEST $test/$samples — '
-          '${(totalWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
+          '========== TEST $test/$totalTests — U$user P$game — '
+          '${(elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
           '(G ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
           '+ R ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
           '+ S ${(result.sortDuration.inMilliseconds / 1000).toStringAsFixed(2)} s) ==========',
@@ -558,7 +582,7 @@ Future<void> main(List<String> args) async {
             : 'Q$questionCorrections R$answerCorrections D$distractorCorrections';
 
         stdout.writeln();
-        stdout.writeln('TEST $test/$samples');
+        stdout.writeln('TEST $test/$totalTests — U$user P$game');
         _printMetricsTable([
           (
             'Tiempo',
@@ -612,20 +636,69 @@ Future<void> main(List<String> args) async {
         } else {
           stdout.writeln('CAMBIOS: —');
         }
-      } catch (error) {
-        totalWatch.stop();
+
+    }
+
+    Future<void> processFailure({
+      required int user,
+      required int game,
+      required int test,
+      required int elapsedMilliseconds,
+      required Object error,
+    }) async {
+
         failedTests++;
-        totalDurations.add(totalWatch.elapsedMilliseconds);
+        totalDurations.add(elapsedMilliseconds);
         report.writeln(
-          '========== TEST $test/$samples — ERROR — '
-          '${(totalWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s ==========',
+          '========== TEST $test/$totalTests — U$user P$game — ERROR — '
+          '${(elapsedMilliseconds / 1000).toStringAsFixed(2)} s ==========',
         );
         report.writeln(error);
         report.writeln();
         await report.flush();
-        stderr.writeln('Test $test/$samples: $error');
+        stderr.writeln('Test $test/$totalTests — U$user P$game: $error');
+
+    }
+
+    final auditWatch = Stopwatch()..start();
+
+    Future<void> runUser(int user, AiQuiz10Pipeline userPipeline) async {
+      for (var game = 1; game <= samples; game++) {
+        final test = (user - 1) * samples + game;
+        final index = test - 1;
+        final totalWatch = Stopwatch()..start();
+
+        try {
+          final result = await userPipeline.generateDetailed(
+            planRandom: Random(seed + index),
+            optionRandom: Random(seed + 100000 + index),
+          );
+          totalWatch.stop();
+          await processSuccess(
+            user: user,
+            game: game,
+            test: test,
+            elapsedMilliseconds: totalWatch.elapsedMilliseconds,
+            result: result,
+          );
+        } catch (error) {
+          totalWatch.stop();
+          await processFailure(
+            user: user,
+            game: game,
+            test: test,
+            elapsedMilliseconds: totalWatch.elapsedMilliseconds,
+            error: error,
+          );
+        }
       }
     }
+
+    await Future.wait([
+      for (var user = 1; user <= users; user++)
+        runUser(user, pipelines[user - 1]),
+    ]);
+    auditWatch.stop();
 
     final totalReasoning =
         lunaReasoning + reviewReasoning + sortReasoning;
@@ -637,7 +710,11 @@ Future<void> main(List<String> args) async {
 
     report.writeln('========== ESTADÍSTICAS FINALES ==========');
     report.writeln(
-      'Tests: $samples | completos: $completeTests | fallidos: $failedTests | '
+      'Tiempo real de auditoría: '
+      '${(auditWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s.',
+    );
+    report.writeln(
+      'Tests: $totalTests | completos: $completeTests | fallidos: $failedTests | '
       'filas finales con incidencia local: $finalRowsWithIssues.',
     );
     report.writeln(
@@ -760,7 +837,7 @@ Future<void> main(List<String> args) async {
         : sorterCostTotal / sorterPricedTests;
 
     stdout.writeln();
-    stdout.writeln('RESUMEN $samples TESTS');
+    stdout.writeln('RESUMEN $totalTests TESTS');
     _printMetricsTable([
       (
         'Tiempo medio',
@@ -817,7 +894,7 @@ Future<void> main(List<String> args) async {
     stdout.writeln('RESULTADO');
     _printResultTable([
       ('Métrica', 'Valor'),
-      ('Tests completos', '$completeTests/$samples'),
+      ('Tests completos', '$completeTests/$totalTests'),
       ('Tests fallidos', '$failedTests'),
       ('Tests con correcciones', '$correctedTests/$completeTests'),
       ('Preguntas corregidas', '$correctedQuestions'),
