@@ -145,6 +145,10 @@ Future<void> main(List<String> args) async {
   var lunaUsageTests = 0;
   var reviewUsageTests = 0;
   var totalCost = 0.0;
+  var lunaCostTotal = 0.0;
+  var reviewerCostTotal = 0.0;
+  var completePackCostTotal = 0.0;
+  var fullyPricedPacks = 0;
   var pricedStages = 0;
 
   try {
@@ -216,11 +220,20 @@ Future<void> main(List<String> args) async {
         );
         if (lunaCost != null) {
           totalCost += lunaCost;
+          lunaCostTotal += lunaCost;
           pricedStages++;
         }
         if (reviewerCost != null) {
           totalCost += reviewerCost;
+          reviewerCostTotal += reviewerCost;
           pricedStages++;
+        }
+        final packCost = lunaCost != null && reviewerCost != null
+            ? lunaCost + reviewerCost
+            : null;
+        if (packCost != null) {
+          completePackCostTotal += packCost;
+          fullyPricedPacks++;
         }
 
         if (result.review.patches.isNotEmpty) correctedTests++;
@@ -319,7 +332,9 @@ Future<void> main(List<String> args) async {
           'Test $test/$samples | '
           'Luna ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
           'revisión ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
-          'correcciones ${result.review.patches.length} pregunta(s)',
+          'correcciones ${result.review.patches.length} pregunta(s) | '
+          'coste pack ${_usd(packCost)} | '
+          'acumulado ${pricedStages == 0 ? "n/d" : _usd(totalCost)}',
         );
       } catch (error) {
         totalWatch.stop();
@@ -393,10 +408,19 @@ Future<void> main(List<String> args) async {
       'salida $totalOutput | razonamiento $totalReasoning '
       '(${reasoningPercent.toStringAsFixed(1)}% de salida).',
     );
+    final averagePackCost = fullyPricedPacks == 0
+        ? null
+        : completePackCostTotal / fullyPricedPacks;
+
     report.writeln(
       'Coste estimado combinado: '
       '${pricedStages == 0 ? "n/d" : _usd(totalCost)} '
       '($pricedStages/${completeTests * 2} etapas calculables).',
+    );
+    report.writeln(
+      'Coste Luna: ${_usd(lunaCostTotal)} | '
+      'revisor: ${_usd(reviewerCostTotal)} | '
+      'media por pack: ${_usd(averagePackCost)}.',
     );
     report.writeln(
       'No evaluado automáticamente: exactitud factual profunda, '
@@ -404,6 +428,13 @@ Future<void> main(List<String> args) async {
     );
 
     await report.flush();
+    stdout.writeln(
+      'Coste total estimado: '
+      '${pricedStages == 0 ? "n/d" : _usd(totalCost)} | '
+      'media por pack ${_usd(averagePackCost)} | '
+      'Luna ${_usd(lunaCostTotal)} | '
+      'revisor ${_usd(reviewerCostTotal)}',
+    );
     stdout.writeln('Informe: $path');
 
     if (failedTests > 0) exitCode = 1;
