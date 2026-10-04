@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:quizai/modes/quiz10/Quiz10_PROMPT_G.dart';
 import 'package:quizai/modes/quiz10/Quiz10_PROMPT_R.dart';
+import 'package:quizai/modes/quiz10/Quiz10_PROMPT_S.dart';
 import 'package:quizai/modes/quiz10/quiz10_pipeline.dart';
 
 String _key(String text) =>
@@ -94,31 +95,34 @@ String _cell(String value, int width) {
 
 String _rule(int width) => List.filled(width, '─').join();
 
-void _printMetricsTable(List<(String, String, String, String)> rows) {
+void _printMetricsTable(
+  List<(String, String, String, String, String)> rows,
+) {
   const labelWidth = 20;
   const valueWidth = 14;
   final top =
-      '┌${_rule(labelWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┐';
+      '┌${_rule(labelWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┐';
   final mid =
-      '├${_rule(labelWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┤';
+      '├${_rule(labelWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┤';
   final bottom =
-      '└${_rule(labelWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┘';
+      '└${_rule(labelWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┘';
 
   stdout.writeln(top);
   stdout.writeln(
     '│${_cell('', labelWidth)}│${_cell('G', valueWidth)}│'
-    '${_cell('R', valueWidth)}│${_cell('TOTAL', valueWidth)}│',
+    '${_cell('R', valueWidth)}│${_cell('S', valueWidth)}│'
+    '${_cell('TOTAL', valueWidth)}│',
   );
   stdout.writeln(mid);
   for (final row in rows) {
     stdout.writeln(
       '│${_cell(row.$1, labelWidth)}│${_cell(row.$2, valueWidth)}│'
-      '${_cell(row.$3, valueWidth)}│${_cell(row.$4, valueWidth)}│',
+      '${_cell(row.$3, valueWidth)}│${_cell(row.$4, valueWidth)}│'
+      '${_cell(row.$5, valueWidth)}│',
     );
   }
   stdout.writeln(bottom);
 }
-
 void _printResultTable(List<(String, String)> rows) {
   const labelWidth = 28;
   const valueWidth = 14;
@@ -184,14 +188,18 @@ Future<void> main(List<String> args) async {
     authorization: env['AI_APPS_GAME_TOKEN'] ?? '',
   );
 
+  final reviewModel =
+      env['AI_APPS_QUIZ10_REVIEW_MODEL'] ?? 'gpt-5.6-luna';
   final pipeline = AiQuiz10Pipeline(
     client: client,
     lunaModel: env['AI_APPS_LUNA_MODEL'] ?? 'gpt-5.6-luna',
-    reviewerModel: env['AI_APPS_QUIZ10_REVIEW_MODEL'] ?? 'gpt-5.6-luna',
+    reviewerModel: reviewModel,
+    sorterModel: env['AI_APPS_QUIZ10_SORT_MODEL'] ?? reviewModel,
   );
 
   final lunaRates = _rates(pipeline.luna.model);
   final reviewRates = _rates(pipeline.reviewer.model);
+  final sortRates = _rates(pipeline.sorter.model);
 
   final timestamp = DateTime.now()
       .toIso8601String()
@@ -201,8 +209,9 @@ Future<void> main(List<String> args) async {
 
   final path =
       'Quiz10_${_modelLabel(pipeline.luna.model)}+'
-      '${_modelLabel(pipeline.reviewer.model)}_PIPELINE_'
-      '${samples}T_${samples * 10}L_${samples}R_'
+      '${_modelLabel(pipeline.reviewer.model)}+'
+      '${_modelLabel(pipeline.sorter.model)}_PIPELINE_'
+      '${samples}T_${samples * 10}G_${samples * 10}R_${samples}S_'
       's${seed}_$timestamp.txt';
 
   final report = File(path).openWrite();
@@ -210,6 +219,7 @@ Future<void> main(List<String> args) async {
   final totalDurations = <int>[];
   final lunaDurations = <int>[];
   final reviewDurations = <int>[];
+  final sortDurations = <int>[];
 
   var completeTests = 0;
   var failedTests = 0;
@@ -227,30 +237,40 @@ Future<void> main(List<String> args) async {
   var reviewInput = 0;
   var reviewOutput = 0;
   var reviewReasoning = 0;
+  var sortInput = 0;
+  var sortOutput = 0;
+  var sortReasoning = 0;
   var lunaUsageTests = 0;
   var reviewUsageTests = 0;
+  var sortUsageTests = 0;
+
   var totalCost = 0.0;
   var lunaCostTotal = 0.0;
   var reviewerCostTotal = 0.0;
+  var sorterCostTotal = 0.0;
   var completePackCostTotal = 0.0;
   var fullyPricedPacks = 0;
   var lunaPricedTests = 0;
   var reviewerPricedTests = 0;
+  var sorterPricedTests = 0;
   var pricedStages = 0;
 
   try {
-    report.writeln('AUDITORÍA QUIZ10 — PIPELINE G → R → DART');
+    report.writeln('AUDITORÍA QUIZ10 — PIPELINE G → R → S → DART');
     report.writeln('Fecha: ${DateTime.now()}');
     report.writeln('G: ${pipeline.luna.model}');
     report.writeln('R: ${pipeline.reviewer.model}');
+    report.writeln('S: ${pipeline.sorter.model}');
     report.writeln(
       'Ejecución por test: 10 llamadas G simultáneas, '
-      '1 revisión global, aplicación de parches, orden y shuffle en Dart.',
+      '10 revisiones R simultáneas, 1 ordenación global S, '
+      'aplicación de orden y shuffle en Dart.',
     );
     report.writeln(
       'Semilla: $seed | Tests: $samples | '
       'Llamadas G: ${samples * 10} | '
-      'Llamadas R: $samples.',
+      'Llamadas R: ${samples * 10} | '
+      'Llamadas S: $samples.',
     );
     report.writeln();
 
@@ -269,9 +289,11 @@ Future<void> main(List<String> args) async {
         totalDurations.add(totalWatch.elapsedMilliseconds);
         lunaDurations.add(result.lunaDuration.inMilliseconds);
         reviewDurations.add(result.reviewDuration.inMilliseconds);
+        sortDurations.add(result.sortDuration.inMilliseconds);
 
         final lunaUsage = result.lunaGeneration.usage;
         final reviewerUsage = result.review.usage;
+        final sorterUsage = result.sort.usage;
 
         final li = _usage(lunaUsage, 'inputTokens');
         final lo = _usage(lunaUsage, 'outputTokens');
@@ -293,6 +315,16 @@ Future<void> main(List<String> args) async {
           reviewReasoning += rr ?? 0;
         }
 
+        final si = _usage(sorterUsage, 'inputTokens');
+        final so = _usage(sorterUsage, 'outputTokens');
+        final sr = _usage(sorterUsage, 'reasoningTokens');
+        if (si != null && so != null) {
+          sortUsageTests++;
+          sortInput += si;
+          sortOutput += so;
+          sortReasoning += sr ?? 0;
+        }
+
         final lunaCost = _cost(
           lunaUsage,
           inputRate: lunaRates.input,
@@ -303,6 +335,12 @@ Future<void> main(List<String> args) async {
           inputRate: reviewRates.input,
           outputRate: reviewRates.output,
         );
+        final sorterCost = _cost(
+          sorterUsage,
+          inputRate: sortRates.input,
+          outputRate: sortRates.output,
+        );
+
         if (lunaCost != null) {
           totalCost += lunaCost;
           lunaCostTotal += lunaCost;
@@ -315,9 +353,17 @@ Future<void> main(List<String> args) async {
           reviewerPricedTests++;
           pricedStages++;
         }
-        final packCost = lunaCost != null && reviewerCost != null
-            ? lunaCost + reviewerCost
-            : null;
+        if (sorterCost != null) {
+          totalCost += sorterCost;
+          sorterCostTotal += sorterCost;
+          sorterPricedTests++;
+          pricedStages++;
+        }
+
+        final packCost =
+            lunaCost != null && reviewerCost != null && sorterCost != null
+                ? lunaCost + reviewerCost + sorterCost
+                : null;
         if (packCost != null) {
           completePackCostTotal += packCost;
           fullyPricedPacks++;
@@ -357,19 +403,27 @@ Future<void> main(List<String> args) async {
         answerFieldCorrections += answerCorrections;
         distractorFieldCorrections += distractorCorrections;
 
-        final packInputTokens = li != null && ri != null ? li + ri : null;
-        final packOutputTokens = lo != null && ro != null ? lo + ro : null;
+        final packInputTokens =
+            li != null && ri != null && si != null ? li + ri + si : null;
+        final packOutputTokens =
+            lo != null && ro != null && so != null ? lo + ro + so : null;
+
         final generationReasoningPercent = lo != null && lo > 0 && lr != null
             ? '${(lr * 100 / lo).toStringAsFixed(1)}%'
             : 'n/d';
         final reviewReasoningPercent = ro != null && ro > 0 && rr != null
             ? '${(rr * 100 / ro).toStringAsFixed(1)}%'
             : 'n/d';
+        final sortReasoningPercent = so != null && so > 0 && sr != null
+            ? '${(sr * 100 / so).toStringAsFixed(1)}%'
+            : 'n/d';
+
         report.writeln(
           '========== TEST $test/$samples — '
           '${(totalWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
           '(G ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
-          ' + R ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s) ==========',
+          '+ R ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
+          '+ S ${(result.sortDuration.inMilliseconds / 1000).toStringAsFixed(2)} s) ==========',
         );
 
         report.writeln('\n--- SALIDA G ---');
@@ -386,16 +440,18 @@ Future<void> main(List<String> args) async {
           );
         }
 
-        report.writeln('\n--- ENTRADA REVISOR ---');
-        report.writeln(result.reviewInput);
+        report.writeln('\n--- ENTRADAS R (10 LLAMADAS PARALELAS) ---');
+        for (final call in result.review.calls) {
+          report.writeln('\n[R${call.number}]');
+          report.writeln(call.input);
+        }
 
-        report.writeln('\n--- SALIDA REVISOR RAW ---');
-        report.writeln(result.review.rawText);
+        report.writeln('\n--- SALIDAS R RAW ---');
+        for (final call in result.review.calls) {
+          report.writeln('R${call.number}: ${call.rawText}');
+        }
 
-        report.writeln('\n--- ORDEN ---');
-        report.writeln(result.review.order);
-
-        report.writeln('\n--- CORRECCIONES ---');
+        report.writeln('\n--- CORRECCIONES R ---');
         if (result.review.patches.isEmpty) {
           report.writeln('(ninguna)');
         } else {
@@ -404,7 +460,29 @@ Future<void> main(List<String> args) async {
           }
         }
 
-        report.writeln('\n--- TEST TRAS REVISIÓN Y ORDEN ---');
+        report.writeln('\n--- TEST TRAS R ---');
+        for (var itemIndex = 0;
+            itemIndex < result.correctedItems.length;
+            itemIndex++) {
+          final item = result.correctedItems[itemIndex];
+          report.writeln(
+            '${itemIndex + 1}. Q: ${item.question} | R: ${item.correct} | '
+            'd1: ${item.distractors[0]} | '
+            'd2: ${item.distractors[1]} | '
+            'd3: ${item.distractors[2]}',
+          );
+        }
+
+        report.writeln('\n--- ENTRADA S ---');
+        report.writeln(result.sortInput);
+
+        report.writeln('\n--- SALIDA S RAW ---');
+        report.writeln(result.sort.rawText);
+
+        report.writeln('\n--- ORDEN S ---');
+        report.writeln(result.sort.order);
+
+        report.writeln('\n--- TEST TRAS R Y S ---');
         for (var finalIndex = 0;
             finalIndex < result.reviewedItems.length;
             finalIndex++) {
@@ -446,7 +524,9 @@ Future<void> main(List<String> args) async {
           'G: entrada ${_known(li)}, salida ${_known(lo)}, '
           'razonamiento ${_known(lr)}, coste ${_usd(lunaCost)} | '
           'R: entrada ${_known(ri)}, salida ${_known(ro)}, '
-          'razonamiento ${_known(rr)}, coste ${_usd(reviewerCost)}',
+          'razonamiento ${_known(rr)}, coste ${_usd(reviewerCost)} | '
+          'S: entrada ${_known(si)}, salida ${_known(so)}, '
+          'razonamiento ${_known(sr)}, coste ${_usd(sorterCost)}',
         );
         report.writeln();
         await report.flush();
@@ -455,16 +535,22 @@ Future<void> main(List<String> args) async {
             result.lunaDuration.inMilliseconds / 1000;
         final reviewSeconds =
             result.reviewDuration.inMilliseconds / 1000;
-        final generationReviewSeconds = generationSeconds + reviewSeconds;
+        final sortSeconds =
+            result.sortDuration.inMilliseconds / 1000;
+        final pipelineSeconds =
+            generationSeconds + reviewSeconds + sortSeconds;
 
         final totalReasoningPercent =
             lo != null &&
                     ro != null &&
+                    so != null &&
                     lr != null &&
                     rr != null &&
-                    lo + ro > 0
-                ? '${((lr + rr) * 100 / (lo + ro)).toStringAsFixed(1)}%'
+                    sr != null &&
+                    lo + ro + so > 0
+                ? '${((lr + rr + sr) * 100 / (lo + ro + so)).toStringAsFixed(1)}%'
                 : 'n/d';
+
         final correctionFields =
             questionCorrections + answerCorrections + distractorCorrections;
         final correctionLabel = result.review.patches.isEmpty
@@ -478,36 +564,42 @@ Future<void> main(List<String> args) async {
             'Tiempo',
             _seconds(generationSeconds),
             _seconds(reviewSeconds),
-            _seconds(generationReviewSeconds),
+            _seconds(sortSeconds),
+            _seconds(pipelineSeconds),
           ),
           (
             'Tokens entrada',
             _tokens(li),
             _tokens(ri),
+            _tokens(si),
             _tokens(packInputTokens),
           ),
           (
             'Tokens salida',
             _tokens(lo),
             _tokens(ro),
+            _tokens(so),
             _tokens(packOutputTokens),
           ),
           (
             'Razonamiento',
             generationReasoningPercent,
             reviewReasoningPercent,
+            sortReasoningPercent,
             totalReasoningPercent,
           ),
           (
             'Coste',
             _usd(lunaCost),
             _usd(reviewerCost),
+            _usd(sorterCost),
             _usd(packCost),
           ),
           (
             'Correcciones',
             '—',
             correctionLabel,
+            '—',
             '$correctionFields campos',
           ),
         ]);
@@ -536,9 +628,9 @@ Future<void> main(List<String> args) async {
     }
 
     final totalReasoning =
-        lunaReasoning + reviewReasoning;
-    final totalOutput =
-        lunaOutput + reviewOutput;
+        lunaReasoning + reviewReasoning + sortReasoning;
+    final totalOutput = lunaOutput + reviewOutput + sortOutput;
+    final totalInput = lunaInput + reviewInput + sortInput;
     final reasoningPercent = totalOutput == 0
         ? 0.0
         : totalReasoning * 100 / totalOutput;
@@ -549,7 +641,7 @@ Future<void> main(List<String> args) async {
       'filas finales con incidencia local: $finalRowsWithIssues.',
     );
     report.writeln(
-      'Revisión: tests con correcciones $correctedTests/$completeTests | '
+      'Revisión R: tests con correcciones $correctedTests/$completeTests | '
       'preguntas corregidas $correctedQuestions | '
       'campos corregidos $correctedFields.',
     );
@@ -578,6 +670,14 @@ Future<void> main(List<String> args) async {
         'p95 ${(_percentile(reviewDurations, 0.95) / 1000).toStringAsFixed(2)} s.',
       );
     }
+    if (sortDurations.isNotEmpty) {
+      report.writeln(
+        'S: media '
+        '${(sortDurations.reduce((a, b) => a + b) / sortDurations.length / 1000).toStringAsFixed(2)} s | '
+        'mediana ${(_percentile(sortDurations, 0.5) / 1000).toStringAsFixed(2)} s | '
+        'p95 ${(_percentile(sortDurations, 0.95) / 1000).toStringAsFixed(2)} s.',
+      );
+    }
 
     report.writeln(
       'Tokens G: entrada $lunaInput | salida $lunaOutput | '
@@ -588,10 +688,15 @@ Future<void> main(List<String> args) async {
       'razonamiento $reviewReasoning | uso $reviewUsageTests/$completeTests.',
     );
     report.writeln(
-      'Tokens combinados: entrada ${lunaInput + reviewInput} | '
+      'Tokens S: entrada $sortInput | salida $sortOutput | '
+      'razonamiento $sortReasoning | uso $sortUsageTests/$completeTests.',
+    );
+    report.writeln(
+      'Tokens combinados: entrada $totalInput | '
       'salida $totalOutput | razonamiento $totalReasoning '
       '(${reasoningPercent.toStringAsFixed(1)}% de salida).',
     );
+
     final averagePackCost = fullyPricedPacks == 0
         ? null
         : completePackCostTotal / fullyPricedPacks;
@@ -599,11 +704,12 @@ Future<void> main(List<String> args) async {
     report.writeln(
       'Coste estimado combinado: '
       '${pricedStages == 0 ? "n/d" : _usd(totalCost)} '
-      '($pricedStages/${completeTests * 2} etapas calculables).',
+      '($pricedStages/${completeTests * 3} etapas calculables).',
     );
     report.writeln(
       'Coste G: ${_usd(lunaCostTotal)} | '
       'R: ${_usd(reviewerCostTotal)} | '
+      'S: ${_usd(sorterCostTotal)} | '
       'media por pack: ${_usd(averagePackCost)}.',
     );
     report.writeln(
@@ -620,8 +726,12 @@ Future<void> main(List<String> args) async {
     report.writeln('--- PROMPT R ---');
     report.writeln(quiz10ReviewPrompt);
     report.writeln();
+    report.writeln('--- PROMPT S ---');
+    report.writeln(quiz10SortPrompt);
+    report.writeln();
 
     await report.flush();
+
     final meanGSeconds = lunaDurations.isEmpty
         ? 0.0
         : lunaDurations.reduce((a, b) => a + b) /
@@ -632,7 +742,12 @@ Future<void> main(List<String> args) async {
         : reviewDurations.reduce((a, b) => a + b) /
             reviewDurations.length /
             1000;
-    final meanTotalSeconds = meanGSeconds + meanRSeconds;
+    final meanSSeconds = sortDurations.isEmpty
+        ? 0.0
+        : sortDurations.reduce((a, b) => a + b) /
+            sortDurations.length /
+            1000;
+    final meanTotalSeconds = meanGSeconds + meanRSeconds + meanSSeconds;
 
     final gCostPerTest = lunaPricedTests == 0
         ? null
@@ -640,6 +755,9 @@ Future<void> main(List<String> args) async {
     final rCostPerTest = reviewerPricedTests == 0
         ? null
         : reviewerCostTotal / reviewerPricedTests;
+    final sCostPerTest = sorterPricedTests == 0
+        ? null
+        : sorterCostTotal / sorterPricedTests;
 
     stdout.writeln();
     stdout.writeln('RESUMEN $samples TESTS');
@@ -648,42 +766,49 @@ Future<void> main(List<String> args) async {
         'Tiempo medio',
         _seconds(meanGSeconds),
         _seconds(meanRSeconds),
+        _seconds(meanSSeconds),
         _seconds(meanTotalSeconds),
       ),
       (
         'Tokens entrada',
         lunaInput.toString(),
         reviewInput.toString(),
-        (lunaInput + reviewInput).toString(),
+        sortInput.toString(),
+        totalInput.toString(),
       ),
       (
         'Tokens salida',
         lunaOutput.toString(),
         reviewOutput.toString(),
+        sortOutput.toString(),
         totalOutput.toString(),
       ),
       (
         'Razonamiento',
         _reasoning(lunaReasoning, lunaOutput),
         _reasoning(reviewReasoning, reviewOutput),
+        _reasoning(sortReasoning, sortOutput),
         _reasoning(totalReasoning, totalOutput),
       ),
       (
         'Coste total',
         lunaPricedTests == 0 ? 'n/d' : _usd(lunaCostTotal),
         reviewerPricedTests == 0 ? 'n/d' : _usd(reviewerCostTotal),
+        sorterPricedTests == 0 ? 'n/d' : _usd(sorterCostTotal),
         pricedStages == 0 ? 'n/d' : _usd(totalCost),
       ),
       (
         'Coste / test',
         _usd(gCostPerTest),
         _usd(rCostPerTest),
+        _usd(sCostPerTest),
         _usd(averagePackCost),
       ),
       (
         'Correcciones',
         '—',
         'Q$questionFieldCorrections R$answerFieldCorrections D$distractorFieldCorrections',
+        '—',
         '$correctedFields campos',
       ),
     ]);
