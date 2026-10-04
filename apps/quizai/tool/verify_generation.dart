@@ -165,8 +165,8 @@ Future<void> main(List<String> args) async {
         'los tests se ejecutan secuencialmente.',
       );
       report.writeln(
-        'H: histórico factual por cruce P×D; cada llamada recibe los pares (F,R) '
-        'previos de ese cruce y cada fila estructuralmente recibida avanza H.',
+        'H: histórico de pares (Q,R) por cruce P×D; F es transitoria y no entra '
+        'en H. Cada fila estructuralmente recibida avanza H con (Q,R).',
       );
       report.writeln(
         'La auditoría no rechaza filas por contenido: registra literalmente '
@@ -228,6 +228,7 @@ Future<void> main(List<String> args) async {
               'D devuelta "${row.returnedDimension}" != ${row.slot.dimension.code}',
             );
           }
+          if (row.fact.trim().isEmpty) issues.add('F vacía');
           if (row.question.trim().isEmpty) issues.add('Q vacía');
 
           if (row.options.length != 4) {
@@ -272,6 +273,7 @@ Future<void> main(List<String> args) async {
 
           report.writeln(
             '${row.slot.number}. $p $d | '
+            'F: ${row.fact} | '
             'Q: ${row.question} | '
             'O: ${[
               for (var i = 0; i < row.options.length; i++)
@@ -430,7 +432,7 @@ Future<void> main(List<String> args) async {
           qCounts.values.where((count) => count > 1).length;
       final repeatedR =
           rCounts.values.where((count) => count > 1).length;
-      final repeatedFactAnswerForSamePivotDimension =
+      final repeatedQuestionAnswerForSamePivotDimension =
           qrByPivotDimensionCounts.values.where((count) => count > 1).length;
 
       report.writeln('========== ESTADÍSTICAS FINALES ==========');
@@ -465,12 +467,12 @@ Future<void> main(List<String> args) async {
       );
       report.writeln(
         'Duplicados exactos: grupos Q=$repeatedQ | grupos R=$repeatedR | '
-        'pares (F,R) repetidos dentro del mismo P×D='
-        '$repeatedFactAnswerForSamePivotDimension.',
+        'pares (Q,R) repetidos dentro del mismo P×D='
+        '$repeatedQuestionAnswerForSamePivotDimension.',
       );
       report.writeln(
         'La última cifra se observa, no se bloquea: H se envía a Luna, '
-        'pero Dart no rechaza una fila si Luna reutiliza un par (F,R).',
+        'pero Dart no rechaza una fila si G reutiliza un par (Q,R).',
       );
 
       _distribution(report, 'Frecuencias P', pCounts);
@@ -491,8 +493,8 @@ Future<void> main(List<String> args) async {
       }
 
       report.writeln(
-        '\nNo evaluado automáticamente: exactitud factual, '
-        'equivalencia semántica de F/H y plausibilidad factual de las opciones.',
+        '\nNo evaluado automáticamente: exactitud factual de F, '
+        'independencia semántica de F respecto de O y plausibilidad factual de las opciones.',
       );
 
       await report.flush();
