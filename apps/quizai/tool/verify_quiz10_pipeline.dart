@@ -95,29 +95,27 @@ String _cell(String value, int width) {
 String _rule(int width) => List.filled(width, '─').join();
 
 void _printMetricsTable(
-  List<(String, String, String, String, String)> rows,
+  List<(String, String, String, String)> rows,
 ) {
   const labelWidth = 20;
   const valueWidth = 14;
   final top =
-      '┌${_rule(labelWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┐';
+      '┌${_rule(labelWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┐';
   final mid =
-      '├${_rule(labelWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┤';
+      '├${_rule(labelWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┤';
   final bottom =
-      '└${_rule(labelWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┘';
+      '└${_rule(labelWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┘';
 
   stdout.writeln(top);
   stdout.writeln(
     '│${_cell('', labelWidth)}│${_cell('G', valueWidth)}│'
-    '${_cell('R', valueWidth)}│${_cell('S', valueWidth)}│'
-    '${_cell('TOTAL', valueWidth)}│',
+    '${_cell('R', valueWidth)}│${_cell('TOTAL', valueWidth)}│',
   );
   stdout.writeln(mid);
   for (final row in rows) {
     stdout.writeln(
       '│${_cell(row.$1, labelWidth)}│${_cell(row.$2, valueWidth)}│'
-      '${_cell(row.$3, valueWidth)}│${_cell(row.$4, valueWidth)}│'
-      '${_cell(row.$5, valueWidth)}│',
+      '${_cell(row.$3, valueWidth)}│${_cell(row.$4, valueWidth)}│',
     );
   }
   stdout.writeln(bottom);
