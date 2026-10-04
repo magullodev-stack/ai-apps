@@ -269,6 +269,12 @@ Future<void> main(List<String> args) async {
         final packInputTokens = li != null && ri != null ? li + ri : null;
         final packOutputTokens = lo != null && ro != null ? lo + ro : null;
         final packReasoningTokens = lr != null && rr != null ? lr + rr : null;
+        final packReasoningPercent =
+            packOutputTokens != null &&
+                    packOutputTokens > 0 &&
+                    packReasoningTokens != null
+                ? '${(packReasoningTokens * 100 / packOutputTokens).toStringAsFixed(1)}%'
+                : 'n/d';
 
         report.writeln(
           '========== TEST $test/$samples — '
@@ -359,13 +365,13 @@ Future<void> main(List<String> args) async {
           'Test $test/$samples | '
           'Generación ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
           'Revisión ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
-          'correcciones: preguntas $questionCorrections, '
-          'respuestas $answerCorrections, '
-          'distractores $distractorCorrections | '
-          'coste pack ${_usd(packCost)} | '
           'tokens: entrada ${_known(packInputTokens)}, '
           'salida ${_known(packOutputTokens)}, '
-          'razonamiento ${_known(packReasoningTokens)}',
+          'razonamiento ${_known(packReasoningTokens)} ($packReasoningPercent) | '
+          'coste pack ${_usd(packCost)} | '
+          'correcciones: preguntas $questionCorrections, '
+          'respuestas $answerCorrections, '
+          'distractores $distractorCorrections',
         );
       } catch (error) {
         totalWatch.stop();
