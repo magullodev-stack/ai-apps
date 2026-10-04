@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'package:quizai/modes/quiz10/quiz10_DART_Pi+Di.dart';
-import 'package:quizai/modes/quiz10/quiz10_LUNA_Prompt.dart';
+import 'package:quizai/modes/quiz10/Quiz10_PROMPT_G.dart';
 
 String _key(String text) =>
     text.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
