@@ -108,26 +108,26 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación Quiz10: Luna → Luna revisor → Dart
+## Generación Quiz10: G → R → Dart
 
 El catálogo canónico se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34 dimensiones D01–D34 expresadas como instrucciones directas.
 
-Cada Quiz10 selecciona diez P distintas y diez D distintas. Luna recibe diez
+Cada Quiz10 selecciona diez P distintas y diez D distintas. G recibe diez
 unidades independientes y simultáneas:
 
 ```text
 (P, D, H) -> (F, Q, O, C)
 ```
 
-`lib/modes/quiz10/quiz10_LUNA_Prompt.dart` contiene el único prompt de Luna.
+`lib/modes/quiz10/Quiz10_PROMPT_G.dart` contiene el prompt de generación G.
 `O` contiene cuatro opciones y `C` señala la correcta; internamente
-`R := O_C`. Luna no recibe dificultad.
+`R := O_C`. G no recibe dificultad.
 
 Cuando terminan las diez llamadas, Dart transforma cada fila en
 `Q, R, a1, a2, a3` y construye un único test `T`.
-`lib/modes/quiz10/quiz10_REVIEW_Prompt.dart` envía ese test al revisor global,
-que por defecto también usa `gpt-5.6-luna` y devuelve únicamente el orden
+`lib/modes/quiz10/Quiz10_PROMPT_R.dart` envía ese test al rol revisor R,
+que usa el modelo seleccionado para revisión y devuelve únicamente el orden
 relativo de dificultad y los campos que considere necesario corregir.
 
 Dart aplica esos parches, reordena las diez preguntas y, al final, baraja las
@@ -141,18 +141,18 @@ la respuesta final tras los parches.
 La pantalla Quiz10 está conectada al pipeline real. Dentro de una misma sesión,
 `Otra partida` reutiliza la instancia del pipeline y por tanto su H.
 
-Para auditar solo Luna:
+Para auditar solo G:
 
 ```powershell
 .\apps\quizai\run.ps1 -ProbarLuna -Muestras 20
 ```
 
-Para auditar el flujo completo Luna → revisor → Dart (Luna también por defecto):
+Para auditar el flujo completo G → R → Dart:
 
 ```powershell
 .\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
 ```
 
-La auditoría completa usa `gpt-5.6-luna` también como revisor por defecto y conserva por test la salida de Luna, la entrada enviada al revisor, su salida bruta, el orden, las correcciones, el test resultante y las opciones tras el shuffle de Dart, además de latencia, tokens y coste por etapa.
+La auditoría completa conserva por test la salida de G, la entrada enviada a R, su salida bruta, el orden, las correcciones, el test resultante y las opciones tras el shuffle de Dart, además del modelo elegido, la latencia, los tokens y el coste por etapa.
 
-`-VerifyOnly` conserva la comprobación aislada de Luna.
+`-VerifyOnly` conserva la comprobación aislada de G.
