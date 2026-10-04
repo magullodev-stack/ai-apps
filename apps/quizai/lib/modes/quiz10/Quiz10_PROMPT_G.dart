@@ -18,11 +18,11 @@ H := {{H}}
 (F,I_D) → Q
 (F,Q) → O
 
-F: base factual mínima de cultura general generalista, no especializada ni de detalle.
+F: afirmación factual autónoma mínima de cultura general generalista, no especializada ni de detalle.
 
 I_D define la relación semántica que Q debe realizar, no su redacción.
 
-Q contiene únicamente el contexto necesario para interpretarse sin F ni H y realizar I_D.
+min |Q| sujeto a Q realiza I_D ∧ todo referente necesario aparece explícitamente en Q.
 
 O := {o₁,o₂,o₃,o₄}, opciones distintas, plausibles, homogéneas y concisas.
 
