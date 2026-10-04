@@ -211,7 +211,7 @@ Future<void> main(List<String> args) async {
       'Quiz10_${_modelLabel(pipeline.luna.model)}+'
       '${_modelLabel(pipeline.reviewer.model)}+'
       '${_modelLabel(pipeline.sorter.model)}_PIPELINE_'
-      '${samples}T_${samples * 10}G_${samples * 10}R_${samples}S_'
+      '${samples}T_${samples * 10}G_${samples}R_${samples}S_'
       's${seed}_$timestamp.txt';
 
   final report = File(path).openWrite();
@@ -263,13 +263,13 @@ Future<void> main(List<String> args) async {
     report.writeln('S: ${pipeline.sorter.model}');
     report.writeln(
       'Ejecución por test: 10 llamadas G simultáneas, '
-      '10 revisiones R simultáneas, 1 ordenación global S, '
+      '1 revisión R de los 10 ítems, 1 ordenación global S, '
       'aplicación de orden y shuffle en Dart.',
     );
     report.writeln(
       'Semilla: $seed | Tests: $samples | '
       'Llamadas G: ${samples * 10} | '
-      'Llamadas R: ${samples * 10} | '
+      'Llamadas R: $samples | '
       'Llamadas S: $samples.',
     );
     report.writeln();
@@ -440,15 +440,14 @@ Future<void> main(List<String> args) async {
           );
         }
 
-        report.writeln('\n--- ENTRADAS R (10 LLAMADAS PARALELAS) ---');
+        report.writeln('\n--- ENTRADA R (1 LLAMADA, 10 ÍTEMS) ---');
         for (final call in result.review.calls) {
-          report.writeln('\n[R${call.number}]');
           report.writeln(call.input);
         }
 
-        report.writeln('\n--- SALIDAS R RAW ---');
+        report.writeln('\n--- SALIDA R RAW ---');
         for (final call in result.review.calls) {
-          report.writeln('R${call.number}: ${call.rawText}');
+          report.writeln(call.rawText);
         }
 
         report.writeln('\n--- CORRECCIONES R ---');
