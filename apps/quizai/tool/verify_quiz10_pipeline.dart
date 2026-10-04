@@ -257,9 +257,9 @@ Future<void> main(List<String> args) async {
               patch.changes
                   .where(
                     (change) =>
-                        change.field == 'a1' ||
-                        change.field == 'a2' ||
-                        change.field == 'a3',
+                        change.field == 'd1' ||
+                        change.field == 'd2' ||
+                        change.field == 'd3',
                   )
                   .length,
         );
@@ -329,9 +329,9 @@ Future<void> main(List<String> args) async {
           report.writeln(
             '${finalIndex + 1}. [original $original] '
             'Q: ${item.question} | R: ${item.correct} | '
-            'a1: ${item.distractors[0]} | '
-            'a2: ${item.distractors[1]} | '
-            'a3: ${item.distractors[2]}',
+            'd1: ${item.distractors[0]} | '
+            'd2: ${item.distractors[1]} | '
+            'd3: ${item.distractors[2]}',
           );
 
           final normalized = [
