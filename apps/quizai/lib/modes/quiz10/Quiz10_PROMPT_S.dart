@@ -4,6 +4,8 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 const String quiz10SortPrompt = r'''T := {{TEST}}
 
+Orden := (n₁,...,n₁₀)
+
 Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
 
 para un concursante generalista de cultura general.
