@@ -124,7 +124,6 @@ List<Quiz10SortItem> buildQuiz10SortItems(
     Quiz10SortItem(
       question: item.question,
       correct: item.correct,
-      distractors: item.distractors,
     ),
 ]);
 
