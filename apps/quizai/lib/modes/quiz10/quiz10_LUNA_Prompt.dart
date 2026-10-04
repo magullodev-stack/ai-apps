@@ -19,7 +19,7 @@ H := {{H}}
 
 ## Generación
 
-Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso, que permita cumplir D y contenga toda la información factual necesaria para determinar la respuesta correcta.
+Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado o técnico del área, que permita cumplir D y contenga toda la información factual necesaria para determinar la respuesta correcta.
 Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
 
 O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
@@ -36,7 +36,8 @@ Q no contiene R.
 ## Salida
 
 | P | D | F | Q | O | C |
-|---|---|---|---|---|---|''';
+|---|---|---|---|---|---|
+''';
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
   if (history.isEmpty) return '∅';
