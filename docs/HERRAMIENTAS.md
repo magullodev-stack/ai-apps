@@ -57,3 +57,8 @@ y reutiliza Android cuando ya está conectado.
 # COMMIT
 
 .\scripts\sync-dev.ps1
+
+# TEST PROMPT QUIZ10
+
+.\scripts\sync-dev.ps1
+.\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
