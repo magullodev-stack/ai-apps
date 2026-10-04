@@ -14,11 +14,17 @@ D := {{D}}
 I_D := {{instruction}}
 H := {{H}}
 
-F := f(P,I_D,H), base factual mínima de cultura general generalista, no especializada ni de detalle.
+(P,I_D,H) → F
+(F,I_D) → Q
+(F,Q) → O
 
-Q := q(F,I_D), autosuficiente.
+F: base factual mínima de cultura general generalista, no especializada ni de detalle.
 
-O := o(F,Q) = {o₁,o₂,o₃,o₄}, opciones distintas, plausibles, homogéneas y concisas.
+I_D define la relación semántica que Q debe realizar, no su redacción.
+
+Q contiene únicamente el contexto necesario para interpretarse sin F ni H y realizar I_D.
+
+O := {o₁,o₂,o₃,o₄}, opciones distintas, plausibles, homogéneas y concisas.
 
 C := posición de la única opción correcta en O.
 
