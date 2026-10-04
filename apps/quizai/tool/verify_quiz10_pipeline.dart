@@ -660,12 +660,7 @@ Future<void> main(List<String> args) async {
         : reviewDurations.reduce((a, b) => a + b) /
             reviewDurations.length /
             1000;
-    final meanSSeconds = sortDurations.isEmpty
-        ? 0.0
-        : sortDurations.reduce((a, b) => a + b) /
-            sortDurations.length /
-            1000;
-    final meanTotalSeconds = meanGSeconds + meanRSeconds + meanSSeconds;
+    final meanTotalSeconds = meanGSeconds + meanRSeconds;
 
     final gCostPerTest = lunaPricedTests == 0
         ? null
