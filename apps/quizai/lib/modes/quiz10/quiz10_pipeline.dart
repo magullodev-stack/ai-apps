@@ -167,8 +167,10 @@ final class AiQuiz10Pipeline {
 
     final reviewedItems = applyQuiz10Review(lunaRows, review);
 
-    luna.commitFacts(
+    luna.commitReviewedQuestions(
       reviewedItems.map((item) => item.source).toList(growable: false),
+      reviewedItems.map((item) => item.question).toList(growable: false),
+      reviewedItems.map((item) => item.correct).toList(growable: false),
     );
 
     final questions = buildQuiz10FinalQuestions(
