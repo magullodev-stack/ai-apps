@@ -38,6 +38,9 @@ String quiz10ReviewTestLiteral(List<Quiz10LunaRow> rows) {
     for (var i = 0; i < rows.length; i++)
       [
         '${i + 1}.',
+        'P: ${rows[i].returnedPivot}',
+        'D: ${rows[i].returnedDimension}',
+        'F: ${rows[i].fact}',
         'Q: ${rows[i].question}',
         'R: ${rows[i].correct}',
         'a1: ${rows[i].distractors[0]}',
