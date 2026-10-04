@@ -28,10 +28,6 @@ final class QuizAiGenerationDependencies {
       'AI_APPS_QUIZ10_REVIEW_MODEL',
       defaultValue: 'gpt-5.6-luna',
     ),
-    sorterModel: const String.fromEnvironment(
-      'AI_APPS_QUIZ10_SORT_MODEL',
-      defaultValue: 'gpt-5.6-luna',
-    ),
   );
 
   PivotCatalogGenerator get catalogGenerator => AiPivotCatalogGenerator(
