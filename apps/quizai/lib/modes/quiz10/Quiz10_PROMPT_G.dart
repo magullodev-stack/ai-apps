@@ -19,8 +19,9 @@ H := {{H}}
 
 ## Generación
 
-Formula una Q autosuficiente de cultura general sobre P siguiendo la Instrucción D, con valor de pregunta de concurso para un concursante generalista y no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área.
+Antes de formular Q, establece la base factual necesaria sobre P, propia de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y determinar la respuesta correcta.
 
+Formula después una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin necesidad de conocer esa base factual.
 O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
 
 C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
