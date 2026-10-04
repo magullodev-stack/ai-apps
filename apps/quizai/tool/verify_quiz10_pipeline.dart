@@ -563,9 +563,9 @@ Future<void> main(List<String> args) async {
     }
 
     final totalReasoning =
-        lunaReasoning + reviewReasoning + sortReasoning;
-    final totalOutput = lunaOutput + reviewOutput + sortOutput;
-    final totalInput = lunaInput + reviewInput + sortInput;
+        lunaReasoning + reviewReasoning;
+    final totalOutput = lunaOutput + reviewOutput;
+    final totalInput = lunaInput + reviewInput;
     final reasoningPercent = totalOutput == 0
         ? 0.0
         : totalReasoning * 100 / totalOutput;
@@ -605,14 +605,6 @@ Future<void> main(List<String> args) async {
         'p95 ${(_percentile(reviewDurations, 0.95) / 1000).toStringAsFixed(2)} s.',
       );
     }
-    if (sortDurations.isNotEmpty) {
-      report.writeln(
-        'S: media '
-        '${(sortDurations.reduce((a, b) => a + b) / sortDurations.length / 1000).toStringAsFixed(2)} s | '
-        'mediana ${(_percentile(sortDurations, 0.5) / 1000).toStringAsFixed(2)} s | '
-        'p95 ${(_percentile(sortDurations, 0.95) / 1000).toStringAsFixed(2)} s.',
-      );
-    }
 
     report.writeln(
       'Tokens G: entrada $lunaInput | salida $lunaOutput | '
@@ -621,10 +613,6 @@ Future<void> main(List<String> args) async {
     report.writeln(
       'Tokens R: entrada $reviewInput | salida $reviewOutput | '
       'razonamiento $reviewReasoning | uso $reviewUsageTests/$completeTests.',
-    );
-    report.writeln(
-      'Tokens S: entrada $sortInput | salida $sortOutput | '
-      'razonamiento $sortReasoning | uso $sortUsageTests/$completeTests.',
     );
     report.writeln(
       'Tokens combinados: entrada $totalInput | '
@@ -639,12 +627,11 @@ Future<void> main(List<String> args) async {
     report.writeln(
       'Coste estimado combinado: '
       '${pricedStages == 0 ? "n/d" : _usd(totalCost)} '
-      '($pricedStages/${completeTests * 3} etapas calculables).',
+      '($pricedStages/${completeTests * 2} etapas calculables).',
     );
     report.writeln(
       'Coste G: ${_usd(lunaCostTotal)} | '
       'R: ${_usd(reviewerCostTotal)} | '
-      'S: ${_usd(sorterCostTotal)} | '
       'media por pack: ${_usd(averagePackCost)}.',
     );
     report.writeln(
@@ -660,10 +647,6 @@ Future<void> main(List<String> args) async {
     report.writeln();
     report.writeln('--- PROMPT R ---');
     report.writeln(quiz10ReviewPrompt);
-    report.writeln();
-    report.writeln('--- PROMPT S ---');
-    report.writeln(quiz10SortPrompt);
-    report.writeln();
 
     await report.flush();
 
@@ -690,10 +673,6 @@ Future<void> main(List<String> args) async {
     final rCostPerTest = reviewerPricedTests == 0
         ? null
         : reviewerCostTotal / reviewerPricedTests;
-    final sCostPerTest = sorterPricedTests == 0
-        ? null
-        : sorterCostTotal / sorterPricedTests;
-
     stdout.writeln();
     stdout.writeln('RESUMEN $samples TESTS');
     _printMetricsTable([
@@ -701,49 +680,42 @@ Future<void> main(List<String> args) async {
         'Tiempo medio',
         _seconds(meanGSeconds),
         _seconds(meanRSeconds),
-        _seconds(meanSSeconds),
         _seconds(meanTotalSeconds),
       ),
       (
         'Tokens entrada',
         lunaInput.toString(),
         reviewInput.toString(),
-        sortInput.toString(),
         totalInput.toString(),
       ),
       (
         'Tokens salida',
         lunaOutput.toString(),
         reviewOutput.toString(),
-        sortOutput.toString(),
         totalOutput.toString(),
       ),
       (
         'Razonamiento',
         _reasoning(lunaReasoning, lunaOutput),
         _reasoning(reviewReasoning, reviewOutput),
-        _reasoning(sortReasoning, sortOutput),
         _reasoning(totalReasoning, totalOutput),
       ),
       (
         'Coste total',
         lunaPricedTests == 0 ? 'n/d' : _usd(lunaCostTotal),
         reviewerPricedTests == 0 ? 'n/d' : _usd(reviewerCostTotal),
-        sorterPricedTests == 0 ? 'n/d' : _usd(sorterCostTotal),
         pricedStages == 0 ? 'n/d' : _usd(totalCost),
       ),
       (
         'Coste / test',
         _usd(gCostPerTest),
         _usd(rCostPerTest),
-        _usd(sCostPerTest),
         _usd(averagePackCost),
       ),
       (
         'Correcciones',
         '—',
         'Q$questionFieldCorrections R$answerFieldCorrections D$distractorFieldCorrections',
-        '—',
         '$correctedFields campos',
       ),
     ]);
