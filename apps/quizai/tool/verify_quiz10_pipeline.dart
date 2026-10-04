@@ -160,8 +160,6 @@ Future<void> main(List<String> args) async {
       'Ejecución por test: 10 llamadas G simultáneas, '
       '1 revisión global, aplicación de parches, orden y shuffle en Dart.',
     );
-    report.writeln('Prompt Luna:\n$quiz10LunaPrompt');
-    report.writeln('Prompt revisor:\n$quiz10ReviewPrompt');
     report.writeln(
       'Semilla: $seed | Tests: $samples | '
       'Llamadas G: ${samples * 10} | '
@@ -477,6 +475,16 @@ Future<void> main(List<String> args) async {
       'No evaluado automáticamente: exactitud factual profunda, '
       'calidad semántica de las correcciones y validez real del orden de dificultad.',
     );
+
+    report.writeln();
+    report.writeln('========== PROMPTS DE ESTA EJECUCIÓN ==========');
+    report.writeln();
+    report.writeln('--- PROMPT G ---');
+    report.writeln(quiz10LunaPrompt);
+    report.writeln();
+    report.writeln('--- PROMPT R ---');
+    report.writeln(quiz10ReviewPrompt);
+    report.writeln();
 
     await report.flush();
     stdout.writeln(
