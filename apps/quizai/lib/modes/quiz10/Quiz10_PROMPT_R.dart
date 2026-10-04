@@ -6,21 +6,23 @@ import 'Quiz10_PROMPT_G.dart';
 
 const String quiz10ReviewPrompt = r'''t := {{ITEM}}
 
-t* := argmin_t' |Δ_campos(t,t')|
+Δ := correcciones
+
+t' := aplicar(Δ,t)
+
+min |Δ|
 
 sujeto a:
 
-R' = única respuesta correcta a Q'.
+R' es la única respuesta correcta a Q'.
 
-{R',d1',d2',d3'}: distintas, plausibles, homogéneas y concisas.
-
-I_D define la relación semántica realizada por Q', no su redacción.
+Q' realiza la relación semántica definida por I_D.
 
 Todo referente necesario para interpretar Q' aparece explícitamente en Q'.
 
-Q' no contiene contexto prescindible.
-
 Q' no contiene R' ni una pista léxica evidente de R' por forma, raíz, abreviación, símbolo, derivación o semejanza.
+
+∀(campo,valor) ∈ Δ, valor ≠ t[campo].
 ''';
 
 String quiz10ReviewItemLiteral(Quiz10LunaRow row) => [
