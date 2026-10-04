@@ -62,6 +62,62 @@ String _formatPatch(Quiz10ReviewPatch patch) {
   return buffer.toString().trimRight();
 }
 
+
+String _cell(String value, int width) {
+  if (value.length >= width) return value.substring(0, width);
+  return value.padRight(width);
+}
+
+void _printMetricsTable(List<(String, String, String, String)> rows) {
+  const labelWidth = 20;
+  const valueWidth = 14;
+  final top =
+      '┌${'─' * labelWidth}┬${'─' * valueWidth}┬${'─' * valueWidth}┬${'─' * valueWidth}┐';
+  final mid =
+      '├${'─' * labelWidth}┼${'─' * valueWidth}┼${'─' * valueWidth}┼${'─' * valueWidth}┤';
+  final bottom =
+      '└${'─' * labelWidth}┴${'─' * valueWidth}┴${'─' * valueWidth}┴${'─' * valueWidth}┘';
+
+  stdout.writeln(top);
+  stdout.writeln(
+    '│${_cell('', labelWidth)}│${_cell('G', valueWidth)}│'
+    '${_cell('R', valueWidth)}│${_cell('TOTAL', valueWidth)}│',
+  );
+  stdout.writeln(mid);
+  for (final row in rows) {
+    stdout.writeln(
+      '│${_cell(row.$1, labelWidth)}│${_cell(row.$2, valueWidth)}│'
+      '${_cell(row.$3, valueWidth)}│${_cell(row.$4, valueWidth)}│',
+    );
+  }
+  stdout.writeln(bottom);
+}
+
+void _printResultTable(List<(String, String)> rows) {
+  const labelWidth = 28;
+  const valueWidth = 14;
+  final top = '┌${'─' * labelWidth}┬${'─' * valueWidth}┐';
+  final mid = '├${'─' * labelWidth}┼${'─' * valueWidth}┤';
+  final bottom = '└${'─' * labelWidth}┴${'─' * valueWidth}┘';
+
+  stdout.writeln(top);
+  for (var i = 0; i < rows.length; i++) {
+    final row = rows[i];
+    stdout.writeln(
+      '│${_cell(row.$1, labelWidth)}│${_cell(row.$2, valueWidth)}│',
+    );
+    if (i == 0) stdout.writeln(mid);
+  }
+  stdout.writeln(bottom);
+}
+
+String _tokens(int? value) => value == null ? 'n/d' : value.toString();
+
+String _reasoning(int reasoning, int output) =>
+    output <= 0 ? 'n/d' : '${(reasoning * 100 / output).toStringAsFixed(1)}%';
+
+String _seconds(double value) => '${value.toStringAsFixed(2)} s';
+
 Future<void> main(List<String> args) async {
   var samples = 1;
   var seed = 20260929;
@@ -134,6 +190,9 @@ Future<void> main(List<String> args) async {
   var correctedTests = 0;
   var correctedQuestions = 0;
   var correctedFields = 0;
+  var questionFieldCorrections = 0;
+  var answerFieldCorrections = 0;
+  var distractorFieldCorrections = 0;
   var finalRowsWithIssues = 0;
 
   var lunaInput = 0;
@@ -149,6 +208,8 @@ Future<void> main(List<String> args) async {
   var reviewerCostTotal = 0.0;
   var completePackCostTotal = 0.0;
   var fullyPricedPacks = 0;
+  var lunaPricedTests = 0;
+  var reviewerPricedTests = 0;
   var pricedStages = 0;
 
   try {
@@ -219,11 +280,13 @@ Future<void> main(List<String> args) async {
         if (lunaCost != null) {
           totalCost += lunaCost;
           lunaCostTotal += lunaCost;
+          lunaPricedTests++;
           pricedStages++;
         }
         if (reviewerCost != null) {
           totalCost += reviewerCost;
           reviewerCostTotal += reviewerCost;
+          reviewerPricedTests++;
           pricedStages++;
         }
         final packCost = lunaCost != null && reviewerCost != null
@@ -264,6 +327,10 @@ Future<void> main(List<String> args) async {
                   .length,
         );
 
+        questionFieldCorrections += questionCorrections;
+        answerFieldCorrections += answerCorrections;
+        distractorFieldCorrections += distractorCorrections;
+
         final packInputTokens = li != null && ri != null ? li + ri : null;
         final packOutputTokens = lo != null && ro != null ? lo + ro : null;
         final packTotalTokens =
@@ -276,12 +343,6 @@ Future<void> main(List<String> args) async {
         final reviewReasoningPercent = ro != null && ro > 0 && rr != null
             ? '${(rr * 100 / ro).toStringAsFixed(1)}%'
             : 'n/d';
-        final correctionsSummary = result.review.patches.isEmpty
-            ? ''
-            : 'preguntas $questionCorrections, '
-                'respuestas $answerCorrections, '
-                'distractores $distractorCorrections';
-
         report.writeln(
           '========== TEST $test/$samples — '
           '${(totalWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
@@ -373,18 +434,69 @@ Future<void> main(List<String> args) async {
             result.reviewDuration.inMilliseconds / 1000;
         final generationReviewSeconds = generationSeconds + reviewSeconds;
 
-        stdout.writeln(
-          'Test $test/$samples | '
-          'G(${pipeline.luna.model}) ${generationSeconds.toStringAsFixed(2)} s + '
-          'R(${pipeline.reviewer.model}) ${reviewSeconds.toStringAsFixed(2)} s = '
-          '${generationReviewSeconds.toStringAsFixed(2)} s | '
-          'TOKENS: entrada ${_known(packInputTokens)} + '
-          'salida ${_known(packOutputTokens)} = ${_known(packTotalTokens)} | '
-          'Razonamiento G/R: $generationReasoningPercent / '
-          '$reviewReasoningPercent | '
-          'COSTE G/R: ${_usd(lunaCost)} + ${_usd(reviewerCost)} = ${_usd(packCost)} | '
-          'Correcciones: $correctionsSummary',
-        );
+        final totalReasoningPercent =
+            lo != null &&
+                    ro != null &&
+                    lr != null &&
+                    rr != null &&
+                    lo + ro > 0
+                ? '${((lr + rr) * 100 / (lo + ro)).toStringAsFixed(1)}%'
+                : 'n/d';
+        final correctionFields =
+            questionCorrections + answerCorrections + distractorCorrections;
+        final correctionLabel = result.review.patches.isEmpty
+            ? '—'
+            : 'Q$questionCorrections R$answerCorrections D$distractorCorrections';
+
+        stdout.writeln();
+        stdout.writeln('TEST $test/$samples');
+        _printMetricsTable([
+          (
+            'Tiempo',
+            _seconds(generationSeconds),
+            _seconds(reviewSeconds),
+            _seconds(generationReviewSeconds),
+          ),
+          (
+            'Tokens entrada',
+            _tokens(li),
+            _tokens(ri),
+            _tokens(packInputTokens),
+          ),
+          (
+            'Tokens salida',
+            _tokens(lo),
+            _tokens(ro),
+            _tokens(packOutputTokens),
+          ),
+          (
+            'Razonamiento',
+            generationReasoningPercent,
+            reviewReasoningPercent,
+            totalReasoningPercent,
+          ),
+          (
+            'Coste',
+            _usd(lunaCost),
+            _usd(reviewerCost),
+            _usd(packCost),
+          ),
+          (
+            'Correcciones',
+            '—',
+            correctionLabel,
+            '$correctionFields campos',
+          ),
+        ]);
+
+        if (result.review.patches.isNotEmpty) {
+          stdout.writeln('CAMBIOS');
+          for (final patch in result.review.patches) {
+            stdout.writeln(_formatPatch(patch));
+          }
+        } else {
+          stdout.writeln('CAMBIOS: —');
+        }
       } catch (error) {
         totalWatch.stop();
         failedTests++;
@@ -487,13 +599,88 @@ Future<void> main(List<String> args) async {
     report.writeln();
 
     await report.flush();
-    stdout.writeln(
-      'Coste total estimado: '
-      '${pricedStages == 0 ? "n/d" : _usd(totalCost)} | '
-      'media por pack ${_usd(averagePackCost)} | '
-      'G ${_usd(lunaCostTotal)} | '
-      'R ${_usd(reviewerCostTotal)}',
-    );
+    final meanGSeconds = lunaDurations.isEmpty
+        ? 0.0
+        : lunaDurations.reduce((a, b) => a + b) /
+            lunaDurations.length /
+            1000;
+    final meanRSeconds = reviewDurations.isEmpty
+        ? 0.0
+        : reviewDurations.reduce((a, b) => a + b) /
+            reviewDurations.length /
+            1000;
+    final meanTotalSeconds = totalDurations.isEmpty
+        ? 0.0
+        : totalDurations.reduce((a, b) => a + b) /
+            totalDurations.length /
+            1000;
+
+    final gCostPerTest = lunaPricedTests == 0
+        ? null
+        : lunaCostTotal / lunaPricedTests;
+    final rCostPerTest = reviewerPricedTests == 0
+        ? null
+        : reviewerCostTotal / reviewerPricedTests;
+
+    stdout.writeln();
+    stdout.writeln('RESUMEN $samples TESTS');
+    _printMetricsTable([
+      (
+        'Tiempo medio',
+        _seconds(meanGSeconds),
+        _seconds(meanRSeconds),
+        _seconds(meanTotalSeconds),
+      ),
+      (
+        'Tokens entrada',
+        lunaInput.toString(),
+        reviewInput.toString(),
+        (lunaInput + reviewInput).toString(),
+      ),
+      (
+        'Tokens salida',
+        lunaOutput.toString(),
+        reviewOutput.toString(),
+        totalOutput.toString(),
+      ),
+      (
+        'Razonamiento',
+        _reasoning(lunaReasoning, lunaOutput),
+        _reasoning(reviewReasoning, reviewOutput),
+        _reasoning(totalReasoning, totalOutput),
+      ),
+      (
+        'Coste total',
+        lunaPricedTests == 0 ? 'n/d' : _usd(lunaCostTotal),
+        reviewerPricedTests == 0 ? 'n/d' : _usd(reviewerCostTotal),
+        pricedStages == 0 ? 'n/d' : _usd(totalCost),
+      ),
+      (
+        'Coste / test',
+        _usd(gCostPerTest),
+        _usd(rCostPerTest),
+        _usd(averagePackCost),
+      ),
+      (
+        'Correcciones',
+        '—',
+        'Q$questionFieldCorrections R$answerFieldCorrections D$distractorFieldCorrections',
+        '$correctedFields campos',
+      ),
+    ]);
+
+    stdout.writeln();
+    stdout.writeln('RESULTADO');
+    _printResultTable([
+      ('Métrica', 'Valor'),
+      ('Tests completos', '$completeTests/$samples'),
+      ('Tests fallidos', '$failedTests'),
+      ('Tests con correcciones', '$correctedTests/$completeTests'),
+      ('Preguntas corregidas', '$correctedQuestions'),
+      ('Respuestas corregidas', '$answerFieldCorrections'),
+      ('Distractores corregidos', '$distractorFieldCorrections'),
+      ('Incidencias finales', '$finalRowsWithIssues'),
+    ]);
     stdout.writeln('Informe: $path');
 
     if (failedTests > 0) exitCode = 1;
