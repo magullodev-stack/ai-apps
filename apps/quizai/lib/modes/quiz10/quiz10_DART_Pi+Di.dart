@@ -73,7 +73,7 @@ const quiz10Dimensions = <Quiz10Dimension>[
   ),
   (
     code: 'D06',
-    instruction: 'Pregunta qué elemento ocupa un extremo o posición destacada dentro de una comparación, orden o clasificación.',
+    instruction: 'Pregunta qué elemento ocupa un extremo o posición destacada dentro de una comparación o clasificación bien definida.',
   ),
   (
     code: 'D07',
@@ -105,11 +105,11 @@ const quiz10Dimensions = <Quiz10Dimension>[
   ),
   (
     code: 'D14',
-    instruction: 'Pregunta qué acontecimiento ocurrió antes, después o al mismo tiempo que otro.',
+    instruction: 'Pregunta cuál de varios acontecimientos ocurrió primero o cuál ocurrió más recientemente.',
   ),
   (
     code: 'D15',
-    instruction: 'Pregunta si un acontecimiento ocurrió antes, después o al mismo tiempo que otro, o cuánto tiempo los separó.',
+    instruction: 'Pregunta qué acontecimiento, etapa o entidad precedió o sucedió inmediatamente a otro dentro de una secuencia temporal establecida.',
   ),
   (
     code: 'D16',

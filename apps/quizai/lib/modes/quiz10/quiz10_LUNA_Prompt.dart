@@ -19,11 +19,10 @@ H := {{H}}
 
 ## Generación
 
-Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso, que permita cumplir D.
+Elige un hecho factual F de P, propio de cultura general y con valor de pregunta de concurso, que permita cumplir D y contenga toda la información factual necesaria para determinar la respuesta correcta.
+Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
 
-Formula Q siguiendo la Instrucción D.
-
-O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, una correcta y tres incorrectas, todas plausibles y del mismo tipo.
+O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
 
 C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
 

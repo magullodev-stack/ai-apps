@@ -11,9 +11,9 @@ T := {{TEST}}
 
 ## Tarea
 
-Ordena las 10 preguntas de menor a mayor dificultad.
-
 Revisa Q, R y los tres distractores de cada pregunta y corrige lo necesario para que la pregunta y sus opciones sean correctas, coherentes y de calidad.
+
+Ordena las 10 preguntas de menor a mayor dificultad para un concursante generalista de cultura general, según la probabilidad de que responda correctamente la pregunta tal como queda formulada: a mayor probabilidad de acierto, menor dificultad.
 
 
 ## Salida
