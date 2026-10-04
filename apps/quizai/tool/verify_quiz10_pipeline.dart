@@ -55,9 +55,9 @@ String _modelLabel(String model) =>
 }
 
 String _formatPatch(Quiz10ReviewPatch patch) {
-  final buffer = StringBuffer()..writeln('${patch.number}.');
+  final buffer = StringBuffer();
   for (final change in patch.changes) {
-    buffer.writeln('${change.field}: ${change.value}');
+    buffer.writeln('${patch.number}.${change.field}: ${change.value}');
   }
   return buffer.toString().trimRight();
 }
