@@ -110,17 +110,6 @@ Quiz10ReviewedItem _applyReviewPatch(
   );
 }
 
-List<Quiz10SortItem> buildQuiz10SortItems(
-  List<Quiz10ReviewedItem> items,
-) => List.unmodifiable([
-  for (final item in items)
-    Quiz10SortItem(
-      question: item.question,
-      correct: item.correct,
-      distractors: item.distractors,
-    ),
-]);
-
 List<Quiz10ReviewedItem> applyQuiz10Order(
   List<Quiz10ReviewedItem> items,
   List<int> order,
@@ -160,7 +149,6 @@ final class AiQuiz10Pipeline {
     required AiAppsClient client,
     required String lunaModel,
     required String reviewerModel,
-    String? sorterModel,
   }) : luna = AiQuiz10LunaGenerator(
          client: client,
          model: lunaModel,
@@ -168,15 +156,10 @@ final class AiQuiz10Pipeline {
        reviewer = AiQuiz10Reviewer(
          client: client,
          model: reviewerModel,
-       ),
-       sorter = AiQuiz10Sorter(
-         client: client,
-         model: sorterModel ?? reviewerModel,
        );
 
   final AiQuiz10LunaGenerator luna;
   final AiQuiz10Reviewer reviewer;
-  final AiQuiz10Sorter sorter;
 
   Future<List<Quiz10FinalQuestion>> generate() async {
     final result = await generateDetailed();
