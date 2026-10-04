@@ -148,6 +148,39 @@ String _reasoning(int reasoning, int output) =>
 
 String _seconds(double value) => '${value.toStringAsFixed(2)} s';
 
+int _wordCount(String text) =>
+    text.trim().isEmpty ? 0 : text.trim().split(RegExp(r'\s+')).length;
+
+void _printLongestTextTable(
+  ({String kind, int chars, int words, String text}) question,
+  ({String kind, int chars, int words, String text}) option,
+) {
+  const kindWidth = 8;
+  const charsWidth = 8;
+  const wordsWidth = 9;
+  const textWidth = 84;
+  final top =
+      '┌${_rule(kindWidth)}┬${_rule(charsWidth)}┬${_rule(wordsWidth)}┬${_rule(textWidth)}┐';
+  final mid =
+      '├${_rule(kindWidth)}┼${_rule(charsWidth)}┼${_rule(wordsWidth)}┼${_rule(textWidth)}┤';
+  final bottom =
+      '└${_rule(kindWidth)}┴${_rule(charsWidth)}┴${_rule(wordsWidth)}┴${_rule(textWidth)}┘';
+
+  stdout.writeln(top);
+  stdout.writeln(
+    '│${_cell('Tipo', kindWidth)}│${_cell('Chars', charsWidth)}│'
+    '${_cell('Palabras', wordsWidth)}│${_cell('Texto', textWidth)}│',
+  );
+  stdout.writeln(mid);
+  for (final row in [question, option]) {
+    stdout.writeln(
+      '│${_cell(row.kind, kindWidth)}│${_cell(row.chars.toString(), charsWidth)}│'
+      '${_cell(row.words.toString(), wordsWidth)}│${_cell(row.text, textWidth)}│',
+    );
+  }
+  stdout.writeln(bottom);
+}
+
 Future<void> main(List<String> args) async {
   var samples = 1;
   var users = 1;
@@ -252,6 +285,9 @@ Future<void> main(List<String> args) async {
   var answerFieldCorrections = 0;
   var distractorFieldCorrections = 0;
   var finalRowsWithIssues = 0;
+
+  var longestQuestion = (kind: 'Q', chars: 0, words: 0, text: '');
+  var longestOption = (kind: 'R/d', chars: 0, words: 0, text: '');
 
   var lunaInput = 0;
   var lunaOutput = 0;
@@ -489,6 +525,28 @@ Future<void> main(List<String> args) async {
             itemIndex < result.correctedItems.length;
             itemIndex++) {
           final item = result.correctedItems[itemIndex];
+
+          final qChars = item.question.length;
+          if (qChars > longestQuestion.chars) {
+            longestQuestion = (
+              kind: 'Q',
+              chars: qChars,
+              words: _wordCount(item.question),
+              text: item.question,
+            );
+          }
+
+          for (final option in [item.correct, ...item.distractors]) {
+            final optionChars = option.length;
+            if (optionChars > longestOption.chars) {
+              longestOption = (
+                kind: 'R/d',
+                chars: optionChars,
+                words: _wordCount(option),
+                text: option,
+              );
+            }
+          }
           report.writeln(
             '${itemIndex + 1}. Q: ${item.question} | R: ${item.correct} | '
             'd1: ${item.distractors[0]} | '
@@ -889,6 +947,10 @@ Future<void> main(List<String> args) async {
         '$correctedFields campos',
       ),
     ]);
+
+    stdout.writeln();
+    stdout.writeln('LONGITUD MÁXIMA');
+    _printLongestTextTable(longestQuestion, longestOption);
 
     stdout.writeln();
     stdout.writeln('RESULTADO');
