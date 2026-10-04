@@ -83,16 +83,12 @@ Quiz10ReviewedItem _applyReviewPatch(
   Quiz10LunaRow row,
   Quiz10ReviewPatch? patch,
 ) {
-  var question = row.question;
   var correct = row.correct;
   final distractors = [...row.distractors];
 
   if (patch != null) {
     for (final change in patch.changes) {
       switch (change.field) {
-        case 'Q':
-          question = change.value;
-          break;
         case 'R':
           correct = change.value;
           break;
@@ -111,7 +107,7 @@ Quiz10ReviewedItem _applyReviewPatch(
 
   return Quiz10ReviewedItem(
     source: row,
-    question: question,
+    question: row.question,
     correct: correct,
     distractors: List.unmodifiable(distractors),
   );
