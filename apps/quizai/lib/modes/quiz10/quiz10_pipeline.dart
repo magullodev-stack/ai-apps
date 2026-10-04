@@ -5,7 +5,6 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import 'quiz10_DART_Pi+Di.dart';
 import 'Quiz10_PROMPT_G.dart';
 import 'Quiz10_PROMPT_R.dart';
-import 'Quiz10_PROMPT_S.dart';
 
 typedef Quiz10FinalQuestion = ({
   String pivot,
@@ -35,13 +34,10 @@ class Quiz10PipelineResult {
     required this.lunaGeneration,
     required this.review,
     required this.correctedItems,
-    required this.sortInput,
-    required this.sort,
     required this.reviewedItems,
     required this.questions,
     required this.lunaDuration,
     required this.reviewDuration,
-    required this.sortDuration,
   });
 
   final List<Quiz10Pair> plan;
@@ -49,13 +45,10 @@ class Quiz10PipelineResult {
   final AiGeneration lunaGeneration;
   final Quiz10ReviewResult review;
   final List<Quiz10ReviewedItem> correctedItems;
-  final String sortInput;
-  final Quiz10SortResult sort;
   final List<Quiz10ReviewedItem> reviewedItems;
   final List<Quiz10FinalQuestion> questions;
   final Duration lunaDuration;
   final Duration reviewDuration;
-  final Duration sortDuration;
 }
 
 List<Quiz10ReviewedItem> applyQuiz10Review(
