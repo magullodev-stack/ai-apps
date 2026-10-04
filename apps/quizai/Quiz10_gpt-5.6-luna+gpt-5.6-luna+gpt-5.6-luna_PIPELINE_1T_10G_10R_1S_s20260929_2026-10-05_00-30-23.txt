@@ -1,0 +1,483 @@
+AUDITORÍA QUIZ10 — PIPELINE G → R → S → DART
+Fecha: 2026-10-05 00:30:23.625679
+G: gpt-5.6-luna
+R: gpt-5.6-luna
+S: gpt-5.6-luna
+Ejecución por test: 10 llamadas G simultáneas, 10 revisiones R simultáneas, 1 ordenación global S, aplicación de orden y shuffle en Dart.
+Semilla: 20260929 | Tests: 1 | Llamadas G: 10 | Llamadas R: 10 | Llamadas S: 1.
+
+========== TEST 1/1 — 13.71 s (G 6.61 s + R 3.15 s + S 3.94 s) ==========
+
+--- SALIDA G ---
+1. P07 D15 | F: La filosofía medieval estuvo estrechamente vinculada al pensamiento religioso. | Q: En la periodización tradicional de la historia de la filosofía, ¿qué etapa siguió inmediatamente a la Antigüedad? | O: 1=Filosofía medieval / 2=Filosofía moderna / 3=Filosofía contemporánea / 4=Filosofía helenística | C: 1 | R: Filosofía medieval
+2. P04 D02 | F: El ADN está formado habitualmente por dos cadenas complementarias enrolladas entre sí. | Q: ¿Cómo se organiza normalmente la molécula de ADN? | O: 1=Como una sola cadena de aminoácidos / 2=Como dos cadenas complementarias enrolladas entre sí / 3=Como tres cadenas de azúcares simples / 4=Como una red de lípidos y proteínas | C: 2 | R: Como dos cadenas complementarias enrolladas entre sí
+3. P16 D01 | F: Un número primo tiene exactamente dos divisores positivos. | Q: ¿Cuál de los siguientes números posee exactamente dos divisores positivos? | O: 1=9 / 2=11 / 3=15 / 4=21 | C: 2 | R: 11
+4. P08 D04 | F: El sonido necesita un medio material para propagarse. | Q: ¿A qué categoría de ondas pertenece el sonido? | O: 1=Ondas mecánicas / 2=Ondas electromagnéticas / 3=Ondas gravitacionales / 4=Ondas de materia | C: 1 | R: Ondas mecánicas
+5. P15 D06 | F: La Epopeya de Gilgamesh suele considerarse la obra literaria extensa más antigua conservada. | Q: ¿Cuál de estas obras literarias se considera generalmente la más antigua conservada? | O: 1=Epopeya de Gilgamesh / 2=La Ilíada / 3=Beowulf / 4=La Divina comedia | C: 1 | R: Epopeya de Gilgamesh
+6. P14 D09 | F: Sancho Panza acompaña a Don Quijote en muchas de sus aventuras. | Q: ¿Qué personaje acompaña a Don Quijote en sus aventuras? | O: 1=Hamlet / 2=Sancho Panza / 3=Edipo / 4=Lazarillo de Tormes | C: 2 | R: Sancho Panza
+7. P05 D11 | F: La Corte Internacional de Justicia tiene su sede en La Haya. | Q: ¿Qué tribunal tiene su sede en La Haya? | O: 1=Corte Internacional de Justicia / 2=Corte Penal Internacional / 3=Tribunal Europeo de Derechos Humanos / 4=Tribunal Internacional del Derecho del Mar | C: 1 | R: Corte Internacional de Justicia
+8. P09 D10 | F: La fondue es un plato emblemático de Suiza. | Q: ¿En qué país es emblemática la fondue? | O: 1=Austria / 2=Bélgica / 3=Suiza / 4=Alemania | C: 3 | R: Suiza
+9. P12 D29 | F: Tucídides entendió la historia como una investigación crítica de causas humanas, apoyada en testimonios y análisis racional. | Q: Según Tucídides, ¿cómo debía construirse el conocimiento histórico? | O: 1=Mediante el examen crítico de testimonios y causas humanas / 2=Mediante la recopilación de relatos míticos transmitidos oralmente / 3=Mediante la interpretación de presagios y designios divinos / 4=Mediante la exaltación literaria de los héroes nacionales | C: 1 | R: Mediante el examen crítico de testimonios y causas humanas
+10. P03 D26 | F: Carl Sagan coescribió la novela «Contacto». | Q: ¿Qué novela coescribió Carl Sagan? | O: 1=Solaris / 2=Dune / 3=Contacto / 4=Fundación | C: 3 | R: Contacto
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := Q: En la periodización tradicional de la historia de la filosofía, ¿qué etapa siguió inmediatamente a la Antigüedad?
+R: Filosofía medieval
+d1: Filosofía moderna
+d2: Filosofía contemporánea
+d3: Filosofía helenística
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R2]
+t := Q: ¿Cómo se organiza normalmente la molécula de ADN?
+R: Como dos cadenas complementarias enrolladas entre sí
+d1: Como una sola cadena de aminoácidos
+d2: Como tres cadenas de azúcares simples
+d3: Como una red de lípidos y proteínas
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R3]
+t := Q: ¿Cuál de los siguientes números posee exactamente dos divisores positivos?
+R: 11
+d1: 9
+d2: 15
+d3: 21
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R4]
+t := Q: ¿A qué categoría de ondas pertenece el sonido?
+R: Ondas mecánicas
+d1: Ondas electromagnéticas
+d2: Ondas gravitacionales
+d3: Ondas de materia
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R5]
+t := Q: ¿Cuál de estas obras literarias se considera generalmente la más antigua conservada?
+R: Epopeya de Gilgamesh
+d1: La Ilíada
+d2: Beowulf
+d3: La Divina comedia
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R6]
+t := Q: ¿Qué personaje acompaña a Don Quijote en sus aventuras?
+R: Sancho Panza
+d1: Hamlet
+d2: Edipo
+d3: Lazarillo de Tormes
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R7]
+t := Q: ¿Qué tribunal tiene su sede en La Haya?
+R: Corte Internacional de Justicia
+d1: Corte Penal Internacional
+d2: Tribunal Europeo de Derechos Humanos
+d3: Tribunal Internacional del Derecho del Mar
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R8]
+t := Q: ¿En qué país es emblemática la fondue?
+R: Suiza
+d1: Austria
+d2: Bélgica
+d3: Alemania
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R9]
+t := Q: Según Tucídides, ¿cómo debía construirse el conocimiento histórico?
+R: Mediante el examen crítico de testimonios y causas humanas
+d1: Mediante la recopilación de relatos míticos transmitidos oralmente
+d2: Mediante la interpretación de presagios y designios divinos
+d3: Mediante la exaltación literaria de los héroes nacionales
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+[R10]
+t := Q: ¿Qué novela coescribió Carl Sagan?
+R: Contacto
+d1: Solaris
+d2: Dune
+d3: Fundación
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[{"campo":"d1","valor":"Tribunal de Justicia de la Unión Europea"}]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+7.d1
+  G: Corte Penal Internacional
+  R: Tribunal de Justicia de la Unión Europea
+
+--- TEST TRAS R ---
+1. Q: En la periodización tradicional de la historia de la filosofía, ¿qué etapa siguió inmediatamente a la Antigüedad? | R: Filosofía medieval | d1: Filosofía moderna | d2: Filosofía contemporánea | d3: Filosofía helenística
+2. Q: ¿Cómo se organiza normalmente la molécula de ADN? | R: Como dos cadenas complementarias enrolladas entre sí | d1: Como una sola cadena de aminoácidos | d2: Como tres cadenas de azúcares simples | d3: Como una red de lípidos y proteínas
+3. Q: ¿Cuál de los siguientes números posee exactamente dos divisores positivos? | R: 11 | d1: 9 | d2: 15 | d3: 21
+4. Q: ¿A qué categoría de ondas pertenece el sonido? | R: Ondas mecánicas | d1: Ondas electromagnéticas | d2: Ondas gravitacionales | d3: Ondas de materia
+5. Q: ¿Cuál de estas obras literarias se considera generalmente la más antigua conservada? | R: Epopeya de Gilgamesh | d1: La Ilíada | d2: Beowulf | d3: La Divina comedia
+6. Q: ¿Qué personaje acompaña a Don Quijote en sus aventuras? | R: Sancho Panza | d1: Hamlet | d2: Edipo | d3: Lazarillo de Tormes
+7. Q: ¿Qué tribunal tiene su sede en La Haya? | R: Corte Internacional de Justicia | d1: Tribunal de Justicia de la Unión Europea | d2: Tribunal Europeo de Derechos Humanos | d3: Tribunal Internacional del Derecho del Mar
+8. Q: ¿En qué país es emblemática la fondue? | R: Suiza | d1: Austria | d2: Bélgica | d3: Alemania
+9. Q: Según Tucídides, ¿cómo debía construirse el conocimiento histórico? | R: Mediante el examen crítico de testimonios y causas humanas | d1: Mediante la recopilación de relatos míticos transmitidos oralmente | d2: Mediante la interpretación de presagios y designios divinos | d3: Mediante la exaltación literaria de los héroes nacionales
+10. Q: ¿Qué novela coescribió Carl Sagan? | R: Contacto | d1: Solaris | d2: Dune | d3: Fundación
+
+--- ENTRADA S ---
+T := 1.
+Q: En la periodización tradicional de la historia de la filosofía, ¿qué etapa siguió inmediatamente a la Antigüedad?
+R: Filosofía medieval
+d1: Filosofía moderna
+d2: Filosofía contemporánea
+d3: Filosofía helenística
+
+2.
+Q: ¿Cómo se organiza normalmente la molécula de ADN?
+R: Como dos cadenas complementarias enrolladas entre sí
+d1: Como una sola cadena de aminoácidos
+d2: Como tres cadenas de azúcares simples
+d3: Como una red de lípidos y proteínas
+
+3.
+Q: ¿Cuál de los siguientes números posee exactamente dos divisores positivos?
+R: 11
+d1: 9
+d2: 15
+d3: 21
+
+4.
+Q: ¿A qué categoría de ondas pertenece el sonido?
+R: Ondas mecánicas
+d1: Ondas electromagnéticas
+d2: Ondas gravitacionales
+d3: Ondas de materia
+
+5.
+Q: ¿Cuál de estas obras literarias se considera generalmente la más antigua conservada?
+R: Epopeya de Gilgamesh
+d1: La Ilíada
+d2: Beowulf
+d3: La Divina comedia
+
+6.
+Q: ¿Qué personaje acompaña a Don Quijote en sus aventuras?
+R: Sancho Panza
+d1: Hamlet
+d2: Edipo
+d3: Lazarillo de Tormes
+
+7.
+Q: ¿Qué tribunal tiene su sede en La Haya?
+R: Corte Internacional de Justicia
+d1: Tribunal de Justicia de la Unión Europea
+d2: Tribunal Europeo de Derechos Humanos
+d3: Tribunal Internacional del Derecho del Mar
+
+8.
+Q: ¿En qué país es emblemática la fondue?
+R: Suiza
+d1: Austria
+d2: Bélgica
+d3: Alemania
+
+9.
+Q: Según Tucídides, ¿cómo debía construirse el conocimiento histórico?
+R: Mediante el examen crítico de testimonios y causas humanas
+d1: Mediante la recopilación de relatos míticos transmitidos oralmente
+d2: Mediante la interpretación de presagios y designios divinos
+d3: Mediante la exaltación literaria de los héroes nacionales
+
+10.
+Q: ¿Qué novela coescribió Carl Sagan?
+R: Contacto
+d1: Solaris
+d2: Dune
+d3: Fundación
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[6,8,2,4,3,1,7,5,10,9]}
+
+--- ORDEN S ---
+[6, 8, 2, 4, 3, 1, 7, 5, 10, 9]
+
+--- TEST TRAS R Y S ---
+1. [original 6] Q: ¿Qué personaje acompaña a Don Quijote en sus aventuras? | R: Sancho Panza | d1: Hamlet | d2: Edipo | d3: Lazarillo de Tormes
+2. [original 8] Q: ¿En qué país es emblemática la fondue? | R: Suiza | d1: Austria | d2: Bélgica | d3: Alemania
+3. [original 2] Q: ¿Cómo se organiza normalmente la molécula de ADN? | R: Como dos cadenas complementarias enrolladas entre sí | d1: Como una sola cadena de aminoácidos | d2: Como tres cadenas de azúcares simples | d3: Como una red de lípidos y proteínas
+4. [original 4] Q: ¿A qué categoría de ondas pertenece el sonido? | R: Ondas mecánicas | d1: Ondas electromagnéticas | d2: Ondas gravitacionales | d3: Ondas de materia
+5. [original 3] Q: ¿Cuál de los siguientes números posee exactamente dos divisores positivos? | R: 11 | d1: 9 | d2: 15 | d3: 21
+6. [original 1] Q: En la periodización tradicional de la historia de la filosofía, ¿qué etapa siguió inmediatamente a la Antigüedad? | R: Filosofía medieval | d1: Filosofía moderna | d2: Filosofía contemporánea | d3: Filosofía helenística
+7. [original 7] Q: ¿Qué tribunal tiene su sede en La Haya? | R: Corte Internacional de Justicia | d1: Tribunal de Justicia de la Unión Europea | d2: Tribunal Europeo de Derechos Humanos | d3: Tribunal Internacional del Derecho del Mar
+8. [original 5] Q: ¿Cuál de estas obras literarias se considera generalmente la más antigua conservada? | R: Epopeya de Gilgamesh | d1: La Ilíada | d2: Beowulf | d3: La Divina comedia
+9. [original 10] Q: ¿Qué novela coescribió Carl Sagan? | R: Contacto | d1: Solaris | d2: Dune | d3: Fundación
+10. [original 9] Q: Según Tucídides, ¿cómo debía construirse el conocimiento histórico? | R: Mediante el examen crítico de testimonios y causas humanas | d1: Mediante la recopilación de relatos míticos transmitidos oralmente | d2: Mediante la interpretación de presagios y designios divinos | d3: Mediante la exaltación literaria de los héroes nacionales
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué personaje acompaña a Don Quijote en sus aventuras? | R: Sancho Panza | O: Lazarillo de Tormes / Sancho Panza / Edipo / Hamlet
+2. ¿En qué país es emblemática la fondue? | R: Suiza | O: Alemania / Austria / Bélgica / Suiza
+3. ¿Cómo se organiza normalmente la molécula de ADN? | R: Como dos cadenas complementarias enrolladas entre sí | O: Como una sola cadena de aminoácidos / Como tres cadenas de azúcares simples / Como dos cadenas complementarias enrolladas entre sí / Como una red de lípidos y proteínas
+4. ¿A qué categoría de ondas pertenece el sonido? | R: Ondas mecánicas | O: Ondas gravitacionales / Ondas de materia / Ondas electromagnéticas / Ondas mecánicas
+5. ¿Cuál de los siguientes números posee exactamente dos divisores positivos? | R: 11 | O: 9 / 21 / 11 / 15
+6. En la periodización tradicional de la historia de la filosofía, ¿qué etapa siguió inmediatamente a la Antigüedad? | R: Filosofía medieval | O: Filosofía medieval / Filosofía contemporánea / Filosofía helenística / Filosofía moderna
+7. ¿Qué tribunal tiene su sede en La Haya? | R: Corte Internacional de Justicia | O: Tribunal Europeo de Derechos Humanos / Corte Internacional de Justicia / Tribunal Internacional del Derecho del Mar / Tribunal de Justicia de la Unión Europea
+8. ¿Cuál de estas obras literarias se considera generalmente la más antigua conservada? | R: Epopeya de Gilgamesh | O: Beowulf / La Divina comedia / La Ilíada / Epopeya de Gilgamesh
+9. ¿Qué novela coescribió Carl Sagan? | R: Contacto | O: Solaris / Contacto / Fundación / Dune
+10. Según Tucídides, ¿cómo debía construirse el conocimiento histórico? | R: Mediante el examen crítico de testimonios y causas humanas | O: Mediante la interpretación de presagios y designios divinos / Mediante el examen crítico de testimonios y causas humanas / Mediante la exaltación literaria de los héroes nacionales / Mediante la recopilación de relatos míticos transmitidos oralmente
+
+USO TEST 1 | G: entrada 3555, salida 4660, razonamiento 3645, coste USD 0.006303 | R: entrada 2618, salida 876, razonamiento 679, coste USD 0.001575 | S: entrada 626, salida 270, razonamiento 236, coste USD 0.000449
+
+========== ESTADÍSTICAS FINALES ==========
+Tests: 1 | completos: 1 | fallidos: 0 | filas finales con incidencia local: 0.
+Revisión R: tests con correcciones 1/1 | preguntas corregidas 1 | campos corregidos 1.
+Pipeline: media 13.71 s | mediana 13.71 s | p95 13.71 s | máxima 13.71 s.
+G: media 6.61 s | mediana 6.61 s.
+R: media 3.15 s | mediana 3.15 s | p95 3.15 s.
+S: media 3.94 s | mediana 3.94 s | p95 3.94 s.
+Tokens G: entrada 3555 | salida 4660 | razonamiento 3645 | uso 1/1.
+Tokens R: entrada 2618 | salida 876 | razonamiento 679 | uso 1/1.
+Tokens S: entrada 626 | salida 270 | razonamiento 236 | uso 1/1.
+Tokens combinados: entrada 6799 | salida 5806 | razonamiento 4560 (78.5% de salida).
+Coste estimado combinado: USD 0.008327 (3/3 etapas calculables).
+Coste G: USD 0.006303 | R: USD 0.001575 | S: USD 0.000449 | media por pack: USD 0.008327.
+No evaluado automáticamente: exactitud factual profunda, calidad semántica de las correcciones y validez real del orden de dificultad.
+
+========== PROMPTS DE ESTA EJECUCIÓN ==========
+
+--- PROMPT G ---
+P := {{P}}
+D := {{D}}
+I_D := {{instruction}}
+H := {{H}}
+
+(P,I_D,H) → F
+(F,I_D) → Q
+(F,Q) → O
+
+F: afirmación factual autónoma mínima de cultura general generalista, no especializada ni de detalle.
+
+I_D define la relación semántica que Q debe realizar, no su redacción.
+
+Q es concisa y realiza I_D.
+
+F no forma parte del contexto disponible al responder Q.
+
+Todo referente contextual de Q se resuelve en Q u O, nunca en F.
+
+O := {o₁,o₂,o₃,o₄}, opciones distintas, plausibles, homogéneas y concisas.
+
+C := posición de la única opción correcta en O.
+
+R := O_C
+
+Q no contiene R ni una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza.
+
+∀(Qᵢ,Rᵢ) ∈ H, Q pregunta un conocimiento materialmente distinto de Qᵢ.
+
+R ∉ {R₁,...,Rₙ}
+
+
+--- PROMPT R ---
+t := {{ITEM}}
+
+O := {R,d1,d2,d3}
+
+C := {o ∈ O : o responde correctamente a Q}
+
+A := {a ∈ Q : a requiere un referente contextual y referente(a,Q,O) = ∅}
+
+C = {R} ⇒ Δ = ∅
+
+C ≠ {R} ⇒ Δ contiene únicamente correcciones de R,d1,d2,d3 necesarias para que C = {R}.
+
+A = ∅ ⇒ Q' = Q
+
+A ≠ ∅ ⇒ Q' difiere de Q únicamente en sustituir cada a ∈ A por un referente explícito inferido de Q,O,R.
+
+Cualquier otra modificación de Q está prohibida.
+
+
+--- PROMPT S ---
+T := {{TEST}}
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
