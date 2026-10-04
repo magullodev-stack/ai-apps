@@ -11,7 +11,7 @@ T := {{TEST}}
 
 ## Tarea
 
-Revisa Q, R y los tres distractores de cada pregunta y corrige lo necesario para que la pregunta y sus opciones sean correctas, coherentes y de calidad.
+Revisa Q, R y los tres distractores de cada pregunta y corrige lo necesario para que la pregunta y sus opciones sean correctas, coherentes y de calidad, conservando la relación definida por la Instrucción D.
 
 Ordena las 10 preguntas de menor a mayor dificultad para un concursante generalista de cultura general, según la probabilidad de que responda correctamente la pregunta tal como queda formulada: a mayor probabilidad de acierto, menor dificultad.
 
@@ -39,7 +39,7 @@ String quiz10ReviewTestLiteral(List<Quiz10LunaRow> rows) {
       [
         '${i + 1}.',
         'P: ${rows[i].returnedPivot}',
-        'D: ${rows[i].returnedDimension}',
+        'Instrucción D: ${rows[i].slot.dimension.instruction}',
         'F: ${rows[i].fact}',
         'Q: ${rows[i].question}',
         'R: ${rows[i].correct}',
