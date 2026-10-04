@@ -7,21 +7,22 @@ import 'Quiz10_PROMPT_G.dart';
 const String quiz10ReviewPrompt = r'''t := {{ITEM}}
 
 O := {R,d1,d2,d3}
-Δ := correcciones
 
-V := {
+V(t) := {
   {o ∈ O : o responde correctamente a Q} ≠ {R},
   algún referente contextual de Q carece de antecedente en Q u O,
   Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
 }
 
-Una diferencia de estilo, tecnicidad o precisión no constituye V salvo que altere una condición anterior.
+Δ := correcciones
 
-V = ∅ ⇒ Δ = ∅
+V(t) = ∅ ⇒ Δ = ∅
 
-V ≠ ∅ ⇒ Δ := mínimo conjunto de correcciones que elimina V.
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
 
-∀(campo,valor) ∈ Δ, valor ≠ t[campo].
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
 ''';
 
 String quiz10ReviewItemLiteral(Quiz10LunaRow row) => [
