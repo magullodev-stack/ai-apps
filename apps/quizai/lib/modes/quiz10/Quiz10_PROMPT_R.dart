@@ -6,16 +6,21 @@ import 'Quiz10_PROMPT_G.dart';
 
 const String quiz10ReviewPrompt = r'''t := {{ITEM}}
 
+O := {R,d1,d2,d3}
+Δ := correcciones
+
 V := {
-  R no es la única respuesta correcta a Q,
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
   Q no realiza la relación semántica definida por I_D,
   algún referente necesario para interpretar Q no aparece explícitamente en Q,
   Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
 }
 
+V se evalúa como pregunta de concurso para un concursante generalista de cultura general; una reformulación equivalente o una mayor precisión técnica no constituye una violación.
+
 V = ∅ ⇒ Δ = ∅
 
-V ≠ ∅ ⇒ Δ := mínimo conjunto de correcciones que elimina V.
+V ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅ y Δ contiene únicamente los campos necesarios para eliminar V.
 
 ∀(campo,valor) ∈ Δ, valor ≠ t[campo].
 ''';
