@@ -363,9 +363,9 @@ Future<void> main(List<String> args) async {
         distractorFieldCorrections += distractorCorrections;
 
         final packInputTokens =
-            li != null && ri != null && si != null ? li + ri + si : null;
+            li != null && ri != null ? li + ri : null;
         final packOutputTokens =
-            lo != null && ro != null && so != null ? lo + ro + so : null;
+            lo != null && ro != null ? lo + ro : null;
 
         final generationReasoningPercent = lo != null && lo > 0 && lr != null
             ? '${(lr * 100 / lo).toStringAsFixed(1)}%'
@@ -373,16 +373,11 @@ Future<void> main(List<String> args) async {
         final reviewReasoningPercent = ro != null && ro > 0 && rr != null
             ? '${(rr * 100 / ro).toStringAsFixed(1)}%'
             : 'n/d';
-        final sortReasoningPercent = so != null && so > 0 && sr != null
-            ? '${(sr * 100 / so).toStringAsFixed(1)}%'
-            : 'n/d';
-
         report.writeln(
           '========== TEST $test/$samples — '
           '${(totalWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
           '(G ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
-          '+ R ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
-          '+ S ${(result.sortDuration.inMilliseconds / 1000).toStringAsFixed(2)} s) ==========',
+          '+ R ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s) ==========',
         );
 
         report.writeln('\n--- SALIDA G ---');
@@ -431,16 +426,10 @@ Future<void> main(List<String> args) async {
           );
         }
 
-        report.writeln('\n--- ENTRADA S ---');
-        report.writeln(result.sortInput);
+        report.writeln('\n--- ORDEN R ---');
+        report.writeln(result.review.order);
 
-        report.writeln('\n--- SALIDA S RAW ---');
-        report.writeln(result.sort.rawText);
-
-        report.writeln('\n--- ORDEN S ---');
-        report.writeln(result.sort.order);
-
-        report.writeln('\n--- TEST TRAS R Y S ---');
+        report.writeln('\n--- TEST TRAS R Y ORDEN ---');
         for (var finalIndex = 0;
             finalIndex < result.reviewedItems.length;
             finalIndex++) {
@@ -482,9 +471,7 @@ Future<void> main(List<String> args) async {
           'G: entrada ${_known(li)}, salida ${_known(lo)}, '
           'razonamiento ${_known(lr)}, coste ${_usd(lunaCost)} | '
           'R: entrada ${_known(ri)}, salida ${_known(ro)}, '
-          'razonamiento ${_known(rr)}, coste ${_usd(reviewerCost)} | '
-          'S: entrada ${_known(si)}, salida ${_known(so)}, '
-          'razonamiento ${_known(sr)}, coste ${_usd(sorterCost)}',
+          'razonamiento ${_known(rr)}, coste ${_usd(reviewerCost)}',
         );
         report.writeln();
         await report.flush();
@@ -493,20 +480,16 @@ Future<void> main(List<String> args) async {
             result.lunaDuration.inMilliseconds / 1000;
         final reviewSeconds =
             result.reviewDuration.inMilliseconds / 1000;
-        final sortSeconds =
-            result.sortDuration.inMilliseconds / 1000;
         final pipelineSeconds =
-            generationSeconds + reviewSeconds + sortSeconds;
+            generationSeconds + reviewSeconds;
 
         final totalReasoningPercent =
             lo != null &&
                     ro != null &&
-                    so != null &&
                     lr != null &&
                     rr != null &&
-                    sr != null &&
-                    lo + ro + so > 0
-                ? '${((lr + rr + sr) * 100 / (lo + ro + so)).toStringAsFixed(1)}%'
+                    lo + ro > 0
+                ? '${((lr + rr) * 100 / (lo + ro)).toStringAsFixed(1)}%'
                 : 'n/d';
 
         final correctionFields =
@@ -522,42 +505,36 @@ Future<void> main(List<String> args) async {
             'Tiempo',
             _seconds(generationSeconds),
             _seconds(reviewSeconds),
-            _seconds(sortSeconds),
             _seconds(pipelineSeconds),
           ),
           (
             'Tokens entrada',
             _tokens(li),
             _tokens(ri),
-            _tokens(si),
             _tokens(packInputTokens),
           ),
           (
             'Tokens salida',
             _tokens(lo),
             _tokens(ro),
-            _tokens(so),
             _tokens(packOutputTokens),
           ),
           (
             'Razonamiento',
             generationReasoningPercent,
             reviewReasoningPercent,
-            sortReasoningPercent,
             totalReasoningPercent,
           ),
           (
             'Coste',
             _usd(lunaCost),
             _usd(reviewerCost),
-            _usd(sorterCost),
             _usd(packCost),
           ),
           (
             'Correcciones',
             '—',
             correctionLabel,
-            '—',
             '$correctionFields campos',
           ),
         ]);
