@@ -80,13 +80,13 @@ List<Quiz10ReviewedItem> applyQuiz10Review(
           case 'R':
             correct = change.value;
             break;
-          case 'a1':
+          case 'd1':
             distractors[0] = change.value;
             break;
-          case 'a2':
+          case 'd2':
             distractors[1] = change.value;
             break;
-          case 'a3':
+          case 'd3':
             distractors[2] = change.value;
             break;
         }
