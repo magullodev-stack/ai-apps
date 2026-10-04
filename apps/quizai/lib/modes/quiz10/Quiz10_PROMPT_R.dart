@@ -23,6 +23,12 @@ Aᵢ = ∅ ⇒ Qᵢ' = Qᵢ
 Aᵢ ≠ ∅ ⇒ Qᵢ' difiere de Qᵢ únicamente en sustituir cada a ∈ Aᵢ por un referente explícito inferido de Qᵢ,Oᵢ,Rᵢ.
 
 Cualquier otra modificación de Qᵢ está prohibida.
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
 ''';
 
 String quiz10ReviewItemLiteral(int number, Quiz10LunaRow row) => [
@@ -46,7 +52,7 @@ String quiz10ReviewInput(List<Quiz10LunaRow> rows) =>
 Map<String, Object?> quiz10ReviewSchema() => {
   'type': 'object',
   'additionalProperties': false,
-  'required': ['correcciones'],
+  'required': ['correcciones', 'Orden'],
   'properties': {
     'correcciones': {
       'type': 'array',
@@ -66,6 +72,13 @@ Map<String, Object?> quiz10ReviewSchema() => {
           },
           'valor': {'type': 'string'},
         },
+      },
+    },
+    'Orden': {
+      'type': 'array',
+      'items': {
+        'type': 'integer',
+        'enum': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
     },
   },
@@ -108,16 +121,19 @@ class Quiz10ReviewCall {
 class Quiz10ReviewResult {
   const Quiz10ReviewResult({
     required this.patches,
+    required this.order,
     required this.calls,
     required this.usage,
   });
 
   final List<Quiz10ReviewPatch> patches;
+  final List<int> order;
   final List<Quiz10ReviewCall> calls;
   final Map<String, dynamic>? usage;
 }
 
-List<Quiz10ReviewPatch> parseQuiz10ReviewOutput(String text) {
+({List<Quiz10ReviewPatch> patches, List<int> order})
+parseQuiz10ReviewOutput(String text) {
   dynamic decoded;
   try {
     decoded = jsonDecode(text);
@@ -126,9 +142,10 @@ List<Quiz10ReviewPatch> parseQuiz10ReviewOutput(String text) {
   }
 
   if (decoded is! Map<String, dynamic> ||
-      decoded['correcciones'] is! List) {
+      decoded['correcciones'] is! List ||
+      decoded['Orden'] is! List) {
     throw const FormatException(
-      'La revisión no conserva la estructura correcciones.',
+      'La revisión no conserva correcciones y Orden.',
     );
   }
 
@@ -166,14 +183,32 @@ List<Quiz10ReviewPatch> parseQuiz10ReviewOutput(String text) {
         );
   }
 
+  final rawOrder = decoded['Orden'] as List;
+  if (rawOrder.length != 10 || rawOrder.any((value) => value is! int)) {
+    throw const FormatException('Orden debe contener diez números.');
+  }
+
+  final order = [for (final value in rawOrder) value as int];
+  if (order.toSet().length != 10 ||
+      order.any((value) => value < 1 || value > 10)) {
+    throw const FormatException(
+      'Orden debe ser una permutación de 1 a 10.',
+    );
+  }
+
   final numbers = byNumber.keys.toList()..sort();
-  return List.unmodifiable([
+  final patches = List<Quiz10ReviewPatch>.unmodifiable([
     for (final number in numbers)
       Quiz10ReviewPatch(
         number: number,
         changes: List.unmodifiable(byNumber[number]!),
       ),
   ]);
+
+  return (
+    patches: patches,
+    order: List<int>.unmodifiable(order),
+  );
 }
 
 final class AiQuiz10Reviewer {
@@ -201,16 +236,17 @@ final class AiQuiz10Reviewer {
         )
         .timeout(const Duration(seconds: 120));
 
-    final patches = parseQuiz10ReviewOutput(response.text);
+    final parsed = parseQuiz10ReviewOutput(response.text);
     final call = Quiz10ReviewCall(
       input: input,
       rawText: response.text,
-      patches: patches,
+      patches: parsed.patches,
       usage: response.usage,
     );
 
     return Quiz10ReviewResult(
-      patches: patches,
+      patches: parsed.patches,
+      order: parsed.order,
       calls: List.unmodifiable([call]),
       usage: response.usage,
     );
