@@ -269,12 +269,21 @@ Future<void> main(List<String> args) async {
         final packInputTokens = li != null && ri != null ? li + ri : null;
         final packOutputTokens = lo != null && ro != null ? lo + ro : null;
         final packReasoningTokens = lr != null && rr != null ? lr + rr : null;
-        final packReasoningPercent =
-            packOutputTokens != null &&
-                    packOutputTokens > 0 &&
-                    packReasoningTokens != null
-                ? '${(packReasoningTokens * 100 / packOutputTokens).toStringAsFixed(1)}%'
-                : 'n/d';
+        final packTotalTokens =
+            packInputTokens != null && packOutputTokens != null
+                ? packInputTokens + packOutputTokens
+                : null;
+        final generationReasoningPercent = lo != null && lo > 0 && lr != null
+            ? '${(lr * 100 / lo).toStringAsFixed(1)}%'
+            : 'n/d';
+        final reviewReasoningPercent = ro != null && ro > 0 && rr != null
+            ? '${(rr * 100 / ro).toStringAsFixed(1)}%'
+            : 'n/d';
+        final correctionsSummary = result.review.patches.isEmpty
+            ? ''
+            : 'preguntas $questionCorrections, '
+                'respuestas $answerCorrections, '
+                'distractores $distractorCorrections';
 
         report.writeln(
           '========== TEST $test/$samples — '
@@ -361,17 +370,24 @@ Future<void> main(List<String> args) async {
         report.writeln();
         await report.flush();
 
+        final generationSeconds =
+            result.lunaDuration.inMilliseconds / 1000;
+        final reviewSeconds =
+            result.reviewDuration.inMilliseconds / 1000;
+        final generationReviewSeconds = generationSeconds + reviewSeconds;
+
         stdout.writeln(
           'Test $test/$samples | '
-          'Generación ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
-          'Revisión ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
-          'tokens: entrada ${_known(packInputTokens)}, '
-          'salida ${_known(packOutputTokens)}, '
-          'razonamiento ${_known(packReasoningTokens)} ($packReasoningPercent) | '
+          'G+R ${generationSeconds.toStringAsFixed(2)} s + '
+          '${reviewSeconds.toStringAsFixed(2)} s = '
+          '${generationReviewSeconds.toStringAsFixed(2)} s | '
+          'TOKENS: entrada ${_known(packInputTokens)} + '
+          'salida ${_known(packOutputTokens)} = ${_known(packTotalTokens)} '
+          '(razonamiento ${_known(packReasoningTokens)}) | '
+          '% Razonamiento G/R: $generationReasoningPercent / '
+          '$reviewReasoningPercent | '
           'coste pack ${_usd(packCost)} | '
-          'correcciones: preguntas $questionCorrections, '
-          'respuestas $answerCorrections, '
-          'distractores $distractorCorrections',
+          'Correcciones: $correctionsSummary',
         );
       } catch (error) {
         totalWatch.stop();
