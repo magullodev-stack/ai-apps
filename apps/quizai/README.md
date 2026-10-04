@@ -111,7 +111,7 @@ activo. El archivo de selección es local y no se publica en Git.
 ## Generación Quiz10: Luna → Luna revisor → Dart
 
 El catálogo canónico se encuentra en
-`lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 28 dimensiones activas expresadas como instrucciones directas. Se conservan sus códigos originales; D27, D28, D29, D31, D32 y D33 están retiradas.
+`lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34 dimensiones D01–D34 expresadas como instrucciones directas.
 
 Cada Quiz10 selecciona diez P distintas y diez D distintas. Luna recibe diez
 unidades independientes y simultáneas:
