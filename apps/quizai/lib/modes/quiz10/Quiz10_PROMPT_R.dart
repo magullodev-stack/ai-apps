@@ -194,53 +194,6 @@ Quiz10ReviewResult parseQuiz10ReviewOutput(
   );
 }
 
-String _reviewedSourceValue(
-  Quiz10LunaRow row,
-  String field,
-) {
-  return switch (field) {
-    'Q' => row.question,
-    'R' => row.correct,
-    'd1' => row.distractors[0],
-    'd2' => row.distractors[1],
-    'd3' => row.distractors[2],
-    _ => throw ArgumentError.value(field, 'field'),
-  };
-}
-
-Quiz10ReviewResult _withoutNoOpChanges(
-  Quiz10ReviewResult review,
-  List<Quiz10LunaRow> rows,
-) {
-  final patches = <Quiz10ReviewPatch>[];
-
-  for (final patch in review.patches) {
-    final row = rows[patch.number - 1];
-    final changes = [
-      for (final change in patch.changes)
-        if (change.value.trim() !=
-            _reviewedSourceValue(row, change.field).trim())
-          change,
-    ];
-
-    if (changes.isNotEmpty) {
-      patches.add(
-        Quiz10ReviewPatch(
-          number: patch.number,
-          changes: List.unmodifiable(changes),
-        ),
-      );
-    }
-  }
-
-  return Quiz10ReviewResult(
-    order: review.order,
-    patches: List.unmodifiable(patches),
-    rawText: review.rawText,
-    usage: review.usage,
-  );
-}
-
 final class AiQuiz10Reviewer {
   AiQuiz10Reviewer({
     required this.client,
@@ -261,10 +214,9 @@ final class AiQuiz10Reviewer {
         )
         .timeout(const Duration(seconds: 120));
 
-    final review = parseQuiz10ReviewOutput(
+    return parseQuiz10ReviewOutput(
       response.text,
       usage: response.usage,
     );
-    return _withoutNoOpChanges(review, rows);
   }
 }
