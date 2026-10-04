@@ -335,10 +335,6 @@ Future<void> main(List<String> args) async {
 
         final packInputTokens = li != null && ri != null ? li + ri : null;
         final packOutputTokens = lo != null && ro != null ? lo + ro : null;
-        final packTotalTokens =
-            packInputTokens != null && packOutputTokens != null
-                ? packInputTokens + packOutputTokens
-                : null;
         final generationReasoningPercent = lo != null && lo > 0 && lr != null
             ? '${(lr * 100 / lo).toStringAsFixed(1)}%'
             : 'n/d';
@@ -611,11 +607,7 @@ Future<void> main(List<String> args) async {
         : reviewDurations.reduce((a, b) => a + b) /
             reviewDurations.length /
             1000;
-    final meanTotalSeconds = totalDurations.isEmpty
-        ? 0.0
-        : totalDurations.reduce((a, b) => a + b) /
-            totalDurations.length /
-            1000;
+    final meanTotalSeconds = meanGSeconds + meanRSeconds;
 
     final gCostPerTest = lunaPricedTests == 0
         ? null
