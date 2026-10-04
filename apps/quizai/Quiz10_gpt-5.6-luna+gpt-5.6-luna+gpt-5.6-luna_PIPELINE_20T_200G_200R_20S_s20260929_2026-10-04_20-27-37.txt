@@ -1,0 +1,2189 @@
+AUDITORÍA QUIZ10 — PIPELINE G → R → S → DART
+Fecha: 2026-10-04 20:27:37.571224
+G: gpt-5.6-luna
+R: gpt-5.6-luna
+S: gpt-5.6-luna
+Ejecución por test: 10 llamadas G simultáneas, 10 revisiones R simultáneas, 1 ordenación global S, aplicación de orden y shuffle en Dart.
+Semilla: 20260929 | Tests: 20 | Llamadas G: 200 | Llamadas R: 200 | Llamadas S: 20.
+
+========== TEST 1/20 — 27.46 s (G 11.32 s + R 12.52 s + S 3.61 s) ==========
+
+--- SALIDA G ---
+1. P07 D15 | F: Immanuel Kant publicó los Prolegómenos a toda metafísica futura en 1783, después de la primera edición de la Crítica de la razón pura. | Q: ¿Qué obra publicó Kant inmediatamente después de la Crítica de la razón pura? | O: 1=Fundamentación de la metafísica de las costumbres / 2=Prolegómenos a toda metafísica futura / 3=Crítica de la razón práctica / 4=La religión dentro de los límites de la mera razón | C: 2 | R: Prolegómenos a toda metafísica futura
+2. P04 D02 | F: Los eritrocitos humanos maduros carecen de núcleo celular. | Q: ¿Qué característica poseen los eritrocitos humanos maduros? | O: 1=Tienen un núcleo definido / 2=Carecen de núcleo celular / 3=Presentan una pared celular rígida / 4=Contienen cloroplastos | C: 2 | R: Carecen de núcleo celular
+3. P16 D01 | F: El triángulo es el polígono con el menor número de lados posible. | Q: ¿Qué polígono posee el menor número de lados posible? | O: 1=Cuadrado / 2=Pentágono / 3=Triángulo / 4=Hexágono | C: 3 | R: Triángulo
+4. P08 D04 | F: La ballena azul es el animal más grande conocido. | Q: ¿A qué clase de animales pertenece la ballena azul? | O: 1=Peces / 2=Reptiles / 3=Mamíferos / 4=Anfibios | C: 3 | R: Mamíferos
+5. P15 D06 | F: La Divina comedia de Dante está organizada en tres partes principales: Infierno, Purgatorio y Paraíso. | Q: ¿Qué parte aparece primero en la estructura de la Divina comedia? | O: 1=Infierno / 2=Purgatorio / 3=Paraíso / 4=Epílogo | C: 1 | R: Infierno
+6. P14 D09 | F: Durante la misión Apolo 11, Neil Armstrong y Buzz Aldrin caminaron sobre la Luna en 1969. | Q: ¿Qué astronauta caminó sobre la Luna junto con Neil Armstrong durante la misión Apolo 11? | O: 1=Buzz Aldrin / 2=Michael Collins / 3=Yuri Gagarin / 4=John Glenn | C: 1 | R: Buzz Aldrin
+7. P05 D11 | F: La sede principal de la Organización de las Naciones Unidas se encuentra en Nueva York. | Q: ¿Qué organización internacional tiene su sede principal en Nueva York? | O: 1=Organización Mundial del Comercio / 2=Organización de las Naciones Unidas / 3=Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura / 4=Organización del Tratado del Atlántico Norte | C: 2 | R: Organización de las Naciones Unidas
+8. P09 D10 | F: El sushi es una preparación culinaria originaria de Japón. | Q: ¿En qué país se originó el sushi? | O: 1=Japón / 2=China / 3=Corea del Sur / 4=Tailandia | C: 1 | R: Japón
+9. P12 D29 | F: En 1543, Nicolás Copérnico publicó una obra que defendía un modelo heliocéntrico del universo. | Q: Según la propuesta de Nicolás Copérnico, ¿qué posición ocupaba la Tierra respecto del sistema planetario? | O: 1=Era el centro inmóvil de las órbitas celestes. / 2=Era un planeta que giraba alrededor del Sol. / 3=Era una esfera situada fuera del sistema planetario. / 4=Era el límite fijo de la región celeste. | C: 2 | R: Era un planeta que giraba alrededor del Sol.
+10. P03 D26 | F: Carl Sagan creó y presentó la serie de divulgación científica Cosmos. | Q: ¿Qué serie televisiva de divulgación astronómica creó Carl Sagan? | O: 1=Nova / 2=Cosmos / 3=The Universe / 4=Wonders of the Universe | C: 2 | R: Cosmos
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := P: Filosofía
+I_D: Pregunta qué acontecimiento, etapa o entidad precedió o sucedió inmediatamente a otro dentro de una secuencia temporal establecida.
+Q: ¿Qué obra publicó Kant inmediatamente después de la Crítica de la razón pura?
+R: Prolegómenos a toda metafísica futura
+d1: Fundamentación de la metafísica de las costumbres
+d2: Crítica de la razón práctica
+d3: La religión dentro de los límites de la mera razón
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R2]
+t := P: Biología
+I_D: Pregunta qué característica descriptiva o constitutiva posee algo.
+Q: ¿Qué característica poseen los eritrocitos humanos maduros?
+R: Carecen de núcleo celular
+d1: Tienen un núcleo definido
+d2: Presentan una pared celular rígida
+d3: Contienen cloroplastos
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R3]
+t := P: Matemáticas
+I_D: Pregunta qué posee una característica descriptiva o constitutiva determinada.
+Q: ¿Qué polígono posee el menor número de lados posible?
+R: Triángulo
+d1: Cuadrado
+d2: Pentágono
+d3: Hexágono
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R4]
+t := P: Física
+I_D: Pregunta a qué clase, categoría, grupo o conjunto pertenece algo.
+Q: ¿A qué clase de animales pertenece la ballena azul?
+R: Mamíferos
+d1: Peces
+d2: Reptiles
+d3: Anfibios
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R5]
+t := P: Literatura
+I_D: Pregunta qué elemento ocupa un extremo o posición destacada dentro de una comparación o clasificación bien definida.
+Q: ¿Qué parte aparece primero en la estructura de la Divina comedia?
+R: Infierno
+d1: Purgatorio
+d2: Paraíso
+d3: Epílogo
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R6]
+t := P: Lingüística
+I_D: Pregunta quién o qué participó junto con alguien o algo en una actividad o acontecimiento.
+Q: ¿Qué astronauta caminó sobre la Luna junto con Neil Armstrong durante la misión Apolo 11?
+R: Buzz Aldrin
+d1: Michael Collins
+d2: Yuri Gagarin
+d3: John Glenn
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R7]
+t := P: Derecho
+I_D: Pregunta qué entidad, hecho o acontecimiento corresponde a un lugar determinado.
+Q: ¿Qué organización internacional tiene su sede principal en Nueva York?
+R: Organización de las Naciones Unidas
+d1: Organización Mundial del Comercio
+d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura
+d3: Organización del Tratado del Atlántico Norte
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R8]
+t := P: Gastronomía
+I_D: Pregunta dónde se encuentra, ocurre, nace, se desarrolla o tiene lugar algo.
+Q: ¿En qué país se originó el sushi?
+R: Japón
+d1: China
+d2: Corea del Sur
+d3: Tailandia
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R9]
+t := P: Historia
+I_D: Pregunta qué concepción documentada sostiene alguien sobre un objeto o fenómeno.
+Q: Según la propuesta de Nicolás Copérnico, ¿qué posición ocupaba la Tierra respecto del sistema planetario?
+R: Era un planeta que giraba alrededor del Sol.
+d1: Era el centro inmóvil de las órbitas celestes.
+d2: Era una esfera situada fuera del sistema planetario.
+d3: Era el límite fijo de la región celeste.
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R10]
+t := P: Astronomía
+I_D: Pregunta qué obra, invención o contenido creó alguien.
+Q: ¿Qué serie televisiva de divulgación astronómica creó Carl Sagan?
+R: Cosmos
+d1: Nova
+d2: The Universe
+d3: Wonders of the Universe
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[{"campo":"Q","valor":"Según la propuesta de Nicolás Copérnico, ¿qué papel asignaba a la Tierra?"}]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+9.Q
+  G: Según la propuesta de Nicolás Copérnico, ¿qué posición ocupaba la Tierra respecto del sistema planetario?
+  R: Según la propuesta de Nicolás Copérnico, ¿qué papel asignaba a la Tierra?
+
+--- TEST TRAS R ---
+1. Q: ¿Qué obra publicó Kant inmediatamente después de la Crítica de la razón pura? | R: Prolegómenos a toda metafísica futura | d1: Fundamentación de la metafísica de las costumbres | d2: Crítica de la razón práctica | d3: La religión dentro de los límites de la mera razón
+2. Q: ¿Qué característica poseen los eritrocitos humanos maduros? | R: Carecen de núcleo celular | d1: Tienen un núcleo definido | d2: Presentan una pared celular rígida | d3: Contienen cloroplastos
+3. Q: ¿Qué polígono posee el menor número de lados posible? | R: Triángulo | d1: Cuadrado | d2: Pentágono | d3: Hexágono
+4. Q: ¿A qué clase de animales pertenece la ballena azul? | R: Mamíferos | d1: Peces | d2: Reptiles | d3: Anfibios
+5. Q: ¿Qué parte aparece primero en la estructura de la Divina comedia? | R: Infierno | d1: Purgatorio | d2: Paraíso | d3: Epílogo
+6. Q: ¿Qué astronauta caminó sobre la Luna junto con Neil Armstrong durante la misión Apolo 11? | R: Buzz Aldrin | d1: Michael Collins | d2: Yuri Gagarin | d3: John Glenn
+7. Q: ¿Qué organización internacional tiene su sede principal en Nueva York? | R: Organización de las Naciones Unidas | d1: Organización Mundial del Comercio | d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura | d3: Organización del Tratado del Atlántico Norte
+8. Q: ¿En qué país se originó el sushi? | R: Japón | d1: China | d2: Corea del Sur | d3: Tailandia
+9. Q: Según la propuesta de Nicolás Copérnico, ¿qué papel asignaba a la Tierra? | R: Era un planeta que giraba alrededor del Sol. | d1: Era el centro inmóvil de las órbitas celestes. | d2: Era una esfera situada fuera del sistema planetario. | d3: Era el límite fijo de la región celeste.
+10. Q: ¿Qué serie televisiva de divulgación astronómica creó Carl Sagan? | R: Cosmos | d1: Nova | d2: The Universe | d3: Wonders of the Universe
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué obra publicó Kant inmediatamente después de la Crítica de la razón pura?
+R: Prolegómenos a toda metafísica futura
+d1: Fundamentación de la metafísica de las costumbres
+d2: Crítica de la razón práctica
+d3: La religión dentro de los límites de la mera razón
+
+2.
+Q: ¿Qué característica poseen los eritrocitos humanos maduros?
+R: Carecen de núcleo celular
+d1: Tienen un núcleo definido
+d2: Presentan una pared celular rígida
+d3: Contienen cloroplastos
+
+3.
+Q: ¿Qué polígono posee el menor número de lados posible?
+R: Triángulo
+d1: Cuadrado
+d2: Pentágono
+d3: Hexágono
+
+4.
+Q: ¿A qué clase de animales pertenece la ballena azul?
+R: Mamíferos
+d1: Peces
+d2: Reptiles
+d3: Anfibios
+
+5.
+Q: ¿Qué parte aparece primero en la estructura de la Divina comedia?
+R: Infierno
+d1: Purgatorio
+d2: Paraíso
+d3: Epílogo
+
+6.
+Q: ¿Qué astronauta caminó sobre la Luna junto con Neil Armstrong durante la misión Apolo 11?
+R: Buzz Aldrin
+d1: Michael Collins
+d2: Yuri Gagarin
+d3: John Glenn
+
+7.
+Q: ¿Qué organización internacional tiene su sede principal en Nueva York?
+R: Organización de las Naciones Unidas
+d1: Organización Mundial del Comercio
+d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura
+d3: Organización del Tratado del Atlántico Norte
+
+8.
+Q: ¿En qué país se originó el sushi?
+R: Japón
+d1: China
+d2: Corea del Sur
+d3: Tailandia
+
+9.
+Q: Según la propuesta de Nicolás Copérnico, ¿qué papel asignaba a la Tierra?
+R: Era un planeta que giraba alrededor del Sol.
+d1: Era el centro inmóvil de las órbitas celestes.
+d2: Era una esfera situada fuera del sistema planetario.
+d3: Era el límite fijo de la región celeste.
+
+10.
+Q: ¿Qué serie televisiva de divulgación astronómica creó Carl Sagan?
+R: Cosmos
+d1: Nova
+d2: The Universe
+d3: Wonders of the Universe
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[2,3,4,6,8,10,7,5,9,1]}
+
+--- ORDEN S ---
+[2, 3, 4, 6, 8, 10, 7, 5, 9, 1]
+
+--- TEST TRAS R Y S ---
+1. [original 2] Q: ¿Qué característica poseen los eritrocitos humanos maduros? | R: Carecen de núcleo celular | d1: Tienen un núcleo definido | d2: Presentan una pared celular rígida | d3: Contienen cloroplastos
+2. [original 3] Q: ¿Qué polígono posee el menor número de lados posible? | R: Triángulo | d1: Cuadrado | d2: Pentágono | d3: Hexágono
+3. [original 4] Q: ¿A qué clase de animales pertenece la ballena azul? | R: Mamíferos | d1: Peces | d2: Reptiles | d3: Anfibios
+4. [original 6] Q: ¿Qué astronauta caminó sobre la Luna junto con Neil Armstrong durante la misión Apolo 11? | R: Buzz Aldrin | d1: Michael Collins | d2: Yuri Gagarin | d3: John Glenn
+5. [original 8] Q: ¿En qué país se originó el sushi? | R: Japón | d1: China | d2: Corea del Sur | d3: Tailandia
+6. [original 10] Q: ¿Qué serie televisiva de divulgación astronómica creó Carl Sagan? | R: Cosmos | d1: Nova | d2: The Universe | d3: Wonders of the Universe
+7. [original 7] Q: ¿Qué organización internacional tiene su sede principal en Nueva York? | R: Organización de las Naciones Unidas | d1: Organización Mundial del Comercio | d2: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura | d3: Organización del Tratado del Atlántico Norte
+8. [original 5] Q: ¿Qué parte aparece primero en la estructura de la Divina comedia? | R: Infierno | d1: Purgatorio | d2: Paraíso | d3: Epílogo
+9. [original 9] Q: Según la propuesta de Nicolás Copérnico, ¿qué papel asignaba a la Tierra? | R: Era un planeta que giraba alrededor del Sol. | d1: Era el centro inmóvil de las órbitas celestes. | d2: Era una esfera situada fuera del sistema planetario. | d3: Era el límite fijo de la región celeste.
+10. [original 1] Q: ¿Qué obra publicó Kant inmediatamente después de la Crítica de la razón pura? | R: Prolegómenos a toda metafísica futura | d1: Fundamentación de la metafísica de las costumbres | d2: Crítica de la razón práctica | d3: La religión dentro de los límites de la mera razón
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué característica poseen los eritrocitos humanos maduros? | R: Carecen de núcleo celular | O: Contienen cloroplastos / Carecen de núcleo celular / Presentan una pared celular rígida / Tienen un núcleo definido
+2. ¿Qué polígono posee el menor número de lados posible? | R: Triángulo | O: Hexágono / Cuadrado / Pentágono / Triángulo
+3. ¿A qué clase de animales pertenece la ballena azul? | R: Mamíferos | O: Peces / Reptiles / Mamíferos / Anfibios
+4. ¿Qué astronauta caminó sobre la Luna junto con Neil Armstrong durante la misión Apolo 11? | R: Buzz Aldrin | O: Yuri Gagarin / John Glenn / Michael Collins / Buzz Aldrin
+5. ¿En qué país se originó el sushi? | R: Japón | O: China / Tailandia / Japón / Corea del Sur
+6. ¿Qué serie televisiva de divulgación astronómica creó Carl Sagan? | R: Cosmos | O: Cosmos / The Universe / Wonders of the Universe / Nova
+7. ¿Qué organización internacional tiene su sede principal en Nueva York? | R: Organización de las Naciones Unidas | O: Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura / Organización de las Naciones Unidas / Organización del Tratado del Atlántico Norte / Organización Mundial del Comercio
+8. ¿Qué parte aparece primero en la estructura de la Divina comedia? | R: Infierno | O: Paraíso / Epílogo / Purgatorio / Infierno
+9. Según la propuesta de Nicolás Copérnico, ¿qué papel asignaba a la Tierra? | R: Era un planeta que giraba alrededor del Sol. | O: Era el centro inmóvil de las órbitas celestes. / Era un planeta que giraba alrededor del Sol. / Era el límite fijo de la región celeste. / Era una esfera situada fuera del sistema planetario.
+10. ¿Qué obra publicó Kant inmediatamente después de la Crítica de la razón pura? | R: Prolegómenos a toda metafísica futura | O: Crítica de la razón práctica / Prolegómenos a toda metafísica futura / La religión dentro de los límites de la mera razón / Fundamentación de la metafísica de las costumbres
+
+USO TEST 1 | G: entrada 3555, salida 5258, razonamiento 4194, coste USD 0.007021 | R: entrada 2944, salida 2536, razonamiento 2330, coste USD 0.003632 | S: entrada 629, salida 254, razonamiento 220, coste USD 0.000431
+
+========== TEST 2/20 — 19.54 s (G 9.93 s + R 5.00 s + S 4.61 s) ==========
+
+--- SALIDA G ---
+1. P17 D30 | F: En 1847, el lavado de manos con una solución clorada por parte de los médicos redujo notablemente la mortalidad por fiebre puerperal. | Q: ¿Qué hipótesis quedó respaldada por la reducción de la fiebre puerperal tras imponer el lavado de manos con una solución clorada? | O: 1=Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos / 2=Que la enfermedad se debía principalmente a una alteración hereditaria de las pacientes / 3=Que la enfermedad aparecía por la falta de oxígeno en las salas hospitalarias / 4=Que la enfermedad era causada por cambios bruscos en la alimentación | C: 1 | R: Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos
+2. P13 D07 | F: El modelo OSI organiza la comunicación de red en siete capas. | Q: En el modelo de interconexión de sistemas abiertos (OSI), ¿qué capa ocupa la cuarta posición desde abajo? | O: 1=Aplicación / 2=Red / 3=Transporte / 4=Sesión | C: 3 | R: Transporte
+3. P01 D08 | F: Antoni Gaudí diseñó la Sagrada Familia de Barcelona. | Q: ¿Qué profesión ejercía Antoni Gaudí? | O: 1=Arquitecto / 2=Escultor / 3=Compositor / 4=Astrónomo | C: 1 | R: Arquitecto
+4. P05 D13 | F: La Declaración Universal de los Derechos Humanos fue adoptada por la Asamblea General de las Naciones Unidas el 10 de diciembre de 1948. | Q: ¿Qué acontecimiento tuvo lugar el 10 de diciembre de 1948? | O: 1=Entrada en vigor del Tratado de Roma / 2=Creación de la Organización Mundial de la Salud / 3=Adopción de la Declaración Universal de los Derechos Humanos / 4=Firma del Tratado de Maastricht | C: 3 | R: Adopción de la Declaración Universal de los Derechos Humanos
+5. P04 D10 | F: La fotosíntesis ocurre principalmente en los cloroplastos de las células vegetales. | Q: ¿Dónde tiene lugar principalmente la fotosíntesis en las células vegetales? | O: 1=En las mitocondrias / 2=En los cloroplastos / 3=En el núcleo / 4=En los ribosomas | C: 2 | R: En los cloroplastos
+6. P16 D28 | F: La geometría euclidiana estudia las propiedades de las figuras y las relaciones espaciales en el plano. | Q: ¿Qué objeto aborda la geometría euclidiana? | O: 1=Las figuras y relaciones espaciales del plano / 2=La evolución de las especies biológicas / 3=La composición química de las sustancias / 4=El comportamiento de los mercados financieros | C: 1 | R: Las figuras y relaciones espaciales del plano
+7. P19 D04 | F: El oxígeno está formado únicamente por átomos de oxígeno. | Q: ¿A qué categoría de la materia pertenece el oxígeno? | O: 1=Elemento químico / 2=Compuesto químico / 3=Mezcla homogénea / 4=Mezcla heterogénea | C: 1 | R: Elemento químico
+8. P09 D14 | F: Coca-Cola se creó en 1886. | Q: ¿Cuál de estas bebidas se introdujo primero? | O: 1=Coca-Cola / 2=Fanta / 3=Red Bull / 4=Pepsi | C: 1 | R: Coca-Cola
+9. P03 D34 | F: Los astrónomos estudian cuerpos celestes mediante la luz que emiten o reflejan. | Q: ¿Qué instrumento se utiliza principalmente para observar visualmente objetos celestes lejanos? | O: 1=Espectrómetro / 2=Telescopio / 3=Fotómetro / 4=Astrolabio | C: 2 | R: Telescopio
+10. P07 D15 | F: Aristóteles fue discípulo de Platón. | Q: ¿Qué filósofo fue maestro de Aristóteles, precediéndolo inmediatamente en la sucesión maestro-discípulo? | O: 1=Platón / 2=Sócrates / 3=Epicuro / 4=Zenón de Citio | C: 1 | R: Platón
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := P: Medicina
+I_D: Pregunta qué afirmación o hipótesis fue apoyada, refutada o puesta a prueba mediante unas evidencias o un procedimiento concreto.
+Q: ¿Qué hipótesis quedó respaldada por la reducción de la fiebre puerperal tras imponer el lavado de manos con una solución clorada?
+R: Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos
+d1: Que la enfermedad se debía principalmente a una alteración hereditaria de las pacientes
+d2: Que la enfermedad aparecía por la falta de oxígeno en las salas hospitalarias
+d3: Que la enfermedad era causada por cambios bruscos en la alimentación
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R2]
+t := P: Informática
+I_D: Pregunta qué ocupa una posición o relación estructural dentro de una configuración.
+Q: En el modelo de interconexión de sistemas abiertos (OSI), ¿qué capa ocupa la cuarta posición desde abajo?
+R: Transporte
+d1: Aplicación
+d2: Red
+d3: Sesión
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R3]
+t := P: Arquitectura
+I_D: Pregunta qué cargo, función, título, condición o identidad corresponde a una persona o entidad.
+Q: ¿Qué profesión ejercía Antoni Gaudí?
+R: Arquitecto
+d1: Escultor
+d2: Compositor
+d3: Astrónomo
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R4]
+t := P: Derecho
+I_D: Pregunta qué hecho o acontecimiento corresponde a una fecha o periodo determinado.
+Q: ¿Qué acontecimiento tuvo lugar el 10 de diciembre de 1948?
+R: Adopción de la Declaración Universal de los Derechos Humanos
+d1: Entrada en vigor del Tratado de Roma
+d2: Creación de la Organización Mundial de la Salud
+d3: Firma del Tratado de Maastricht
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R5]
+t := P: Biología
+I_D: Pregunta dónde se encuentra, ocurre, nace, se desarrolla o tiene lugar algo.
+Q: ¿Dónde tiene lugar principalmente la fotosíntesis en las células vegetales?
+R: En los cloroplastos
+d1: En las mitocondrias
+d2: En el núcleo
+d3: En los ribosomas
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R6]
+t := P: Matemáticas
+I_D: Pregunta qué objeto, fenómeno o cuestión aborda o explica una teoría, modelo, hipótesis o concepción.
+Q: ¿Qué objeto aborda la geometría euclidiana?
+R: Las figuras y relaciones espaciales del plano
+d1: La evolución de las especies biológicas
+d2: La composición química de las sustancias
+d3: El comportamiento de los mercados financieros
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R7]
+t := P: Química
+I_D: Pregunta a qué clase, categoría, grupo o conjunto pertenece algo.
+Q: ¿A qué categoría de la materia pertenece el oxígeno?
+R: Elemento químico
+d1: Compuesto químico
+d2: Mezcla homogénea
+d3: Mezcla heterogénea
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R8]
+t := P: Gastronomía
+I_D: Pregunta cuál de varios acontecimientos ocurrió primero o cuál ocurrió más recientemente.
+Q: ¿Cuál de estas bebidas se introdujo primero?
+R: Coca-Cola
+d1: Fanta
+d2: Red Bull
+d3: Pepsi
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R9]
+t := P: Astronomía
+I_D: Pregunta con qué instrumento o medio se ejecuta una intervención.
+Q: ¿Qué instrumento se utiliza principalmente para observar visualmente objetos celestes lejanos?
+R: Telescopio
+d1: Espectrómetro
+d2: Fotómetro
+d3: Astrolabio
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R10]
+t := P: Filosofía
+I_D: Pregunta qué acontecimiento, etapa o entidad precedió o sucedió inmediatamente a otro dentro de una secuencia temporal establecida.
+Q: ¿Qué filósofo fue maestro de Aristóteles, precediéndolo inmediatamente en la sucesión maestro-discípulo?
+R: Platón
+d1: Sócrates
+d2: Epicuro
+d3: Zenón de Citio
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[{"campo":"Q","valor":"¿Qué hipótesis quedó respaldada por la notable disminución de la fiebre puerperal tras introducir una intervención preventiva?"}]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[{"campo":"Q","valor":"¿Qué profesión de la arquitectura ejercía Antoni Gaudí?"}]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+1.Q
+  G: ¿Qué hipótesis quedó respaldada por la reducción de la fiebre puerperal tras imponer el lavado de manos con una solución clorada?
+  R: ¿Qué hipótesis quedó respaldada por la notable disminución de la fiebre puerperal tras introducir una intervención preventiva?
+3.Q
+  G: ¿Qué profesión ejercía Antoni Gaudí?
+  R: ¿Qué profesión de la arquitectura ejercía Antoni Gaudí?
+
+--- TEST TRAS R ---
+1. Q: ¿Qué hipótesis quedó respaldada por la notable disminución de la fiebre puerperal tras introducir una intervención preventiva? | R: Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos | d1: Que la enfermedad se debía principalmente a una alteración hereditaria de las pacientes | d2: Que la enfermedad aparecía por la falta de oxígeno en las salas hospitalarias | d3: Que la enfermedad era causada por cambios bruscos en la alimentación
+2. Q: En el modelo de interconexión de sistemas abiertos (OSI), ¿qué capa ocupa la cuarta posición desde abajo? | R: Transporte | d1: Aplicación | d2: Red | d3: Sesión
+3. Q: ¿Qué profesión de la arquitectura ejercía Antoni Gaudí? | R: Arquitecto | d1: Escultor | d2: Compositor | d3: Astrónomo
+4. Q: ¿Qué acontecimiento tuvo lugar el 10 de diciembre de 1948? | R: Adopción de la Declaración Universal de los Derechos Humanos | d1: Entrada en vigor del Tratado de Roma | d2: Creación de la Organización Mundial de la Salud | d3: Firma del Tratado de Maastricht
+5. Q: ¿Dónde tiene lugar principalmente la fotosíntesis en las células vegetales? | R: En los cloroplastos | d1: En las mitocondrias | d2: En el núcleo | d3: En los ribosomas
+6. Q: ¿Qué objeto aborda la geometría euclidiana? | R: Las figuras y relaciones espaciales del plano | d1: La evolución de las especies biológicas | d2: La composición química de las sustancias | d3: El comportamiento de los mercados financieros
+7. Q: ¿A qué categoría de la materia pertenece el oxígeno? | R: Elemento químico | d1: Compuesto químico | d2: Mezcla homogénea | d3: Mezcla heterogénea
+8. Q: ¿Cuál de estas bebidas se introdujo primero? | R: Coca-Cola | d1: Fanta | d2: Red Bull | d3: Pepsi
+9. Q: ¿Qué instrumento se utiliza principalmente para observar visualmente objetos celestes lejanos? | R: Telescopio | d1: Espectrómetro | d2: Fotómetro | d3: Astrolabio
+10. Q: ¿Qué filósofo fue maestro de Aristóteles, precediéndolo inmediatamente en la sucesión maestro-discípulo? | R: Platón | d1: Sócrates | d2: Epicuro | d3: Zenón de Citio
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué hipótesis quedó respaldada por la notable disminución de la fiebre puerperal tras introducir una intervención preventiva?
+R: Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos
+d1: Que la enfermedad se debía principalmente a una alteración hereditaria de las pacientes
+d2: Que la enfermedad aparecía por la falta de oxígeno en las salas hospitalarias
+d3: Que la enfermedad era causada por cambios bruscos en la alimentación
+
+2.
+Q: En el modelo de interconexión de sistemas abiertos (OSI), ¿qué capa ocupa la cuarta posición desde abajo?
+R: Transporte
+d1: Aplicación
+d2: Red
+d3: Sesión
+
+3.
+Q: ¿Qué profesión de la arquitectura ejercía Antoni Gaudí?
+R: Arquitecto
+d1: Escultor
+d2: Compositor
+d3: Astrónomo
+
+4.
+Q: ¿Qué acontecimiento tuvo lugar el 10 de diciembre de 1948?
+R: Adopción de la Declaración Universal de los Derechos Humanos
+d1: Entrada en vigor del Tratado de Roma
+d2: Creación de la Organización Mundial de la Salud
+d3: Firma del Tratado de Maastricht
+
+5.
+Q: ¿Dónde tiene lugar principalmente la fotosíntesis en las células vegetales?
+R: En los cloroplastos
+d1: En las mitocondrias
+d2: En el núcleo
+d3: En los ribosomas
+
+6.
+Q: ¿Qué objeto aborda la geometría euclidiana?
+R: Las figuras y relaciones espaciales del plano
+d1: La evolución de las especies biológicas
+d2: La composición química de las sustancias
+d3: El comportamiento de los mercados financieros
+
+7.
+Q: ¿A qué categoría de la materia pertenece el oxígeno?
+R: Elemento químico
+d1: Compuesto químico
+d2: Mezcla homogénea
+d3: Mezcla heterogénea
+
+8.
+Q: ¿Cuál de estas bebidas se introdujo primero?
+R: Coca-Cola
+d1: Fanta
+d2: Red Bull
+d3: Pepsi
+
+9.
+Q: ¿Qué instrumento se utiliza principalmente para observar visualmente objetos celestes lejanos?
+R: Telescopio
+d1: Espectrómetro
+d2: Fotómetro
+d3: Astrolabio
+
+10.
+Q: ¿Qué filósofo fue maestro de Aristóteles, precediéndolo inmediatamente en la sucesión maestro-discípulo?
+R: Platón
+d1: Sócrates
+d2: Epicuro
+d3: Zenón de Citio
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[3,5,9,7,10,6,2,4,8,1]}
+
+--- ORDEN S ---
+[3, 5, 9, 7, 10, 6, 2, 4, 8, 1]
+
+--- TEST TRAS R Y S ---
+1. [original 3] Q: ¿Qué profesión de la arquitectura ejercía Antoni Gaudí? | R: Arquitecto | d1: Escultor | d2: Compositor | d3: Astrónomo
+2. [original 5] Q: ¿Dónde tiene lugar principalmente la fotosíntesis en las células vegetales? | R: En los cloroplastos | d1: En las mitocondrias | d2: En el núcleo | d3: En los ribosomas
+3. [original 9] Q: ¿Qué instrumento se utiliza principalmente para observar visualmente objetos celestes lejanos? | R: Telescopio | d1: Espectrómetro | d2: Fotómetro | d3: Astrolabio
+4. [original 7] Q: ¿A qué categoría de la materia pertenece el oxígeno? | R: Elemento químico | d1: Compuesto químico | d2: Mezcla homogénea | d3: Mezcla heterogénea
+5. [original 10] Q: ¿Qué filósofo fue maestro de Aristóteles, precediéndolo inmediatamente en la sucesión maestro-discípulo? | R: Platón | d1: Sócrates | d2: Epicuro | d3: Zenón de Citio
+6. [original 6] Q: ¿Qué objeto aborda la geometría euclidiana? | R: Las figuras y relaciones espaciales del plano | d1: La evolución de las especies biológicas | d2: La composición química de las sustancias | d3: El comportamiento de los mercados financieros
+7. [original 2] Q: En el modelo de interconexión de sistemas abiertos (OSI), ¿qué capa ocupa la cuarta posición desde abajo? | R: Transporte | d1: Aplicación | d2: Red | d3: Sesión
+8. [original 4] Q: ¿Qué acontecimiento tuvo lugar el 10 de diciembre de 1948? | R: Adopción de la Declaración Universal de los Derechos Humanos | d1: Entrada en vigor del Tratado de Roma | d2: Creación de la Organización Mundial de la Salud | d3: Firma del Tratado de Maastricht
+9. [original 8] Q: ¿Cuál de estas bebidas se introdujo primero? | R: Coca-Cola | d1: Fanta | d2: Red Bull | d3: Pepsi
+10. [original 1] Q: ¿Qué hipótesis quedó respaldada por la notable disminución de la fiebre puerperal tras introducir una intervención preventiva? | R: Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos | d1: Que la enfermedad se debía principalmente a una alteración hereditaria de las pacientes | d2: Que la enfermedad aparecía por la falta de oxígeno en las salas hospitalarias | d3: Que la enfermedad era causada por cambios bruscos en la alimentación
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué profesión de la arquitectura ejercía Antoni Gaudí? | R: Arquitecto | O: Arquitecto / Astrónomo / Escultor / Compositor
+2. ¿Dónde tiene lugar principalmente la fotosíntesis en las células vegetales? | R: En los cloroplastos | O: En los ribosomas / En las mitocondrias / En el núcleo / En los cloroplastos
+3. ¿Qué instrumento se utiliza principalmente para observar visualmente objetos celestes lejanos? | R: Telescopio | O: Fotómetro / Astrolabio / Telescopio / Espectrómetro
+4. ¿A qué categoría de la materia pertenece el oxígeno? | R: Elemento químico | O: Mezcla homogénea / Compuesto químico / Mezcla heterogénea / Elemento químico
+5. ¿Qué filósofo fue maestro de Aristóteles, precediéndolo inmediatamente en la sucesión maestro-discípulo? | R: Platón | O: Epicuro / Sócrates / Platón / Zenón de Citio
+6. ¿Qué objeto aborda la geometría euclidiana? | R: Las figuras y relaciones espaciales del plano | O: La evolución de las especies biológicas / Las figuras y relaciones espaciales del plano / La composición química de las sustancias / El comportamiento de los mercados financieros
+7. En el modelo de interconexión de sistemas abiertos (OSI), ¿qué capa ocupa la cuarta posición desde abajo? | R: Transporte | O: Red / Sesión / Transporte / Aplicación
+8. ¿Qué acontecimiento tuvo lugar el 10 de diciembre de 1948? | R: Adopción de la Declaración Universal de los Derechos Humanos | O: Firma del Tratado de Maastricht / Entrada en vigor del Tratado de Roma / Adopción de la Declaración Universal de los Derechos Humanos / Creación de la Organización Mundial de la Salud
+9. ¿Cuál de estas bebidas se introdujo primero? | R: Coca-Cola | O: Pepsi / Coca-Cola / Red Bull / Fanta
+10. ¿Qué hipótesis quedó respaldada por la notable disminución de la fiebre puerperal tras introducir una intervención preventiva? | R: Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos | O: Que la enfermedad se transmitía mediante partículas infecciosas transportadas por las manos / Que la enfermedad aparecía por la falta de oxígeno en las salas hospitalarias / Que la enfermedad se debía principalmente a una alteración hereditaria de las pacientes / Que la enfermedad era causada por cambios bruscos en la alimentación
+
+USO TEST 2 | G: entrada 3604, salida 4697, razonamiento 3606, coste USD 0.006357 | R: entrada 2999, salida 2030, razonamiento 1797, coste USD 0.003036 | S: entrada 669, salida 305, razonamiento 271, coste USD 0.000500
+
+========== TEST 3/20 — 17.14 s (G 6.87 s + R 5.67 s + S 4.60 s) ==========
+
+--- SALIDA G ---
+1. P12 D29 | F: Karl Marx sostenía que la lucha de clases impulsaba el desarrollo histórico de las sociedades. | Q: ¿Qué factor consideraba Karl Marx fundamental para explicar el desarrollo de las sociedades? | O: 1=La lucha de clases / 2=La expansión de los océanos / 3=La sucesión de eclipses / 4=La rotación de los planetas | C: 1 | R: La lucha de clases
+2. P01 D26 | F: Antoni Gaudí diseñó la Casa Batlló en Barcelona. | Q: ¿Cuál de estas obras arquitectónicas diseñó Antoni Gaudí? | O: 1=Museo Guggenheim de Bilbao / 2=Casa de la Cascada / 3=Casa Batlló / 4=Edificio Seagram | C: 3 | R: Casa Batlló
+3. P02 D07 | F: Impresión, sol naciente es una obra de Claude Monet. | Q: Si se ordenan cronológicamente por año de creación las siguientes pinturas, ¿cuál ocupa el tercer lugar: Las meninas (1656), La libertad guiando al pueblo (1830), Impresión, sol naciente (1872) y Guernica (1937)? | O: 1=Las meninas / 2=La libertad guiando al pueblo / 3=Impresión, sol naciente / 4=Guernica | C: 3 | R: Impresión, sol naciente
+4. P10 D25 | F: En los mapas físicos, el color azul suele representar masas de agua. | Q: ¿Qué color representa convencionalmente los mares y lagos en los mapas físicos? | O: 1=Amarillo / 2=Azul / 3=Marrón / 4=Verde | C: 2 | R: Azul
+5. P08 D32 | F: Un rayo de luz cambia de dirección al pasar oblicuamente de un medio transparente a otro. | Q: ¿Qué situación puede hacer que un rayo de luz cambie de dirección? | O: 1=Propagarse por el vacío / 2=Pasar oblicuamente entre medios transparentes distintos / 3=Viajar en línea recta por un medio uniforme / 4=Mantener constante su frecuencia | C: 2 | R: Pasar oblicuamente entre medios transparentes distintos
+6. P13 D15 | F: Windows 98 sucedió inmediatamente a Windows 95 en la línea principal de sistemas operativos de Microsoft. | Q: ¿Qué sistema operativo precedió inmediatamente a Windows 98 en la línea principal de Microsoft? | O: 1=Windows 95 / 2=Windows 3.1 / 3=Windows Me / 4=Windows XP | C: 1 | R: Windows 95
+7. P07 D33 | F: Kant distinguió entre juicios analíticos y juicios sintéticos. | Q: Ante una pérdida inevitable, ¿qué respuesta recomendaría el estoicismo clásico? | O: 1=Buscar culpables para revertir el acontecimiento. / 2=Negar emocionalmente que la pérdida haya ocurrido. / 3=Distinguir lo controlable y aceptar lo que no depende de uno. / 4=Abandonar toda actividad hasta recuperar lo perdido. | C: 3 | R: Distinguir lo controlable y aceptar lo que no depende de uno.
+8. P05 D13 | F: La Carta de las Naciones Unidas fue firmada el 26 de junio de 1945. | Q: ¿Qué acontecimiento tuvo lugar el 26 de junio de 1945? | O: 1=Adopción del Tratado de Versalles / 2=Firma de la Carta de las Naciones Unidas / 3=Entrada en vigor del Pacto Internacional de Derechos Civiles y Políticos / 4=Creación de la Corte Penal Internacional | C: 2 | R: Firma de la Carta de las Naciones Unidas
+9. P17 D06 | F: La aorta es la arteria de mayor diámetro del cuerpo humano. | Q: ¿Cuál de las siguientes arterias tiene el mayor diámetro? | O: 1=Arteria pulmonar / 2=Arteria femoral / 3=Aorta / 4=Arteria carótida | C: 3 | R: Aorta
+10. P18 D02 | F: La memoria de trabajo permite mantener y manipular temporalmente información necesaria para realizar una tarea. | Q: ¿Cuál es una función característica de la memoria de trabajo? | O: 1=Almacenar recuerdos durante toda la vida / 2=Regular automáticamente el ritmo cardíaco / 3=Mantener y manipular información durante una tarea / 4=Producir respuestas reflejas ante estímulos | C: 3 | R: Mantener y manipular información durante una tarea
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := P: Historia
+I_D: Pregunta qué concepción documentada sostiene alguien sobre un objeto o fenómeno.
+Q: ¿Qué factor consideraba Karl Marx fundamental para explicar el desarrollo de las sociedades?
+R: La lucha de clases
+d1: La expansión de los océanos
+d2: La sucesión de eclipses
+d3: La rotación de los planetas
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R2]
+t := P: Arquitectura
+I_D: Pregunta qué obra, invención o contenido creó alguien.
+Q: ¿Cuál de estas obras arquitectónicas diseñó Antoni Gaudí?
+R: Casa Batlló
+d1: Museo Guggenheim de Bilbao
+d2: Casa de la Cascada
+d3: Edificio Seagram
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R3]
+t := P: Arte
+I_D: Pregunta qué ocupa una posición o relación estructural dentro de una configuración.
+Q: Si se ordenan cronológicamente por año de creación las siguientes pinturas, ¿cuál ocupa el tercer lugar: Las meninas (1656), La libertad guiando al pueblo (1830), Impresión, sol naciente (1872) y Guernica (1937)?
+R: Impresión, sol naciente
+d1: Las meninas
+d2: La libertad guiando al pueblo
+d3: Guernica
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R4]
+t := P: Geografía
+I_D: Pregunta qué signo, símbolo o código representa convencionalmente un significado o referente.
+Q: ¿Qué color representa convencionalmente los mares y lagos en los mapas físicos?
+R: Azul
+d1: Amarillo
+d2: Marrón
+d3: Verde
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R5]
+t := P: Física
+I_D: Pregunta qué estímulo, acción, situación o condición provoca una respuesta determinada.
+Q: ¿Qué situación puede hacer que un rayo de luz cambie de dirección?
+R: Pasar oblicuamente entre medios transparentes distintos
+d1: Propagarse por el vacío
+d2: Viajar en línea recta por un medio uniforme
+d3: Mantener constante su frecuencia
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R6]
+t := P: Informática
+I_D: Pregunta qué acontecimiento, etapa o entidad precedió o sucedió inmediatamente a otro dentro de una secuencia temporal establecida.
+Q: ¿Qué sistema operativo precedió inmediatamente a Windows 98 en la línea principal de Microsoft?
+R: Windows 95
+d1: Windows 3.1
+d2: Windows Me
+d3: Windows XP
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R7]
+t := P: Filosofía
+I_D: Pregunta cómo responde un sistema o una persona ante un estímulo, conducta, solicitud o contenido.
+Q: Ante una pérdida inevitable, ¿qué respuesta recomendaría el estoicismo clásico?
+R: Distinguir lo controlable y aceptar lo que no depende de uno.
+d1: Buscar culpables para revertir el acontecimiento.
+d2: Negar emocionalmente que la pérdida haya ocurrido.
+d3: Abandonar toda actividad hasta recuperar lo perdido.
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R8]
+t := P: Derecho
+I_D: Pregunta qué hecho o acontecimiento corresponde a una fecha o periodo determinado.
+Q: ¿Qué acontecimiento tuvo lugar el 26 de junio de 1945?
+R: Firma de la Carta de las Naciones Unidas
+d1: Adopción del Tratado de Versalles
+d2: Entrada en vigor del Pacto Internacional de Derechos Civiles y Políticos
+d3: Creación de la Corte Penal Internacional
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R9]
+t := P: Medicina
+I_D: Pregunta qué elemento ocupa un extremo o posición destacada dentro de una comparación o clasificación bien definida.
+Q: ¿Cuál de las siguientes arterias tiene el mayor diámetro?
+R: Aorta
+d1: Arteria pulmonar
+d2: Arteria femoral
+d3: Arteria carótida
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R10]
+t := P: Psicología
+I_D: Pregunta qué característica descriptiva o constitutiva posee algo.
+Q: ¿Cuál es una función característica de la memoria de trabajo?
+R: Mantener y manipular información durante una tarea
+d1: Almacenar recuerdos durante toda la vida
+d2: Regular automáticamente el ritmo cardíaco
+d3: Producir respuestas reflejas ante estímulos
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[{"campo":"Q","valor":"Si se ordenan cronológicamente por año de creación las siguientes pinturas: Las meninas (1656), La libertad guiando al pueblo (1830), una obra de Monet (1872) y Guernica (1937), ¿cuál ocupa el tercer lugar?"}]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+3.Q
+  G: Si se ordenan cronológicamente por año de creación las siguientes pinturas, ¿cuál ocupa el tercer lugar: Las meninas (1656), La libertad guiando al pueblo (1830), Impresión, sol naciente (1872) y Guernica (1937)?
+  R: Si se ordenan cronológicamente por año de creación las siguientes pinturas: Las meninas (1656), La libertad guiando al pueblo (1830), una obra de Monet (1872) y Guernica (1937), ¿cuál ocupa el tercer lugar?
+
+--- TEST TRAS R ---
+1. Q: ¿Qué factor consideraba Karl Marx fundamental para explicar el desarrollo de las sociedades? | R: La lucha de clases | d1: La expansión de los océanos | d2: La sucesión de eclipses | d3: La rotación de los planetas
+2. Q: ¿Cuál de estas obras arquitectónicas diseñó Antoni Gaudí? | R: Casa Batlló | d1: Museo Guggenheim de Bilbao | d2: Casa de la Cascada | d3: Edificio Seagram
+3. Q: Si se ordenan cronológicamente por año de creación las siguientes pinturas: Las meninas (1656), La libertad guiando al pueblo (1830), una obra de Monet (1872) y Guernica (1937), ¿cuál ocupa el tercer lugar? | R: Impresión, sol naciente | d1: Las meninas | d2: La libertad guiando al pueblo | d3: Guernica
+4. Q: ¿Qué color representa convencionalmente los mares y lagos en los mapas físicos? | R: Azul | d1: Amarillo | d2: Marrón | d3: Verde
+5. Q: ¿Qué situación puede hacer que un rayo de luz cambie de dirección? | R: Pasar oblicuamente entre medios transparentes distintos | d1: Propagarse por el vacío | d2: Viajar en línea recta por un medio uniforme | d3: Mantener constante su frecuencia
+6. Q: ¿Qué sistema operativo precedió inmediatamente a Windows 98 en la línea principal de Microsoft? | R: Windows 95 | d1: Windows 3.1 | d2: Windows Me | d3: Windows XP
+7. Q: Ante una pérdida inevitable, ¿qué respuesta recomendaría el estoicismo clásico? | R: Distinguir lo controlable y aceptar lo que no depende de uno. | d1: Buscar culpables para revertir el acontecimiento. | d2: Negar emocionalmente que la pérdida haya ocurrido. | d3: Abandonar toda actividad hasta recuperar lo perdido.
+8. Q: ¿Qué acontecimiento tuvo lugar el 26 de junio de 1945? | R: Firma de la Carta de las Naciones Unidas | d1: Adopción del Tratado de Versalles | d2: Entrada en vigor del Pacto Internacional de Derechos Civiles y Políticos | d3: Creación de la Corte Penal Internacional
+9. Q: ¿Cuál de las siguientes arterias tiene el mayor diámetro? | R: Aorta | d1: Arteria pulmonar | d2: Arteria femoral | d3: Arteria carótida
+10. Q: ¿Cuál es una función característica de la memoria de trabajo? | R: Mantener y manipular información durante una tarea | d1: Almacenar recuerdos durante toda la vida | d2: Regular automáticamente el ritmo cardíaco | d3: Producir respuestas reflejas ante estímulos
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué factor consideraba Karl Marx fundamental para explicar el desarrollo de las sociedades?
+R: La lucha de clases
+d1: La expansión de los océanos
+d2: La sucesión de eclipses
+d3: La rotación de los planetas
+
+2.
+Q: ¿Cuál de estas obras arquitectónicas diseñó Antoni Gaudí?
+R: Casa Batlló
+d1: Museo Guggenheim de Bilbao
+d2: Casa de la Cascada
+d3: Edificio Seagram
+
+3.
+Q: Si se ordenan cronológicamente por año de creación las siguientes pinturas: Las meninas (1656), La libertad guiando al pueblo (1830), una obra de Monet (1872) y Guernica (1937), ¿cuál ocupa el tercer lugar?
+R: Impresión, sol naciente
+d1: Las meninas
+d2: La libertad guiando al pueblo
+d3: Guernica
+
+4.
+Q: ¿Qué color representa convencionalmente los mares y lagos en los mapas físicos?
+R: Azul
+d1: Amarillo
+d2: Marrón
+d3: Verde
+
+5.
+Q: ¿Qué situación puede hacer que un rayo de luz cambie de dirección?
+R: Pasar oblicuamente entre medios transparentes distintos
+d1: Propagarse por el vacío
+d2: Viajar en línea recta por un medio uniforme
+d3: Mantener constante su frecuencia
+
+6.
+Q: ¿Qué sistema operativo precedió inmediatamente a Windows 98 en la línea principal de Microsoft?
+R: Windows 95
+d1: Windows 3.1
+d2: Windows Me
+d3: Windows XP
+
+7.
+Q: Ante una pérdida inevitable, ¿qué respuesta recomendaría el estoicismo clásico?
+R: Distinguir lo controlable y aceptar lo que no depende de uno.
+d1: Buscar culpables para revertir el acontecimiento.
+d2: Negar emocionalmente que la pérdida haya ocurrido.
+d3: Abandonar toda actividad hasta recuperar lo perdido.
+
+8.
+Q: ¿Qué acontecimiento tuvo lugar el 26 de junio de 1945?
+R: Firma de la Carta de las Naciones Unidas
+d1: Adopción del Tratado de Versalles
+d2: Entrada en vigor del Pacto Internacional de Derechos Civiles y Políticos
+d3: Creación de la Corte Penal Internacional
+
+9.
+Q: ¿Cuál de las siguientes arterias tiene el mayor diámetro?
+R: Aorta
+d1: Arteria pulmonar
+d2: Arteria femoral
+d3: Arteria carótida
+
+10.
+Q: ¿Cuál es una función característica de la memoria de trabajo?
+R: Mantener y manipular información durante una tarea
+d1: Almacenar recuerdos durante toda la vida
+d2: Regular automáticamente el ritmo cardíaco
+d3: Producir respuestas reflejas ante estímulos
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[1,4,2,9,6,10,5,7,3,8]}
+
+--- ORDEN S ---
+[1, 4, 2, 9, 6, 10, 5, 7, 3, 8]
+
+--- TEST TRAS R Y S ---
+1. [original 1] Q: ¿Qué factor consideraba Karl Marx fundamental para explicar el desarrollo de las sociedades? | R: La lucha de clases | d1: La expansión de los océanos | d2: La sucesión de eclipses | d3: La rotación de los planetas
+2. [original 4] Q: ¿Qué color representa convencionalmente los mares y lagos en los mapas físicos? | R: Azul | d1: Amarillo | d2: Marrón | d3: Verde
+3. [original 2] Q: ¿Cuál de estas obras arquitectónicas diseñó Antoni Gaudí? | R: Casa Batlló | d1: Museo Guggenheim de Bilbao | d2: Casa de la Cascada | d3: Edificio Seagram
+4. [original 9] Q: ¿Cuál de las siguientes arterias tiene el mayor diámetro? | R: Aorta | d1: Arteria pulmonar | d2: Arteria femoral | d3: Arteria carótida
+5. [original 6] Q: ¿Qué sistema operativo precedió inmediatamente a Windows 98 en la línea principal de Microsoft? | R: Windows 95 | d1: Windows 3.1 | d2: Windows Me | d3: Windows XP
+6. [original 10] Q: ¿Cuál es una función característica de la memoria de trabajo? | R: Mantener y manipular información durante una tarea | d1: Almacenar recuerdos durante toda la vida | d2: Regular automáticamente el ritmo cardíaco | d3: Producir respuestas reflejas ante estímulos
+7. [original 5] Q: ¿Qué situación puede hacer que un rayo de luz cambie de dirección? | R: Pasar oblicuamente entre medios transparentes distintos | d1: Propagarse por el vacío | d2: Viajar en línea recta por un medio uniforme | d3: Mantener constante su frecuencia
+8. [original 7] Q: Ante una pérdida inevitable, ¿qué respuesta recomendaría el estoicismo clásico? | R: Distinguir lo controlable y aceptar lo que no depende de uno. | d1: Buscar culpables para revertir el acontecimiento. | d2: Negar emocionalmente que la pérdida haya ocurrido. | d3: Abandonar toda actividad hasta recuperar lo perdido.
+9. [original 3] Q: Si se ordenan cronológicamente por año de creación las siguientes pinturas: Las meninas (1656), La libertad guiando al pueblo (1830), una obra de Monet (1872) y Guernica (1937), ¿cuál ocupa el tercer lugar? | R: Impresión, sol naciente | d1: Las meninas | d2: La libertad guiando al pueblo | d3: Guernica
+10. [original 8] Q: ¿Qué acontecimiento tuvo lugar el 26 de junio de 1945? | R: Firma de la Carta de las Naciones Unidas | d1: Adopción del Tratado de Versalles | d2: Entrada en vigor del Pacto Internacional de Derechos Civiles y Políticos | d3: Creación de la Corte Penal Internacional
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué factor consideraba Karl Marx fundamental para explicar el desarrollo de las sociedades? | R: La lucha de clases | O: La expansión de los océanos / La rotación de los planetas / La lucha de clases / La sucesión de eclipses
+2. ¿Qué color representa convencionalmente los mares y lagos en los mapas físicos? | R: Azul | O: Amarillo / Verde / Marrón / Azul
+3. ¿Cuál de estas obras arquitectónicas diseñó Antoni Gaudí? | R: Casa Batlló | O: Edificio Seagram / Casa Batlló / Casa de la Cascada / Museo Guggenheim de Bilbao
+4. ¿Cuál de las siguientes arterias tiene el mayor diámetro? | R: Aorta | O: Arteria pulmonar / Aorta / Arteria femoral / Arteria carótida
+5. ¿Qué sistema operativo precedió inmediatamente a Windows 98 en la línea principal de Microsoft? | R: Windows 95 | O: Windows XP / Windows 95 / Windows 3.1 / Windows Me
+6. ¿Cuál es una función característica de la memoria de trabajo? | R: Mantener y manipular información durante una tarea | O: Producir respuestas reflejas ante estímulos / Mantener y manipular información durante una tarea / Regular automáticamente el ritmo cardíaco / Almacenar recuerdos durante toda la vida
+7. ¿Qué situación puede hacer que un rayo de luz cambie de dirección? | R: Pasar oblicuamente entre medios transparentes distintos | O: Mantener constante su frecuencia / Pasar oblicuamente entre medios transparentes distintos / Propagarse por el vacío / Viajar en línea recta por un medio uniforme
+8. Ante una pérdida inevitable, ¿qué respuesta recomendaría el estoicismo clásico? | R: Distinguir lo controlable y aceptar lo que no depende de uno. | O: Distinguir lo controlable y aceptar lo que no depende de uno. / Buscar culpables para revertir el acontecimiento. / Abandonar toda actividad hasta recuperar lo perdido. / Negar emocionalmente que la pérdida haya ocurrido.
+9. Si se ordenan cronológicamente por año de creación las siguientes pinturas: Las meninas (1656), La libertad guiando al pueblo (1830), una obra de Monet (1872) y Guernica (1937), ¿cuál ocupa el tercer lugar? | R: Impresión, sol naciente | O: La libertad guiando al pueblo / Las meninas / Impresión, sol naciente / Guernica
+10. ¿Qué acontecimiento tuvo lugar el 26 de junio de 1945? | R: Firma de la Carta de las Naciones Unidas | O: Creación de la Corte Penal Internacional / Firma de la Carta de las Naciones Unidas / Adopción del Tratado de Versalles / Entrada en vigor del Pacto Internacional de Derechos Civiles y Políticos
+
+USO TEST 3 | G: entrada 3621, salida 4381, razonamiento 3253, coste USD 0.005981 | R: entrada 3035, salida 2256, razonamiento 2013, coste USD 0.003314 | S: entrada 723, salida 324, razonamiento 290, coste USD 0.000533
+
+========== TEST 4/20 — 20.39 s (G 9.12 s + R 6.65 s + S 4.62 s) ==========
+
+--- SALIDA G ---
+1. P19 D33 | F: El papel tornasol rojo se vuelve azul en presencia de una base. | Q: ¿Cómo responde el papel tornasol rojo al entrar en contacto con una disolución alcalina? | O: 1=Adopta una tonalidad azul / 2=Desprende burbujas de gas / 3=Forma un precipitado blanco / 4=Se vuelve metálico | C: 1 | R: Adopta una tonalidad azul
+2. P02 D22 | F: El fresco es una técnica pictórica que utiliza pigmentos aplicados sobre yeso húmedo. | Q: Respecto a la técnica del fresco, ¿cuál de las siguientes afirmaciones es correcta? | O: 1=Los pigmentos se aplican sobre una superficie de yeso húmedo. / 2=La imagen se graba directamente sobre una plancha metálica. / 3=Los colores se mezclan únicamente con aceite de linaza. / 4=La obra se obtiene al tejer hilos teñidos. | C: 1 | R: Los pigmentos se aplican sobre una superficie de yeso húmedo.
+3. P01 D06 | F: El Burj Khalifa, en Dubái, es el edificio más alto del mundo. | Q: ¿Qué construcción ostenta el récord mundial de mayor altura entre los edificios? | O: 1=Empire State Building / 2=Burj Khalifa / 3=Torre Eiffel / 4=Taipei 101 | C: 2 | R: Burj Khalifa
+4. P12 D23 | F: La doctrina Monroe, proclamada en 1823, rechazaba nuevas intervenciones coloniales europeas en América. | Q: ¿En qué ámbito geopolítico se aplicaba principalmente la doctrina Monroe? | O: 1=Las relaciones entre Europa y los territorios americanos / 2=La organización del comercio interno de China / 3=Los conflictos religiosos dentro del Imperio otomano / 4=La administración británica de la India | C: 1 | R: Las relaciones entre Europa y los territorios americanos
+5. P18 D12 | F: El experimento de la prisión de Stanford comenzó en 1971. | Q: ¿En qué año comenzó el experimento de la prisión de Stanford? | O: 1=1965 / 2=1971 / 3=1978 / 4=1984 | C: 2 | R: 1971
+6. P07 D10 | F: La filosofía occidental tiene sus orígenes en las ciudades griegas de la Antigüedad. | Q: ¿En qué región histórica se ubican los orígenes de la filosofía occidental? | O: 1=Grecia antigua / 2=Egipto faraónico / 3=Imperio persa / 4=China imperial | C: 1 | R: Grecia antigua
+7. P06 D21 | F: Los bancos centrales suelen gestionar la política monetaria de sus países. | Q: ¿Qué función desempeña un banco central en una economía? | O: 1=Fijar los precios de todos los bienes / 2=Regular la cantidad de dinero y el crédito / 3=Producir la mayoría de los bienes de consumo / 4=Administrar directamente los comercios minoristas | C: 2 | R: Regular la cantidad de dinero y el crédito
+8. P10 D28 | F: La teoría de la transición demográfica describe cómo cambian las tasas de natalidad y mortalidad a medida que una sociedad se desarrolla. | Q: ¿Qué fenómeno busca explicar la teoría de la transición demográfica? | O: 1=La formación y evolución de las cadenas montañosas / 2=Las variaciones de natalidad, mortalidad y crecimiento poblacional / 3=La distribución mundial de los climas y sus cambios / 4=La expansión y transformación de las redes de transporte | C: 2 | R: Las variaciones de natalidad, mortalidad y crecimiento poblacional
+9. P17 D07 | F: El corazón se encuentra en la región central del tórax, entre ambos pulmones. | Q: ¿Qué órgano ocupa la región central del tórax, entre ambos pulmones? | O: 1=Hígado / 2=Corazón / 3=Riñón / 4=Bazo | C: 2 | R: Corazón
+10. P11 D31 | F: El basalto es una roca ígnea volcánica de composición máfica. | Q: ¿Qué evidencia petrográfica permitiría contrastar esa afirmación sobre el basalto? | O: 1=Fósiles visibles y capas formadas por acumulación de sedimentos. / 2=Una textura de grano fino y abundancia de minerales máficos. / 3=Foliación marcada y alineación de minerales por presión. / 4=Granos redondeados unidos por cemento sedimentario. | C: 2 | R: Una textura de grano fino y abundancia de minerales máficos.
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := P: Química
+I_D: Pregunta cómo responde un sistema o una persona ante un estímulo, conducta, solicitud o contenido.
+Q: ¿Cómo responde el papel tornasol rojo al entrar en contacto con una disolución alcalina?
+R: Adopta una tonalidad azul
+d1: Desprende burbujas de gas
+d2: Forma un precipitado blanco
+d3: Se vuelve metálico
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R2]
+t := P: Arte
+I_D: Pregunta qué proposición, norma o regla es válida o aplicable en un ámbito concreto.
+Q: Respecto a la técnica del fresco, ¿cuál de las siguientes afirmaciones es correcta?
+R: Los pigmentos se aplican sobre una superficie de yeso húmedo.
+d1: La imagen se graba directamente sobre una plancha metálica.
+d2: Los colores se mezclan únicamente con aceite de linaza.
+d3: La obra se obtiene al tejer hilos teñidos.
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R3]
+t := P: Arquitectura
+I_D: Pregunta qué elemento ocupa un extremo o posición destacada dentro de una comparación o clasificación bien definida.
+Q: ¿Qué construcción ostenta el récord mundial de mayor altura entre los edificios?
+R: Burj Khalifa
+d1: Empire State Building
+d2: Torre Eiffel
+d3: Taipei 101
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R4]
+t := P: Historia
+I_D: Pregunta en qué ámbito es válida o aplicable una proposición, norma o regla.
+Q: ¿En qué ámbito geopolítico se aplicaba principalmente la doctrina Monroe?
+R: Las relaciones entre Europa y los territorios americanos
+d1: La organización del comercio interno de China
+d2: Los conflictos religiosos dentro del Imperio otomano
+d3: La administración británica de la India
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R5]
+t := P: Psicología
+I_D: Pregunta cuándo ocurrió un hecho.
+Q: ¿En qué año comenzó el experimento de la prisión de Stanford?
+R: 1971
+d1: 1965
+d2: 1978
+d3: 1984
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R6]
+t := P: Filosofía
+I_D: Pregunta dónde se encuentra, ocurre, nace, se desarrolla o tiene lugar algo.
+Q: ¿En qué región histórica se ubican los orígenes de la filosofía occidental?
+R: Grecia antigua
+d1: Egipto faraónico
+d2: Imperio persa
+d3: China imperial
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R7]
+t := P: Economía
+I_D: Pregunta qué función desempeña un componente dentro de un sistema.
+Q: ¿Qué función desempeña un banco central en una economía?
+R: Regular la cantidad de dinero y el crédito
+d1: Fijar los precios de todos los bienes
+d2: Producir la mayoría de los bienes de consumo
+d3: Administrar directamente los comercios minoristas
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R8]
+t := P: Geografía
+I_D: Pregunta qué objeto, fenómeno o cuestión aborda o explica una teoría, modelo, hipótesis o concepción.
+Q: ¿Qué fenómeno busca explicar la teoría de la transición demográfica?
+R: Las variaciones de natalidad, mortalidad y crecimiento poblacional
+d1: La formación y evolución de las cadenas montañosas
+d2: La distribución mundial de los climas y sus cambios
+d3: La expansión y transformación de las redes de transporte
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R9]
+t := P: Medicina
+I_D: Pregunta qué ocupa una posición o relación estructural dentro de una configuración.
+Q: ¿Qué órgano ocupa la región central del tórax, entre ambos pulmones?
+R: Corazón
+d1: Hígado
+d2: Riñón
+d3: Bazo
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R10]
+t := P: Geología
+I_D: Pregunta qué dato, evidencia o criterio se usa para contrastar una afirmación mediante un procedimiento.
+Q: ¿Qué evidencia petrográfica permitiría contrastar esa afirmación sobre el basalto?
+R: Una textura de grano fino y abundancia de minerales máficos.
+d1: Fósiles visibles y capas formadas por acumulación de sedimentos.
+d2: Foliación marcada y alineación de minerales por presión.
+d3: Granos redondeados unidos por cemento sedimentario.
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[]}
+R9: {"correcciones":[{"campo":"Q","valor":"¿Qué órgano ocupa la región central del tórax?"}]}
+R10: {"correcciones":[{"campo":"Q","valor":"¿Qué evidencia petrográfica permitiría contrastar la afirmación de que la muestra corresponde a basalto?"}]}
+
+--- CORRECCIONES R ---
+9.Q
+  G: ¿Qué órgano ocupa la región central del tórax, entre ambos pulmones?
+  R: ¿Qué órgano ocupa la región central del tórax?
+10.Q
+  G: ¿Qué evidencia petrográfica permitiría contrastar esa afirmación sobre el basalto?
+  R: ¿Qué evidencia petrográfica permitiría contrastar la afirmación de que la muestra corresponde a basalto?
+
+--- TEST TRAS R ---
+1. Q: ¿Cómo responde el papel tornasol rojo al entrar en contacto con una disolución alcalina? | R: Adopta una tonalidad azul | d1: Desprende burbujas de gas | d2: Forma un precipitado blanco | d3: Se vuelve metálico
+2. Q: Respecto a la técnica del fresco, ¿cuál de las siguientes afirmaciones es correcta? | R: Los pigmentos se aplican sobre una superficie de yeso húmedo. | d1: La imagen se graba directamente sobre una plancha metálica. | d2: Los colores se mezclan únicamente con aceite de linaza. | d3: La obra se obtiene al tejer hilos teñidos.
+3. Q: ¿Qué construcción ostenta el récord mundial de mayor altura entre los edificios? | R: Burj Khalifa | d1: Empire State Building | d2: Torre Eiffel | d3: Taipei 101
+4. Q: ¿En qué ámbito geopolítico se aplicaba principalmente la doctrina Monroe? | R: Las relaciones entre Europa y los territorios americanos | d1: La organización del comercio interno de China | d2: Los conflictos religiosos dentro del Imperio otomano | d3: La administración británica de la India
+5. Q: ¿En qué año comenzó el experimento de la prisión de Stanford? | R: 1971 | d1: 1965 | d2: 1978 | d3: 1984
+6. Q: ¿En qué región histórica se ubican los orígenes de la filosofía occidental? | R: Grecia antigua | d1: Egipto faraónico | d2: Imperio persa | d3: China imperial
+7. Q: ¿Qué función desempeña un banco central en una economía? | R: Regular la cantidad de dinero y el crédito | d1: Fijar los precios de todos los bienes | d2: Producir la mayoría de los bienes de consumo | d3: Administrar directamente los comercios minoristas
+8. Q: ¿Qué fenómeno busca explicar la teoría de la transición demográfica? | R: Las variaciones de natalidad, mortalidad y crecimiento poblacional | d1: La formación y evolución de las cadenas montañosas | d2: La distribución mundial de los climas y sus cambios | d3: La expansión y transformación de las redes de transporte
+9. Q: ¿Qué órgano ocupa la región central del tórax? | R: Corazón | d1: Hígado | d2: Riñón | d3: Bazo
+10. Q: ¿Qué evidencia petrográfica permitiría contrastar la afirmación de que la muestra corresponde a basalto? | R: Una textura de grano fino y abundancia de minerales máficos. | d1: Fósiles visibles y capas formadas por acumulación de sedimentos. | d2: Foliación marcada y alineación de minerales por presión. | d3: Granos redondeados unidos por cemento sedimentario.
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Cómo responde el papel tornasol rojo al entrar en contacto con una disolución alcalina?
+R: Adopta una tonalidad azul
+d1: Desprende burbujas de gas
+d2: Forma un precipitado blanco
+d3: Se vuelve metálico
+
+2.
+Q: Respecto a la técnica del fresco, ¿cuál de las siguientes afirmaciones es correcta?
+R: Los pigmentos se aplican sobre una superficie de yeso húmedo.
+d1: La imagen se graba directamente sobre una plancha metálica.
+d2: Los colores se mezclan únicamente con aceite de linaza.
+d3: La obra se obtiene al tejer hilos teñidos.
+
+3.
+Q: ¿Qué construcción ostenta el récord mundial de mayor altura entre los edificios?
+R: Burj Khalifa
+d1: Empire State Building
+d2: Torre Eiffel
+d3: Taipei 101
+
+4.
+Q: ¿En qué ámbito geopolítico se aplicaba principalmente la doctrina Monroe?
+R: Las relaciones entre Europa y los territorios americanos
+d1: La organización del comercio interno de China
+d2: Los conflictos religiosos dentro del Imperio otomano
+d3: La administración británica de la India
+
+5.
+Q: ¿En qué año comenzó el experimento de la prisión de Stanford?
+R: 1971
+d1: 1965
+d2: 1978
+d3: 1984
+
+6.
+Q: ¿En qué región histórica se ubican los orígenes de la filosofía occidental?
+R: Grecia antigua
+d1: Egipto faraónico
+d2: Imperio persa
+d3: China imperial
+
+7.
+Q: ¿Qué función desempeña un banco central en una economía?
+R: Regular la cantidad de dinero y el crédito
+d1: Fijar los precios de todos los bienes
+d2: Producir la mayoría de los bienes de consumo
+d3: Administrar directamente los comercios minoristas
+
+8.
+Q: ¿Qué fenómeno busca explicar la teoría de la transición demográfica?
+R: Las variaciones de natalidad, mortalidad y crecimiento poblacional
+d1: La formación y evolución de las cadenas montañosas
+d2: La distribución mundial de los climas y sus cambios
+d3: La expansión y transformación de las redes de transporte
+
+9.
+Q: ¿Qué órgano ocupa la región central del tórax?
+R: Corazón
+d1: Hígado
+d2: Riñón
+d3: Bazo
+
+10.
+Q: ¿Qué evidencia petrográfica permitiría contrastar la afirmación de que la muestra corresponde a basalto?
+R: Una textura de grano fino y abundancia de minerales máficos.
+d1: Fósiles visibles y capas formadas por acumulación de sedimentos.
+d2: Foliación marcada y alineación de minerales por presión.
+d3: Granos redondeados unidos por cemento sedimentario.
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[1,3,9,6,2,7,5,4,8,10]}
+
+--- ORDEN S ---
+[1, 3, 9, 6, 2, 7, 5, 4, 8, 10]
+
+--- TEST TRAS R Y S ---
+1. [original 1] Q: ¿Cómo responde el papel tornasol rojo al entrar en contacto con una disolución alcalina? | R: Adopta una tonalidad azul | d1: Desprende burbujas de gas | d2: Forma un precipitado blanco | d3: Se vuelve metálico
+2. [original 3] Q: ¿Qué construcción ostenta el récord mundial de mayor altura entre los edificios? | R: Burj Khalifa | d1: Empire State Building | d2: Torre Eiffel | d3: Taipei 101
+3. [original 9] Q: ¿Qué órgano ocupa la región central del tórax? | R: Corazón | d1: Hígado | d2: Riñón | d3: Bazo
+4. [original 6] Q: ¿En qué región histórica se ubican los orígenes de la filosofía occidental? | R: Grecia antigua | d1: Egipto faraónico | d2: Imperio persa | d3: China imperial
+5. [original 2] Q: Respecto a la técnica del fresco, ¿cuál de las siguientes afirmaciones es correcta? | R: Los pigmentos se aplican sobre una superficie de yeso húmedo. | d1: La imagen se graba directamente sobre una plancha metálica. | d2: Los colores se mezclan únicamente con aceite de linaza. | d3: La obra se obtiene al tejer hilos teñidos.
+6. [original 7] Q: ¿Qué función desempeña un banco central en una economía? | R: Regular la cantidad de dinero y el crédito | d1: Fijar los precios de todos los bienes | d2: Producir la mayoría de los bienes de consumo | d3: Administrar directamente los comercios minoristas
+7. [original 5] Q: ¿En qué año comenzó el experimento de la prisión de Stanford? | R: 1971 | d1: 1965 | d2: 1978 | d3: 1984
+8. [original 4] Q: ¿En qué ámbito geopolítico se aplicaba principalmente la doctrina Monroe? | R: Las relaciones entre Europa y los territorios americanos | d1: La organización del comercio interno de China | d2: Los conflictos religiosos dentro del Imperio otomano | d3: La administración británica de la India
+9. [original 8] Q: ¿Qué fenómeno busca explicar la teoría de la transición demográfica? | R: Las variaciones de natalidad, mortalidad y crecimiento poblacional | d1: La formación y evolución de las cadenas montañosas | d2: La distribución mundial de los climas y sus cambios | d3: La expansión y transformación de las redes de transporte
+10. [original 10] Q: ¿Qué evidencia petrográfica permitiría contrastar la afirmación de que la muestra corresponde a basalto? | R: Una textura de grano fino y abundancia de minerales máficos. | d1: Fósiles visibles y capas formadas por acumulación de sedimentos. | d2: Foliación marcada y alineación de minerales por presión. | d3: Granos redondeados unidos por cemento sedimentario.
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Cómo responde el papel tornasol rojo al entrar en contacto con una disolución alcalina? | R: Adopta una tonalidad azul | O: Adopta una tonalidad azul / Se vuelve metálico / Desprende burbujas de gas / Forma un precipitado blanco
+2. ¿Qué construcción ostenta el récord mundial de mayor altura entre los edificios? | R: Burj Khalifa | O: Empire State Building / Torre Eiffel / Burj Khalifa / Taipei 101
+3. ¿Qué órgano ocupa la región central del tórax? | R: Corazón | O: Corazón / Bazo / Hígado / Riñón
+4. ¿En qué región histórica se ubican los orígenes de la filosofía occidental? | R: Grecia antigua | O: Egipto faraónico / Grecia antigua / Imperio persa / China imperial
+5. Respecto a la técnica del fresco, ¿cuál de las siguientes afirmaciones es correcta? | R: Los pigmentos se aplican sobre una superficie de yeso húmedo. | O: Los colores se mezclan únicamente con aceite de linaza. / La imagen se graba directamente sobre una plancha metálica. / La obra se obtiene al tejer hilos teñidos. / Los pigmentos se aplican sobre una superficie de yeso húmedo.
+6. ¿Qué función desempeña un banco central en una economía? | R: Regular la cantidad de dinero y el crédito | O: Producir la mayoría de los bienes de consumo / Administrar directamente los comercios minoristas / Fijar los precios de todos los bienes / Regular la cantidad de dinero y el crédito
+7. ¿En qué año comenzó el experimento de la prisión de Stanford? | R: 1971 | O: 1965 / 1971 / 1978 / 1984
+8. ¿En qué ámbito geopolítico se aplicaba principalmente la doctrina Monroe? | R: Las relaciones entre Europa y los territorios americanos | O: La administración británica de la India / La organización del comercio interno de China / Los conflictos religiosos dentro del Imperio otomano / Las relaciones entre Europa y los territorios americanos
+9. ¿Qué fenómeno busca explicar la teoría de la transición demográfica? | R: Las variaciones de natalidad, mortalidad y crecimiento poblacional | O: La formación y evolución de las cadenas montañosas / La expansión y transformación de las redes de transporte / La distribución mundial de los climas y sus cambios / Las variaciones de natalidad, mortalidad y crecimiento poblacional
+10. ¿Qué evidencia petrográfica permitiría contrastar la afirmación de que la muestra corresponde a basalto? | R: Una textura de grano fino y abundancia de minerales máficos. | O: Fósiles visibles y capas formadas por acumulación de sedimentos. / Granos redondeados unidos por cemento sedimentario. / Una textura de grano fino y abundancia de minerales máficos. / Foliación marcada y alineación de minerales por presión.
+
+USO TEST 4 | G: entrada 3558, salida 5012, razonamiento 3873, coste USD 0.006726 | R: entrada 3044, salida 2167, razonamiento 1937, coste USD 0.003209 | S: entrada 729, salida 313, razonamiento 279, coste USD 0.000521
+
+========== TEST 5/20 — 19.37 s (G 9.19 s + R 5.60 s + S 4.57 s) ==========
+
+--- SALIDA G ---
+1. P06 D13 | F: La primera crisis del petróleo comenzó en 1973. | Q: ¿Qué acontecimiento económico comenzó en 1973? | O: 1=La creación de la Organización Mundial del Comercio / 2=La primera crisis del petróleo / 3=La introducción del euro / 4=La firma de los Acuerdos de Bretton Woods | C: 2 | R: La primera crisis del petróleo
+2. P09 D34 | F: La pizza napolitana tradicional se cuece en un horno de leña. | Q: ¿Qué medio se emplea tradicionalmente para cocinar la pizza napolitana? | O: 1=Horno eléctrico / 2=Horno de leña / 3=Plancha de hierro / 4=Baño maría | C: 2 | R: Horno de leña
+3. P18 D22 | F: En el condicionamiento operante, las consecuencias influyen en la probabilidad de que una conducta vuelva a ocurrir. | Q: Si una conducta aumenta porque, inmediatamente después, desaparece un estímulo desagradable, ¿qué concepto describe mejor el procedimiento? | O: 1=Castigo positivo / 2=Refuerzo negativo / 3=Extinción operante / 4=Castigo negativo | C: 2 | R: Refuerzo negativo
+4. P16 D10 | F: Las diagonales de un rectángulo se cortan en su punto medio común. | Q: ¿Dónde se encuentra el punto de intersección de las diagonales de un rectángulo? | O: 1=En uno de sus vértices / 2=En el centro del rectángulo / 3=Sobre uno de sus lados / 4=Fuera del rectángulo | C: 2 | R: En el centro del rectángulo
+5. P03 D30 | F: Las fases de Venus observadas por Galileo apoyaron el modelo heliocéntrico. | Q: ¿Qué hipótesis quedó respaldada por la observación de las fases de Venus realizada por Galileo? | O: 1=La hipótesis heliocéntrica / 2=La hipótesis geocéntrica ptolemaica / 3=La hipótesis de la Tierra plana / 4=La hipótesis de un universo estático | C: 1 | R: La hipótesis heliocéntrica
+6. P01 D01 | F: El Panteón de Roma posee una cúpula con un óculo central. | Q: ¿Cuál de estos edificios posee una cúpula con un óculo central? | O: 1=Panteón de Roma / 2=Basílica de San Marcos / 3=Catedral de Chartres / 4=Palacio de Versalles | C: 1 | R: Panteón de Roma
+7. P10 D18 | F: Las corrientes oceánicas frías suelen enfriar el aire cercano y reducir la humedad disponible sobre las costas. | Q: ¿Qué efecto suele tener una corriente oceánica fría sobre el clima de una costa cercana? | O: 1=Favorece un clima más seco y reduce las precipitaciones. / 2=Provoca lluvias intensas durante todo el año. / 3=Eleva notablemente la temperatura media costera. / 4=Aumenta la humedad y forma bosques tropicales. | C: 1 | R: Favorece un clima más seco y reduce las precipitaciones.
+8. P20 D11 | F: La Organización Mundial de la Salud tiene su sede principal en Ginebra, Suiza. | Q: ¿Qué organismo internacional tiene su sede principal en Ginebra, Suiza? | O: 1=UNESCO / 2=Organización Mundial de la Salud / 3=Organización Mundial del Comercio / 4=Organización de las Naciones Unidas | C: 2 | R: Organización Mundial de la Salud
+9. P02 D31 | F: En el estudio técnico del arte, la datación por radiocarbono puede aplicarse a soportes orgánicos. | Q: Para contrastar la fecha atribuida a una pintura mediante el análisis de su soporte orgánico, ¿qué dato resulta pertinente? | O: 1=La relación entre isótopos de carbono del soporte / 2=La composición mineral de los pigmentos / 3=La distribución espacial de las figuras / 4=La cadena documental de propietarios | C: 1 | R: La relación entre isótopos de carbono del soporte
+10. P14 D26 | F: Gabriel García Márquez escribió la novela Cien años de soledad. | Q: ¿Qué novela escribió Gabriel García Márquez? | O: 1=Cien años de soledad / 2=La ciudad y los perros / 3=Rayuela / 4=Pedro Páramo | C: 1 | R: Cien años de soledad
+
+--- ENTRADAS R (10 LLAMADAS PARALELAS) ---
+
+[R1]
+t := P: Economía
+I_D: Pregunta qué hecho o acontecimiento corresponde a una fecha o periodo determinado.
+Q: ¿Qué acontecimiento económico comenzó en 1973?
+R: La primera crisis del petróleo
+d1: La creación de la Organización Mundial del Comercio
+d2: La introducción del euro
+d3: La firma de los Acuerdos de Bretton Woods
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R2]
+t := P: Gastronomía
+I_D: Pregunta con qué instrumento o medio se ejecuta una intervención.
+Q: ¿Qué medio se emplea tradicionalmente para cocinar la pizza napolitana?
+R: Horno de leña
+d1: Horno eléctrico
+d2: Plancha de hierro
+d3: Baño maría
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R3]
+t := P: Psicología
+I_D: Pregunta qué proposición, norma o regla es válida o aplicable en un ámbito concreto.
+Q: Si una conducta aumenta porque, inmediatamente después, desaparece un estímulo desagradable, ¿qué concepto describe mejor el procedimiento?
+R: Refuerzo negativo
+d1: Castigo positivo
+d2: Extinción operante
+d3: Castigo negativo
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R4]
+t := P: Matemáticas
+I_D: Pregunta dónde se encuentra, ocurre, nace, se desarrolla o tiene lugar algo.
+Q: ¿Dónde se encuentra el punto de intersección de las diagonales de un rectángulo?
+R: En el centro del rectángulo
+d1: En uno de sus vértices
+d2: Sobre uno de sus lados
+d3: Fuera del rectángulo
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R5]
+t := P: Astronomía
+I_D: Pregunta qué afirmación o hipótesis fue apoyada, refutada o puesta a prueba mediante unas evidencias o un procedimiento concreto.
+Q: ¿Qué hipótesis quedó respaldada por la observación de las fases de Venus realizada por Galileo?
+R: La hipótesis heliocéntrica
+d1: La hipótesis geocéntrica ptolemaica
+d2: La hipótesis de la Tierra plana
+d3: La hipótesis de un universo estático
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R6]
+t := P: Arquitectura
+I_D: Pregunta qué posee una característica descriptiva o constitutiva determinada.
+Q: ¿Cuál de estos edificios posee una cúpula con un óculo central?
+R: Panteón de Roma
+d1: Basílica de San Marcos
+d2: Catedral de Chartres
+d3: Palacio de Versalles
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R7]
+t := P: Geografía
+I_D: Pregunta qué hecho o efecto ocurre como consecuencia de unas causas o condiciones.
+Q: ¿Qué efecto suele tener una corriente oceánica fría sobre el clima de una costa cercana?
+R: Favorece un clima más seco y reduce las precipitaciones.
+d1: Provoca lluvias intensas durante todo el año.
+d2: Eleva notablemente la temperatura media costera.
+d3: Aumenta la humedad y forma bosques tropicales.
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R8]
+t := P: Sociología
+I_D: Pregunta qué entidad, hecho o acontecimiento corresponde a un lugar determinado.
+Q: ¿Qué organismo internacional tiene su sede principal en Ginebra, Suiza?
+R: Organización Mundial de la Salud
+d1: UNESCO
+d2: Organización Mundial del Comercio
+d3: Organización de las Naciones Unidas
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R9]
+t := P: Arte
+I_D: Pregunta qué dato, evidencia o criterio se usa para contrastar una afirmación mediante un procedimiento.
+Q: Para contrastar la fecha atribuida a una pintura mediante el análisis de su soporte orgánico, ¿qué dato resulta pertinente?
+R: La relación entre isótopos de carbono del soporte
+d1: La composición mineral de los pigmentos
+d2: La distribución espacial de las figuras
+d3: La cadena documental de propietarios
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+[R10]
+t := P: Lingüística
+I_D: Pregunta qué obra, invención o contenido creó alguien.
+Q: ¿Qué novela escribió Gabriel García Márquez?
+R: Cien años de soledad
+d1: La ciudad y los perros
+d2: Rayuela
+d3: Pedro Páramo
+
+O := {R,d1,d2,d3}
+
+V(t) := {
+  {o ∈ O : o responde correctamente a Q} ≠ {R},
+  algún referente contextual de Q carece de antecedente en Q u O,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
+
+Δ := correcciones
+
+V(t) = ∅ ⇒ Δ = ∅
+
+V(t) ≠ ∅ ⇒ V(aplicar(Δ,t)) = ∅
+
+∀c ∈ Δ, c elimina una violación de V(t).
+
+Una modificación que no elimina una violación de V(t) está prohibida.
+
+
+--- SALIDAS R RAW ---
+R1: {"correcciones":[]}
+R2: {"correcciones":[]}
+R3: {"correcciones":[]}
+R4: {"correcciones":[]}
+R5: {"correcciones":[]}
+R6: {"correcciones":[]}
+R7: {"correcciones":[]}
+R8: {"correcciones":[{"campo":"d2","valor":"Organización de las Naciones Unidas para la Alimentación y la Agricultura"}]}
+R9: {"correcciones":[]}
+R10: {"correcciones":[]}
+
+--- CORRECCIONES R ---
+8.d2
+  G: Organización Mundial del Comercio
+  R: Organización de las Naciones Unidas para la Alimentación y la Agricultura
+
+--- TEST TRAS R ---
+1. Q: ¿Qué acontecimiento económico comenzó en 1973? | R: La primera crisis del petróleo | d1: La creación de la Organización Mundial del Comercio | d2: La introducción del euro | d3: La firma de los Acuerdos de Bretton Woods
+2. Q: ¿Qué medio se emplea tradicionalmente para cocinar la pizza napolitana? | R: Horno de leña | d1: Horno eléctrico | d2: Plancha de hierro | d3: Baño maría
+3. Q: Si una conducta aumenta porque, inmediatamente después, desaparece un estímulo desagradable, ¿qué concepto describe mejor el procedimiento? | R: Refuerzo negativo | d1: Castigo positivo | d2: Extinción operante | d3: Castigo negativo
+4. Q: ¿Dónde se encuentra el punto de intersección de las diagonales de un rectángulo? | R: En el centro del rectángulo | d1: En uno de sus vértices | d2: Sobre uno de sus lados | d3: Fuera del rectángulo
+5. Q: ¿Qué hipótesis quedó respaldada por la observación de las fases de Venus realizada por Galileo? | R: La hipótesis heliocéntrica | d1: La hipótesis geocéntrica ptolemaica | d2: La hipótesis de la Tierra plana | d3: La hipótesis de un universo estático
+6. Q: ¿Cuál de estos edificios posee una cúpula con un óculo central? | R: Panteón de Roma | d1: Basílica de San Marcos | d2: Catedral de Chartres | d3: Palacio de Versalles
+7. Q: ¿Qué efecto suele tener una corriente oceánica fría sobre el clima de una costa cercana? | R: Favorece un clima más seco y reduce las precipitaciones. | d1: Provoca lluvias intensas durante todo el año. | d2: Eleva notablemente la temperatura media costera. | d3: Aumenta la humedad y forma bosques tropicales.
+8. Q: ¿Qué organismo internacional tiene su sede principal en Ginebra, Suiza? | R: Organización Mundial de la Salud | d1: UNESCO | d2: Organización de las Naciones Unidas para la Alimentación y la Agricultura | d3: Organización de las Naciones Unidas
+9. Q: Para contrastar la fecha atribuida a una pintura mediante el análisis de su soporte orgánico, ¿qué dato resulta pertinente? | R: La relación entre isótopos de carbono del soporte | d1: La composición mineral de los pigmentos | d2: La distribución espacial de las figuras | d3: La cadena documental de propietarios
+10. Q: ¿Qué novela escribió Gabriel García Márquez? | R: Cien años de soledad | d1: La ciudad y los perros | d2: Rayuela | d3: Pedro Páramo
+
+--- ENTRADA S ---
+T := 1.
+Q: ¿Qué acontecimiento económico comenzó en 1973?
+R: La primera crisis del petróleo
+d1: La creación de la Organización Mundial del Comercio
+d2: La introducción del euro
+d3: La firma de los Acuerdos de Bretton Woods
+
+2.
+Q: ¿Qué medio se emplea tradicionalmente para cocinar la pizza napolitana?
+R: Horno de leña
+d1: Horno eléctrico
+d2: Plancha de hierro
+d3: Baño maría
+
+3.
+Q: Si una conducta aumenta porque, inmediatamente después, desaparece un estímulo desagradable, ¿qué concepto describe mejor el procedimiento?
+R: Refuerzo negativo
+d1: Castigo positivo
+d2: Extinción operante
+d3: Castigo negativo
+
+4.
+Q: ¿Dónde se encuentra el punto de intersección de las diagonales de un rectángulo?
+R: En el centro del rectángulo
+d1: En uno de sus vértices
+d2: Sobre uno de sus lados
+d3: Fuera del rectángulo
+
+5.
+Q: ¿Qué hipótesis quedó respaldada por la observación de las fases de Venus realizada por Galileo?
+R: La hipótesis heliocéntrica
+d1: La hipótesis geocéntrica ptolemaica
+d2: La hipótesis de la Tierra plana
+d3: La hipótesis de un universo estático
+
+6.
+Q: ¿Cuál de estos edificios posee una cúpula con un óculo central?
+R: Panteón de Roma
+d1: Basílica de San Marcos
+d2: Catedral de Chartres
+d3: Palacio de Versalles
+
+7.
+Q: ¿Qué efecto suele tener una corriente oceánica fría sobre el clima de una costa cercana?
+R: Favorece un clima más seco y reduce las precipitaciones.
+d1: Provoca lluvias intensas durante todo el año.
+d2: Eleva notablemente la temperatura media costera.
+d3: Aumenta la humedad y forma bosques tropicales.
+
+8.
+Q: ¿Qué organismo internacional tiene su sede principal en Ginebra, Suiza?
+R: Organización Mundial de la Salud
+d1: UNESCO
+d2: Organización de las Naciones Unidas para la Alimentación y la Agricultura
+d3: Organización de las Naciones Unidas
+
+9.
+Q: Para contrastar la fecha atribuida a una pintura mediante el análisis de su soporte orgánico, ¿qué dato resulta pertinente?
+R: La relación entre isótopos de carbono del soporte
+d1: La composición mineral de los pigmentos
+d2: La distribución espacial de las figuras
+d3: La cadena documental de propietarios
+
+10.
+Q: ¿Qué novela escribió Gabriel García Márquez?
+R: Cien años de soledad
+d1: La ciudad y los perros
+d2: Rayuela
+d3: Pedro Páramo
+
+Orden := (n₁,...,n₁₀)
+
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
+
+para un concursante generalista de cultura general.
+
+
+--- SALIDA S RAW ---
+{"Orden":[2,4,10,6,3,7,1,8,5,9]}
+
+--- ORDEN S ---
+[2, 4, 10, 6, 3, 7, 1, 8, 5, 9]
+
+--- TEST TRAS R Y S ---
+1. [original 2] Q: ¿Qué medio se emplea tradicionalmente para cocinar la pizza napolitana? | R: Horno de leña | d1: Horno eléctrico | d2: Plancha de hierro | d3: Baño maría
+2. [original 4] Q: ¿Dónde se encuentra el punto de intersección de las diagonales de un rectángulo? | R: En el centro del rectángulo | d1: En uno de sus vértices | d2: Sobre uno de sus lados | d3: Fuera del rectángulo
+3. [original 10] Q: ¿Qué novela escribió Gabriel García Márquez? | R: Cien años de soledad | d1: La ciudad y los perros | d2: Rayuela | d3: Pedro Páramo
+4. [original 6] Q: ¿Cuál de estos edificios posee una cúpula con un óculo central? | R: Panteón de Roma | d1: Basílica de San Marcos | d2: Catedral de Chartres | d3: Palacio de Versalles
+5. [original 3] Q: Si una conducta aumenta porque, inmediatamente después, desaparece un estímulo desagradable, ¿qué concepto describe mejor el procedimiento? | R: Refuerzo negativo | d1: Castigo positivo | d2: Extinción operante | d3: Castigo negativo
+6. [original 7] Q: ¿Qué efecto suele tener una corriente oceánica fría sobre el clima de una costa cercana? | R: Favorece un clima más seco y reduce las precipitaciones. | d1: Provoca lluvias intensas durante todo el año. | d2: Eleva notablemente la temperatura media costera. | d3: Aumenta la humedad y forma bosques tropicales.
+7. [original 1] Q: ¿Qué acontecimiento económico comenzó en 1973? | R: La primera crisis del petróleo | d1: La creación de la Organización Mundial del Comercio | d2: La introducción del euro | d3: La firma de los Acuerdos de Bretton Woods
+8. [original 8] Q: ¿Qué organismo internacional tiene su sede principal en Ginebra, Suiza? | R: Organización Mundial de la Salud | d1: UNESCO | d2: Organización de las Naciones Unidas para la Alimentación y la Agricultura | d3: Organización de las Naciones Unidas
+9. [original 5] Q: ¿Qué hipótesis quedó respaldada por la observación de las fases de Venus realizada por Galileo? | R: La hipótesis heliocéntrica | d1: La hipótesis geocéntrica ptolemaica | d2: La hipótesis de la Tierra plana | d3: La hipótesis de un universo estático
+10. [original 9] Q: Para contrastar la fecha atribuida a una pintura mediante el análisis de su soporte orgánico, ¿qué dato resulta pertinente? | R: La relación entre isótopos de carbono del soporte | d1: La composición mineral de los pigmentos | d2: La distribución espacial de las figuras | d3: La cadena documental de propietarios
+
+--- OPCIONES FINALES TRAS SHUFFLE DART ---
+1. ¿Qué medio se emplea tradicionalmente para cocinar la pizza napolitana? | R: Horno de leña | O: Plancha de hierro / Baño maría / Horno de leña / Horno eléctrico
+2. ¿Dónde se encuentra el punto de intersección de las diagonales de un rectángulo? | R: En el centro del rectángulo | O: Fuera del rectángulo / Sobre uno de sus lados / En uno de sus vértices / En el centro del rectángulo
+3. ¿Qué novela escribió Gabriel García Márquez? | R: Cien años de soledad | O: La ciudad y los perros / Rayuela / Cien años de soledad / Pedro Páramo
+4. ¿Cuál de estos edificios posee una cúpula con un óculo central? | R: Panteón de Roma | O: Panteón de Roma / Catedral de Chartres / Basílica de San Marcos / Palacio de Versalles
+5. Si una conducta aumenta porque, inmediatamente después, desaparece un estímulo desagradable, ¿qué concepto describe mejor el procedimiento? | R: Refuerzo negativo | O: Castigo negativo / Extinción operante / Castigo positivo / Refuerzo negativo
+6. ¿Qué efecto suele tener una corriente oceánica fría sobre el clima de una costa cercana? | R: Favorece un clima más seco y reduce las precipitaciones. | O: Eleva notablemente la temperatura media costera. / Aumenta la humedad y forma bosques tropicales. / Favorece un clima más seco y reduce las precipitaciones. / Provoca lluvias intensas durante todo el año.
+7. ¿Qué acontecimiento económico comenzó en 1973? | R: La primera crisis del petróleo | O: La introducción del euro / La primera crisis del petróleo / La creación de la Organización Mundial del Comercio / La firma de los Acuerdos de Bretton Woods
+8. ¿Qué organismo internacional tiene su sede principal en Ginebra, Suiza? | R: Organización Mundial de la Salud | O: Organización Mundial de la Salud / Organización de las Naciones Unidas para la Alimentación y la Agricultura / Organización de las Naciones Unidas / UNESCO
+9. ¿Qué hipótesis quedó respaldada por la observación de las fases de Venus realizada por Galileo? | R: La hipótesis heliocéntrica | O: La hipótesis heliocéntrica / La hipótesis geocéntrica ptolemaica / La hipótesis de un universo estático / La hipótesis de la Tierra plana
+10. Para contrastar la fecha atribuida a una pintura mediante el análisis de su soporte orgánico, ¿qué dato resulta pertinente? | R: La relación entre isótopos de carbono del soporte | O: La composición mineral de los pigmentos / La distribución espacial de las figuras / La relación entre isótopos de carbono del soporte / La cadena documental de propietarios
+
+USO TEST 5 | G: entrada 3558, salida 4913, razonamiento 3783, coste USD 0.006607 | R: entrada 3023, salida 1861, razonamiento 1659, coste USD 0.002838 | S: entrada 717, salida 361, razonamiento 327, coste USD 0.000577
+
