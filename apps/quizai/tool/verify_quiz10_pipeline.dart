@@ -54,11 +54,35 @@ String _modelLabel(String model) =>
   };
 }
 
-String _formatPatch(Quiz10ReviewPatch patch) {
+String _originalReviewValue(
+  Quiz10LunaRow row,
+  String field,
+) {
+  return switch (field) {
+    'Q' => row.question,
+    'R' => row.correct,
+    'd1' => row.distractors[0],
+    'd2' => row.distractors[1],
+    'd3' => row.distractors[2],
+    _ => throw ArgumentError.value(field, 'field'),
+  };
+}
+
+String _formatPatch(
+  Quiz10ReviewPatch patch,
+  List<Quiz10LunaRow> rows,
+) {
   final buffer = StringBuffer();
+  final row = rows[patch.number - 1];
+
   for (final change in patch.changes) {
-    buffer.writeln('${patch.number}.${change.field}: ${change.value}');
+    buffer.writeln('${patch.number}.${change.field}');
+    buffer.writeln(
+      '  Antes: ${_originalReviewValue(row, change.field)}',
+    );
+    buffer.writeln('  Después: ${change.value}');
   }
+
   return buffer.toString().trimRight();
 }
 
@@ -376,7 +400,7 @@ Future<void> main(List<String> args) async {
           report.writeln('(ninguna)');
         } else {
           for (final patch in result.review.patches) {
-            report.writeln(_formatPatch(patch));
+            report.writeln(_formatPatch(patch, result.lunaRows));
           }
         }
 
@@ -491,7 +515,7 @@ Future<void> main(List<String> args) async {
         if (result.review.patches.isNotEmpty) {
           stdout.writeln('CAMBIOS');
           for (final patch in result.review.patches) {
-            stdout.writeln(_formatPatch(patch));
+            stdout.writeln(_formatPatch(patch, result.lunaRows));
           }
         } else {
           stdout.writeln('CAMBIOS: —');
