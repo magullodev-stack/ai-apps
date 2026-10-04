@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 import 'quiz10_DART_Pi+Di.dart';
-import 'quiz10_LUNA_Prompt.dart';
-import 'quiz10_REVIEW_Prompt.dart';
+import 'Quiz10_PROMPT_G.dart';
+import 'Quiz10_PROMPT_R.dart';
 
 typedef Quiz10FinalQuestion = ({
   String pivot,
