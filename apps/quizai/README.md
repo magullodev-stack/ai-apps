@@ -108,7 +108,7 @@ Si necesita una clave OpenAI, la solicita en la terminal.
 Para trabajar sin abrir ningún juego, establecer `none` como juego
 activo. El archivo de selección es local y no se publica en Git.
 
-## Generación Quiz10: G → R → Dart
+## Generación Quiz10: G → R → S → Dart
 
 El catálogo canónico se encuentra en
 `lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34 dimensiones D01–D34 expresadas como instrucciones directas.
@@ -117,28 +117,34 @@ Cada Quiz10 selecciona diez P distintas y diez D distintas. G recibe diez
 unidades independientes y simultáneas:
 
 ```text
-(P, D, H) -> (F, Q, O, C)
+(P, I_D, H) -> F
+(F, I_D) -> Q
+(F, Q) -> O
 ```
 
 `lib/modes/quiz10/Quiz10_PROMPT_G.dart` contiene el prompt de generación G.
 `F` es un andamiaje factual transitorio que G materializa antes de construir la
-pregunta; no entra en H, no se envía a R y no forma parte del test final.
+pregunta; no entra en H, no se envía a R ni a S y no forma parte del test final.
 `O` contiene cuatro opciones y `C` señala la correcta; internamente
 `R := O_C`. G no recibe dificultad.
 
-Cuando terminan las diez llamadas, Dart transforma cada fila en
-`Q, R, a1, a2, a3` y construye un único test `T`.
-`lib/modes/quiz10/Quiz10_PROMPT_R.dart` envía ese test al rol revisor R,
-que usa el modelo seleccionado para revisión y devuelve únicamente el orden
-relativo de dificultad y los campos que considere necesario corregir.
+Cuando terminan las diez llamadas G, Dart transforma cada fila en
+`Q, R, d1, d2, d3`. `lib/modes/quiz10/Quiz10_PROMPT_R.dart` revisa cada
+ítem de forma independiente: se lanzan diez llamadas R simultáneas y cada una
+devuelve únicamente los campos de su propio ítem que sea necesario corregir.
 
-Dart aplica esos parches, reordena las diez preguntas y, al final, baraja las
-cuatro opciones de cada pregunta. La posición de la respuesta correcta que
-produjo G no llega al jugador.
+Dart aplica los parches R y construye el test corregido `T*`.
+`lib/modes/quiz10/Quiz10_PROMPT_S.dart` define S, una única llamada global
+que recibe las diez preguntas corregidas y devuelve exclusivamente su orden
+relativo de dificultad. S no corrige contenido.
 
-`H` es el histórico de pares `(Q,R)` ya usados por cruce P×D. El pipeline completo no
-lo actualiza hasta que la revisión global termina; guarda la pregunta y la respuesta
-finales tras los parches para impedir reutilizar el mismo conocimiento.
+Dart aplica el orden de S y, al final, baraja las cuatro opciones de cada
+pregunta. La posición de la respuesta correcta que produjo G no llega al
+jugador.
+
+`H` es el histórico de pares `(Q,R)` ya usados por cruce P×D. El pipeline
+no lo actualiza hasta terminar R; guarda la pregunta y la respuesta corregidas.
+El orden posterior de S no modifica H.
 
 La pantalla Quiz10 está conectada al pipeline real. Dentro de una misma sesión,
 `Otra partida` reutiliza la instancia del pipeline y por tanto su H.
@@ -149,12 +155,14 @@ Para auditar solo G:
 .\apps\quizai\run.ps1 -ProbarLuna -Muestras 20
 ```
 
-Para auditar el flujo completo G → R → Dart:
+Para auditar el flujo completo G → R → S → Dart:
 
 ```powershell
 .\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
 ```
 
-La auditoría completa conserva por test la salida de G, la entrada enviada a R, su salida bruta, el orden, las correcciones, el test resultante y las opciones tras el shuffle de Dart, además del modelo elegido, la latencia, los tokens y el coste por etapa.
-
-`-VerifyOnly` conserva la comprobación aislada de G.
+La auditoría completa conserva por test la salida de G, las diez entradas y
+salidas R, las correcciones, el test tras R, la entrada y salida S, el orden,
+el test resultante y las opciones tras el shuffle de Dart. La terminal resume
+G, R, S y TOTAL en una sola tabla por test y mantiene `CAMBIOS` con los
+valores G/R únicamente cuando R corrige campos.
