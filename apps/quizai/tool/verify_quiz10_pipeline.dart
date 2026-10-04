@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
-import 'package:quizai/modes/quiz10/quiz10_LUNA_Prompt.dart';
-import 'package:quizai/modes/quiz10/quiz10_REVIEW_Prompt.dart';
+import 'package:quizai/modes/quiz10/Quiz10_PROMPT_G.dart';
+import 'package:quizai/modes/quiz10/Quiz10_PROMPT_R.dart';
 import 'package:quizai/modes/quiz10/quiz10_pipeline.dart';
 
 String _key(String text) =>
@@ -152,20 +152,20 @@ Future<void> main(List<String> args) async {
   var pricedStages = 0;
 
   try {
-    report.writeln('AUDITORÍA QUIZ10 — PIPELINE LUNA → REVISIÓN → DART');
+    report.writeln('AUDITORÍA QUIZ10 — PIPELINE G → R → DART');
     report.writeln('Fecha: ${DateTime.now()}');
-    report.writeln('Luna: ${pipeline.luna.model}');
-    report.writeln('Revisor: ${pipeline.reviewer.model}');
+    report.writeln('G: ${pipeline.luna.model}');
+    report.writeln('R: ${pipeline.reviewer.model}');
     report.writeln(
-      'Ejecución por test: 10 llamadas Luna simultáneas, '
+      'Ejecución por test: 10 llamadas G simultáneas, '
       '1 revisión global, aplicación de parches, orden y shuffle en Dart.',
     );
     report.writeln('Prompt Luna:\n$quiz10LunaPrompt');
     report.writeln('Prompt revisor:\n$quiz10ReviewPrompt');
     report.writeln(
       'Semilla: $seed | Tests: $samples | '
-      'Llamadas Luna: ${samples * 10} | '
-      'Llamadas revisor: $samples.',
+      'Llamadas G: ${samples * 10} | '
+      'Llamadas R: $samples.',
     );
     report.writeln();
 
@@ -268,7 +268,6 @@ Future<void> main(List<String> args) async {
 
         final packInputTokens = li != null && ri != null ? li + ri : null;
         final packOutputTokens = lo != null && ro != null ? lo + ro : null;
-        final packReasoningTokens = lr != null && rr != null ? lr + rr : null;
         final packTotalTokens =
             packInputTokens != null && packOutputTokens != null
                 ? packInputTokens + packOutputTokens
@@ -288,11 +287,11 @@ Future<void> main(List<String> args) async {
         report.writeln(
           '========== TEST $test/$samples — '
           '${(totalWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
-          '(Luna ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
-          '+ revisión ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s) ==========',
+          '(G ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s '
+          ' + R ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s) ==========',
         );
 
-        report.writeln('\n--- SALIDA LUNA ---');
+        report.writeln('\n--- SALIDA G ---');
         for (var rowIndex = 0; rowIndex < result.lunaRows.length; rowIndex++) {
           final row = result.lunaRows[rowIndex];
           report.writeln(
@@ -362,9 +361,9 @@ Future<void> main(List<String> args) async {
 
         report.writeln(
           '\nUSO TEST $test | '
-          'Luna: entrada ${_known(li)}, salida ${_known(lo)}, '
+          'G: entrada ${_known(li)}, salida ${_known(lo)}, '
           'razonamiento ${_known(lr)}, coste ${_usd(lunaCost)} | '
-          'Revisor: entrada ${_known(ri)}, salida ${_known(ro)}, '
+          'R: entrada ${_known(ri)}, salida ${_known(ro)}, '
           'razonamiento ${_known(rr)}, coste ${_usd(reviewerCost)}',
         );
         report.writeln();
@@ -378,15 +377,14 @@ Future<void> main(List<String> args) async {
 
         stdout.writeln(
           'Test $test/$samples | '
-          'G+R ${generationSeconds.toStringAsFixed(2)} s + '
-          '${reviewSeconds.toStringAsFixed(2)} s = '
+          'G(${pipeline.luna.model}) ${generationSeconds.toStringAsFixed(2)} s + '
+          'R(${pipeline.reviewer.model}) ${reviewSeconds.toStringAsFixed(2)} s = '
           '${generationReviewSeconds.toStringAsFixed(2)} s | '
           'TOKENS: entrada ${_known(packInputTokens)} + '
-          'salida ${_known(packOutputTokens)} = ${_known(packTotalTokens)} '
-          '(razonamiento ${_known(packReasoningTokens)}) | '
-          '% Razonamiento G/R: $generationReasoningPercent / '
+          'salida ${_known(packOutputTokens)} = ${_known(packTotalTokens)} | '
+          'Razonamiento G/R: $generationReasoningPercent / '
           '$reviewReasoningPercent | '
-          'coste pack ${_usd(packCost)} | '
+          'COSTE G/R: ${_usd(lunaCost)} + ${_usd(reviewerCost)} = ${_usd(packCost)} | '
           'Correcciones: $correctionsSummary',
         );
       } catch (error) {
@@ -434,14 +432,14 @@ Future<void> main(List<String> args) async {
     }
     if (lunaDurations.isNotEmpty) {
       report.writeln(
-        'Luna: media '
+        'G: media '
         '${(lunaDurations.reduce((a, b) => a + b) / lunaDurations.length / 1000).toStringAsFixed(2)} s | '
         'mediana ${(_percentile(lunaDurations, 0.5) / 1000).toStringAsFixed(2)} s.',
       );
     }
     if (reviewDurations.isNotEmpty) {
       report.writeln(
-        'Revisor: media '
+        'R: media '
         '${(reviewDurations.reduce((a, b) => a + b) / reviewDurations.length / 1000).toStringAsFixed(2)} s | '
         'mediana ${(_percentile(reviewDurations, 0.5) / 1000).toStringAsFixed(2)} s | '
         'p95 ${(_percentile(reviewDurations, 0.95) / 1000).toStringAsFixed(2)} s.',
@@ -449,11 +447,11 @@ Future<void> main(List<String> args) async {
     }
 
     report.writeln(
-      'Tokens Luna: entrada $lunaInput | salida $lunaOutput | '
+      'Tokens G: entrada $lunaInput | salida $lunaOutput | '
       'razonamiento $lunaReasoning | uso $lunaUsageTests/$completeTests.',
     );
     report.writeln(
-      'Tokens revisor: entrada $reviewInput | salida $reviewOutput | '
+      'Tokens R: entrada $reviewInput | salida $reviewOutput | '
       'razonamiento $reviewReasoning | uso $reviewUsageTests/$completeTests.',
     );
     report.writeln(
@@ -471,8 +469,8 @@ Future<void> main(List<String> args) async {
       '($pricedStages/${completeTests * 2} etapas calculables).',
     );
     report.writeln(
-      'Coste Luna: ${_usd(lunaCostTotal)} | '
-      'revisor: ${_usd(reviewerCostTotal)} | '
+      'Coste G: ${_usd(lunaCostTotal)} | '
+      'R: ${_usd(reviewerCostTotal)} | '
       'media por pack: ${_usd(averagePackCost)}.',
     );
     report.writeln(
@@ -485,8 +483,8 @@ Future<void> main(List<String> args) async {
       'Coste total estimado: '
       '${pricedStages == 0 ? "n/d" : _usd(totalCost)} | '
       'media por pack ${_usd(averagePackCost)} | '
-      'Luna ${_usd(lunaCostTotal)} | '
-      'revisor ${_usd(reviewerCostTotal)}',
+      'G ${_usd(lunaCostTotal)} | '
+      'R ${_usd(reviewerCostTotal)}',
     );
     stdout.writeln('Informe: $path');
 
