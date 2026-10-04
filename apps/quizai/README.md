@@ -132,7 +132,7 @@ relativo de dificultad y los campos que considere necesario corregir.
 
 Dart aplica esos parches, reordena las diez preguntas y, al final, baraja las
 cuatro opciones de cada pregunta. La posición de la respuesta correcta que
-produjo Luna no llega al jugador.
+produjo G no llega al jugador.
 
 `H` sigue siendo el histórico factual por cruce P×D. El pipeline completo no
 lo actualiza hasta que la revisión global termina; guarda el par `(F,R)` con
