@@ -8,23 +8,18 @@ import 'quiz10_DART_Pi+Di.dart';
 // Dart fija P, D e H; G devuelve F, Q, cuatro opciones O y la posición C.
 // Las diez unidades de G del Quiz10 se ejecutan simultáneamente.
 
-const String quiz10LunaPrompt = r'''# PROMPT 1
-
-## Entrada
+const String quiz10LunaPrompt = r'''## Entrada
 
 P := {{P}}
 D := {{D}}
 Instrucción D := {{instruction}}
 
-H := {{H}}
+H := {(Q₁, R₁), ..., (Qₙ, Rₙ)}
 
 
 ## Generación
 
-Elige un núcleo de conocimiento K de P, propio de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D. K identifica de forma breve qué conocimiento se pone a prueba, sin incluir la respuesta R ni enumerar opciones, evidencias o datos auxiliares.
-Si H ≠ ∅, K debe ser materialmente distinto de todos los núcleos ya usados en H; no reutilices, reformules, parafrasees ni preguntes desde otro ángulo sobre ninguno de ellos.
-Construye una base factual F sobre K que contenga toda la información necesaria para determinar la respuesta correcta.
-Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
+Formula una Q autosuficiente de cultura general sobre P siguiendo la Instrucción D, con valor de pregunta de concurso para un concursante generalista y no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área.
 
 O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
 
@@ -32,14 +27,20 @@ C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
 
 R := O_C
 
-Q no contiene R ni proporciona una pista léxica evidente que permita inferir R por su forma, raíz, derivación o semejanza verbal.
+Q no contiene R ni términos cuya forma, raíz, abreviación, símbolo, derivación o semejanza léxica proporcione una pista evidente para inferir R.
 
+Para todo (Qᵢ, Rᵢ) ∈ H, Q debe preguntar por un conocimiento materialmente distinto del preguntado por Qᵢ; no puede reutilizarlo, reformularlo, parafrasearlo ni preguntarlo desde otro ángulo.
+
+Q ∉ {Q₁, ..., Qₙ}
+
+R ∉ {R₁, ..., Rₙ}
 
 
 ## Salida
 
-| P | D | K | F | Q | O | C |
-|---|---|---|---|---|---|---|''';
+| P | D | Q | O | C |
+|---|---|---|---|---|
+''';
 
 String _historyLiteral(List<String> history) {
   if (history.isEmpty) return '∅';
