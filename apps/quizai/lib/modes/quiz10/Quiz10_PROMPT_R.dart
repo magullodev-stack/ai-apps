@@ -4,25 +4,23 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 import 'Quiz10_PROMPT_G.dart';
 
-const String quiz10ReviewPrompt = r'''## Entrada
+const String quiz10ReviewPrompt = r'''T := {{TEST}}
 
-T := {{TEST}}
+∀i:
 
+Rᵢ := única respuesta correcta a Qᵢ.
 
-## Tarea
+{Rᵢ,d1ᵢ,d2ᵢ,d3ᵢ}: distintas, plausibles, homogéneas y concisas.
 
-Revisa Q, R y los tres distractores de cada pregunta y corrige lo necesario para que la pregunta y sus opciones sean correctas, coherentes y de calidad, sin que Q contenga R ni términos cuya forma, raíz, abreviación, símbolo, derivación o semejanza léxica proporcionen una pista evidente para inferir R, y conservando la relación definida por la Instrucción D.
+Qᵢ: correcta, autosuficiente y conforme a Instrucción D.
 
-Ordena las 10 preguntas de menor a mayor dificultad para un concursante generalista de cultura general, según la probabilidad de que responda correctamente la pregunta tal como queda formulada: a mayor probabilidad de acierto, menor dificultad.
+Qᵢ no contiene Rᵢ ni una pista léxica evidente de Rᵢ por forma, raíz, abreviación, símbolo, derivación o semejanza.
 
+Modifica únicamente los campos que incumplan alguna condición anterior.
 
-## Salida
+Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
 
-Orden: [n₁, n₂, n₃, n₄, n₅, n₆, n₇, n₈, n₉, n₁₀]
-
-Después, únicamente los campos modificados:
-
-n.campo: nuevo valor''';
+para un concursante generalista de cultura general.''';
 
 String quiz10ReviewTestLiteral(List<Quiz10LunaRow> rows) {
   if (rows.length != 10) {

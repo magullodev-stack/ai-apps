@@ -9,42 +9,26 @@ import 'quiz10_DART_Pi+Di.dart';
 // F es un andamiaje factual efímero de G: no entra en H, R ni en el test final.
 // Las diez unidades de G del Quiz10 se ejecutan simultáneamente.
 
-const String quiz10LunaPrompt = r'''## Entrada
-
-P := {{P}}
+const String quiz10LunaPrompt = r'''P := {{P}}
 D := {{D}}
-Instrucción D := {{instruction}}
-
+I_D := {{instruction}}
 H := {{H}}
 
+F := f(P,I_D,H), base factual mínima de cultura general generalista, no especializada ni de detalle.
 
-## Generación
+Q := q(F,I_D), autosuficiente.
 
-F := una afirmación factual autónoma, o el mínimo conjunto de afirmaciones factuales estrechamente relacionadas, sobre P y de cultura general, con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y determine de forma unívoca el conocimiento que Q debe preguntar.
+O := o(F,Q) = {o₁,o₂,o₃,o₄}, opciones distintas, plausibles, homogéneas y concisas.
 
-F se establece antes de Q y O y debe poder leerse de forma autónoma sin ellos; no contiene alternativas de respuesta, distractores, enumeraciones de candidatos ni información introducida únicamente para construir O.
-
-Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
-
-O := {o₁, o₂, o₃, o₄}, cuatro respuestas distintas para Q, exactamente una correcta y tres incorrectas, todas plausibles y del mismo tipo.
-
-C := posición 1, 2, 3 o 4 de la respuesta correcta en O.
+C := posición de la única opción correcta en O.
 
 R := O_C
 
-Q no contiene R ni términos cuya forma, raíz, abreviación, símbolo, derivación o semejanza léxica proporcione una pista evidente para inferir R.
+Q no contiene R ni una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza.
 
-Para todo (Qᵢ, Rᵢ) ∈ H, Q debe preguntar por un conocimiento materialmente distinto del preguntado por Qᵢ; no puede reutilizarlo, reformularlo, parafrasearlo ni preguntarlo desde otro ángulo.
+∀(Qᵢ,Rᵢ) ∈ H, Q pregunta un conocimiento materialmente distinto de Qᵢ.
 
-Q ∉ {Q₁, ..., Qₙ}
-
-R ∉ {R₁, ..., Rₙ}
-
-
-## Salida
-
-| P | D | F | Q | O | C |
-|---|---|---|---|---|---|
+R ∉ {R₁,...,Rₙ}
 ''';
 
 String _historyLiteral(List<Quiz10HistoryEntry> history) {
