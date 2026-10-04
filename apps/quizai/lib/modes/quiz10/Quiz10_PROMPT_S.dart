@@ -4,11 +4,13 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 const String quiz10SortPrompt = r'''T := {{TEST}}
 
+G := persona no especialista con conocimientos generales
+
+p(n) := P(conocer Rₙ dado Qₙ | G)
+
 Orden := (n₁,...,n₁₀)
 
-Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
-
-para un concursante generalista de cultura general.
+p(n₁) ≥ ... ≥ p(n₁₀)
 ''';
 
 class Quiz10SortItem {
