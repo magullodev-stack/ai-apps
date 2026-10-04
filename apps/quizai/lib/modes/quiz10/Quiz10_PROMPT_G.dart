@@ -20,9 +20,9 @@ H := {{H}}
 
 ## Generación
 
-F := una afirmación factual autónoma, o el mínimo conjunto de afirmaciones factuales estrechamente relacionadas, sobre P, propia de cultura general y con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y determine de forma unívoca el conocimiento que Q debe preguntar.
+F := una afirmación factual autónoma, o el mínimo conjunto de afirmaciones factuales estrechamente relacionadas, sobre P y de cultura general, con valor de pregunta de concurso para un concursante generalista, no dependiente de conocimiento especializado, técnico ni de datos de detalle o trivia especializada del área, que permita cumplir D y determine de forma unívoca el conocimiento que Q debe preguntar.
 
-F se establece antes de Q y O; no contiene alternativas de respuesta, distractores ni enumeraciones de candidatos, ni información introducida únicamente para construir O.
+F se establece antes de Q y O y debe poder leerse de forma autónoma sin ellos; no contiene alternativas de respuesta, distractores, enumeraciones de candidatos ni información introducida únicamente para construir O.
 
 Formula una Q autosuficiente siguiendo la Instrucción D, que pueda entenderse y responderse sin conocer F.
 
