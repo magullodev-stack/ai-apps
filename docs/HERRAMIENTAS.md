@@ -60,5 +60,11 @@ y reutiliza Android cuando ya está conectado.
 
 # TEST PROMPT QUIZ10
 
+
+## USUARIO H
 .\scripts\sync-dev.ps1
 .\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
+
+## COLA USUARIOS
+.\scripts\sync-dev.ps1
+.\apps\quizai\run.ps1 -ProbarQuiz10 -Usuarios 20
