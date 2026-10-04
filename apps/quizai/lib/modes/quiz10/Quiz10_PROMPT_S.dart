@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
-import 'quiz10_pipeline.dart';
-
 const String quiz10SortPrompt = r'''T := {{TEST}}
 
 Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
@@ -11,7 +9,19 @@ Pr(acierto(n₁)) ≥ ... ≥ Pr(acierto(n₁₀))
 para un concursante generalista de cultura general.
 ''';
 
-String quiz10SortTestLiteral(List<Quiz10ReviewedItem> items) {
+class Quiz10SortItem {
+  const Quiz10SortItem({
+    required this.question,
+    required this.correct,
+    required this.distractors,
+  });
+
+  final String question;
+  final String correct;
+  final List<String> distractors;
+}
+
+String quiz10SortTestLiteral(List<Quiz10SortItem> items) {
   if (items.length != 10) {
     throw ArgumentError('La ordenación requiere diez preguntas revisadas.');
   }
@@ -29,7 +39,7 @@ String quiz10SortTestLiteral(List<Quiz10ReviewedItem> items) {
   ].join('\n\n');
 }
 
-String quiz10SortInput(List<Quiz10ReviewedItem> items) =>
+String quiz10SortInput(List<Quiz10SortItem> items) =>
     quiz10SortPrompt.replaceAll('{{TEST}}', quiz10SortTestLiteral(items));
 
 Map<String, Object?> quiz10SortSchema() => {
@@ -105,7 +115,7 @@ final class AiQuiz10Sorter {
   final AiAppsClient client;
   final String model;
 
-  Future<Quiz10SortResult> sort(List<Quiz10ReviewedItem> items) async {
+  Future<Quiz10SortResult> sort(List<Quiz10SortItem> items) async {
     final response = await client
         .generate(
           application: 'quiz10-sort',
