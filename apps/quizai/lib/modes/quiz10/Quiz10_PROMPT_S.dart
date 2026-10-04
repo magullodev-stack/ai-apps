@@ -15,12 +15,10 @@ class Quiz10SortItem {
   const Quiz10SortItem({
     required this.question,
     required this.correct,
-    required this.distractors,
   });
 
   final String question;
   final String correct;
-  final List<String> distractors;
 }
 
 String quiz10SortTestLiteral(List<Quiz10SortItem> items) {
@@ -34,9 +32,6 @@ String quiz10SortTestLiteral(List<Quiz10SortItem> items) {
         '${i + 1}.',
         'Q: ${items[i].question}',
         'R: ${items[i].correct}',
-        'd1: ${items[i].distractors[0]}',
-        'd2: ${items[i].distractors[1]}',
-        'd3: ${items[i].distractors[2]}',
       ].join('\n'),
   ].join('\n\n');
 }
