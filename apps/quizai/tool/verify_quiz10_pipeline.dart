@@ -159,7 +159,7 @@ Future<void> main(List<String> args) async {
         args[3] != '--semilla') {
       stderr.writeln(
         'Uso: verify_quiz10_pipeline.dart '
-        '[--quiz10 --muestras 1-20 --semilla N]',
+        '[--quiz10 --muestras 1-200 --semilla N]',
       );
       exitCode = 64;
       return;
@@ -169,11 +169,11 @@ Future<void> main(List<String> args) async {
     final parsedSeed = int.tryParse(args[4]);
     if (parsedSamples == null ||
         parsedSamples < 1 ||
-        parsedSamples > 20 ||
+        parsedSamples > 200 ||
         parsedSeed == null ||
         parsedSeed < 0 ||
         parsedSeed > 1000000000) {
-      stderr.writeln('Muestras 1-20 y semilla 0-1000000000.');
+      stderr.writeln('Muestras 1-200 y semilla 0-1000000000.');
       exitCode = 64;
       return;
     }
