@@ -121,6 +121,8 @@ unidades independientes y simultáneas:
 ```
 
 `lib/modes/quiz10/Quiz10_PROMPT_G.dart` contiene el prompt de generación G.
+`F` es un andamiaje factual transitorio que G materializa antes de construir la
+pregunta; no entra en H, no se envía a R y no forma parte del test final.
 `O` contiene cuatro opciones y `C` señala la correcta; internamente
 `R := O_C`. G no recibe dificultad.
 
