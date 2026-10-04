@@ -611,7 +611,6 @@ Future<void> main(List<String> args) async {
           'razonamiento ${_known(sr)}, coste ${_usd(sorterCost)}',
         );
         report.writeln();
-        await report.flush();
 
         final generationSeconds =
             result.lunaDuration.inMilliseconds / 1000;
@@ -713,7 +712,6 @@ Future<void> main(List<String> args) async {
         );
         report.writeln(error);
         report.writeln();
-        await report.flush();
         stderr.writeln('Test $test/$totalTests — U$user P$game: $error');
 
     }
