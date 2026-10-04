@@ -243,6 +243,33 @@ Future<void> main(List<String> args) async {
           (sum, patch) => sum + patch.changes.length,
         );
 
+        final questionCorrections = result.review.patches.fold<int>(
+          0,
+          (sum, patch) =>
+              sum + patch.changes.where((change) => change.field == 'Q').length,
+        );
+        final answerCorrections = result.review.patches.fold<int>(
+          0,
+          (sum, patch) =>
+              sum + patch.changes.where((change) => change.field == 'R').length,
+        );
+        final distractorCorrections = result.review.patches.fold<int>(
+          0,
+          (sum, patch) => sum +
+              patch.changes
+                  .where(
+                    (change) =>
+                        change.field == 'a1' ||
+                        change.field == 'a2' ||
+                        change.field == 'a3',
+                  )
+                  .length,
+        );
+
+        final packInputTokens = li != null && ri != null ? li + ri : null;
+        final packOutputTokens = lo != null && ro != null ? lo + ro : null;
+        final packReasoningTokens = lr != null && rr != null ? lr + rr : null;
+
         report.writeln(
           '========== TEST $test/$samples — '
           '${(totalWatch.elapsedMilliseconds / 1000).toStringAsFixed(2)} s '
@@ -330,11 +357,15 @@ Future<void> main(List<String> args) async {
 
         stdout.writeln(
           'Test $test/$samples | '
-          'Luna ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
-          'revisión ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
-          'correcciones ${result.review.patches.length} pregunta(s) | '
+          'Generación ${(result.lunaDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
+          'Revisión ${(result.reviewDuration.inMilliseconds / 1000).toStringAsFixed(2)} s | '
+          'correcciones: preguntas $questionCorrections, '
+          'respuestas $answerCorrections, '
+          'distractores $distractorCorrections | '
           'coste pack ${_usd(packCost)} | '
-          'acumulado ${pricedStages == 0 ? "n/d" : _usd(totalCost)}',
+          'tokens: entrada ${_known(packInputTokens)}, '
+          'salida ${_known(packOutputTokens)}, '
+          'razonamiento ${_known(packReasoningTokens)}',
         );
       } catch (error) {
         totalWatch.stop();
