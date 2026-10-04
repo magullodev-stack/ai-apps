@@ -353,6 +353,7 @@ Future<void> main(List<String> args) async {
           final row = result.lunaRows[rowIndex];
           report.writeln(
             '${rowIndex + 1}. ${row.slot.pivot.code} ${row.slot.dimension.code} | '
+            'F: ${row.fact} | '
             'Q: ${row.question} | '
             'O: ${[
               for (var option = 0; option < row.options.length; option++)
