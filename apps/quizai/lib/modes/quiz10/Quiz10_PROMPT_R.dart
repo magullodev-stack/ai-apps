@@ -6,21 +6,16 @@ import 'Quiz10_PROMPT_G.dart';
 
 const String quiz10ReviewPrompt = r'''t := {{ITEM}}
 
-Δ := correcciones
+V := {
+  R no es la única respuesta correcta a Q,
+  Q no realiza la relación semántica definida por I_D,
+  algún referente necesario para interpretar Q no aparece explícitamente en Q,
+  Q contiene R o una pista léxica evidente de R por forma, raíz, abreviación, símbolo, derivación o semejanza
+}
 
-t' := aplicar(Δ,t)
+V = ∅ ⇒ Δ = ∅
 
-min |Δ|
-
-sujeto a:
-
-R' es la única respuesta correcta a Q'.
-
-Q' realiza la relación semántica definida por I_D.
-
-Todo referente necesario para interpretar Q' aparece explícitamente en Q'.
-
-Q' no contiene R' ni una pista léxica evidente de R' por forma, raíz, abreviación, símbolo, derivación o semejanza.
+V ≠ ∅ ⇒ Δ := mínimo conjunto de correcciones que elimina V.
 
 ∀(campo,valor) ∈ Δ, valor ≠ t[campo].
 ''';
