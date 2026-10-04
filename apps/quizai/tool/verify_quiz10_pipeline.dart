@@ -68,15 +68,17 @@ String _cell(String value, int width) {
   return value.padRight(width);
 }
 
+String _rule(int width) => List.filled(width, '─').join();
+
 void _printMetricsTable(List<(String, String, String, String)> rows) {
   const labelWidth = 20;
   const valueWidth = 14;
   final top =
-      '┌${'─' * labelWidth}┬${'─' * valueWidth}┬${'─' * valueWidth}┬${'─' * valueWidth}┐';
+      '┌${_rule(labelWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┬${_rule(valueWidth)}┐';
   final mid =
-      '├${'─' * labelWidth}┼${'─' * valueWidth}┼${'─' * valueWidth}┼${'─' * valueWidth}┤';
+      '├${_rule(labelWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┼${_rule(valueWidth)}┤';
   final bottom =
-      '└${'─' * labelWidth}┴${'─' * valueWidth}┴${'─' * valueWidth}┴${'─' * valueWidth}┘';
+      '└${_rule(labelWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┴${_rule(valueWidth)}┘';
 
   stdout.writeln(top);
   stdout.writeln(
@@ -96,9 +98,9 @@ void _printMetricsTable(List<(String, String, String, String)> rows) {
 void _printResultTable(List<(String, String)> rows) {
   const labelWidth = 28;
   const valueWidth = 14;
-  final top = '┌${'─' * labelWidth}┬${'─' * valueWidth}┐';
-  final mid = '├${'─' * labelWidth}┼${'─' * valueWidth}┤';
-  final bottom = '└${'─' * labelWidth}┴${'─' * valueWidth}┘';
+  final top = '┌${_rule(labelWidth)}┬${_rule(valueWidth)}┐';
+  final mid = '├${_rule(labelWidth)}┼${_rule(valueWidth)}┤';
+  final bottom = '└${_rule(labelWidth)}┴${_rule(valueWidth)}┘';
 
   stdout.writeln(top);
   for (var i = 0; i < rows.length; i++) {
