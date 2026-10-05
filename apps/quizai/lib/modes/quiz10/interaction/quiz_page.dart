@@ -105,23 +105,7 @@ class _QuizPageState extends State<QuizPage> {
             widget.loadQuestions != null);
 
     if (isPreparing) {
-      return Quiz10PreparationScreen(
-        title: 'Quiz10',
-        headline: 'Preparando tu Quiz10…',
-        steps: const [
-          'Seleccionando temas y niveles',
-          'Generando preguntas',
-          'Revisando respuestas',
-          'Organizando tu partida',
-        ],
-        footerMessage: 'Un buen Quiz10 mezcla sorpresa, variedad y preguntas que merecen la pena.',
-        illustration: const Icon(
-          Icons.science_rounded,
-          color: Colors.white,
-          size: 104,
-        ),
-        onBack: () => Navigator.of(context).maybePop(),
-      );
+      return const Quiz10PreparationScreen();
     }
 
     return Scaffold(
