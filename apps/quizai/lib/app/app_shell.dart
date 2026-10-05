@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
-import 'home/modalidades_page.dart';
+import 'home/home_page.dart';
 import 'profile/profile_page.dart';
 import 'settings/quiz_settings.dart';
 import 'settings/settings_page.dart';
@@ -43,76 +43,15 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: QuizPalette.backgroundDark,
-      appBar: AppBar(
-        toolbarHeight: 92,
-        titleSpacing: QuizLayout.horizontalPadding,
-        centerTitle: false,
-        backgroundColor: QuizPalette.backgroundLight,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                'assets/branding/quizai_logo.png',
-                width: 38,
-                height: 38,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(width: QuizSpacing.sm),
-            const Flexible(
-              child: Text(
-                'QuizAI',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: QuizTypography.brand,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: QuizSpacing.lg),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: QuizPalette.foreground.withAlpha(28),
-                border: Border.all(color: QuizPalette.foreground.withAlpha(52)),
-              ),
-              child: IconButton(
-                tooltip: 'Ajustes',
-                icon: const Icon(
-                  Icons.settings_rounded,
-                  color: QuizPalette.foreground,
-                  size: 28,
-                ),
-                onPressed: _openSettings,
-              ),
-            ),
-          ),
-        ],
-      ),
       body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: QuizPalette.backgroundGradient,
         ),
         child: SafeArea(
-          top: false,
           bottom: false,
           child: _selectedTab == 0
-              ? const ModalidadesPage()
-              : Theme(
-                  data: Theme.of(context).copyWith(
-                    textTheme: Theme.of(context).textTheme.apply(
-                      bodyColor: QuizPalette.foreground,
-                      displayColor: QuizPalette.foreground,
-                    ),
-                  ),
-                  child: const ProfilePage(),
-                ),
+              ? HomePage(onOpenSettings: _openSettings)
+              : _ProfileTab(onOpenSettings: _openSettings),
         ),
       ),
       bottomNavigationBar: Container(
@@ -148,10 +87,10 @@ class _AppShellState extends State<AppShell> {
               children: [
                 Expanded(
                   child: _QuizNavItem(
-                    key: const Key('quizai-nav-modalidades'),
-                    label: 'Modalidades',
-                    icon: Icons.grid_view_outlined,
-                    selectedIcon: Icons.grid_view_rounded,
+                    key: const Key('quizai-nav-inicio'),
+                    label: 'Inicio',
+                    icon: Icons.home_outlined,
+                    selectedIcon: Icons.home_rounded,
                     selected: _selectedTab == 0,
                     onTap: () {
                       if (_selectedTab != 0) {
@@ -179,6 +118,51 @@ class _AppShellState extends State<AppShell> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileTab extends StatelessWidget {
+  const _ProfileTab({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              textTheme: Theme.of(context).textTheme.apply(
+                bodyColor: QuizPalette.foreground,
+                displayColor: QuizPalette.foreground,
+              ),
+            ),
+            child: const ProfilePage(),
+          ),
+        ),
+        Positioned(
+          top: QuizSpacing.sm,
+          right: QuizSpacing.lg,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: QuizPalette.foreground.withAlpha(24),
+              border: Border.all(color: QuizPalette.foreground.withAlpha(72)),
+            ),
+            child: IconButton(
+              tooltip: 'Ajustes',
+              onPressed: onOpenSettings,
+              icon: const Icon(
+                Icons.settings_rounded,
+                color: QuizPalette.foreground,
+                size: 29,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
