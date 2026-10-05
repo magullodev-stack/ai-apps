@@ -115,7 +115,7 @@ legal ni enlaces. Versión es informativa y no navega.
 Los componentes reutilizados pertenecen a `lib/app/settings/` y consumen
 los tokens de `app_theme.dart`; no se trasladan a la UI compartida.
 
-`lib/main.dart` arranca QuizAI. `lib/app/` contiene la identidad, el tema, la navegación general y las pantallas Modalidades, Perfil y Ajustes. `lib/modes/quiz10/` separa `interaction/`, responsable de la experiencia de Quiz10, y `production/`, responsable de construir y validar sus tests. `lib/modes/estudio/` contiene la implementación de Estudio. Las pruebas del Design System y su integración se encuentran en `test/app/`.
+`lib/main.dart` arranca QuizAI. `lib/app/` contiene la identidad y la experiencia general; `app/interaction/` presenta las intervenciones de QuizAI y `app/onboarding/` gobierna sus secuencias iniciales. `lib/modes/quiz10/` separa `interaction/`, responsable de la partida y su escena propia, y `production/`, responsable de construir y validar sus tests. `lib/modes/estudio/` contiene la implementación de Estudio. Las pruebas del Design System y su integración se encuentran en `test/app/`.
 
 ## Ejecutar con IA
 
