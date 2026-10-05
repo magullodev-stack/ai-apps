@@ -54,17 +54,35 @@ y reutiliza Android cuando ya está conectado.
 
 ---
 
-# COMMIT
+
+
+
+
+
+
+
+
+## COMMIT
 
 .\scripts\sync-dev.ps1
 
-# TEST PROMPT QUIZ10
-
+---
 
 ## USUARIO H
 .\scripts\sync-dev.ps1
 .\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
 
+---
+
 ## COLA USUARIOS
 .\scripts\sync-dev.ps1
 .\apps\quizai\run.ps1 -ProbarQuiz10 -Usuarios 20
+
+---
+
+## HOT RELOAD FLUTTER
+
+en la terminal donde está vivo flutter run, usa:
+r
+
+Eso reconstruye la aplicación desde cero y ejecutará el nuevo initState
