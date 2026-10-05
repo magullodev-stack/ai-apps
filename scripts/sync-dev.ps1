@@ -35,110 +35,6 @@ function Get-Text {
     return (($Value | Out-String).Trim())
 }
 
-
-function Invoke-QuizAiHotReload {
-    $flutterCommand = Get-Command flutter.bat -ErrorAction SilentlyContinue
-    $flutter = if ($flutterCommand) {
-        $flutterCommand.Source
-    }
-    else {
-        Join-Path $env:USERPROFILE 'development\flutter\bin\flutter.bat'
-    }
-
-    $adbCommand = Get-Command adb.exe -ErrorAction SilentlyContinue
-    $adb = if ($adbCommand) {
-        $adbCommand.Source
-    }
-    else {
-        Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe'
-    }
-
-    if (-not (Test-Path -LiteralPath $flutter) -or
-        -not (Test-Path -LiteralPath $adb)) {
-        Write-Host 'HOT RELOAD skipped: Flutter or ADB is not available.'
-        return
-    }
-
-    $devices = @()
-    foreach ($line in (& $adb devices 2>$null)) {
-        $trimmed = $line.Trim()
-        if ([string]::IsNullOrWhiteSpace($trimmed)) { continue }
-
-        $parts = @($trimmed.Split([char]9))
-        if ($parts.Count -ge 2 -and
-            $parts[0].StartsWith('emulator-') -and
-            $parts[1] -eq 'device') {
-            $devices += $parts[0]
-        }
-    }
-
-    if ($devices.Count -ne 1) {
-        Write-Host 'HOT RELOAD skipped: no unique Android emulator is connected.'
-        return
-    }
-
-    $device = $devices[0]
-    $appPid = (& $adb -s $device shell pidof com.example.quizai 2>$null |
-        Out-String).Trim()
-
-    if ([string]::IsNullOrWhiteSpace($appPid)) {
-        Write-Host 'HOT RELOAD skipped: QuizAI is not running.'
-        return
-    }
-
-    Write-Host 'HOT RELOAD - QuizAI...' -ForegroundColor Cyan
-
-    $quizAi = Join-Path $script:Repo 'apps\quizai'
-    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $startInfo.FileName = $flutter
-    $startInfo.Arguments = "attach -d $device"
-    $startInfo.WorkingDirectory = $quizAi
-    $startInfo.UseShellExecute = $false
-    $startInfo.RedirectStandardInput = $true
-
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $startInfo
-
-    try {
-        if (-not $process.Start()) {
-            Write-Host '    Hot reload skipped: flutter attach could not start.' -ForegroundColor Yellow
-            return
-        }
-
-        Start-Sleep -Milliseconds 2500
-
-        if ($process.HasExited) {
-            Write-Host '    Hot reload skipped: no attachable Flutter session was found.' -ForegroundColor Yellow
-            return
-        }
-
-        $process.StandardInput.WriteLine('r')
-        $process.StandardInput.Flush()
-        Start-Sleep -Milliseconds 1400
-
-        if (-not $process.HasExited) {
-            $process.StandardInput.WriteLine('d')
-            $process.StandardInput.Flush()
-        }
-
-        if (-not $process.WaitForExit(5000)) {
-            $process.Kill()
-            $process.WaitForExit()
-        }
-
-        Write-Host '    Hot reload requested.' -ForegroundColor Green
-    }
-    catch {
-        Write-Host ("    Hot reload skipped: " + $_.Exception.Message) -ForegroundColor Yellow
-        if (-not $process.HasExited) {
-            $process.Kill()
-        }
-    }
-    finally {
-        $process.Dispose()
-    }
-}
-
 function Stage-SyncContent {
     Invoke-Git -GitArgs @('add', '-A') | Out-Null
 
@@ -265,7 +161,6 @@ try {
             [string]::IsNullOrWhiteSpace($newStaged)
         ) {
             Write-Host "SYNC COMPLETE - dev = origin/dev ($($local.Substring(0, 7)))" -ForegroundColor Green
-            Invoke-QuizAiHotReload
             exit 0
         }
 
