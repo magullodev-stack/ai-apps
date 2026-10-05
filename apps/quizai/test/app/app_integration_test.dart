@@ -32,7 +32,7 @@ void main() {
         same(quizAITheme),
       );
       expect(find.text('QuizAI'), findsOneWidget);
-      expect(find.byTooltip('Configuración'), findsOneWidget);
+      expect(find.byTooltip('Ajustes'), findsOneWidget);
       expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
       expect(find.text('Modalidades'), findsOneWidget);
       expect(find.text('Perfil'), findsOneWidget);
@@ -89,7 +89,7 @@ void main() {
     });
   }
 
-  testWidgets('Perfil y Configuración conservan la pestaña al regresar', (
+  testWidgets('Perfil y Ajustes conservan la pestaña al regresar', (
     tester,
   ) async {
     await pumpApp(tester, const Size(390, 844));
@@ -99,11 +99,12 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(ProfilePage), findsOneWidget);
       }
-      await tester.tap(find.byTooltip('Configuración'));
+      await tester.tap(find.byTooltip('Ajustes'));
       await tester.pumpAndSettle();
       expect(find.byType(SettingsPage), findsOneWidget);
-      expect(find.text('Todavía no disponible.'), findsOneWidget);
-      await tester.pageBack();
+      expect(find.text('Experiencia'), findsOneWidget);
+      expect(find.byKey(const Key('quizai-bottom-nav')), findsNothing);
+      await tester.tap(find.byTooltip('Volver'));
       await tester.pumpAndSettle();
       expect(
         find.byType(ProfilePage),

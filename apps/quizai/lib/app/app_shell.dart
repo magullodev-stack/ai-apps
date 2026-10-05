@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 import 'home/modalidades_page.dart';
 import 'profile/profile_page.dart';
+import 'settings/quiz_settings.dart';
 import 'settings/settings_page.dart';
 
 class AppShell extends StatefulWidget {
@@ -14,10 +15,26 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _selectedTab = 0;
+  final _settings = ValueNotifier(const QuizSettings());
+
+  @override
+  void dispose() {
+    _settings.dispose();
+    super.dispose();
+  }
 
   void _openSettings() {
-    Navigator.of(context)
-        .push<void>(MaterialPageRoute(builder: (_) => const SettingsPage()));
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => ValueListenableBuilder<QuizSettings>(
+          valueListenable: _settings,
+          builder: (_, settings, _) => SettingsPage(
+            settings: settings,
+            onChanged: (value) => _settings.value = value,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -64,7 +81,7 @@ class _AppShellState extends State<AppShell> {
                 border: Border.all(color: QuizPalette.foreground.withAlpha(52)),
               ),
               child: IconButton(
-                tooltip: 'Configuración',
+                tooltip: 'Ajustes',
                 icon: const Icon(
                   Icons.settings_rounded,
                   color: QuizPalette.foreground,
