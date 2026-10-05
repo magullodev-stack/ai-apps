@@ -1,3 +1,4 @@
+import 'package:ai_apps_ui/ai_apps_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/generation/quiz_preparation_screen.dart';
@@ -159,7 +160,7 @@ class _QuizPageState extends State<QuizPage> {
                   Text(questions[_index].pivot),
                   const SizedBox(height: 8),
 
-                  Text(
+                  AiAppsContentText(
                     questions[_index].question,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
@@ -170,13 +171,16 @@ class _QuizPageState extends State<QuizPage> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: OutlinedButton(
                         onPressed: _selected == null ? () => _answer(i) : null,
-                        child: Text(questions[_index].options[i]),
+                        child: AiAppsContentText(
+                          questions[_index].options[i],
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
 
                   if (_selected != null) ...[
                     const SizedBox(height: 12),
-                    Text(
+                    AiAppsContentText(
                       questions[_index].options[_selected!] ==
                               questions[_index].correct
                           ? '¡Correcto!'
