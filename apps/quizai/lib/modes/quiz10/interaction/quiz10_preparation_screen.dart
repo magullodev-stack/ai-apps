@@ -67,6 +67,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
   late final AnimationController _pulseController;
   late final AnimationController _completionController;
   final math.Random _progressRandom = math.Random();
+  final Stopwatch _progressWatch = Stopwatch();
 
   int _messageIndex = 0;
   double _progress = 0.02;
@@ -94,6 +95,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
       ..addListener(_tickCompletion)
       ..addStatusListener(_handleCompletionStatus);
 
+    _progressWatch.start();
     _scheduleProgressTick();
 
     if (widget.ready) {
@@ -125,7 +127,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
     if (widget.ready || _completionController.isAnimating) return;
 
     final delay = Duration(
-      milliseconds: 180 + _progressRandom.nextInt(620),
+      milliseconds: 260 + _progressRandom.nextInt(440),
     );
 
     _progressTimer = Timer(delay, () {
@@ -133,16 +135,25 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
         return;
       }
 
-      const ceiling = 0.88;
-      final remaining = ceiling - _progress;
+      final seconds = _progressWatch.elapsedMilliseconds / 1000.0;
 
-      if (remaining > 0.002) {
-        final pace = 0.08 + (_progressRandom.nextDouble() * 0.20);
-        final jitter = 0.002 + (_progressRandom.nextDouble() * 0.018);
-        final next = _progress + (remaining * pace) + jitter;
+      double target;
+      if (seconds <= 10) {
+        // La carga visual alcanza aproximadamente el 80 % a los 10 s.
+        target = 0.80 * (seconds / 10.0);
+      } else {
+        // Después avanza muy lentamente y nunca aparenta terminar por sí sola.
+        final extraSeconds = seconds - 10;
+        target = 0.80 + math.min(0.12, extraSeconds * 0.006);
+      }
 
+      // Pequeña irregularidad para evitar una animación mecánica.
+      final jitter = 0.002 + (_progressRandom.nextDouble() * 0.010);
+      final next = math.min(0.92, math.max(_progress, target + jitter));
+
+      if ((next - _progress).abs() > 0.0005) {
         setState(() {
-          _progress = math.min(ceiling, next);
+          _progress = next;
         });
       }
 
@@ -154,6 +165,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
     if (_completionNotified || _completionController.isAnimating) return;
 
     _progressTimer?.cancel();
+    _progressWatch.stop();
     _completionStart = _progress;
     _completionController.forward(from: 0);
   }
@@ -179,6 +191,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
   void dispose() {
     _messageTimer?.cancel();
     _progressTimer?.cancel();
+    _progressWatch.stop();
     _floatController.dispose();
     _pulseController.dispose();
     _completionController.dispose();
