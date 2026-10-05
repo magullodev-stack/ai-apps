@@ -15,12 +15,14 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
   List<Quiz10FinalQuestion>? _questions;
+  List<Quiz10FinalQuestion>? _preparedQuestions;
 
   int _index = 0;
   int _score = 0;
   int? _selected;
 
   bool _loading = false;
+  bool _testReady = false;
   bool _finished = false;
   String? _error;
 
@@ -43,6 +45,8 @@ class _QuizPageState extends State<QuizPage> {
       _loading = true;
       _error = null;
       _questions = null;
+      _preparedQuestions = null;
+      _testReady = false;
       _index = 0;
       _score = 0;
       _selected = null;
@@ -57,14 +61,30 @@ class _QuizPageState extends State<QuizPage> {
       }
 
       if (!mounted) return;
-      setState(() => _questions = questions);
+      setState(() {
+        _preparedQuestions = questions;
+        _testReady = true;
+      });
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'No se pudieron preparar las preguntas.');
+        setState(() {
+          _loading = false;
+          _error = 'No se pudieron preparar las preguntas.';
+        });
       }
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _enterPreparedQuiz() {
+    final prepared = _preparedQuestions;
+    if (!mounted || prepared == null) return;
+
+    setState(() {
+      _questions = prepared;
+      _preparedQuestions = null;
+      _testReady = false;
+      _loading = false;
+    });
   }
 
   void _answer(int index) {
@@ -105,7 +125,10 @@ class _QuizPageState extends State<QuizPage> {
             widget.loadQuestions != null);
 
     if (isPreparing) {
-      return const Quiz10PreparationScreen();
+      return Quiz10PreparationScreen(
+        ready: _testReady,
+        onCompleted: _enterPreparedQuiz,
+      );
     }
 
     return Scaffold(
