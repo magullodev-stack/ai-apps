@@ -115,7 +115,7 @@ legal ni enlaces. Versión es informativa y no navega.
 Los componentes reutilizados pertenecen a `lib/app/settings/` y consumen
 los tokens de `app_theme.dart`; no se trasladan a la UI compartida.
 
-`lib/main.dart` arranca QuizAI. `lib/app/` contiene la identidad, el tema, la navegación general y las pantallas Modalidades, Perfil y Ajustes. `lib/modes/quiz10/` contiene la pantalla, el estado, las reglas, la validación y la generación mediante IA de la modalidad 🎲 Quiz10. `lib/modes/estudio/` contiene la implementación de Estudio. Las pruebas del Design System y su integración se encuentran en `test/app/`.
+`lib/main.dart` arranca QuizAI. `lib/app/` contiene la identidad, el tema, la navegación general y las pantallas Modalidades, Perfil y Ajustes. `lib/modes/quiz10/` separa `interaction/`, responsable de la experiencia de Quiz10, y `production/`, responsable de construir y validar sus tests. `lib/modes/estudio/` contiene la implementación de Estudio. Las pruebas del Design System y su integración se encuentran en `test/app/`.
 
 ## Ejecutar con IA
 
@@ -167,7 +167,7 @@ activo. El archivo de selección es local y no se publica en Git.
 ## Generación Quiz10: G → R → S → Dart
 
 El catálogo canónico se encuentra en
-`lib/modes/quiz10/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34 dimensiones D01–D34 expresadas como instrucciones directas.
+`lib/modes/quiz10/production/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34 dimensiones D01–D34 expresadas como instrucciones directas.
 
 Cada Quiz10 selecciona diez P distintas y diez D distintas. G recibe diez
 unidades independientes y simultáneas:
@@ -178,19 +178,19 @@ unidades independientes y simultáneas:
 (F, Q) -> O
 ```
 
-`lib/modes/quiz10/Quiz10_PROMPT_G.dart` contiene el prompt de generación G.
+`lib/modes/quiz10/production/Quiz10_PROMPT_G.dart` contiene el prompt de generación G.
 `F` es un andamiaje factual transitorio que G materializa antes de construir la
 pregunta; no entra en H, no se envía a R ni a S y no forma parte del test final.
 `O` contiene cuatro opciones y `C` señala la correcta; internamente
 `R := O_C`. G no recibe dificultad.
 
 Cuando terminan las diez llamadas G, Dart transforma cada fila en
-`Q, R, d1, d2, d3`. `lib/modes/quiz10/Quiz10_PROMPT_R.dart` revisa cada
+`Q, R, d1, d2, d3`. `lib/modes/quiz10/production/Quiz10_PROMPT_R.dart` revisa cada
 ítem de forma independiente: se lanzan diez llamadas R simultáneas y cada una
 devuelve únicamente los campos de su propio ítem que sea necesario corregir.
 
 Dart aplica los parches R y construye el test corregido `T*`.
-`lib/modes/quiz10/Quiz10_PROMPT_S.dart` define S, una única llamada global
+`lib/modes/quiz10/production/Quiz10_PROMPT_S.dart` define S, una única llamada global
 que recibe las diez preguntas corregidas y devuelve exclusivamente su orden
 relativo de dificultad. S no corrige contenido.
 
