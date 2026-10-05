@@ -184,6 +184,11 @@ final class AiQuiz10Pipeline {
   final AiQuiz10Reviewer reviewer;
   final AiQuiz10Sorter sorter;
 
+  final Map<Quiz10HistoryKey, int> _usageByPair = {};
+
+  Map<Quiz10HistoryKey, int> get usageByPair =>
+      Map.unmodifiable(_usageByPair);
+
   Future<List<Quiz10FinalQuestion>> generate() async {
     final result = await generateDetailed();
     return result.questions;
@@ -193,7 +198,10 @@ final class AiQuiz10Pipeline {
     Random? planRandom,
     Random? optionRandom,
   }) async {
-    final plan = selectQuiz10Pairs(planRandom ?? Random());
+    final plan = selectQuiz10Pairs(
+      planRandom ?? Random(),
+      usageByPair: _usageByPair,
+    );
 
     final lunaWatch = Stopwatch()..start();
     final lunaGeneration = await luna.generateResponse(
@@ -230,6 +238,15 @@ final class AiQuiz10Pipeline {
       reviewedItems,
       random: optionRandom,
     );
+
+    for (final slot in plan) {
+      final key = quiz10HistoryKey(slot);
+      _usageByPair.update(
+        key,
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
+    }
 
     return Quiz10PipelineResult(
       plan: List.unmodifiable(plan),
