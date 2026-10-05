@@ -177,8 +177,11 @@ class _StageProgress extends StatelessWidget {
           final available = constraints.maxWidth > 6
               ? constraints.maxWidth - 6
               : 0.0;
-          final fillWidth = (available * progress.clamp(0.0, 1.0))
-              .clamp(8.0, available > 8 ? available : 8.0);
+          final fillWidth = available <= 8
+              ? available
+              : (available * progress.clamp(0.0, 1.0))
+                    .clamp(8.0, available)
+                    .toDouble();
 
           return DecoratedBox(
             decoration: BoxDecoration(
