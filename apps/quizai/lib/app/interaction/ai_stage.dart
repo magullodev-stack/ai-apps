@@ -49,7 +49,7 @@ class QuizAiStage extends StatelessWidget {
             scene,
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
+                padding: const EdgeInsets.fromLTRB(28, 0, 28, 52),
                 child: Column(
                   children: [
                     const Spacer(flex: 11),
