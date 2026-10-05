@@ -13,9 +13,11 @@ class ModalidadesPage extends StatelessWidget {
     final dependencies = QuizAiGenerationDependencies();
     try {
       await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) =>
+        PageRouteBuilder<void>(
+          pageBuilder: (_, _, _) =>
               QuizPage(loadQuestions: dependencies.quiz10Pipeline.generate),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
         ),
       );
     } finally {
@@ -27,11 +29,13 @@ class ModalidadesPage extends StatelessWidget {
     final dependencies = QuizAiGenerationDependencies();
     try {
       await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) => EstudioPage(
+        PageRouteBuilder<void>(
+          pageBuilder: (_, _, _) => EstudioPage(
             generator: dependencies.catalogGenerator,
             questionGenerator: dependencies.questionGenerator,
           ),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
         ),
       );
     } finally {
