@@ -260,7 +260,7 @@ catch {
         Start-Sleep -Milliseconds 1400
 
         if (-not $process.HasExited) {
-            $process.StandardInput.WriteLine('q')
+            $process.StandardInput.WriteLine('d')
             $process.StandardInput.Flush()
         }
 
