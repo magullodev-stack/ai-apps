@@ -249,18 +249,6 @@ class _StageProgressPainter extends CustomPainter {
       ..strokeWidth = 2.4;
     canvas.drawRRect(track, trackBorderPaint);
 
-    final innerTrackBorderPaint = Paint()
-      ..color = Colors.white.withAlpha(65)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        trackRect.deflate(2.0),
-        const Radius.circular(999),
-      ),
-      innerTrackBorderPaint,
-    );
-
     final available = size.width - (fillInset * 2);
     if (available <= 0) return;
 
@@ -319,11 +307,6 @@ class _StageProgressPainter extends CustomPainter {
     canvas.drawRect(tipRect, tipPaint);
     canvas.restore();
 
-    final fillBorderPaint = Paint()
-      ..color = const Color(0xFFFFEAFF)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.3;
-    canvas.drawRRect(fill, fillBorderPaint);
   }
 
   @override
