@@ -207,13 +207,17 @@ abstract final class _AiAppsContentParser {
       switch (char) {
         case '×':
           output.write(r'\\times ');
+          break;
         case '⋅':
         case '·':
           output.write(r'\\cdot ');
+          break;
         case '−':
           output.write('-');
+          break;
         default:
           output.write(char);
+          break;
       }
       index++;
     }
