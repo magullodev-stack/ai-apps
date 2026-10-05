@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -171,171 +173,161 @@ class _StageProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 36,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const inset = 5.0;
-          const fillHeight = 18.0;
-          final available = (constraints.maxWidth - (inset * 2))
-              .clamp(0.0, double.infinity)
-              .toDouble();
-          final normalized = progress.clamp(0.0, 1.0).toDouble();
-          final fillWidth = available <= 14
-              ? available
-              : (available * normalized)
-                    .clamp(14.0, available)
-                    .toDouble();
-          final tipLeft = inset + fillWidth - 11;
-
-          return Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.centerLeft,
-            children: [
-              // 1. Halo exterior: una nube de luz independiente del track.
-              Positioned(
-                left: 6,
-                right: 6,
-                top: 5,
-                bottom: 5,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFA457FF).withAlpha(150),
-                        blurRadius: 24,
-                        spreadRadius: 4,
-                      ),
-                      BoxShadow(
-                        color: const Color(0xFFF0B6FF).withAlpha(85),
-                        blurRadius: 38,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 2. Track luminoso: cápsula visible incluso en la parte vacía.
-              Positioned(
-                left: 1,
-                right: 1,
-                top: 7,
-                bottom: 7,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF351172),
-                        Color(0xFF2A0B66),
-                        Color(0xFF321071),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: const Color(0xFFD5B1FF),
-                      width: 2.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFB36CFF).withAlpha(185),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withAlpha(55),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 3. Fill luminoso: masa de luz con borde propio.
-              Positioned(
-                left: inset,
-                top: (36 - fillHeight) / 2,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 360),
-                  curve: Curves.easeOutCubic,
-                  width: fillWidth,
-                  height: fillHeight,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF9D55FF),
-                        Color(0xFFD985FF),
-                        Color(0xFFF3B7FF),
-                        Color(0xFFFFF2FF),
-                      ],
-                      stops: [0.0, 0.52, 0.82, 1.0],
-                    ),
-                    border: Border.all(
-                      color: const Color(0xFFFFE7FF),
-                      width: 1.4,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFCB73FF).withAlpha(245),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                      BoxShadow(
-                        color: const Color(0xFFF4C8FF).withAlpha(180),
-                        blurRadius: 24,
-                        spreadRadius: 1,
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withAlpha(170),
-                        blurRadius: 5,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 4. Bloom en la punta: destello independiente que sigue al fill.
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 360),
-                curve: Curves.easeOutCubic,
-                left: tipLeft,
-                top: 7,
-                child: IgnorePointer(
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Colors.white,
-                          const Color(0xFFFFD8FF).withAlpha(225),
-                          const Color(0xFFD57BFF).withAlpha(125),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.28, 0.58, 1.0],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white.withAlpha(210),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFFE29BFF).withAlpha(220),
-                          blurRadius: 20,
-                          spreadRadius: 3,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      height: 42,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(
+          end: progress.clamp(0.0, 1.0).toDouble(),
+        ),
+        duration: const Duration(milliseconds: 360),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, _) {
+          return CustomPaint(
+            painter: _StageProgressPainter(value),
+            size: Size.infinite,
           );
         },
       ),
     );
+  }
+}
+
+class _StageProgressPainter extends CustomPainter {
+  const _StageProgressPainter(this.progress);
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final centerY = size.height / 2;
+    const trackHeight = 27.0;
+    const fillHeight = 23.0;
+    const outerInset = 2.0;
+    const fillInset = 5.0;
+
+    final trackRect = Rect.fromLTWH(
+      outerInset,
+      centerY - (trackHeight / 2),
+      size.width - (outerInset * 2),
+      trackHeight,
+    );
+    final track = RRect.fromRectAndRadius(
+      trackRect,
+      const Radius.circular(999),
+    );
+
+    // Halo exterior continuo, sin elementos móviles superpuestos.
+    final haloPaint = Paint()
+      ..color = const Color(0xFFB66CFF).withAlpha(145)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.normal, 12);
+    canvas.drawRRect(track, haloPaint);
+
+    final softHaloPaint = Paint()
+      ..color = const Color(0xFFE5B5FF).withAlpha(70)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.normal, 22);
+    canvas.drawRRect(track, softHaloPaint);
+
+    // Track oscuro pero luminoso.
+    final trackPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFF3A147E),
+          Color(0xFF26085E),
+          Color(0xFF321070),
+        ],
+      ).createShader(trackRect);
+    canvas.drawRRect(track, trackPaint);
+
+    final trackBorderPaint = Paint()
+      ..color = const Color(0xFFD8B5FF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4;
+    canvas.drawRRect(track, trackBorderPaint);
+
+    final innerTrackBorderPaint = Paint()
+      ..color = Colors.white.withAlpha(65)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        trackRect.deflate(2.0),
+        const Radius.circular(999),
+      ),
+      innerTrackBorderPaint,
+    );
+
+    final available = size.width - (fillInset * 2);
+    if (available <= 0) return;
+
+    final fillWidth = (available * progress)
+        .clamp(12.0, available)
+        .toDouble();
+    final fillRect = Rect.fromLTWH(
+      fillInset,
+      centerY - (fillHeight / 2),
+      fillWidth,
+      fillHeight,
+    );
+    final fill = RRect.fromRectAndRadius(
+      fillRect,
+      const Radius.circular(999),
+    );
+
+    // Glow del propio relleno: mantiene la forma de cápsula.
+    final fillGlowPaint = Paint()
+      ..color = const Color(0xFFCB73FF).withAlpha(205)
+      ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.normal, 11);
+    canvas.drawRRect(fill, fillGlowPaint);
+
+    final fillPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFF9750FF),
+          Color(0xFFD987FF),
+          Color(0xFFF2B7FF),
+          Color(0xFFFFE9FF),
+        ],
+        stops: [0.0, 0.56, 0.84, 1.0],
+      ).createShader(fillRect);
+    canvas.drawRRect(fill, fillPaint);
+
+    // La punta gana luz gradualmente, sin una bola ni una costura visible.
+    final tipWidth = fillWidth < 40 ? fillWidth : 40.0;
+    final tipRect = Rect.fromLTWH(
+      fillRect.right - tipWidth,
+      fillRect.top,
+      tipWidth,
+      fillRect.height,
+    );
+
+    canvas.save();
+    canvas.clipRRect(fill);
+    final tipPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          Colors.transparent,
+          Colors.white.withAlpha(70),
+          Colors.white.withAlpha(225),
+        ],
+        stops: const [0.0, 0.68, 1.0],
+      ).createShader(tipRect);
+    canvas.drawRect(tipRect, tipPaint);
+    canvas.restore();
+
+    final fillBorderPaint = Paint()
+      ..color = const Color(0xFFFFEAFF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3;
+    canvas.drawRRect(fill, fillBorderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _StageProgressPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
