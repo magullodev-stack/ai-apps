@@ -43,10 +43,14 @@ const _defaultLoadingMessages = <Quiz10LoadingMessage>[
 class Quiz10PreparationScreen extends StatefulWidget {
   const Quiz10PreparationScreen({
     super.key,
+    required this.ready,
+    required this.onCompleted,
     this.messages = _defaultLoadingMessages,
     this.messageInterval = const Duration(milliseconds: 3200),
   });
 
+  final bool ready;
+  final VoidCallback onCompleted;
   final List<Quiz10LoadingMessage> messages;
   final Duration messageInterval;
 
@@ -58,11 +62,16 @@ class Quiz10PreparationScreen extends StatefulWidget {
 class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
     with TickerProviderStateMixin {
   Timer? _messageTimer;
+  Timer? _progressTimer;
   late final AnimationController _floatController;
   late final AnimationController _pulseController;
-  late final AnimationController _progressController;
+  late final AnimationController _completionController;
+  final math.Random _progressRandom = math.Random();
 
   int _messageIndex = 0;
+  double _progress = 0.02;
+  double _completionStart = 0;
+  bool _completionNotified = false;
 
   @override
   void initState() {
@@ -78,10 +87,20 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
       duration: const Duration(milliseconds: 2600),
     )..repeat(reverse: true);
 
-    _progressController = AnimationController(
+    _completionController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
-    )..repeat();
+      duration: const Duration(milliseconds: 620),
+    )
+      ..addListener(_tickCompletion)
+      ..addStatusListener(_handleCompletionStatus);
+
+    _scheduleProgressTick();
+
+    if (widget.ready) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _completeProgress();
+      });
+    }
 
     if (widget.messages.length > 1) {
       _messageTimer = Timer.periodic(widget.messageInterval, (_) {
@@ -94,11 +113,75 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
   }
 
   @override
+  void didUpdateWidget(covariant Quiz10PreparationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!oldWidget.ready && widget.ready) {
+      _completeProgress();
+    }
+  }
+
+  void _scheduleProgressTick() {
+    if (widget.ready || _completionController.isAnimating) return;
+
+    final delay = Duration(
+      milliseconds: 180 + _progressRandom.nextInt(620),
+    );
+
+    _progressTimer = Timer(delay, () {
+      if (!mounted || widget.ready || _completionController.isAnimating) {
+        return;
+      }
+
+      const ceiling = 0.88;
+      final remaining = ceiling - _progress;
+
+      if (remaining > 0.002) {
+        final pace = 0.08 + (_progressRandom.nextDouble() * 0.20);
+        final jitter = 0.002 + (_progressRandom.nextDouble() * 0.018);
+        final next = _progress + (remaining * pace) + jitter;
+
+        setState(() {
+          _progress = math.min(ceiling, next);
+        });
+      }
+
+      _scheduleProgressTick();
+    });
+  }
+
+  void _completeProgress() {
+    if (_completionNotified || _completionController.isAnimating) return;
+
+    _progressTimer?.cancel();
+    _completionStart = _progress;
+    _completionController.forward(from: 0);
+  }
+
+  void _tickCompletion() {
+    if (!mounted) return;
+
+    final eased = Curves.easeInCubic.transform(_completionController.value);
+    setState(() {
+      _progress = _completionStart + ((1 - _completionStart) * eased);
+    });
+  }
+
+  void _handleCompletionStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed || _completionNotified) return;
+
+    _completionNotified = true;
+    _progress = 1;
+    widget.onCompleted();
+  }
+
+  @override
   void dispose() {
     _messageTimer?.cancel();
+    _progressTimer?.cancel();
     _floatController.dispose();
     _pulseController.dispose();
-    _progressController.dispose();
+    _completionController.dispose();
     super.dispose();
   }
 
@@ -209,7 +292,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 560),
                       child: _Quiz10LoadingBar(
-                        animation: _progressController,
+                        progress: _progress,
                       ),
                     ),
                   ],
@@ -305,10 +388,10 @@ class _LoadingCopy extends StatelessWidget {
 
 class _Quiz10LoadingBar extends StatelessWidget {
   const _Quiz10LoadingBar({
-    required this.animation,
+    required this.progress,
   });
 
-  final Animation<double> animation;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
@@ -316,62 +399,60 @@ class _Quiz10LoadingBar extends StatelessWidget {
       height: 20,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return AnimatedBuilder(
-            animation: animation,
-            builder: (context, _) {
-              final t = Curves.easeInOutCubic.transform(animation.value);
-              final available = math.max(0.0, constraints.maxWidth - 6);
-              final fraction = 0.12 + (0.76 * t);
-              final fillWidth = math.max(34.0, available * fraction);
+          final available = math.max(0.0, constraints.maxWidth - 6);
+          final fillWidth = math.max(
+            8.0,
+            available * progress.clamp(0.0, 1.0),
+          );
 
-              return DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0x33100045),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: const Color(0xFF9D75FF).withAlpha(170),
-                    width: 1.4,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF8F5CFF).withAlpha(70),
-                      blurRadius: 12,
-                      spreadRadius: 1,
-                    ),
-                  ],
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0x33100045),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: const Color(0xFF9D75FF).withAlpha(170),
+                width: 1.4,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF8F5CFF).withAlpha(70),
+                  blurRadius: 12,
+                  spreadRadius: 1,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      width: fillWidth,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(999),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF855CFF),
-                            Color(0xFFD18CFF),
-                            Color(0xFFF5D6FF),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFD89BFF).withAlpha(205),
-                            blurRadius: 12,
-                            spreadRadius: 1,
-                          ),
-                          BoxShadow(
-                            color: Colors.white.withAlpha(90),
-                            blurRadius: 4,
-                          ),
-                        ],
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(3),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 360),
+                  curve: Curves.easeOutCubic,
+                  width: fillWidth,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF855CFF),
+                        Color(0xFFD18CFF),
+                        Color(0xFFF5D6FF),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFD89BFF).withAlpha(205),
+                        blurRadius: 12,
+                        spreadRadius: 1,
                       ),
-                    ),
+                      BoxShadow(
+                        color: Colors.white.withAlpha(90),
+                        blurRadius: 4,
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           );
         },
       ),
