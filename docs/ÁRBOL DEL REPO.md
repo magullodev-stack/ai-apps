@@ -22,6 +22,8 @@ ai-apps/
 │       │   ├── modes/         # Modalidades de QuizAI.
 │       │   │   ├── estudio/
 │       │   │   └── quiz10/
+│       │   │       ├── interaction/ # Experiencia e interacción de Quiz10.
+│       │   │       └── production/  # Producción y validación de sus tests.
 │       │   ├── coverage/      # Estructuras de cobertura factual.
 │       │   └── semantic_catalog/ # Catálogo semántico.
 │       │
