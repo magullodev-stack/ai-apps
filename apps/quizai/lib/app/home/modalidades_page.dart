@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../modes/estudio/estudio_page.dart';
-import '../../modes/quiz10/quiz_page.dart';
+import '../../modes/quiz10/interaction/quiz_page.dart';
 import '../app_theme.dart';
 import '../generation_dependencies.dart';
 import 'modalidad_card.dart';
