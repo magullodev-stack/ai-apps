@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:ai_apps_ai/ai_apps_ai.dart';
-import 'package:quizai/modes/quiz10/Quiz10_PROMPT_G.dart';
-import 'package:quizai/modes/quiz10/Quiz10_PROMPT_R.dart';
-import 'package:quizai/modes/quiz10/Quiz10_PROMPT_S.dart';
-import 'package:quizai/modes/quiz10/quiz10_pipeline.dart';
+import 'package:quizai/modes/quiz10/production/Quiz10_PROMPT_G.dart';
+import 'package:quizai/modes/quiz10/production/Quiz10_PROMPT_R.dart';
+import 'package:quizai/modes/quiz10/production/Quiz10_PROMPT_S.dart';
+import 'package:quizai/modes/quiz10/production/quiz10_pipeline.dart';
 
 String _key(String text) =>
     text.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
