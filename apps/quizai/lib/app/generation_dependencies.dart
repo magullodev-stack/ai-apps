@@ -1,7 +1,7 @@
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
 import '../modes/estudio/estudio_generation.dart';
-import '../modes/quiz10/quiz10_pipeline.dart';
+import '../modes/quiz10/production/quiz10_pipeline.dart';
 import '../semantic_catalog/pivot_catalog.dart';
 
 final class QuizAiGenerationDependencies {
