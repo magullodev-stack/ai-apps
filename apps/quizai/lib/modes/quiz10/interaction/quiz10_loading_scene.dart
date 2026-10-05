@@ -45,10 +45,16 @@ class _Quiz10LoadingSceneState extends State<Quiz10LoadingScene>
     return Stack(
       fit: StackFit.expand,
       children: [
-        _sceneLayer(
-          'assets/quiz10/loading/quiz10_loading_background_1080x1920.png',
+        Positioned.fill(
+          child: Transform.scale(
+            scale: 1.12,
+            child: _sceneLayer(
+              'assets/quiz10/loading/quiz10_loading_background_1080x1920.png',
+            ),
+          ),
         ),
-        AnimatedBuilder(
+        Positioned.fill(
+          child: AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
             final t = Curves.easeInOutSine.transform(_pulseController.value);
@@ -64,7 +70,9 @@ class _Quiz10LoadingSceneState extends State<Quiz10LoadingScene>
             'assets/quiz10/loading/quiz10_loading_trails_stars_1080x1920.png',
           ),
         ),
-        AnimatedBuilder(
+        ),
+        Positioned.fill(
+          child: AnimatedBuilder(
           animation: _floatController,
           builder: (context, child) {
             final t = Curves.easeInOutSine.transform(_floatController.value);
@@ -77,7 +85,9 @@ class _Quiz10LoadingSceneState extends State<Quiz10LoadingScene>
             'assets/quiz10/loading/quiz10_loading_robot_1080x1920.png',
           ),
         ),
-        AnimatedBuilder(
+        ),
+        Positioned.fill(
+          child: AnimatedBuilder(
           animation: _floatController,
           builder: (context, child) {
             final t = Curves.easeInOutSine.transform(_floatController.value);
@@ -95,6 +105,7 @@ class _Quiz10LoadingSceneState extends State<Quiz10LoadingScene>
           child: _sceneLayer(
             'assets/quiz10/loading/quiz10_loading_dice_1080x1920.png',
           ),
+        ),
         ),
       ],
     );
