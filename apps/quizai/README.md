@@ -42,15 +42,18 @@ claras; el coral de estado está disponible en `QuizPalette.error`.
 estrictamente sobre este sistema: escenario degradado, cabecera integrada,
 tarjetas claras, filas redondeadas y switches violetas, sin ilustraciones.
 
-Quiz10 es la modalidad protagonista y conserva su acceso directo a la
-partida existente. Sala y 1vs1 mantienen su estado no disponible; Estudio
-conserva su acceso a la pantalla existente.
+Home se organiza alrededor de tres zonas de producto: Quiz10 como acceso
+principal, Salas como espacio competitivo y Estudia tu documento como entrada
+al contenido propio del usuario. Quiz10 conserva su acceso directo a la partida
+existente y Estudia tu documento reutiliza provisionalmente la pantalla actual
+de Estudio. Las Salas visibles todavía no navegan.
 
 Los indicadores de puntos, racha y ranking mostrarán sus datos cuando
 existan los sistemas responsables de proporcionar sus datos reales.
 
-La cabecera incorpora el logotipo propio de QuizAI, registrado como
-recurso gráfico de la aplicación en `assets/branding/`.
+Home reserva en su cabecera el espacio del logotipo propio de QuizAI y mantiene
+el acceso a Ajustes. El recurso gráfico definitivo se incorporará en los assets
+propios de Home sin alterar la estructura de la pantalla.
 
 La tipografía Nunito forma parte de la identidad visual de QuizAI.
 
@@ -70,25 +73,31 @@ superficie clara, mientras que la pestaña inactiva conserva el fondo
 morado. Los colores pertenecen a `lib/app/app_theme.dart` y el componente
 de navegación pertenece a `lib/app/app_shell.dart`.
 
-La navegación mantiene las pestañas Modalidades y Perfil, conserva la
-selección al volver desde Ajustes y permanece fija durante el
-desplazamiento de la pantalla principal.
+La navegación mantiene las pestañas Inicio y Perfil, conserva la selección al
+volver desde Ajustes y permanece fija durante el desplazamiento de Home.
 Los estilos particulares existentes siguen utilizando sus tamaños
 y pesos hasta que se complete el rediseño de cada pantalla.
 
-La pantalla principal utiliza cuatro PNG propios en assets/modalidades/.
-Los textos y las acciones permanecen implementados en Flutter.
+La estructura de Home permanece implementada en Flutter. El arte de Quiz10,
+Salas, Estudia tu documento y el logotipo se mantiene desacoplado para poder
+sustituir cada recurso sin modificar la jerarquía ni la navegación.
 
 Los colores pertenecen a `lib/app/app_theme.dart`. La estructura general
-y la navegación pertenecen a `lib/app/app_shell.dart`. Las tarjetas y la
-pantalla de modalidades pertenecen a `lib/app/home/`.
+y la navegación pertenecen a `lib/app/app_shell.dart`. Home y sus bloques
+pertenecen a `lib/app/home/`.
 
 El diseño se adapta al ancho disponible y permite desplazamiento vertical
 cuando la altura del dispositivo no permite mostrar todas las modalidades.
 
 ## Navegación
 
-La cabecera muestra **QuizAI** y el acceso a **Ajustes**. La barra inferior fija alterna entre **Modalidades** y **Perfil**. Modalidades muestra directamente, en este orden, **🎲 Quiz10**, **🏆 Sala**, **⚔️ 1vs1** y **📚 Estudio**. Quiz10 y Estudio abren sus pantallas existentes; la generación se solicita desde **Jugar** o **Generar**, respectivamente. Sala y 1vs1 siguen sin estar disponibles. La flecha de regreso vuelve a la pantalla principal. Salir de una modalidad descarta su partida en memoria.
+Home muestra, en este orden, la cabecera con el espacio de marca y **Ajustes**,
+el acceso principal a **Quiz10**, la zona **Salas** con tres accesos visibles y
+el bloque **Estudia tu documento**. La barra inferior fija alterna entre
+**Inicio** y **Perfil**. Quiz10 abre su partida existente; Estudia tu documento
+abre provisionalmente la pantalla actual de Estudio; las Salas todavía no
+navegan. La flecha de regreso vuelve a Home. Salir de una modalidad descarta su
+partida en memoria.
 
 Perfil mantiene su estado provisional, sin funciones ni datos de usuario.
 Desde Ajustes se vuelve a la pestaña de origen; la navegación inferior no
@@ -142,7 +151,7 @@ flutter build apk --debug
 git diff --check
 ```
 
-Las pruebas de `test/app/` cubren el contrato del Design System, Nunito, la compatibilidad del tema con superficies claras, el orden y disponibilidad de las modalidades, Home en distintos tamaños, la navegación fija al desplazar, el cambio de pestañas y el regreso desde Quiz10 y Estudio. En Ajustes verifican las preferencias iniciales, las filas pulsables, la semántica accesible, el estado de sesión, los diálogos y el texto ampliado en pantallas estrechas. No ejecutan generaciones ni llamadas reales a modelos. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
+Las pruebas de `test/app/` cubren el contrato del Design System, Nunito, la compatibilidad del tema con superficies claras, la jerarquía de Home en distintos tamaños, la navegación fija al desplazar, el cambio de pestañas y el regreso desde Quiz10 y Estudio. En Ajustes verifican las preferencias iniciales, las filas pulsables, la semántica accesible, el estado de sesión, los diálogos y el texto ampliado en pantallas estrechas. No ejecutan generaciones ni llamadas reales a modelos. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
 
 Para una generación real explícita, desde la raíz:
 
