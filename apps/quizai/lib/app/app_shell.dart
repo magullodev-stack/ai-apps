@@ -25,14 +25,16 @@ class _AppShellState extends State<AppShell> {
 
   void _openSettings() {
     Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ValueListenableBuilder<QuizSettings>(
+      PageRouteBuilder<void>(
+        pageBuilder: (_, _, _) => ValueListenableBuilder<QuizSettings>(
           valueListenable: _settings,
           builder: (_, settings, _) => SettingsPage(
             settings: settings,
             onChanged: (value) => _settings.value = value,
           ),
         ),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ),
     );
   }
