@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Identidad visual particular de QuizAI.
+/// Design System v1: identidad visual particular de QuizAI.
 ///
 /// No pertenece a las capacidades compartidas de AI-APPS.
 abstract final class QuizPalette {
@@ -15,6 +15,17 @@ abstract final class QuizPalette {
   static const foregroundMuted = Color(0xFFD8CBFF);
 
   static const ink = Color(0xFF21163B);
+  static const surface = Color(0xFFF7F5FB);
+  static const surfaceElevated = Color(0xFFFFFFFF);
+  static const inkMuted = Color(0xFF625B74);
+  static const divider = Color(0xFFDED8EA);
+
+  // Reservados para estado, no para identificar modalidades.
+  static const success = Color(0xFF16C77A);
+  static const error = Color(0xFFFF4D67);
+  static const warning = Color(0xFFFFC83D);
+  static const accent = warning;
+  static const info = Color(0xFF4DB9ED);
 
   // Identidad visual de la navegación inferior de QuizAI.
   static const navSurfaceStart = Color(0xFF7049CF);
@@ -64,17 +75,116 @@ abstract final class QuizPalette {
 /// Los estilos se comparten entre la aplicación y sus modalidades.
 abstract final class QuizTypography {
   static const family = 'Nunito';
+
+  static const brand = TextStyle(
+    fontFamily: family,
+    color: QuizPalette.foreground,
+    fontSize: 47,
+    fontWeight: FontWeight.w900,
+    letterSpacing: -2.2,
+    height: 0.95,
+  );
+  static const screenTitle = TextStyle(
+    fontFamily: family,
+    fontSize: 28,
+    fontWeight: FontWeight.w900,
+  );
+  static const sectionTitle = TextStyle(
+    fontFamily: family,
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+  );
+  static const cardTitle = TextStyle(
+    fontFamily: family,
+    fontSize: 31,
+    fontWeight: FontWeight.w900,
+    letterSpacing: -0.7,
+    height: 0.98,
+  );
+  static const body = TextStyle(
+    fontFamily: family,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+  );
+  static const bodySecondary = TextStyle(
+    fontFamily: family,
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: QuizPalette.inkMuted,
+  );
+  static const label = TextStyle(
+    fontFamily: family,
+    fontSize: 16,
+    fontWeight: FontWeight.w800,
+  );
+  static const caption = TextStyle(
+    fontFamily: family,
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: QuizPalette.inkMuted,
+  );
 }
 
+abstract final class QuizSpacing {
+  static const xs = 4.0;
+  static const sm = 8.0;
+  static const md = 12.0;
+  static const lg = 16.0;
+  static const xl = 24.0;
+  static const xxl = 32.0;
+}
+
+abstract final class QuizRadii {
+  static const small = 12.0;
+  static const medium = 18.0;
+  static const card = 24.0;
+  static const hero = 28.0;
+  static const pill = 1000.0;
+}
+
+abstract final class QuizShadows {
+  static const card = <BoxShadow>[
+    BoxShadow(color: Color(0x1C000000), blurRadius: 10, offset: Offset(0, 4)),
+  ];
+  static const elevated = <BoxShadow>[
+    BoxShadow(color: Color(0x28000000), blurRadius: 14, offset: Offset(0, 6)),
+  ];
+}
+
+abstract final class QuizDurations {
+  static const fast = Duration(milliseconds: 180);
+  static const normal = Duration(milliseconds: 240);
+  static const curve = Curves.easeOutCubic;
+}
+
+abstract final class QuizLayout {
+  static const maxWidth = 640.0;
+  static const horizontalPadding = 14.0;
+}
+
+// Las pantallas Material aún no migradas conservan un escenario claro.
+// AppShell aplica explícitamente el escenario oscuro de QuizAI.
 final ThemeData quizAITheme = ThemeData(
   useMaterial3: true,
   fontFamily: QuizTypography.family,
-  colorScheme: ColorScheme.fromSeed(seedColor: QuizPalette.primary),
+  colorScheme: ColorScheme.fromSeed(seedColor: QuizPalette.primary).copyWith(
+    primary: QuizPalette.primary,
+    onPrimary: QuizPalette.foreground,
+    surface: QuizPalette.surface,
+    onSurface: QuizPalette.ink,
+    onSurfaceVariant: QuizPalette.inkMuted,
+    outlineVariant: QuizPalette.divider,
+    // Material usa un rojo más oscuro para texto de error sobre superficie
+    // clara; el coral canónico sigue disponible en QuizPalette para estado.
+  ),
+  scaffoldBackgroundColor: QuizPalette.surface,
+  dividerColor: QuizPalette.divider,
   textTheme: const TextTheme(
-    headlineSmall: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-    titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-    bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-    bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-    labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+    headlineSmall: QuizTypography.screenTitle,
+    titleLarge: QuizTypography.sectionTitle,
+    bodyLarge: QuizTypography.body,
+    bodyMedium: QuizTypography.bodySecondary,
+    labelLarge: QuizTypography.label,
+    bodySmall: QuizTypography.caption,
   ),
 );

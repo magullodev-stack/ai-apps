@@ -6,12 +6,44 @@ En la modalidad 🎲 se eligen diez áreas distintas. Cada pregunta tiene cuatro
 
 ## Identidad visual de QuizAI
 
-La pantalla principal utiliza una identidad propia de videojuego móvil:
-fondo morado degradado, cabecera destacada, tarjetas de colores, bordes
-redondeados, sombras y navegación inferior integrada.
+`lib/app/app_theme.dart` es la API canónica del **Design System v1** de
+QuizAI. La identidad pertenece a esta aplicación y permanece en `lib/app/`.
+
+El escenario es azul-violeta oscuro, con superficies de contenido claras
+y limpias. El violeta brillante identifica la acción principal y la
+selección. Los colores semánticos se reservan para estado: verde para
+acierto, coral-rojo para error, amarillo para pista o premio y azul/cian
+para información. Nunito es la única familia tipográfica, con títulos de
+pesos altos y textos secundarios menos dominantes.
+
+Los radios generosos, la profundidad suave y los controles táctiles
+redondeados conforman la gramática común. La ilustración 3D/glossy aporta
+personalidad en zonas protagonistas; las pantallas utilitarias no necesitan
+decoración obligatoria. Home conserva su composición, sus recursos y su
+navegación inferior integrada.
+
+La API incluye `QuizPalette`, `QuizTypography`, `QuizSpacing`, `QuizRadii`,
+`QuizShadows`, `QuizDurations`, `QuizLayout` y `quizAITheme`. La escala
+espacial es 4/8/12/16/24/32; los radios son 12/18/24/28 y cápsula. El ancho
+principal máximo es 640 y el padding horizontal normal es 14. Las
+transiciones usan 180 o 240 ms y `easeOutCubic`; las sombras cubren card
+y superficie elevada. Los valores propios de una composición permanecen
+locales cuando no representan identidad común.
+
+Las modalidades consumen esta identidad general y pueden variar de color
+e ilustración sin cambiar su gramática. Sus reglas particulares no se
+trasladan al sistema visual. Quiz10 y Estudio conservan su UI Material
+actual: el tema global mantiene superficies claras para su compatibilidad,
+y `AppShell` aplica explícitamente el escenario oscuro de Home. Material
+conserva su rojo de error más oscuro para texto legible sobre superficies
+claras; el coral de estado está disponible en `QuizPalette.error`.
+
+`SettingsPage` sigue siendo provisional. La futura pantalla de Ajustes
+será la primera construida estrictamente sobre este sistema.
 
 Quiz10 es la modalidad protagonista y conserva su acceso directo a la
-partida existente. Sala, 1vs1 y Estudio mantienen su estado no disponible.
+partida existente. Sala y 1vs1 mantienen su estado no disponible; Estudio
+conserva su acceso a la pantalla existente.
 
 Los indicadores de puntos, racha y ranking mostrarán sus datos cuando
 existan los sistemas responsables de proporcionar sus datos reales.
@@ -55,11 +87,11 @@ cuando la altura del dispositivo no permite mostrar todas las modalidades.
 
 ## Navegación
 
-La cabecera muestra **QuizAI** y el acceso a **Configuración**. La barra inferior fija alterna entre **Modalidades** y **Perfil**. Modalidades muestra directamente, en este orden, **🎲 Quiz10**, **🏆 Sala**, **⚔️ 1vs1** y **📚 Estudio**. Solo Quiz10 está disponible: al pulsarlo comienza la generación de la partida existente; la flecha de regreso vuelve a la pantalla principal. Salir de la modalidad descarta su partida en memoria.
+La cabecera muestra **QuizAI** y el acceso a **Configuración**. La barra inferior fija alterna entre **Modalidades** y **Perfil**. Modalidades muestra directamente, en este orden, **🎲 Quiz10**, **🏆 Sala**, **⚔️ 1vs1** y **📚 Estudio**. Quiz10 y Estudio abren sus pantallas existentes; la generación se solicita desde **Jugar** o **Generar**, respectivamente. Sala y 1vs1 siguen sin estar disponibles. La flecha de regreso vuelve a la pantalla principal. Salir de una modalidad descarta su partida en memoria.
 
 Perfil y Configuración muestran únicamente un estado provisional, sin funciones ni datos de usuario. Desde Configuración se puede volver a la pestaña de origen.
 
-`lib/main.dart` arranca QuizAI. `lib/app/` contiene la identidad, el tema, la navegación general y las pantallas Modalidades, Perfil y Configuración. `lib/modes/quiz10/` contiene exclusivamente la pantalla, el estado, las reglas, la validación y la generación mediante IA de la modalidad 🎲 Quiz10. Las pruebas se organizan en `test/app/` y `test/modes/quiz10/`. Las otras tres modalidades todavía no tienen implementación propia.
+`lib/main.dart` arranca QuizAI. `lib/app/` contiene la identidad, el tema, la navegación general y las pantallas Modalidades, Perfil y Configuración. `lib/modes/quiz10/` contiene la pantalla, el estado, las reglas, la validación y la generación mediante IA de la modalidad 🎲 Quiz10. `lib/modes/estudio/` contiene la implementación de Estudio. Las pruebas del Design System y su integración se encuentran en `test/app/`.
 
 ## Ejecutar con IA
 
@@ -69,7 +101,7 @@ Con `emulator-5554` iniciado, desde la raíz del repositorio en PowerShell:
 .\apps\quizai\run.ps1
 ```
 
-El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** usa este mismo procedimiento. Cambiar de pestaña o abrir Configuración no llama al modelo; pulsar 🎲 Quiz10 sí solicita una generación.
+El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** usa este mismo procedimiento. Cambiar de pestaña o abrir Configuración no llama al modelo; pulsar **Jugar** dentro de 🎲 Quiz10 solicita una generación.
 
 La generación usa el Dart incluido en Flutter. El proyecto Android conserva su compilación independiente. El prompt y las reglas siguen en Quiz10; el esquema no envía `minItems` ni `maxItems` y el validador sigue exigiendo diez preguntas.
 
@@ -86,7 +118,7 @@ flutter build apk --debug
 git diff --check
 ```
 
-Las pruebas automatizadas cubren también la identidad, el orden y disponibilidad de las modalidades, el cambio de pestañas, Configuración y el regreso desde Quiz10. Las pruebas del generador, validador, partida y conexión al servicio utilizan un proveedor simulado. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
+Las pruebas de `test/app/` cubren el contrato del Design System, Nunito, la compatibilidad del tema con superficies claras, el orden y disponibilidad de las modalidades, Home en distintos tamaños, la navegación fija al desplazar, el cambio de pestañas, Configuración y el regreso desde Quiz10 y Estudio. No ejecutan generaciones ni llamadas reales a modelos. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
 
 Para una generación real explícita, desde la raíz:
 

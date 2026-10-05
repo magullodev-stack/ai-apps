@@ -14,9 +14,8 @@ class ModalidadesPage extends StatelessWidget {
     try {
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
-          builder: (_) => QuizPage(
-            loadQuestions: dependencies.quiz10Pipeline.generate,
-          ),
+          builder: (_) =>
+              QuizPage(loadQuestions: dependencies.quiz10Pipeline.generate),
         ),
       );
     } finally {
@@ -47,7 +46,7 @@ class ModalidadesPage extends StatelessWidget {
         const minTopReserve = 22.0;
         const desiredHeroHeight = 250.0;
         const desiredCardHeight = 78.0;
-        const desiredGap = 8.0;
+        const desiredGap = QuizSpacing.sm;
         const outerPadding = 6.0;
 
         const baseContentHeight =
@@ -121,18 +120,18 @@ class ModalidadesPage extends StatelessWidget {
             ? SingleChildScrollView(
                 key: const Key('quizai-home-scroll'),
                 padding: const EdgeInsets.fromLTRB(
-                  14,
+                  QuizLayout.horizontalPadding,
                   outerPadding,
-                  14,
+                  QuizLayout.horizontalPadding,
                   outerPadding,
                 ),
                 child: buildCardsColumn(pinToBottom: false),
               )
             : Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  14,
+                  QuizLayout.horizontalPadding,
                   outerPadding,
-                  14,
+                  QuizLayout.horizontalPadding,
                   outerPadding,
                 ),
                 child: SizedBox(
@@ -144,7 +143,7 @@ class ModalidadesPage extends StatelessWidget {
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
+            constraints: const BoxConstraints(maxWidth: QuizLayout.maxWidth),
             child: body,
           ),
         );
@@ -165,18 +164,15 @@ class _Quiz10Hero extends StatelessWidget {
       key: const Key('quizai-hero'),
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withAlpha(235), width: 2.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(40),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(QuizRadii.hero),
+        border: Border.all(
+          color: QuizPalette.foreground.withAlpha(235),
+          width: 2.2,
+        ),
+        boxShadow: QuizShadows.elevated,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(QuizRadii.hero - 3),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -192,22 +188,24 @@ class _Quiz10Hero extends StatelessWidget {
                   excludeFromSemantics: true,
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 94, 14),
+                  padding: const EdgeInsets.fromLTRB(
+                    QuizSpacing.lg,
+                    QuizSpacing.md,
+                    94,
+                    14,
+                  ),
                   child: Stack(
                     children: [
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
                           'Quiz10',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white,
+                          style: QuizTypography.brand.copyWith(
                             fontSize: 44,
-                            fontWeight: FontWeight.w900,
                             letterSpacing: -1.0,
-                            height: 0.95,
-                            shadows: [
+                            shadows: const [
                               Shadow(
                                 color: Color(0xB3000000),
                                 offset: Offset(0, 2),
@@ -225,8 +223,8 @@ class _Quiz10Hero extends StatelessWidget {
                           width: 178,
                           padding: const EdgeInsets.only(left: 15, right: 5),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(27),
+                            color: QuizPalette.surfaceElevated,
+                            borderRadius: BorderRadius.circular(QuizRadii.pill),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withAlpha(18),
@@ -235,27 +233,27 @@ class _Quiz10Hero extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
                               Expanded(
                                 child: Text(
                                   'Jugar ahora',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
+                                  style: QuizTypography.label.copyWith(
                                     color: QuizPalette.background,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              CircleAvatar(
+                              const SizedBox(width: QuizSpacing.sm),
+                              const CircleAvatar(
                                 radius: 17,
                                 backgroundColor: QuizPalette.primary,
                                 child: Icon(
                                   Icons.chevron_right_rounded,
-                                  color: Colors.white,
+                                  color: QuizPalette.foreground,
                                   size: 25,
                                 ),
                               ),

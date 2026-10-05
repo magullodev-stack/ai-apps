@@ -26,7 +26,7 @@ class _AppShellState extends State<AppShell> {
       backgroundColor: QuizPalette.backgroundDark,
       appBar: AppBar(
         toolbarHeight: 92,
-        titleSpacing: 14,
+        titleSpacing: QuizLayout.horizontalPadding,
         centerTitle: false,
         backgroundColor: QuizPalette.backgroundLight,
         elevation: 0,
@@ -43,37 +43,31 @@ class _AppShellState extends State<AppShell> {
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: QuizSpacing.sm),
             const Flexible(
               child: Text(
                 'QuizAI',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 47,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -2.2,
-                  height: 0.95,
-                ),
+                style: QuizTypography.brand,
               ),
             ),
           ],
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: QuizSpacing.lg),
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withAlpha(28),
-                border: Border.all(color: Colors.white.withAlpha(52)),
+                color: QuizPalette.foreground.withAlpha(28),
+                border: Border.all(color: QuizPalette.foreground.withAlpha(52)),
               ),
               child: IconButton(
                 tooltip: 'Configuración',
                 icon: const Icon(
                   Icons.settings_rounded,
-                  color: Colors.white,
+                  color: QuizPalette.foreground,
                   size: 28,
                 ),
                 onPressed: _openSettings,
@@ -94,8 +88,8 @@ class _AppShellState extends State<AppShell> {
               : Theme(
                   data: Theme.of(context).copyWith(
                     textTheme: Theme.of(context).textTheme.apply(
-                      bodyColor: Colors.white,
-                      displayColor: Colors.white,
+                      bodyColor: QuizPalette.foreground,
+                      displayColor: QuizPalette.foreground,
                     ),
                   ),
                   child: const ProfilePage(),
@@ -103,17 +97,20 @@ class _AppShellState extends State<AppShell> {
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: QuizLayout.horizontalPadding,
+          vertical: QuizSpacing.sm,
+        ),
         decoration: const BoxDecoration(color: QuizPalette.backgroundDark),
         child: SafeArea(
           top: false,
           child: Container(
             key: const Key('quizai-bottom-nav'),
             height: 84,
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(QuizSpacing.xs),
             decoration: BoxDecoration(
               gradient: QuizPalette.navBackgroundGradient,
-              borderRadius: BorderRadius.circular(48),
+              borderRadius: BorderRadius.circular(QuizRadii.pill),
               border: Border.all(color: QuizPalette.navBorder, width: 1.3),
               boxShadow: [
                 BoxShadow(
@@ -196,21 +193,21 @@ class _QuizNavItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(44),
+          borderRadius: BorderRadius.circular(QuizRadii.pill),
           child: AnimatedContainer(
             key: selected ? const Key('quizai-nav-active') : null,
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
+            duration: QuizDurations.fast,
+            curve: QuizDurations.curve,
             decoration: BoxDecoration(
               gradient: selected ? QuizPalette.navActiveGradient : null,
-              borderRadius: BorderRadius.circular(44),
+              borderRadius: BorderRadius.circular(QuizRadii.pill),
               border: selected
-                  ? Border.all(color: Colors.white, width: 1.5)
+                  ? Border.all(color: QuizPalette.foreground, width: 1.5)
                   : null,
               boxShadow: selected
                   ? [
                       BoxShadow(
-                        color: Colors.white.withAlpha(70),
+                        color: QuizPalette.foreground.withAlpha(70),
                         blurRadius: 12,
                         spreadRadius: 1,
                       ),
@@ -226,15 +223,14 @@ class _QuizNavItem extends StatelessWidget {
                     color: foreground,
                     size: 27,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: QuizSpacing.xs),
                   Text(
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: QuizTypography.family,
+                    style: QuizTypography.label.copyWith(
                       color: foreground,
-                      fontSize: selected ? 16 : 15,
+                      fontSize: selected ? QuizTypography.label.fontSize : 15,
                       fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
                       height: 1.1,
                     ),

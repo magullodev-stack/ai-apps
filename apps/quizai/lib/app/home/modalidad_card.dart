@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../app_theme.dart';
+
 class ModalidadCard extends StatelessWidget {
   const ModalidadCard({
     super.key,
@@ -24,18 +26,15 @@ class ModalidadCard extends StatelessWidget {
       key: Key('quizai-card-$id'),
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(212), width: 1.8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(28),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(QuizRadii.card),
+        border: Border.all(
+          color: QuizPalette.foreground.withAlpha(212),
+          width: 1.8,
+        ),
+        boxShadow: QuizShadows.card,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(QuizRadii.card - 2),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -53,7 +52,12 @@ class ModalidadCard extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 96, 4),
+                    padding: const EdgeInsets.fromLTRB(
+                      QuizSpacing.lg,
+                      QuizSpacing.xs,
+                      96,
+                      QuizSpacing.xs,
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,13 +66,9 @@ class ModalidadCard extends StatelessWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 31,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.7,
-                            height: 0.98,
-                            shadows: [
+                          style: QuizTypography.cardTitle.copyWith(
+                            color: QuizPalette.foreground,
+                            shadows: const [
                               Shadow(
                                 color: Color(0xAA000000),
                                 offset: Offset(0, 1.5),
@@ -78,17 +78,16 @@ class ModalidadCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: QuizSpacing.xs),
                         Text(
                           subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
+                          style: QuizTypography.body.copyWith(
+                            color: QuizPalette.foreground,
                             fontWeight: FontWeight.w800,
                             height: 1.05,
-                            shadows: [
+                            shadows: const [
                               Shadow(
                                 color: Color(0xAA000000),
                                 offset: Offset(0, 1),
