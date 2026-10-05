@@ -36,6 +36,9 @@ ai-apps/
 │   ├── flutter_client/
 │   └── README.md
 │
+├── shared/                    # Componentes compartidos de AI-APPS.
+│   └── ui/                    # Componentes de interfaz reutilizables.
+│
 ├── scripts/                   # Herramientas operativas compartidas.
 │   ├── start-android.ps1
 │   ├── sync-dev.ps1
@@ -66,6 +69,12 @@ Cada aplicación mantiene en su propio espacio la estructura necesaria para desa
 Contiene la infraestructura técnica compartida para ejecutar operaciones de inteligencia artificial.
 
 Su funcionamiento se documenta en [`ai/README.md`](../ai/README.md).
+
+### shared/
+
+Contiene componentes compartidos por las aplicaciones cuando existe una necesidad real de reutilización.
+
+`shared/ui/` contiene componentes de interfaz reutilizables.
 
 ### scripts/
 
