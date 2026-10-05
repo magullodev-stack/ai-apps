@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizai/app/app.dart';
 import 'package:quizai/app/app_theme.dart';
-import 'package:quizai/app/home/modalidad_card.dart';
 import 'package:quizai/app/profile/profile_page.dart';
 import 'package:quizai/app/settings/settings_page.dart';
 import 'package:quizai/modes/estudio/estudio_page.dart';
@@ -23,7 +22,7 @@ void main() {
     const Size(390, 500),
     const Size(900, 1100),
   ]) {
-    testWidgets('Home conserva identidad, orden y navegación a $size', (
+    testWidgets('Home conserva estructura y navegación a $size', (
       tester,
     ) async {
       await pumpApp(tester, size);
@@ -31,60 +30,51 @@ void main() {
         tester.widget<MaterialApp>(find.byType(MaterialApp)).theme,
         same(quizAITheme),
       );
-      expect(find.text('QuizAI'), findsOneWidget);
+      expect(find.byKey(const Key('quizai-home-logo-slot')), findsOneWidget);
       expect(find.byTooltip('Ajustes'), findsOneWidget);
       expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
-      expect(find.text('Modalidades'), findsOneWidget);
+      expect(find.text('Inicio'), findsOneWidget);
       expect(find.text('Perfil'), findsOneWidget);
 
-      final orderedCards = [
-        find.byKey(const Key('quizai-hero')),
-        find.byKey(const Key('quizai-card-sala')),
-        find.byKey(const Key('quizai-card-1vs1')),
-        find.byKey(const Key('quizai-card-estudio')),
+      final orderedBlocks = [
+        find.byKey(const Key('quizai-home-quiz10')),
+        find.byKey(const Key('quizai-home-salas-header')),
+        find.byKey(const Key('quizai-home-salas')),
+        find.byKey(const Key('quizai-home-document')),
       ];
-      for (var i = 0; i < orderedCards.length; i++) {
-        expect(orderedCards[i], findsOneWidget);
+      for (var i = 0; i < orderedBlocks.length; i++) {
+        expect(orderedBlocks[i], findsOneWidget);
         if (i > 0) {
           expect(
-            tester.getTopLeft(orderedCards[i]).dy,
-            greaterThan(tester.getTopLeft(orderedCards[i - 1]).dy),
+            tester.getTopLeft(orderedBlocks[i]).dy,
+            greaterThan(tester.getTopLeft(orderedBlocks[i - 1]).dy),
           );
         }
       }
-      for (final id in ['sala', '1vs1']) {
-        expect(
-          tester
-              .widget<ModalidadCard>(
-                find.byWidgetPredicate(
-                  (widget) => widget is ModalidadCard && widget.id == id,
-                ),
-              )
-              .onTap,
-          isNull,
-        );
+
+      for (final id in ['historia', 'biologia', 'cultura-general']) {
+        expect(find.byKey(Key('quizai-home-sala-$id')), findsOneWidget);
       }
+
       expect(
-        tester.getSize(orderedCards.first).width,
+        tester.getSize(orderedBlocks.first).width,
         lessThanOrEqualTo(
           QuizLayout.maxWidth - 2 * QuizLayout.horizontalPadding,
         ),
       );
-      if (size.height == 500) {
-        expect(find.byKey(const Key('quizai-home-scroll')), findsOneWidget);
-        final navPosition = tester.getTopLeft(
-          find.byKey(const Key('quizai-bottom-nav')),
-        );
-        await tester.drag(
-          find.byKey(const Key('quizai-home-scroll')),
-          const Offset(0, -250),
-        );
-        await tester.pumpAndSettle();
-        expect(
-          tester.getTopLeft(find.byKey(const Key('quizai-bottom-nav'))),
-          navPosition,
-        );
-      }
+
+      final navPosition = tester.getTopLeft(
+        find.byKey(const Key('quizai-bottom-nav')),
+      );
+      await tester.drag(
+        find.byKey(const Key('quizai-home-scroll')),
+        const Offset(0, -250),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(find.byKey(const Key('quizai-bottom-nav'))),
+        navPosition,
+      );
       expect(tester.takeException(), isNull);
     });
   }
@@ -111,13 +101,13 @@ void main() {
         fromProfile ? findsOneWidget : findsNothing,
       );
       expect(
-        find.byKey(const Key('quizai-hero')),
+        find.byKey(const Key('quizai-home-quiz10')),
         fromProfile ? findsNothing : findsOneWidget,
       );
     }
-    await tester.tap(find.byKey(const Key('quizai-nav-modalidades')));
+    await tester.tap(find.byKey(const Key('quizai-nav-inicio')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('quizai-hero')), findsOneWidget);
+    expect(find.byKey(const Key('quizai-home-quiz10')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -125,7 +115,7 @@ void main() {
     'Quiz10 y Estudio abren sus pantallas Material y regresan a Home',
     (tester) async {
       await pumpApp(tester, const Size(390, 844));
-      await tester.tap(find.byKey(const Key('quizai-hero')));
+      await tester.tap(find.byKey(const Key('quizai-home-quiz10')));
       await tester.pumpAndSettle();
       expect(find.byType(QuizPage), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Jugar'), findsOneWidget);
@@ -135,9 +125,13 @@ void main() {
       );
       await tester.pageBack();
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('quizai-hero')), findsOneWidget);
+      expect(find.byKey(const Key('quizai-home-quiz10')), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('quizai-card-estudio')));
+      await tester.ensureVisible(
+        find.byKey(const Key('quizai-document-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('quizai-document-button')));
       await tester.pumpAndSettle();
       expect(find.byType(EstudioPage), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
@@ -150,7 +144,7 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
-      expect(find.byKey(const Key('quizai-card-estudio')), findsOneWidget);
+      expect(find.byKey(const Key('quizai-home-document')), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
