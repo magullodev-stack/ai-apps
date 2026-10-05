@@ -171,82 +171,168 @@ class _StageProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 20,
+      height: 36,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final available = constraints.maxWidth > 6
-              ? constraints.maxWidth - 6
-              : 0.0;
-          final fillWidth = available <= 8
+          const inset = 5.0;
+          const fillHeight = 18.0;
+          final available = (constraints.maxWidth - (inset * 2))
+              .clamp(0.0, double.infinity)
+              .toDouble();
+          final normalized = progress.clamp(0.0, 1.0).toDouble();
+          final fillWidth = available <= 14
               ? available
-              : (available * progress.clamp(0.0, 1.0))
-                    .clamp(8.0, available)
+              : (available * normalized)
+                    .clamp(14.0, available)
                     .toDouble();
+          final tipLeft = inset + fillWidth - 11;
 
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              color: const Color(0x40130055),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: const Color(0xFFC59BFF),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9D63FF).withAlpha(135),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-                BoxShadow(
-                  color: const Color(0xFFE3B8FF).withAlpha(75),
-                  blurRadius: 34,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(3),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 360),
-                  curve: Curves.easeOutCubic,
-                  width: fillWidth,
+          return Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.centerLeft,
+            children: [
+              // 1. Halo exterior: una nube de luz independiente del track.
+              Positioned(
+                left: 6,
+                right: 6,
+                top: 5,
+                bottom: 5,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF8B4FFF),
-                        Color(0xFFD77CFF),
-                        Color(0xFFFFD8FF),
-                        Color(0xFFFFFFFF),
-                      ],
-                      stops: [0.0, 0.58, 0.88, 1.0],
-                    ),
-                    border: Border.all(
-                      color: const Color(0xFFF5DDFF),
-                      width: 1.2,
-                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFCC7BFF).withAlpha(235),
-                        blurRadius: 18,
+                        color: const Color(0xFFA457FF).withAlpha(150),
+                        blurRadius: 24,
+                        spreadRadius: 4,
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFFF0B6FF).withAlpha(85),
+                        blurRadius: 38,
                         spreadRadius: 2,
-                      ),
-                      BoxShadow(
-                        color: const Color(0xFFF1CAFF).withAlpha(150),
-                        blurRadius: 30,
-                        spreadRadius: 1,
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withAlpha(170),
-                        blurRadius: 6,
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
+
+              // 2. Track luminoso: cápsula visible incluso en la parte vacía.
+              Positioned(
+                left: 1,
+                right: 1,
+                top: 7,
+                bottom: 7,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF351172),
+                        Color(0xFF2A0B66),
+                        Color(0xFF321071),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFFD5B1FF),
+                      width: 2.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFB36CFF).withAlpha(185),
+                        blurRadius: 12,
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withAlpha(55),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 3. Fill luminoso: masa de luz con borde propio.
+              Positioned(
+                left: inset,
+                top: (36 - fillHeight) / 2,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 360),
+                  curve: Curves.easeOutCubic,
+                  width: fillWidth,
+                  height: fillHeight,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF9D55FF),
+                        Color(0xFFD985FF),
+                        Color(0xFFF3B7FF),
+                        Color(0xFFFFF2FF),
+                      ],
+                      stops: [0.0, 0.52, 0.82, 1.0],
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFFFFE7FF),
+                      width: 1.4,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFCB73FF).withAlpha(245),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFFF4C8FF).withAlpha(180),
+                        blurRadius: 24,
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withAlpha(170),
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 4. Bloom en la punta: destello independiente que sigue al fill.
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 360),
+                curve: Curves.easeOutCubic,
+                left: tipLeft,
+                top: 7,
+                child: IgnorePointer(
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white,
+                          const Color(0xFFFFD8FF).withAlpha(225),
+                          const Color(0xFFD57BFF).withAlpha(125),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.28, 0.58, 1.0],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withAlpha(210),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFFE29BFF).withAlpha(220),
+                          blurRadius: 20,
+                          spreadRadius: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
