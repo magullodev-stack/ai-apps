@@ -30,6 +30,8 @@ environment:
 dependencies:
   ai_apps_ai:
     path: ../../ai/flutter_client
+  ai_apps_ui:
+    path: ../../shared/ui
   flutter:
     sdk: flutter
 
