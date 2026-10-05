@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/generation/quiz_preparation_screen.dart';
 import 'quiz10_pipeline.dart';
 
 class QuizPage extends StatefulWidget {
@@ -21,6 +22,17 @@ class _QuizPageState extends State<QuizPage> {
   bool _loading = false;
   bool _finished = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.loadQuestions != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _start();
+      });
+    }
+  }
 
   Future<void> _start() async {
     final load = widget.loadQuestions;
@@ -61,8 +73,7 @@ class _QuizPageState extends State<QuizPage> {
     setState(() {
       _selected = index;
 
-      if (questions[_index].options[index] ==
-          questions[_index].correct) {
+      if (questions[_index].options[index] == questions[_index].correct) {
         _score++;
       }
     });
@@ -85,6 +96,33 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) {
     final questions = _questions;
 
+    final isPreparing =
+        _loading ||
+        (questions == null &&
+            !_finished &&
+            _error == null &&
+            widget.loadQuestions != null);
+
+    if (isPreparing) {
+      return QuizPreparationScreen(
+        title: 'Quiz10',
+        headline: 'Preparando tu Quiz10…',
+        steps: const [
+          'Seleccionando temas y niveles',
+          'Generando preguntas',
+          'Revisando respuestas',
+          'Organizando tu partida',
+        ],
+        footerMessage: 'Un buen Quiz10 mezcla sorpresa, variedad y preguntas que merecen la pena.',
+        illustration: const Icon(
+          Icons.science_rounded,
+          color: Colors.white,
+          size: 104,
+        ),
+        onBack: () => Navigator.of(context).maybePop(),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Quiz10')),
       body: Center(
@@ -97,31 +135,19 @@ class _QuizPageState extends State<QuizPage> {
               children: [
                 if (widget.loadQuestions == null)
                   const Text('Generación no disponible.')
-
-                else if (_loading)
-                  const Center(child: CircularProgressIndicator())
-
                 else if (questions == null || _finished) ...[
                   Text(
-                    _finished
-                        ? 'Partida completada'
-                        : 'Quiz10',
+                    _finished ? 'Partida completada' : 'Quiz10',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  if (_finished)
-                    Text('Resultado: $_score / 10'),
-                  if (_error != null)
-                    Text(_error!),
+                  if (_finished) Text('Resultado: $_score / 10'),
+                  if (_error != null) Text(_error!),
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: _start,
-                    child: Text(
-                      _finished ? 'Otra partida' : 'Jugar',
-                    ),
+                    child: Text(_finished ? 'Otra partida' : 'Jugar'),
                   ),
-                ]
-
-                else ...[
+                ] else ...[
                   Text('Pregunta ${_index + 1} de 10'),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(value: _index / 10),
@@ -139,15 +165,11 @@ class _QuizPageState extends State<QuizPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  for (var i = 0;
-                      i < questions[_index].options.length;
-                      i++)
+                  for (var i = 0; i < questions[_index].options.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: OutlinedButton(
-                        onPressed: _selected == null
-                            ? () => _answer(i)
-                            : null,
+                        onPressed: _selected == null ? () => _answer(i) : null,
                         child: Text(questions[_index].options[i]),
                       ),
                     ),
@@ -159,14 +181,12 @@ class _QuizPageState extends State<QuizPage> {
                               questions[_index].correct
                           ? '¡Correcto!'
                           : 'Respuesta correcta: '
-                            '${questions[_index].correct}',
+                                '${questions[_index].correct}',
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: _next,
-                      child: Text(
-                        _index == 9 ? 'Ver resultado' : 'Siguiente',
-                      ),
+                      child: Text(_index == 9 ? 'Ver resultado' : 'Siguiente'),
                     ),
                   ],
                 ],
