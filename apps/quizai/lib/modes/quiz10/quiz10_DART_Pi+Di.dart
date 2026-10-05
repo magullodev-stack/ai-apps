@@ -190,16 +190,121 @@ const quiz10Dimensions = <Quiz10Dimension>[
 ];
 
 /// Diez P distintos y diez D distintas por Quiz10.
-List<Quiz10Pair> selectQuiz10Pairs(Random random) {
-  final pivots = [...quiz10Pivots]..shuffle(random);
-  final dimensions = [...quiz10Dimensions]..shuffle(random);
+///
+/// Sin historial conserva el sorteo uniforme original. Con historial, cada
+/// cruce P×D pierde peso al ser usado y los P/D sobrerrepresentados reciben
+/// una penalización suave. Ningún cruce queda prohibido: el azar se conserva.
+List<Quiz10Pair> selectQuiz10Pairs(
+  Random random, {
+  Map<Quiz10HistoryKey, int> usageByPair = const {},
+}) {
+  if (usageByPair.isEmpty) {
+    final pivots = [...quiz10Pivots]..shuffle(random);
+    final dimensions = [...quiz10Dimensions]..shuffle(random);
 
-  return List.unmodifiable([
-    for (var i = 0; i < 10; i++)
-      (
-        number: i + 1,
-        pivot: pivots[i],
-        dimension: dimensions[i],
-      ),
-  ]);
+    return List.unmodifiable([
+      for (var i = 0; i < 10; i++)
+        (
+          number: i + 1,
+          pivot: pivots[i],
+          dimension: dimensions[i],
+        ),
+    ]);
+  }
+
+  final pivotCodes = {for (final pivot in quiz10Pivots) pivot.code};
+  final dimensionCodes = {
+    for (final dimension in quiz10Dimensions) dimension.code,
+  };
+  final pivotUsage = <String, int>{};
+  final dimensionUsage = <String, int>{};
+
+  for (final entry in usageByPair.entries) {
+    if (!pivotCodes.contains(entry.key.pivotCode) ||
+        !dimensionCodes.contains(entry.key.dimensionCode)) {
+      continue;
+    }
+    final count = entry.value < 0 ? 0 : entry.value;
+    pivotUsage.update(
+      entry.key.pivotCode,
+      (value) => value + count,
+      ifAbsent: () => count,
+    );
+    dimensionUsage.update(
+      entry.key.dimensionCode,
+      (value) => value + count,
+      ifAbsent: () => count,
+    );
+  }
+
+  final usedPivots = <String>{};
+  final usedDimensions = <String>{};
+  final result = <Quiz10Pair>[];
+
+  for (var i = 0; i < 10; i++) {
+    final candidates = <({
+      Quiz10Pivot pivot,
+      Quiz10Dimension dimension,
+      double weight,
+    })>[];
+    var totalWeight = 0.0;
+
+    for (final pivot in quiz10Pivots) {
+      if (usedPivots.contains(pivot.code)) continue;
+
+      for (final dimension in quiz10Dimensions) {
+        if (usedDimensions.contains(dimension.code)) continue;
+
+        final key = (
+          pivotCode: pivot.code,
+          dimensionCode: dimension.code,
+        );
+        final pairCount = usageByPair[key] ?? 0;
+        final pivotCount = pivotUsage[pivot.code] ?? 0;
+        final dimensionCount = dimensionUsage[dimension.code] ?? 0;
+
+        // w(P,D) = 1 / [(1+n_PD) · sqrt(1+n_P) · sqrt(1+n_D)]
+        //
+        // El término P×D domina la novedad local; las raíces corrigen
+        // suavemente desequilibrios marginales sin matar la aleatoriedad.
+        final weight =
+            1.0 /
+            ((1 + pairCount) *
+                sqrt(1 + pivotCount) *
+                sqrt(1 + dimensionCount));
+
+        candidates.add((
+          pivot: pivot,
+          dimension: dimension,
+          weight: weight,
+        ));
+        totalWeight += weight;
+      }
+    }
+
+    if (candidates.isEmpty || totalWeight <= 0) {
+      throw StateError('No hay suficientes cruces P×D disponibles.');
+    }
+
+    var threshold = random.nextDouble() * totalWeight;
+    var chosen = candidates.last;
+
+    for (final candidate in candidates) {
+      threshold -= candidate.weight;
+      if (threshold <= 0) {
+        chosen = candidate;
+        break;
+      }
+    }
+
+    usedPivots.add(chosen.pivot.code);
+    usedDimensions.add(chosen.dimension.code);
+    result.add((
+      number: i + 1,
+      pivot: chosen.pivot,
+      dimension: chosen.dimension,
+    ));
+  }
+
+  return List.unmodifiable(result);
 }
