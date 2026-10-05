@@ -19,6 +19,8 @@ ai-apps/
 │       ├── lib/
 │       │   ├── main.dart
 │       │   ├── app/           # Estructura general de QuizAI.
+│       │   │   ├── interaction/ # Presentación de intervenciones de QuizAI.
+│       │   │   └── onboarding/  # Secuencias iniciales de la aplicación.
 │       │   ├── modes/         # Modalidades de QuizAI.
 │       │   │   ├── estudio/
 │       │   │   └── quiz10/
