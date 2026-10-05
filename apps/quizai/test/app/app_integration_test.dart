@@ -6,7 +6,7 @@ import 'package:quizai/app/home/modalidad_card.dart';
 import 'package:quizai/app/profile/profile_page.dart';
 import 'package:quizai/app/settings/settings_page.dart';
 import 'package:quizai/modes/estudio/estudio_page.dart';
-import 'package:quizai/modes/quiz10/quiz_page.dart';
+import 'package:quizai/modes/quiz10/interaction/quiz_page.dart';
 
 Future<void> pumpApp(WidgetTester tester, Size size) async {
   tester.view.devicePixelRatio = 1;
