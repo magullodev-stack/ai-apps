@@ -1,10 +1,10 @@
 # Manifiesto arquitectónico de AI-APPS
 
-AI-APPS es una plataforma para construir aplicaciones móviles interactivas de creación, descubrimiento y aprendizaje.
+AI-APPS es una plataforma para construir aplicaciones interactivas con inteligencia artificial.
 
 Cada aplicación desarrolla su propia experiencia, realidad, estado y reglas. Los sistemas gobiernan las actividades, las capacidades resuelven necesidades funcionales y la inteligencia artificial puede intervenir en cualquier tarea que lo requiera.
 
-Este manifiesto establece las invariantes estructurales del repositorio. La ontología operacional y el funcionamiento de la inteligencia artificial se definen en sus documentos correspondientes.
+Este manifiesto establece las invariantes estructurales del repositorio. La organización del repositorio y el funcionamiento de la inteligencia artificial se definen en sus documentos correspondientes.
 
 ---
 

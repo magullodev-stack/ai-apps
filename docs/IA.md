@@ -12,6 +12,8 @@ Los modelos no tienen responsabilidades arquitectónicas permanentes. Su selecci
 
 Cada sistema mantiene la realidad, el estado y las reglas de su actividad.
 
+La inteligencia artificial no mantiene la realidad ni la memoria de las actividades. Cualquier estado persistente pertenece al sistema responsable.
+
 Las operaciones de IA reciben el contexto necesario para realizar su tarea, junto con las instrucciones y los requisitos del resultado esperado.
 
 Cada aplicación determina qué información necesita proporcionar y cómo utilizar los resultados obtenidos.
@@ -34,8 +36,8 @@ Los modelos, prompts y procedimientos pueden incorporarse, sustituirse, combinar
 
 La aplicación conecta los componentes necesarios y el sistema determina cómo se incorporan los resultados a su realidad.
 
-## Implementación activa
+## Implementación
 
-`ai/dart_service` ejecuta las solicitudes de generación JSON estructurada mediante OpenAI Responses con las bibliotecas estándar de Dart, incluido en Flutter. Recibe el modelo, el prompt y el esquema de cada consumidor. Mantiene la clave del proveedor en el proceso servidor y ofrece diagnósticos saneados y uso de tokens.
+La implementación técnica compartida de inteligencia artificial se encuentra en `ai/`.
 
-`ai/flutter_client` permite a los juegos móviles utilizar el servicio mediante HTTP local autenticado. `scripts/run-android.ps1` inicia la conexión de desarrollo, gestiona el token local y ejecuta Quiz10 en el emulador. Consulta [`ai/README.md`](../ai/README.md) para el contrato, las pruebas y los límites de desarrollo.
+Consulta [`ai/README.md`](../ai/README.md) para su contrato, funcionamiento y límites de desarrollo.
