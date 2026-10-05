@@ -40,19 +40,34 @@ const _defaultLoadingMessages = <Quiz10LoadingMessage>[
   ),
 ];
 
+const _defaultDelayMessage = Quiz10LoadingMessage(
+  lead: 'Vale… esto está tardando más de la cuenta.',
+  highlight: 'Me estás haciendo trabajar.',
+  support: 'Espero que luego tengas la decencia de fallar alguna.',
+);
+
 class Quiz10PreparationScreen extends StatefulWidget {
   const Quiz10PreparationScreen({
     super.key,
     required this.ready,
     required this.onCompleted,
     this.messages = _defaultLoadingMessages,
-    this.messageInterval = const Duration(milliseconds: 3200),
-  });
+    this.delayMessage = _defaultDelayMessage,
+    this.messageDuration = const Duration(seconds: 4),
+    this.delayThreshold = const Duration(seconds: 20),
+  }) : assert(messages.length == 4);
 
   final bool ready;
   final VoidCallback onCompleted;
+
+  /// Los cuatro beats fundacionales de la primera carga.
   final List<Quiz10LoadingMessage> messages;
-  final Duration messageInterval;
+
+  /// Beat especial que solo aparece si la preparación alcanza el umbral de demora.
+  final Quiz10LoadingMessage delayMessage;
+
+  final Duration messageDuration;
+  final Duration delayThreshold;
 
   @override
   State<Quiz10PreparationScreen> createState() =>
@@ -62,15 +77,22 @@ class Quiz10PreparationScreen extends StatefulWidget {
 class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
     with TickerProviderStateMixin {
   Timer? _messageTimer;
+  Timer? _delayTimer;
   Timer? _progressTimer;
+
   late final AnimationController _floatController;
   late final AnimationController _pulseController;
   late final AnimationController _completionController;
+
   final math.Random _progressRandom = math.Random();
-  final Stopwatch _progressWatch = Stopwatch();
+  final Stopwatch _experienceWatch = Stopwatch();
 
   int _messageIndex = 0;
-  double _progress = 0.02;
+  bool _foundationComplete = false;
+  bool _delayMessageActive = false;
+  bool _delayMessageFinished = false;
+
+  double _progress = 0.01;
   double _completionStart = 0;
   bool _completionNotified = false;
 
@@ -90,26 +112,18 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
 
     _completionController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 620),
+      duration: const Duration(milliseconds: 720),
     )
       ..addListener(_tickCompletion)
       ..addStatusListener(_handleCompletionStatus);
 
-    _progressWatch.start();
+    _experienceWatch.start();
     _scheduleProgressTick();
+    _scheduleNextFoundationBeat();
 
     if (widget.ready) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _completeProgress();
-      });
-    }
-
-    if (widget.messages.length > 1) {
-      _messageTimer = Timer.periodic(widget.messageInterval, (_) {
-        if (!mounted) return;
-        setState(() {
-          _messageIndex = (_messageIndex + 1) % widget.messages.length;
-        });
+        if (mounted) _tryCompleteProgress();
       });
     }
   }
@@ -119,53 +133,145 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
     super.didUpdateWidget(oldWidget);
 
     if (!oldWidget.ready && widget.ready) {
-      _completeProgress();
+      _tryCompleteProgress();
     }
   }
 
+  void _scheduleNextFoundationBeat() {
+    _messageTimer?.cancel();
+    _messageTimer = Timer(widget.messageDuration, () {
+      if (!mounted || _completionNotified) return;
+
+      if (_messageIndex < widget.messages.length - 1) {
+        setState(() => _messageIndex++);
+        _scheduleNextFoundationBeat();
+        return;
+      }
+
+      _foundationComplete = true;
+      _tryCompleteProgress();
+
+      if (!_completionController.isAnimating && !_completionNotified) {
+        _scheduleDelayBeat();
+      }
+    });
+  }
+
+  void _scheduleDelayBeat() {
+    _delayTimer?.cancel();
+
+    final remaining =
+        widget.delayThreshold - _experienceWatch.elapsed;
+
+    if (remaining <= Duration.zero) {
+      _activateDelayBeat();
+      return;
+    }
+
+    _delayTimer = Timer(remaining, () {
+      if (!mounted || _completionNotified) return;
+      if (!widget.ready) {
+        _activateDelayBeat();
+      } else {
+        _tryCompleteProgress();
+      }
+    });
+  }
+
+  void _activateDelayBeat() {
+    if (_delayMessageActive ||
+        _delayMessageFinished ||
+        _completionController.isAnimating ||
+        _completionNotified) {
+      return;
+    }
+
+    setState(() => _delayMessageActive = true);
+
+    _messageTimer?.cancel();
+    _messageTimer = Timer(widget.messageDuration, () {
+      if (!mounted || _completionNotified) return;
+
+      _delayMessageFinished = true;
+      _tryCompleteProgress();
+    });
+  }
+
   void _scheduleProgressTick() {
-    if (widget.ready || _completionController.isAnimating) return;
+    if (_completionController.isAnimating || _completionNotified) return;
 
     final delay = Duration(
       milliseconds: 260 + _progressRandom.nextInt(440),
     );
 
     _progressTimer = Timer(delay, () {
-      if (!mounted || widget.ready || _completionController.isAnimating) {
+      if (!mounted ||
+          _completionController.isAnimating ||
+          _completionNotified) {
         return;
       }
 
-      final seconds = _progressWatch.elapsedMilliseconds / 1000.0;
+      final seconds = _experienceWatch.elapsedMilliseconds / 1000.0;
 
       double target;
       if (seconds <= 10) {
-        // La carga visual alcanza aproximadamente el 80 % a los 10 s.
+        // Aproximadamente 80 % a los 10 s.
         target = 0.80 * (seconds / 10.0);
+      } else if (seconds <= 16) {
+        // Del 80 % al 90 % durante los dos últimos beats fundacionales.
+        target = 0.80 + (0.10 * ((seconds - 10) / 6.0));
       } else {
-        // Después avanza muy lentamente y nunca aparenta terminar por sí sola.
-        final extraSeconds = seconds - 10;
-        target = 0.80 + math.min(0.12, extraSeconds * 0.006);
+        // Después avanza casi imperceptiblemente y nunca completa por sí sola.
+        target = 0.90 + math.min(0.04, (seconds - 16) * 0.002);
       }
 
-      // Pequeña irregularidad para evitar una animación mecánica.
-      final jitter = 0.002 + (_progressRandom.nextDouble() * 0.010);
-      final next = math.min(0.92, math.max(_progress, target + jitter));
+      final jitter = _progressRandom.nextDouble() * 0.007;
+      final next = math.min(
+        0.94,
+        math.max(_progress, target + jitter),
+      );
 
       if ((next - _progress).abs() > 0.0005) {
-        setState(() {
-          _progress = next;
-        });
+        setState(() => _progress = next);
       }
 
       _scheduleProgressTick();
     });
   }
 
+  void _tryCompleteProgress() {
+    if (!widget.ready ||
+        !_foundationComplete ||
+        _completionNotified ||
+        _completionController.isAnimating) {
+      return;
+    }
+
+    final elapsed = _experienceWatch.elapsed;
+
+    // Si el test no estuvo listo antes de los 20 s, el beat de demora
+    // forma parte de la experiencia y no se corta a mitad.
+    if (elapsed >= widget.delayThreshold &&
+        !_delayMessageFinished) {
+      _activateDelayBeat();
+      return;
+    }
+
+    if (_delayMessageActive && !_delayMessageFinished) {
+      return;
+    }
+
+    _completeProgress();
+  }
+
   void _completeProgress() {
     if (_completionNotified || _completionController.isAnimating) return;
 
+    _messageTimer?.cancel();
+    _delayTimer?.cancel();
     _progressTimer?.cancel();
-    _progressWatch.stop();
+    _experienceWatch.stop();
+
     _completionStart = _progress;
     _completionController.forward(from: 0);
   }
@@ -190,8 +296,9 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
   @override
   void dispose() {
     _messageTimer?.cancel();
+    _delayTimer?.cancel();
     _progressTimer?.cancel();
-    _progressWatch.stop();
+    _experienceWatch.stop();
     _floatController.dispose();
     _pulseController.dispose();
     _completionController.dispose();
@@ -200,12 +307,13 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
 
   @override
   Widget build(BuildContext context) {
-    final message = widget.messages.isEmpty
-        ? const Quiz10LoadingMessage(
-            lead: 'Estoy preparando tu Quiz10.',
-            highlight: 'Ya casi está.',
-          )
+    final message = _delayMessageActive
+        ? widget.delayMessage
         : widget.messages[_messageIndex];
+
+    final messageKey = _delayMessageActive
+        ? 'delay'
+        : 'foundation-$_messageIndex';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -257,7 +365,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
                 return Transform.translate(
                   offset: Offset(3 - (6 * t), -3 + (6 * t)),
                   child: Transform.rotate(
-                    angle: (-0.012 + (0.024 * t)),
+                    angle: -0.012 + (0.024 * t),
                     child: Transform.scale(
                       scale: 1 + (0.006 * math.sin(t * math.pi)),
                       child: child,
@@ -295,7 +403,7 @@ class _Quiz10PreparationScreenState extends State<Quiz10PreparationScreen>
                                 ),
                               ),
                           child: _LoadingCopy(
-                            key: ValueKey(_messageIndex),
+                            key: ValueKey(messageKey),
                             message: message,
                           ),
                         ),
