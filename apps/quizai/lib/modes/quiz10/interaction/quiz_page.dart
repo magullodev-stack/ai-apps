@@ -1,8 +1,9 @@
 import 'package:ai_apps_ui/ai_apps_ui.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/onboarding/first_quiz_sequence.dart';
 import '../production/quiz10_pipeline.dart';
-import 'quiz10_preparation_screen.dart';
+import 'quiz10_loading_scene.dart';
 
 class QuizPage extends StatefulWidget {
   const QuizPage({super.key, this.loadQuestions});
@@ -125,9 +126,10 @@ class _QuizPageState extends State<QuizPage> {
             widget.loadQuestions != null);
 
     if (isPreparing) {
-      return Quiz10PreparationScreen(
+      return QuizAiFirstQuizSequence(
         ready: _testReady,
         onCompleted: _enterPreparedQuiz,
+        scene: const Quiz10LoadingScene(),
       );
     }
 
