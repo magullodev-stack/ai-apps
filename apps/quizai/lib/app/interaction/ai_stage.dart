@@ -185,16 +185,21 @@ class _StageProgress extends StatelessWidget {
 
           return DecoratedBox(
             decoration: BoxDecoration(
-              color: const Color(0x33100045),
+              color: const Color(0x40130055),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: const Color(0xFF9D75FF).withAlpha(170),
-                width: 1.4,
+                color: const Color(0xFFC59BFF),
+                width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF8F5CFF).withAlpha(70),
-                  blurRadius: 12,
+                  color: const Color(0xFF9D63FF).withAlpha(135),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+                BoxShadow(
+                  color: const Color(0xFFE3B8FF).withAlpha(75),
+                  blurRadius: 34,
                   spreadRadius: 1,
                 ),
               ],
@@ -211,20 +216,31 @@ class _StageProgress extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     gradient: const LinearGradient(
                       colors: [
-                        Color(0xFF855CFF),
-                        Color(0xFFD18CFF),
-                        Color(0xFFF5D6FF),
+                        Color(0xFF8B4FFF),
+                        Color(0xFFD77CFF),
+                        Color(0xFFFFD8FF),
+                        Color(0xFFFFFFFF),
                       ],
+                      stops: [0.0, 0.58, 0.88, 1.0],
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFFF5DDFF),
+                      width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD89BFF).withAlpha(205),
-                        blurRadius: 12,
+                        color: const Color(0xFFCC7BFF).withAlpha(235),
+                        blurRadius: 18,
+                        spreadRadius: 2,
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFFF1CAFF).withAlpha(150),
+                        blurRadius: 30,
                         spreadRadius: 1,
                       ),
                       BoxShadow(
-                        color: Colors.white.withAlpha(90),
-                        blurRadius: 4,
+                        color: Colors.white.withAlpha(170),
+                        blurRadius: 6,
                       ),
                     ],
                   ),
