@@ -9,7 +9,7 @@ abstract final class _HomeLayout {
   static const logoWidth = 238.0;
   static const logoHeight = 78.0;
   static const headerHeight = 88.0;
-  static const heroHeight = 224.0;
+  static const heroHeight = 206.0;
 }
 
 /// Estructura de la pantalla principal de QuizAI.
@@ -75,11 +75,11 @@ class HomePage extends StatelessWidget {
               _HomeHeader(onOpenSettings: onOpenSettings),
               const SizedBox(height: QuizSpacing.md),
               _Quiz10Slot(onTap: () => _openQuiz10(context)),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               const _SalasHeader(),
               const SizedBox(height: QuizSpacing.md),
               const _SalasSlots(),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               _DocumentSlot(onTap: () => _openEstudio(context)),
             ],
           ),
@@ -300,7 +300,7 @@ class _SalaSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: Key('quizai-home-sala-$id'),
-      height: 142,
+      height: 118,
       padding: const EdgeInsets.all(QuizSpacing.md),
       decoration: BoxDecoration(
         color: QuizPalette.foreground.withAlpha(12),
@@ -334,16 +334,22 @@ class _DocumentSlot extends StatelessWidget {
       child: SizedBox(
         key: const Key('quizai-home-document'),
         width: double.infinity,
-        child: GestureDetector(
-          key: const Key('quizai-document-button'),
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: Image.asset(
-            'assets/home/QuizAI_Home_Subir_Archivo.png',
-            width: double.infinity,
-            fit: BoxFit.fitWidth,
-            alignment: Alignment.center,
-            filterQuality: FilterQuality.high,
+        child: AspectRatio(
+          aspectRatio: 883 / 380,
+          child: GestureDetector(
+            key: const Key('quizai-document-button'),
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: ClipRect(
+              child: Image.asset(
+                'assets/home/QuizAI_Home_Subir_Archivo.png',
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
           ),
         ),
       ),
