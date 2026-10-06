@@ -231,11 +231,10 @@ class _SalasModule extends StatelessWidget {
     return const _HomeCardFrame(
       height: _HomeLayout.heroHeight,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(8, 10, 8, 8),
+        padding: EdgeInsets.fromLTRB(8, 8, 8, 6),
         child: Column(
           children: [
             _SalasHeader(),
-            SizedBox(height: 6),
             Expanded(child: _SalasSlots()),
           ],
         ),
@@ -254,37 +253,22 @@ class _SalasHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
-          width: 52,
-          height: 52,
+          width: 44,
+          height: 44,
           child: Image.asset(
             'assets/home/QuizAI_Home_Icono_Salas.png',
             fit: BoxFit.contain,
             filterQuality: FilterQuality.high,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Salas',
-                style: QuizTypography.screenTitle.copyWith(
-                  color: QuizPalette.foreground,
-                  fontSize: 34,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '3 retos diarios · rankings · comunidad',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: QuizTypography.body.copyWith(
-                  color: QuizPalette.foregroundMuted,
-                  fontSize: 15,
-                ),
-              ),
-            ],
+          child: Text(
+            'Salas',
+            style: QuizTypography.screenTitle.copyWith(
+              color: QuizPalette.foreground,
+              fontSize: 34,
+            ),
           ),
         ),
         const SizedBox(width: QuizSpacing.sm),
@@ -456,7 +440,7 @@ class _SalasSlotsState extends State<_SalasSlots>
         ? 1 - (distance * 0.16)
         : 0.84 - ((distance - 1) * 0.18);
 
-    final top = 8 + (distance * 8);
+    final top = 2 + (distance * 6);
     final opacity = distance <= 1 ? 1.0 : 0.82;
     final isCentered = distance < 0.35;
 
