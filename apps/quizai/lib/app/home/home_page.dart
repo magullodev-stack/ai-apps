@@ -211,8 +211,20 @@ class _SalasHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       key: const Key('quizai-home-salas-header'),
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        const Icon(
+          Icons.groups_rounded,
+          size: 48,
+          color: Color(0xFFD4B0FF),
+          shadows: [
+            Shadow(
+              color: Color(0xAA9E5CFF),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
