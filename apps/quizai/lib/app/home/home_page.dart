@@ -180,43 +180,12 @@ class _Quiz10Slot extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            child: Ink(
-              padding: const EdgeInsets.all(QuizSpacing.xl),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFE8265D), Color(0xFFFF6339)],
-                ),
-                border: Border.all(
-                  color: QuizPalette.foreground.withAlpha(220),
-                  width: 1.6,
-                ),
+            child: Ink.image(
+              image: const AssetImage(
+                'assets/home/QuizAI_Home_Partida_rápida.png',
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Spacer(),
-                  Text(
-                    'Quiz10',
-                    style: QuizTypography.brand.copyWith(fontSize: 45),
-                  ),
-                  const SizedBox(height: QuizSpacing.xs),
-                  Text(
-                    'Cultura general diaria',
-                    style: QuizTypography.body.copyWith(
-                      color: QuizPalette.foreground,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const Spacer(),
-                  const _HomeActionLabel(
-                    text: 'Jugar ahora',
-                    icon: Icons.chevron_right_rounded,
-                  ),
-                ],
-              ),
+              fit: BoxFit.cover,
+              child: const SizedBox.expand(),
             ),
           ),
         ),
