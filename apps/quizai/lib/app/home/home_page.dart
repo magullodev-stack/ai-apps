@@ -175,7 +175,7 @@ class _HomeHeader extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: QuizPalette.foreground.withAlpha(24),
+              color: QuizPalette.navSurfaceEnd,
               border: Border.all(color: QuizPalette.foreground.withAlpha(72)),
             ),
             child: IconButton(
