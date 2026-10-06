@@ -4,7 +4,6 @@ import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/interaction/quiz_page.dart';
 import '../app_theme.dart';
 import '../generation_dependencies.dart';
-import 'widgets/quizai_logo.dart';
 
 /// Estructura de la pantalla principal de QuizAI.
 ///
@@ -98,7 +97,13 @@ class _HomeHeader extends StatelessWidget {
             child: Container(
               key: const Key('quizai-home-logo-slot'),
               alignment: Alignment.centerLeft,
-              child: const QuizAiLogo(height: 60),
+              child: Image.asset(
+                'assets/home/QuizAI_Home_LOGO.png',
+                height: 60,
+                fit: BoxFit.contain,
+                alignment: Alignment.centerLeft,
+                filterQuality: FilterQuality.high,
+              ),
             ),
           ),
           const SizedBox(width: QuizSpacing.md),
@@ -310,89 +315,27 @@ class _DocumentSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      key: const Key('quizai-home-document'),
-      borderRadius: BorderRadius.circular(QuizRadii.hero),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    QuizPalette.primary.withAlpha(230),
-                    QuizPalette.backgroundLight.withAlpha(235),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
+    return Semantics(
+      button: true,
+      label: 'Abrir documento de estudio',
+      child: Material(
+        key: const Key('quizai-home-document'),
+        color: Colors.transparent,
+        child: InkWell(
+          key: const Key('quizai-document-button'),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(QuizRadii.hero),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(QuizRadii.hero),
             child: Image.asset(
               'assets/home/QuizAI_Home_Subir_Archivo.png',
-              fit: BoxFit.cover,
+              width: double.infinity,
+              fit: BoxFit.fitWidth,
               alignment: Alignment.center,
               filterQuality: FilterQuality.high,
-              errorBuilder: (context, error, stackTrace) =>
-                  const SizedBox.shrink(),
             ),
           ),
-          Container(
-            constraints: const BoxConstraints(minHeight: 224),
-            padding: const EdgeInsets.all(QuizSpacing.xl),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: QuizPalette.foreground.withAlpha(150),
-                width: 1.4,
-              ),
-              borderRadius: BorderRadius.circular(QuizRadii.hero),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Estudia\ntu documento',
-                  style: QuizTypography.brand.copyWith(
-                    fontSize: 37,
-                    height: 0.98,
-                  ),
-                ),
-                const SizedBox(height: QuizSpacing.sm),
-                Text(
-                  'PDF · DOCX · PPTX · imágenes',
-                  style: QuizTypography.body.copyWith(
-                    color: QuizPalette.foregroundMuted,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: QuizSpacing.xs),
-                Text(
-                  'Sube tu propio temario',
-                  style: QuizTypography.body.copyWith(
-                    color: QuizPalette.foreground,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: QuizSpacing.lg),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    key: const Key('quizai-document-button'),
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(QuizRadii.pill),
-                    child: const _HomeActionLabel(
-                      text: 'Subir documento',
-                      icon: Icons.file_upload_outlined,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
