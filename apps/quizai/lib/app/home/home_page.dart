@@ -10,6 +10,30 @@ abstract final class _HomeLayout {
   static const logoHeight = 78.0;
   static const headerHeight = 88.0;
   static const heroHeight = 206.0;
+  static const documentHeight = 160.0;
+}
+
+class _HomeCardFrame extends StatelessWidget {
+  const _HomeCardFrame({
+    super.key,
+    required this.height,
+    required this.child,
+  });
+
+  final double height;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(QuizRadii.hero),
+        child: child,
+      ),
+    );
+  }
 }
 
 /// Estructura de la pantalla principal de QuizAI.
@@ -146,57 +170,53 @@ class _Quiz10Slot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
+    return _HomeCardFrame(
+      key: const Key('quizai-home-quiz10'),
+      height: _HomeLayout.heroHeight,
       child: Semantics(
         button: true,
         label: 'Jugar Quiz10',
         child: Material(
-          key: const Key('quizai-home-quiz10'),
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(QuizRadii.hero),
-          clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
             child: Ink(
-              height: _HomeLayout.heroHeight,
-            padding: const EdgeInsets.all(QuizSpacing.xl),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE8265D), Color(0xFFFF6339)],
-              ),
-              borderRadius: BorderRadius.circular(QuizRadii.hero),
-              border: Border.all(
-                color: QuizPalette.foreground.withAlpha(220),
-                width: 1.6,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Spacer(),
-                Text(
-                  'Quiz10',
-                  style: QuizTypography.brand.copyWith(fontSize: 45),
+              padding: const EdgeInsets.all(QuizSpacing.xl),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFE8265D), Color(0xFFFF6339)],
                 ),
-                const SizedBox(height: QuizSpacing.xs),
-                Text(
-                  'Cultura general diaria',
-                  style: QuizTypography.body.copyWith(
-                    color: QuizPalette.foreground,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
+                border: Border.all(
+                  color: QuizPalette.foreground.withAlpha(220),
+                  width: 1.6,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Spacer(),
+                  Text(
+                    'Quiz10',
+                    style: QuizTypography.brand.copyWith(fontSize: 45),
                   ),
-                ),
-                const Spacer(),
-                const _HomeActionLabel(
-                  text: 'Jugar ahora',
-                  icon: Icons.chevron_right_rounded,
-                ),
-              ],
-            ),
+                  const SizedBox(height: QuizSpacing.xs),
+                  Text(
+                    'Cultura general diaria',
+                    style: QuizTypography.body.copyWith(
+                      color: QuizPalette.foreground,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  const _HomeActionLabel(
+                    text: 'Jugar ahora',
+                    icon: Icons.chevron_right_rounded,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -328,28 +348,22 @@ class _DocumentSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Abrir documento de estudio',
-      child: SizedBox(
-        key: const Key('quizai-home-document'),
-        width: double.infinity,
-        child: AspectRatio(
-          aspectRatio: 883 / 380,
-          child: GestureDetector(
-            key: const Key('quizai-document-button'),
-            behavior: HitTestBehavior.opaque,
-            onTap: onTap,
-            child: ClipRect(
-              child: Image.asset(
-                'assets/home/QuizAI_Home_Subir_Archivo.png',
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                filterQuality: FilterQuality.high,
-              ),
-            ),
+    return _HomeCardFrame(
+      key: const Key('quizai-home-document'),
+      height: _HomeLayout.documentHeight,
+      child: Semantics(
+        button: true,
+        label: 'Abrir documento de estudio',
+        child: GestureDetector(
+          key: const Key('quizai-document-button'),
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Image.asset(
+            'assets/home/QuizAI_Home_Subir_Archivo.png',
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.high,
           ),
         ),
       ),
