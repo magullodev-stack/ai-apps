@@ -73,8 +73,10 @@ class _EstudioPageState extends State<EstudioPage> {
       if (!mounted || file == null) return;
       validateEstudioPickedFile(file);
       setState(() => _selectedFile = file);
-    } on EstudioFileTooLargeException {
-      _showError('El archivo supera el límite de 50 MB.');
+    } on EstudioFileTooLargeException catch (error) {
+      _showError(
+        'El archivo supera el límite de ${error.maxSizeMegabytes} MB para este formato.',
+      );
     } on FormatException {
       _showError('El archivo no tiene un formato compatible.');
     } catch (_) {
@@ -354,7 +356,9 @@ class _FileUploadCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text('PDF, DOCX, PPTX, JPEG o PNG · Máx. 50 MB'),
+                          const Text(
+                            'PDF 25 MB · PPTX 20 MB · DOCX/imagen 10 MB',
+                          ),
                         ],
                       ),
                     ),

@@ -1,11 +1,28 @@
 import 'package:file_picker/file_picker.dart';
 
 abstract final class EstudioMaterialPolicy {
-  static const maxFileSizeBytes = 50 * 1024 * 1024;
+  static const maxPdfSizeMegabytes = 25;
+  static const maxDocxSizeMegabytes = 10;
+  static const maxPptxSizeMegabytes = 20;
+  static const maxImageSizeMegabytes = 10;
+
   static const maxPdfPages = 300;
-  static const maxPptxSlides = 300;
-  static const maxMaterialsPerUser = 20;
-  static const maxTotalStorageBytes = 500 * 1024 * 1024;
+  static const maxDocxWords = 75000;
+  static const maxPptxSlides = 100;
+
+  static int maxSizeMegabytesForExtension(String extension) {
+    return switch (extension.toLowerCase()) {
+      'pdf' => maxPdfSizeMegabytes,
+      'docx' => maxDocxSizeMegabytes,
+      'pptx' => maxPptxSizeMegabytes,
+      'jpg' || 'jpeg' || 'png' => maxImageSizeMegabytes,
+      _ => throw ArgumentError.value(extension, 'extension'),
+    };
+  }
+
+  static int maxSizeBytesForExtension(String extension) {
+    return maxSizeMegabytesForExtension(extension) * 1024 * 1024;
+  }
 }
 
 const estudioAllowedExtensions = <String>[
@@ -18,7 +35,9 @@ const estudioAllowedExtensions = <String>[
 ];
 
 final class EstudioFileTooLargeException implements Exception {
-  const EstudioFileTooLargeException();
+  const EstudioFileTooLargeException(this.maxSizeMegabytes);
+
+  final int maxSizeMegabytes;
 }
 
 final class EstudioPickedFile {
@@ -61,8 +80,13 @@ void validateEstudioPickedFile(EstudioPickedFile file) {
   if (!estudioAllowedExtensions.contains(file.extension.toLowerCase())) {
     throw const FormatException('Formato de archivo no compatible.');
   }
-  if (file.sizeBytes > EstudioMaterialPolicy.maxFileSizeBytes) {
-    throw const EstudioFileTooLargeException();
+  final maxSizeBytes = EstudioMaterialPolicy.maxSizeBytesForExtension(
+    file.extension,
+  );
+  if (file.sizeBytes > maxSizeBytes) {
+    throw EstudioFileTooLargeException(
+      EstudioMaterialPolicy.maxSizeMegabytesForExtension(file.extension),
+    );
   }
 }
 

@@ -19,26 +19,53 @@ final class _UnusedQuestionGenerator implements EstudioQuestionGenerator {
 }
 
 void main() {
-  test('la política de Estudio fija los límites iniciales', () {
-    expect(EstudioMaterialPolicy.maxFileSizeBytes, 50 * 1024 * 1024);
+  test('la política de Estudio fija límites por formato y contenido', () {
+    expect(EstudioMaterialPolicy.maxPdfSizeMegabytes, 25);
+    expect(EstudioMaterialPolicy.maxDocxSizeMegabytes, 10);
+    expect(EstudioMaterialPolicy.maxPptxSizeMegabytes, 20);
+    expect(EstudioMaterialPolicy.maxImageSizeMegabytes, 10);
     expect(EstudioMaterialPolicy.maxPdfPages, 300);
-    expect(EstudioMaterialPolicy.maxPptxSlides, 300);
-    expect(EstudioMaterialPolicy.maxMaterialsPerUser, 20);
-    expect(EstudioMaterialPolicy.maxTotalStorageBytes, 500 * 1024 * 1024);
+    expect(EstudioMaterialPolicy.maxDocxWords, 75000);
+    expect(EstudioMaterialPolicy.maxPptxSlides, 100);
   });
 
-  test('rechaza un archivo que supera 50 MB', () {
-    expect(
-      () => validateEstudioPickedFile(
-        const EstudioPickedFile(
-          name: 'manual.pdf',
-          path: '/tmp/manual.pdf',
-          sizeBytes: (50 * 1024 * 1024) + 1,
-          extension: 'pdf',
+  test('aplica el límite de tamaño correspondiente a cada formato', () {
+    const cases = <(String, int)>[
+      ('pdf', 25),
+      ('docx', 10),
+      ('pptx', 20),
+      ('jpg', 10),
+      ('jpeg', 10),
+      ('png', 10),
+    ];
+
+    for (final (extension, maxMegabytes) in cases) {
+      validateEstudioPickedFile(
+        EstudioPickedFile(
+          name: 'material.$extension',
+          path: '/tmp/material.$extension',
+          sizeBytes: maxMegabytes * 1024 * 1024,
+          extension: extension,
         ),
-      ),
-      throwsA(isA<EstudioFileTooLargeException>()),
-    );
+      );
+      expect(
+        () => validateEstudioPickedFile(
+          EstudioPickedFile(
+            name: 'material.$extension',
+            path: '/tmp/material.$extension',
+            sizeBytes: (maxMegabytes * 1024 * 1024) + 1,
+            extension: extension,
+          ),
+        ),
+        throwsA(
+          isA<EstudioFileTooLargeException>().having(
+            (error) => error.maxSizeMegabytes,
+            'maxSizeMegabytes',
+            maxMegabytes,
+          ),
+        ),
+      );
+    }
   });
 
   testWidgets('Estudio muestra el archivo elegido por el selector', (
@@ -73,7 +100,7 @@ void main() {
     expect(find.text('1.5 KB'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('Estudio informa cuando el archivo supera 50 MB', (
+  testWidgets('Estudio informa del límite específico del formato', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -82,10 +109,10 @@ void main() {
           generator: _UnusedPivotGenerator(),
           questionGenerator: _UnusedQuestionGenerator(),
           filePicker: () async => const EstudioPickedFile(
-            name: 'manual.pdf',
-            path: '/tmp/manual.pdf',
-            sizeBytes: (50 * 1024 * 1024) + 1,
-            extension: 'pdf',
+            name: 'apuntes.docx',
+            path: '/tmp/apuntes.docx',
+            sizeBytes: (10 * 1024 * 1024) + 1,
+            extension: 'docx',
           ),
         ),
       ),
@@ -94,7 +121,10 @@ void main() {
     await tester.tap(find.byKey(const Key('estudio-upload-file')));
     await tester.pumpAndSettle();
 
-    expect(find.text('El archivo supera el límite de 50 MB.'), findsOneWidget);
+    expect(
+      find.text('El archivo supera el límite de 10 MB para este formato.'),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('estudio-selected-file')), findsNothing);
     expect(tester.takeException(), isNull);
   });
