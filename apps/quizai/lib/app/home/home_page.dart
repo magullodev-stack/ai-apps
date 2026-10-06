@@ -363,7 +363,7 @@ class _DocumentSlot extends StatelessWidget {
       height: _HomeLayout.documentHeight,
       child: Semantics(
         button: true,
-        label: 'Subir archivo',
+        label: 'Abrir estudio',
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -416,60 +416,10 @@ class _DocumentSlot extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Positioned(
-                  left: 20,
-                  bottom: 16,
-                  child: _HomeActionLabel(
-                    text: 'Subir archivo',
-                    icon: Icons.file_upload_outlined,
-                  ),
-                ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _HomeActionLabel extends StatelessWidget {
-  const _HomeActionLabel({required this.text, required this.icon});
-
-  final String text;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 48, maxWidth: 210),
-      padding: const EdgeInsets.fromLTRB(18, 7, 7, 7),
-      decoration: BoxDecoration(
-        color: QuizPalette.surfaceElevated,
-        borderRadius: BorderRadius.circular(QuizRadii.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: QuizTypography.label.copyWith(
-                color: QuizPalette.backgroundDark,
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(width: QuizSpacing.sm),
-          CircleAvatar(
-            radius: 17,
-            backgroundColor: QuizPalette.primary,
-            child: Icon(icon, color: QuizPalette.foreground, size: 23),
-          ),
-        ],
       ),
     );
   }
