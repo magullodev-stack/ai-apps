@@ -48,7 +48,7 @@ class _AppShellState extends State<AppShell> {
       children: [
         if (isHome)
           Image.asset(
-            'assets/home/quiz10_Home_background_1080x1920.png',
+            'assets/home/QuizAI_Home_background_1080x1920.png',
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
             filterQuality: FilterQuality.high,
