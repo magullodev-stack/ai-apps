@@ -4,6 +4,7 @@ import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/interaction/quiz_page.dart';
 import '../app_theme.dart';
 import '../generation_dependencies.dart';
+import 'widgets/quizai_logo.dart';
 
 /// Estructura de la pantalla principal de QuizAI.
 ///
@@ -97,12 +98,7 @@ class _HomeHeader extends StatelessWidget {
             child: Container(
               key: const Key('quizai-home-logo-slot'),
               alignment: Alignment.centerLeft,
-              child: Text(
-                'QuizAI',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: QuizTypography.brand.copyWith(fontSize: 43),
-              ),
+              child: const QuizAiLogo(height: 60),
             ),
           ),
           const SizedBox(width: QuizSpacing.md),
