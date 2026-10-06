@@ -131,9 +131,7 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: QuizSpacing.md),
               _Quiz10Slot(onTap: () => _openQuiz10(context)),
               const SizedBox(height: 10),
-              const _SalasHeader(),
-              const SizedBox(height: QuizSpacing.md),
-              const _SalasSlots(),
+              const _SalasModule(),
               const SizedBox(height: 10),
               _DocumentSlot(onTap: () => _openEstudio(context)),
             ],
@@ -219,6 +217,27 @@ class _Quiz10Slot extends StatelessWidget {
               child: const SizedBox.expand(),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SalasModule extends StatelessWidget {
+  const _SalasModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _HomeCardFrame(
+      height: 220,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(8, 10, 8, 8),
+        child: Column(
+          children: [
+            _SalasHeader(),
+            SizedBox(height: 6),
+            Expanded(child: _SalasSlots()),
+          ],
         ),
       ),
     );
