@@ -64,7 +64,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/branding/quizai_logo.png
     - assets/modalidades/
     - assets/home/
     - assets/quiz10/loading/
