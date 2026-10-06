@@ -300,51 +300,232 @@ class _SalasHeader extends StatelessWidget {
   }
 }
 
-class _SalasSlots extends StatelessWidget {
+class _SalasSlots extends StatefulWidget {
   const _SalasSlots();
 
   @override
+  State<_SalasSlots> createState() => _SalasSlotsState();
+}
+
+class _SalasSlotsState extends State<_SalasSlots>
+    with SingleTickerProviderStateMixin {
+  static const _salas = <_SalaData>[
+    _SalaData(id: 'historia', title: 'Historia'),
+    _SalaData(id: 'biologia', title: 'Biología'),
+    _SalaData(id: 'cultura-general', title: 'Cultura\ngeneral'),
+    _SalaData(id: 'ciencia', title: 'Ciencia'),
+    _SalaData(id: 'geografia', title: 'Geografía'),
+  ];
+
+  late final AnimationController _snapController;
+  double _position = 0;
+  double _animationFrom = 0;
+  double _animationTo = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _snapController = AnimationController(
+      vsync: this,
+      duration: QuizDurations.normal,
+    )..addListener(() {
+        final t = QuizDurations.curve.transform(_snapController.value);
+        setState(() {
+          _position = _animationFrom + ((_animationTo - _animationFrom) * t);
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _snapController.dispose();
+    super.dispose();
+  }
+
+  double _relativePosition(int index) {
+    final count = _salas.length.toDouble();
+    var relative = (index - _position) % count;
+    if (relative > count / 2) relative -= count;
+    if (relative < -count / 2) relative += count;
+    return relative;
+  }
+
+  double _targetForIndex(int index) {
+    final count = _salas.length.toDouble();
+    var target = index.toDouble();
+    while (target - _position > count / 2) {
+      target -= count;
+    }
+    while (target - _position < -count / 2) {
+      target += count;
+    }
+    return target;
+  }
+
+  void _animateTo(double target) {
+    _snapController.stop();
+    _animationFrom = _position;
+    _animationTo = target;
+    _snapController.forward(from: 0);
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    _snapController.stop();
+    setState(() {
+      _position -= (details.primaryDelta ?? 0) / 82;
+    });
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    double target;
+
+    if (velocity < -350) {
+      target = _position.ceilToDouble();
+    } else if (velocity > 350) {
+      target = _position.floorToDouble();
+    } else {
+      target = _position.roundToDouble();
+    }
+
+    _animateTo(target);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Row(
-      key: Key('quizai-home-salas'),
-      children: [
-        Expanded(child: _SalaSlot(id: 'historia', title: 'Historia')),
-        SizedBox(width: QuizSpacing.sm),
-        Expanded(child: _SalaSlot(id: 'biologia', title: 'Biología')),
-        SizedBox(width: QuizSpacing.sm),
-        Expanded(
-          child: _SalaSlot(id: 'cultura-general', title: 'Cultura\ngeneral'),
+    return SizedBox(
+      key: const Key('quizai-home-salas'),
+      height: 138,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final centerX = constraints.maxWidth / 2;
+          final paintOrder = List<int>.generate(_salas.length, (index) => index)
+            ..sort((a, b) {
+              final aDistance = _relativePosition(a).abs();
+              final bDistance = _relativePosition(b).abs();
+              return bDistance.compareTo(aDistance);
+            });
+
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragUpdate: _onDragUpdate,
+            onHorizontalDragEnd: _onDragEnd,
+            child: ClipRect(
+              child: Stack(
+                children: [
+                  for (final index in paintOrder)
+                    _buildCarouselItem(index, centerX),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCarouselItem(int index, double centerX) {
+    final sala = _salas[index];
+    final relative = _relativePosition(index);
+    final distance = relative.abs().clamp(0.0, 2.0);
+
+    final offset = distance <= 1
+        ? relative * 82
+        : relative.sign * (82 + ((distance - 1) * 62));
+
+    final scale = distance <= 1
+        ? 1 - (distance * 0.16)
+        : 0.84 - ((distance - 1) * 0.18);
+
+    final top = 8 + (distance * 8);
+    final opacity = distance <= 1 ? 1.0 : 0.82;
+    final isCentered = distance < 0.35;
+
+    return Positioned(
+      key: ValueKey('quizai-home-sala-${sala.id}'),
+      left: centerX - 64 + offset,
+      top: top,
+      width: 128,
+      height: 118,
+      child: Transform.scale(
+        scale: scale,
+        child: Opacity(
+          opacity: opacity,
+          child: _SalaSlot(
+            id: sala.id,
+            title: sala.title,
+            selected: isCentered,
+            onTap: () => _animateTo(_targetForIndex(index)),
+          ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _SalaSlot extends StatelessWidget {
-  const _SalaSlot({required this.id, required this.title});
+class _SalaData {
+  const _SalaData({required this.id, required this.title});
 
   final String id;
   final String title;
+}
+
+class _SalaSlot extends StatelessWidget {
+  const _SalaSlot({
+    required this.id,
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String id;
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      key: Key('quizai-home-sala-$id'),
-      height: 118,
-      padding: const EdgeInsets.all(QuizSpacing.md),
-      decoration: BoxDecoration(
-        color: QuizPalette.foreground.withAlpha(12),
-        borderRadius: BorderRadius.circular(QuizRadii.card),
-        border: Border.all(color: QuizPalette.foreground.withAlpha(80)),
-      ),
-      alignment: Alignment.bottomLeft,
-      child: Text(
-        title,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: QuizTypography.cardTitle.copyWith(
-          color: QuizPalette.foreground,
-          fontSize: 20,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'Sala $title',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(QuizRadii.card),
+          child: Ink(
+            padding: const EdgeInsets.all(QuizSpacing.md),
+            decoration: BoxDecoration(
+              color: QuizPalette.foreground.withAlpha(selected ? 22 : 12),
+              borderRadius: BorderRadius.circular(QuizRadii.card),
+              border: Border.all(
+                color: QuizPalette.foreground.withAlpha(selected ? 155 : 72),
+                width: selected ? 1.4 : 1.0,
+              ),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: QuizPalette.primaryLight.withAlpha(70),
+                        blurRadius: 14,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: QuizTypography.cardTitle.copyWith(
+                  color: QuizPalette.foreground,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
