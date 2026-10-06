@@ -159,7 +159,7 @@ abstract final class QuizDurations {
 
 abstract final class QuizLayout {
   static const maxWidth = 640.0;
-  static const horizontalPadding = 6.0;
+  static const horizontalPadding = 12.0;
 }
 
 // Las pantallas Material aún no migradas conservan un escenario claro.
