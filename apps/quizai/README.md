@@ -52,10 +52,8 @@ Los indicadores de puntos, racha y ranking mostrarán sus datos cuando
 existan los sistemas responsables de proporcionar sus datos reales.
 
 Home muestra en su cabecera el logotipo propio de QuizAI y mantiene el acceso a
-Ajustes. El raster sigue siendo la fuente de verdad del arte; Flutter añade una
-microinteracción local sobre los ojos al tocar el logo. El comportamiento vive
-en `lib/app/home/widgets/quizai_logo.dart`, por lo que el PNG puede sustituirse
-sin cambiar código mientras conserve ruta, lienzo y composición.
+Ajustes. El logotipo se renderiza directamente desde
+`assets/home/QuizAI_Home_LOGO.png`, sin animación ni capas adicionales.
 
 La tipografía Nunito forma parte de la identidad visual de QuizAI.
 
@@ -82,7 +80,9 @@ y pesos hasta que se complete el rediseño de cada pantalla.
 
 La estructura de Home permanece implementada en Flutter. El arte de Quiz10,
 Salas, Estudia tu documento y el logotipo se mantiene desacoplado para poder
-sustituir cada recurso sin modificar la jerarquía ni la navegación.
+sustituir cada recurso sin modificar la jerarquía ni la navegación. El arte de
+Estudia tu documento se muestra como una única imagen conservando su relación
+de aspecto, sin texto, borde ni contenedor Flutter superpuestos.
 
 Los colores pertenecen a `lib/app/app_theme.dart`. La estructura general
 y la navegación pertenecen a `lib/app/app_shell.dart`. Home y sus bloques
@@ -153,7 +153,7 @@ flutter build apk --debug
 git diff --check
 ```
 
-Las pruebas de `test/app/` cubren el contrato del Design System, Nunito, la compatibilidad del tema con superficies claras, la jerarquía de Home en distintos tamaños, la microinteracción del logo, la navegación fija al desplazar, el cambio de pestañas y el regreso desde Quiz10 y Estudio. En Ajustes verifican las preferencias iniciales, las filas pulsables, la semántica accesible, el estado de sesión, los diálogos y el texto ampliado en pantallas estrechas. No ejecutan generaciones ni llamadas reales a modelos. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
+Las pruebas de `test/app/` cubren el contrato del Design System, Nunito, la compatibilidad del tema con superficies claras, la jerarquía de Home en distintos tamaños, la navegación fija al desplazar, el cambio de pestañas y el regreso desde Quiz10 y Estudio. En Ajustes verifican las preferencias iniciales, las filas pulsables, la semántica accesible, el estado de sesión, los diálogos y el texto ampliado en pantallas estrechas. No ejecutan generaciones ni llamadas reales a modelos. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
 
 Para una generación real explícita, desde la raíz:
 
