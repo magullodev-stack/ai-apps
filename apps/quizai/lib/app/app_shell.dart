@@ -41,95 +41,98 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final background = _selectedTab == 0
-        ? const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(
-                'assets/home/quiz10_Home_background_1080x1920.png',
-              ),
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-            ),
-          )
-        : const BoxDecoration(
-            gradient: QuizPalette.backgroundGradient,
-          );
+    final isHome = _selectedTab == 0;
 
-    return DecoratedBox(
-      decoration: background,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          bottom: false,
-          child: _selectedTab == 0
-              ? HomePage(onOpenSettings: _openSettings)
-              : _ProfileTab(onOpenSettings: _openSettings),
-        ),
-        bottomNavigationBar: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: QuizLayout.horizontalPadding,
-            vertical: QuizSpacing.sm,
-          ),
-          color: Colors.transparent,
-          child: SafeArea(
-          top: false,
-          child: Container(
-            key: const Key('quizai-bottom-nav'),
-            height: 84,
-            padding: const EdgeInsets.all(QuizSpacing.xs),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (isHome)
+          Image.asset(
+            'assets/home/quiz10_Home_background_1080x1920.png',
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            filterQuality: FilterQuality.high,
+          )
+        else
+          const DecoratedBox(
             decoration: BoxDecoration(
-              gradient: QuizPalette.navBackgroundGradient,
-              borderRadius: BorderRadius.circular(QuizRadii.pill),
-              border: Border.all(color: QuizPalette.navBorder, width: 1.3),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(55),
-                  blurRadius: 20,
-                  offset: const Offset(0, 7),
-                ),
-                BoxShadow(
-                  color: QuizPalette.primaryLight.withAlpha(45),
-                  blurRadius: 18,
-                  spreadRadius: 1,
-                ),
-              ],
+              gradient: QuizPalette.backgroundGradient,
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _QuizNavItem(
-                    key: const Key('quizai-nav-inicio'),
-                    label: 'Inicio',
-                    icon: Icons.home_outlined,
-                    selectedIcon: Icons.home_rounded,
-                    selected: _selectedTab == 0,
-                    onTap: () {
-                      if (_selectedTab != 0) {
-                        setState(() => _selectedTab = 0);
-                      }
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: _QuizNavItem(
-                    key: const Key('quizai-nav-perfil'),
-                    label: 'Perfil',
-                    icon: Icons.person_outline,
-                    selectedIcon: Icons.person,
-                    selected: _selectedTab == 1,
-                    onTap: () {
-                      if (_selectedTab != 1) {
-                        setState(() => _selectedTab = 1);
-                      }
-                    },
-                  ),
-                ),
-              ],
+          ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            bottom: false,
+            child: isHome
+                ? HomePage(onOpenSettings: _openSettings)
+                : _ProfileTab(onOpenSettings: _openSettings),
+          ),
+          bottomNavigationBar: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: QuizLayout.horizontalPadding,
+              vertical: QuizSpacing.sm,
             ),
+            color: Colors.transparent,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                key: const Key('quizai-bottom-nav'),
+                height: 84,
+                padding: const EdgeInsets.all(QuizSpacing.xs),
+                decoration: BoxDecoration(
+                  gradient: QuizPalette.navBackgroundGradient,
+                  borderRadius: BorderRadius.circular(QuizRadii.pill),
+                  border: Border.all(color: QuizPalette.navBorder, width: 1.3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(55),
+                      blurRadius: 20,
+                      offset: const Offset(0, 7),
+                    ),
+                    BoxShadow(
+                      color: QuizPalette.primaryLight.withAlpha(45),
+                      blurRadius: 18,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _QuizNavItem(
+                        key: const Key('quizai-nav-inicio'),
+                        label: 'Inicio',
+                        icon: Icons.home_outlined,
+                        selectedIcon: Icons.home_rounded,
+                        selected: _selectedTab == 0,
+                        onTap: () {
+                          if (_selectedTab != 0) {
+                            setState(() => _selectedTab = 0);
+                          }
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: _QuizNavItem(
+                        key: const Key('quizai-nav-perfil'),
+                        label: 'Perfil',
+                        icon: Icons.person_outline,
+                        selectedIcon: Icons.person,
+                        selected: _selectedTab == 1,
+                        onTap: () {
+                          if (_selectedTab != 1) {
+                            setState(() => _selectedTab = 1);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
