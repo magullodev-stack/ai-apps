@@ -64,7 +64,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/modalidades/
     - assets/home/
     - assets/quiz10/loading/
     - assets/fonts/OFL.txt
