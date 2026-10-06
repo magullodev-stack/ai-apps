@@ -363,7 +363,7 @@ class _DocumentSlot extends StatelessWidget {
       height: _HomeLayout.documentHeight,
       child: Semantics(
         button: true,
-        label: 'Abrir estudio',
+        label: 'Estudio con archivos',
         child: Material(
           color: Colors.transparent,
           child: InkWell(
