@@ -31,7 +31,7 @@ class QuizAiLogo extends StatefulWidget {
 class _QuizAiLogoState extends State<QuizAiLogo>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  var _expressionIndex = 0;
+  var _expressionIndex = QuizAiLogoExpression.values.length - 1;
 
   QuizAiLogoExpression get _expression =>
       QuizAiLogoExpression.values[_expressionIndex];
@@ -147,6 +147,7 @@ class _QuizAiLogoEyesPainter extends CustomPainter {
           openness: 1 - (0.82 * blink),
           opacity: overlayOpacity,
         );
+        break;
 
       case QuizAiLogoExpression.wink:
         _paintEye(
@@ -163,6 +164,7 @@ class _QuizAiLogoEyesPainter extends CustomPainter {
           openness: 1 + (0.10 * phase),
           opacity: overlayOpacity,
         );
+        break;
 
       case QuizAiLogoExpression.mischief:
         final drift = 0.009 * phase;
@@ -182,6 +184,7 @@ class _QuizAiLogoEyesPainter extends CustomPainter {
           tilt: 0.13 * phase,
           opacity: overlayOpacity,
         );
+        break;
     }
   }
 
