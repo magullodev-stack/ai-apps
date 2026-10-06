@@ -146,6 +146,9 @@ void main() {
       await tester.tap(find.byKey(const Key('quizai-document-button')));
       await tester.pumpAndSettle();
       expect(find.byType(EstudioPage), findsOneWidget);
+      expect(find.byKey(const Key('estudio-upload-card')), findsOneWidget);
+      expect(find.byKey(const Key('estudio-upload-file')), findsOneWidget);
+      expect(find.text('Subir archivo'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Generar'), findsOneWidget);
       expect(

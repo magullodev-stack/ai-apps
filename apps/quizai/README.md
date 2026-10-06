@@ -45,8 +45,9 @@ tarjetas claras, filas redondeadas y switches violetas, sin ilustraciones.
 Home se organiza alrededor de tres zonas de producto: Quiz10 como acceso
 principal, Salas como espacio competitivo y Estudia tu documento como entrada
 al contenido propio del usuario. Quiz10 conserva su acceso directo a la partida
-existente y Estudia tu documento reutiliza provisionalmente la pantalla actual
-de Estudio. Las Salas visibles todavía no navegan.
+existente y Estudia tu documento abre la modalidad Estudio, cuya primera capa
+permite seleccionar un archivo compatible desde el selector nativo del sistema.
+Las Salas visibles todavía no navegan.
 
 Los indicadores de puntos, racha y ranking mostrarán sus datos cuando
 existan los sistemas responsables de proporcionar sus datos reales.
@@ -97,9 +98,22 @@ Home muestra, en este orden, la cabecera con el espacio de marca y **Ajustes**,
 el acceso principal a **Quiz10**, la zona **Salas** con tres accesos visibles y
 el bloque **Estudia tu documento**. La barra inferior fija alterna entre
 **Inicio** y **Perfil**. Quiz10 abre su partida existente; Estudia tu documento
-abre provisionalmente la pantalla actual de Estudio; las Salas todavía no
-navegan. La flecha de regreso vuelve a Home. Salir de una modalidad descarta su
+abre Estudio y permite seleccionar un PDF, DOCX, PPTX, JPEG o PNG desde el
+selector nativo; las Salas todavía no navegan. La flecha de regreso vuelve a
+Home. Salir de una modalidad descarta su
 partida en memoria.
+
+
+## Estudio — selección de archivo v1
+
+Al abrir Estudio se muestra una caja **Subir archivo**. Al pulsarla, QuizAI abre
+el selector nativo del sistema y permite elegir un único archivo con extensión
+PDF, DOCX, PPTX, JPEG o PNG. La selección se valida también al regresar a la
+aplicación y la pantalla muestra el nombre y el tamaño del archivo elegido.
+
+Esta primera capa termina en la selección: todavía no copia el archivo a
+almacenamiento propio, no persiste la selección, no extrae contenido, no
+fragmenta el documento y no realiza ninguna operación de IA.
 
 Perfil mantiene su estado provisional, sin funciones ni datos de usuario.
 Desde Ajustes se vuelve a la pestaña de origen; la navegación inferior no

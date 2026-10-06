@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../coverage/coverage_route.dart';
 
 import '../../semantic_catalog/pivot_catalog.dart';
+import 'estudio_file_picker.dart';
 import 'estudio_generation.dart';
 
 class EstudioPage extends StatefulWidget {
@@ -14,11 +15,13 @@ class EstudioPage extends StatefulWidget {
     required this.generator,
     required this.questionGenerator,
     this.random,
+    this.filePicker,
   });
 
   final PivotCatalogGenerator generator;
   final EstudioQuestionGenerator questionGenerator;
   final Random? random;
+  final EstudioFilePicker? filePicker;
 
   @override
   State<EstudioPage> createState() => _EstudioPageState();
@@ -29,7 +32,10 @@ class _EstudioPageState extends State<EstudioPage> {
   late final PivotCatalogGenerator _generator;
   late final EstudioQuestionGenerator _questionGenerator;
   late final Random _random;
+  late final EstudioFilePicker _filePicker;
 
+  EstudioPickedFile? _selectedFile;
+  bool _selectingFile = false;
   List<EstudioQuestion>? _questions;
   List<List<String>> _options = [];
   int _index = 0;
@@ -45,6 +51,7 @@ class _EstudioPageState extends State<EstudioPage> {
     _random = widget.random ?? Random();
     _generator = widget.generator;
     _questionGenerator = widget.questionGenerator;
+    _filePicker = widget.filePicker ?? pickEstudioFile;
   }
 
   @override
@@ -52,6 +59,26 @@ class _EstudioPageState extends State<EstudioPage> {
     _contextController.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _pickFile() async {
+    if (_selectingFile) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _selectingFile = true;
+      _error = null;
+    });
+    try {
+      final file = await _filePicker();
+      if (!mounted || file == null) return;
+      setState(() => _selectedFile = file);
+    } on FormatException {
+      _showError('El archivo no tiene un formato compatible.');
+    } catch (_) {
+      _showError('No se ha podido abrir el archivo. Vuelve a intentarlo.');
+    } finally {
+      if (mounted) setState(() => _selectingFile = false);
+    }
   }
 
   Future<void> _generate() async {
@@ -159,7 +186,13 @@ class _EstudioPageState extends State<EstudioPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!_loading && questions == null)
+                  if (!_loading && questions == null) ...[
+                    _FileUploadCard(
+                      file: _selectedFile,
+                      selecting: _selectingFile,
+                      onTap: _pickFile,
+                    ),
+                    const SizedBox(height: 20),
                     RadioGroup<String>(
                       groupValue: 'topic',
                       onChanged: (_) {},
@@ -191,15 +224,10 @@ class _EstudioPageState extends State<EstudioPage> {
                               child: const Text('Generar'),
                             ),
                           ),
-                          const RadioListTile<String>(
-                            value: 'file',
-                            enabled: false,
-                            title: Text('Sube un archivo'),
-                            subtitle: Text('Todavía no disponible'),
-                          ),
                         ],
                       ),
                     ),
+                  ],
                   if (_loading) ...[
                     const LinearProgressIndicator(),
                     const SizedBox(height: 8),
@@ -273,4 +301,103 @@ class _EstudioPageState extends State<EstudioPage> {
       ),
     );
   }
+}
+
+
+class _FileUploadCard extends StatelessWidget {
+  const _FileUploadCard({
+    required this.file,
+    required this.selecting,
+    required this.onTap,
+  });
+
+  final EstudioPickedFile? file;
+  final bool selecting;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      key: const Key('estudio-upload-card'),
+      clipBehavior: Clip.antiAlias,
+      child: Semantics(
+        button: true,
+        label: 'Subir archivo de estudio',
+        child: InkWell(
+          key: const Key('estudio-upload-file'),
+          onTap: selecting ? null : onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.upload_file_rounded,
+                      size: 34,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Subir archivo',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text('PDF, DOCX, PPTX, JPEG o PNG'),
+                        ],
+                      ),
+                    ),
+                    if (selecting)
+                      const SizedBox.square(
+                        dimension: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    else
+                      const Icon(Icons.chevron_right_rounded),
+                  ],
+                ),
+                if (file case final selected?) ...[
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 14),
+                  Row(
+                    key: const Key('estudio-selected-file'),
+                    children: [
+                      const Icon(Icons.description_outlined),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          selected.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(_formatFileSize(selected.sizeBytes)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _formatFileSize(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  final kilobytes = bytes / 1024;
+  if (kilobytes < 1024) return '${kilobytes.toStringAsFixed(1)} KB';
+  final megabytes = kilobytes / 1024;
+  return '${megabytes.toStringAsFixed(1)} MB';
 }
