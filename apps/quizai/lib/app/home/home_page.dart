@@ -30,7 +30,22 @@ class _HomeCardFrame extends StatelessWidget {
       height: height,
       child: Stack(
         fit: StackFit.expand,
+        clipBehavior: Clip.none,
         children: [
+          IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x665F2EFF),
+                    blurRadius: 4,
+                    spreadRadius: 0.5,
+                  ),
+                ],
+              ),
+            ),
+          ),
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: child,
@@ -40,7 +55,7 @@ class _HomeCardFrame extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: const Color(0x99D8B7FF),
+                  color: const Color(0xDDE7D4FF),
                   width: 1.0,
                 ),
               ),
