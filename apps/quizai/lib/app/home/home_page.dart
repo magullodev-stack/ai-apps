@@ -379,8 +379,8 @@ class _DocumentSlot extends StatelessWidget {
                 ),
                 Positioned(
                   left: 20,
-                  top: 18,
-                  right: 155,
+                  top: 16,
+                  right: 160,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -388,20 +388,31 @@ class _DocumentSlot extends StatelessWidget {
                         'Estudio',
                         maxLines: 1,
                         style: QuizTypography.brand.copyWith(
-                          fontSize: 31,
+                          fontSize: 27,
                           height: 0.95,
-                          letterSpacing: -0.9,
+                          letterSpacing: -0.7,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Tus archivos, tus quizzes',
-                        maxLines: 2,
+                        'Tus archivos',
+                        maxLines: 1,
                         style: QuizTypography.body.copyWith(
                           color: QuizPalette.foregroundMuted,
                           fontSize: 14,
-                          height: 1.05,
+                          height: 1.0,
                           fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'tus quizzes',
+                        maxLines: 1,
+                        style: QuizTypography.body.copyWith(
+                          color: QuizPalette.warning,
+                          fontSize: 18,
+                          height: 1.0,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
