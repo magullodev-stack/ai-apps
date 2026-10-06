@@ -56,12 +56,24 @@ void main() {
         expect(find.byKey(Key('quizai-home-sala-$id')), findsOneWidget);
       }
 
+      final quiz10Width = tester.getSize(
+        find.byKey(const Key('quizai-home-quiz10')),
+      ).width;
+      final salasWidth = tester.getSize(
+        find.byKey(const Key('quizai-home-salas')),
+      ).width;
+      final documentWidth = tester.getSize(
+        find.byKey(const Key('quizai-home-document')),
+      ).width;
+
       expect(
-        tester.getSize(orderedBlocks.first).width,
+        quiz10Width,
         lessThanOrEqualTo(
           QuizLayout.maxWidth - 2 * QuizLayout.horizontalPadding,
         ),
       );
+      expect(salasWidth, closeTo(quiz10Width, 0.01));
+      expect(documentWidth, closeTo(quiz10Width, 0.01));
 
       final navPosition = tester.getTopLeft(
         find.byKey(const Key('quizai-bottom-nav')),
