@@ -379,16 +379,46 @@ class _DocumentSlot extends StatelessWidget {
                 ),
                 Positioned(
                   left: 20,
-                  top: 18,
+                  top: 16,
                   right: 155,
-                  child: Text(
-                    'Sube tu contenido y estudia para tus exámenes',
-                    maxLines: 2,
-                    style: QuizTypography.brand.copyWith(
-                      fontSize: 27,
-                      height: 0.95,
-                      letterSpacing: -0.8,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Sube tu\n',
+                              style: QuizTypography.brand.copyWith(
+                                fontSize: 24,
+                                height: 0.95,
+                                letterSpacing: -0.7,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'contenido',
+                              style: QuizTypography.brand.copyWith(
+                                color: QuizPalette.warning,
+                                fontSize: 29,
+                                height: 0.92,
+                                letterSpacing: -0.9,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        'Estudia para tus exámenes',
+                        maxLines: 2,
+                        style: QuizTypography.body.copyWith(
+                          color: QuizPalette.foregroundMuted,
+                          fontSize: 14,
+                          height: 1.05,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
