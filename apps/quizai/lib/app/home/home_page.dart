@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 import '../../modes/estudio/estudio_page.dart';
@@ -12,17 +10,6 @@ abstract final class _HomeLayout {
   static const logoHeight = 78.0;
   static const headerHeight = 88.0;
   static const heroHeight = 224.0;
-}
-
-class _HomeFullWidth extends StatelessWidget {
-  const _HomeFullWidth({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(width: double.infinity, child: child);
-  }
 }
 
 /// Estructura de la pantalla principal de QuizAI.
@@ -85,21 +72,15 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _HomeFullWidth(
-                child: _HomeHeader(onOpenSettings: onOpenSettings),
-              ),
+              _HomeHeader(onOpenSettings: onOpenSettings),
               const SizedBox(height: QuizSpacing.md),
-              _HomeFullWidth(
-                child: _Quiz10Slot(onTap: () => _openQuiz10(context)),
-              ),
+              _Quiz10Slot(onTap: () => _openQuiz10(context)),
               const SizedBox(height: QuizSpacing.xl),
-              const _HomeFullWidth(child: _SalasHeader()),
+              const _SalasHeader(),
               const SizedBox(height: QuizSpacing.md),
-              const _HomeFullWidth(child: _SalasSlots()),
+              const _SalasSlots(),
               const SizedBox(height: QuizSpacing.xl),
-              _HomeFullWidth(
-                child: _DocumentSlot(onTap: () => _openEstudio(context)),
-              ),
+              _DocumentSlot(onTap: () => _openEstudio(context)),
             ],
           ),
         ),
@@ -126,58 +107,11 @@ class _HomeHeader extends StatelessWidget {
               child: SizedBox(
                 width: _HomeLayout.logoWidth,
                 height: _HomeLayout.logoHeight,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ImageFiltered(
-                      imageFilter: ui.ImageFilter.blur(
-                        sigmaX: 11,
-                        sigmaY: 11,
-                      ),
-                      child: ColorFiltered(
-                        colorFilter: const ColorFilter.mode(
-                          Color(0xFFB94DFF),
-                          BlendMode.srcIn,
-                        ),
-                        child: Opacity(
-                          opacity: 0.82,
-                          child: Image.asset(
-                            'assets/home/QuizAI_Home_LOGO.png',
-                            fit: BoxFit.contain,
-                            alignment: Alignment.centerLeft,
-                            filterQuality: FilterQuality.high,
-                          ),
-                        ),
-                      ),
-                    ),
-                    ImageFiltered(
-                      imageFilter: ui.ImageFilter.blur(
-                        sigmaX: 3.5,
-                        sigmaY: 3.5,
-                      ),
-                      child: ColorFiltered(
-                        colorFilter: const ColorFilter.mode(
-                          Color(0xFFF0C8FF),
-                          BlendMode.srcIn,
-                        ),
-                        child: Opacity(
-                          opacity: 0.72,
-                          child: Image.asset(
-                            'assets/home/QuizAI_Home_LOGO.png',
-                            fit: BoxFit.contain,
-                            alignment: Alignment.centerLeft,
-                            filterQuality: FilterQuality.high,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Image.asset(
-                      'assets/home/QuizAI_Home_LOGO.png',
-                      fit: BoxFit.contain,
-                      alignment: Alignment.centerLeft,
-                      filterQuality: FilterQuality.high,
-                    ),
-                  ],
+                child: Image.asset(
+                  'assets/home/QuizAI_Home_LOGO.png',
+                  fit: BoxFit.contain,
+                  alignment: Alignment.centerLeft,
+                  filterQuality: FilterQuality.high,
                 ),
               ),
             ),
@@ -212,18 +146,20 @@ class _Quiz10Slot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Jugar Quiz10',
-      child: Material(
-        key: const Key('quizai-home-quiz10'),
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(QuizRadii.hero),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Ink(
-            height: _HomeLayout.heroHeight,
+    return SizedBox(
+      width: double.infinity,
+      child: Semantics(
+        button: true,
+        label: 'Jugar Quiz10',
+        child: Material(
+          key: const Key('quizai-home-quiz10'),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(QuizRadii.hero),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Ink(
+              height: _HomeLayout.heroHeight,
             padding: const EdgeInsets.all(QuizSpacing.xl),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -260,6 +196,7 @@ class _Quiz10Slot extends StatelessWidget {
                   icon: Icons.chevron_right_rounded,
                 ),
               ],
+            ),
             ),
           ),
         ),
