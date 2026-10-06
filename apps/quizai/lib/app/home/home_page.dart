@@ -31,14 +31,14 @@ class _HomeCardFrame extends StatelessWidget {
       child: DecoratedBox(
         position: DecorationPosition.foreground,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(QuizRadii.hero),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: const Color(0xFFEAD8FF),
-            width: 1.8,
+            color: const Color(0x99D8B7FF),
+            width: 1.0,
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(QuizRadii.hero),
+          borderRadius: BorderRadius.circular(24),
           child: child,
         ),
       ),
