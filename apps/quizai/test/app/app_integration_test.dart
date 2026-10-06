@@ -31,10 +31,16 @@ void main() {
         same(quizAITheme),
       );
       expect(find.byKey(const Key('quizai-home-logo-slot')), findsOneWidget);
+      expect(find.byKey(const Key('quizai-logo-gesture')), findsOneWidget);
       expect(find.byTooltip('Ajustes'), findsOneWidget);
       expect(find.byKey(const Key('quizai-bottom-nav')), findsOneWidget);
       expect(find.text('Inicio'), findsOneWidget);
       expect(find.text('Perfil'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('quizai-logo-gesture')));
+      await tester.pump(const Duration(milliseconds: 220));
+      expect(tester.takeException(), isNull);
+      await tester.pumpAndSettle();
 
       final orderedBlocks = [
         find.byKey(const Key('quizai-home-quiz10')),
