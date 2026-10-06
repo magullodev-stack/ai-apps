@@ -55,8 +55,8 @@ class _HomeCardFrame extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: const Color(0xDDE7D4FF),
-                  width: 1.0,
+                  color: const Color(0x99D8B7FF),
+                  width: 1.5,
                 ),
               ),
             ),
