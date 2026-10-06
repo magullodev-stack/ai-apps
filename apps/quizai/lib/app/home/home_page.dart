@@ -562,72 +562,67 @@ class _DocumentSlot extends StatelessWidget {
                   filterQuality: FilterQuality.high,
                 ),
                 Positioned(
-                  left: 20,
-                  top: 0,
-                  bottom: 0,
-                  right: 145,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 44,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(
-                                width: 34,
-                                height: 44,
-                                child: Center(
-                                  child: Text(
-                                    '🎓',
-                                    style: TextStyle(
-                                      fontSize: 30,
-                                      height: 1,
-                                    ),
+                  left: 8,
+                  top: 8,
+                  right: 120,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 44,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Center(
+                                child: Text(
+                                  '🎓',
+                                  style: TextStyle(
+                                    fontSize: 30,
+                                    height: 1,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Estudio',
-                                maxLines: 1,
-                                style: QuizTypography.screenTitle.copyWith(
-                                  color: QuizPalette.foreground,
-                                  fontSize: 34,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text.rich(
-                          TextSpan(
-                            style: QuizTypography.body.copyWith(
-                              fontSize: 18,
-                              height: 1.15,
-                              fontWeight: FontWeight.w800,
                             ),
-                            children: const [
-                              TextSpan(
-                                text: 'Tus archivos,\n',
-                                style: TextStyle(
-                                  color: QuizPalette.foreground,
-                                ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Estudio',
+                              maxLines: 1,
+                              style: QuizTypography.screenTitle.copyWith(
+                                color: QuizPalette.foreground,
+                                fontSize: 34,
                               ),
-                              TextSpan(
-                                text: 'tus quizzes',
-                                style: TextStyle(
-                                  color: QuizPalette.warning,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text.rich(
+                        TextSpan(
+                          style: QuizTypography.body.copyWith(
+                            fontSize: 18,
+                            height: 1.15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          children: const [
+                            TextSpan(
+                              text: 'Tus archivos,\n',
+                              style: TextStyle(
+                                color: QuizPalette.foreground,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'tus quizzes',
+                              style: TextStyle(
+                                color: QuizPalette.warning,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
