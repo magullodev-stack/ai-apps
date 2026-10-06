@@ -10,7 +10,7 @@ abstract final class _HomeLayout {
   static const logoHeight = 78.0;
   static const headerHeight = 88.0;
   static const heroHeight = 206.0;
-  static const documentHeight = 189.0; // 378 / 2 = 1774:887
+  static const documentHeight = heroHeight;
 }
 
 class _HomeCardFrame extends StatelessWidget {
@@ -229,7 +229,7 @@ class _SalasModule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const _HomeCardFrame(
-      height: 220,
+      height: _HomeLayout.heroHeight,
       child: Padding(
         padding: EdgeInsets.fromLTRB(8, 10, 8, 8),
         child: Column(
