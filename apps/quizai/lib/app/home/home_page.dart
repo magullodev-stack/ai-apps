@@ -28,8 +28,7 @@ class _HomeCardFrame extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: height,
-      child: DecoratedBox(
-        position: DecorationPosition.foreground,
+      child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
@@ -37,8 +36,9 @@ class _HomeCardFrame extends StatelessWidget {
             width: 1.0,
           ),
         ),
+        padding: const EdgeInsets.all(1),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(23),
           child: child,
         ),
       ),
