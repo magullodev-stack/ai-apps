@@ -381,39 +381,14 @@ class _DocumentSlot extends StatelessWidget {
                   left: 20,
                   top: 18,
                   right: 155,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Prepara tus exámenes',
-                        maxLines: 2,
-                        style: QuizTypography.brand.copyWith(
-                          fontSize: 27,
-                          height: 0.95,
-                          letterSpacing: -0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'PDF · DOCX · PPTX',
-                        maxLines: 1,
-                        style: QuizTypography.body.copyWith(
-                          color: QuizPalette.foreground,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'JPG · PNG',
-                        maxLines: 1,
-                        style: QuizTypography.body.copyWith(
-                          color: QuizPalette.foreground,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Prepara tus exámenes',
+                    maxLines: 2,
+                    style: QuizTypography.brand.copyWith(
+                      fontSize: 27,
+                      height: 0.95,
+                      letterSpacing: -0.8,
+                    ),
                   ),
                 ),
               ],
