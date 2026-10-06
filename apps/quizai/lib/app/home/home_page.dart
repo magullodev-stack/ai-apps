@@ -28,9 +28,19 @@ class _HomeCardFrame extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: height,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(QuizRadii.hero),
-        child: child,
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(QuizRadii.hero),
+          border: Border.all(
+            color: const Color(0xFFEAD8FF),
+            width: 1.8,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(QuizRadii.hero),
+          child: child,
+        ),
       ),
     );
   }
@@ -38,7 +48,7 @@ class _HomeCardFrame extends StatelessWidget {
 
 /// Estructura de la pantalla principal de QuizAI.
 ///
-/// La composición fija la jerarquía de producto. El arte definitivo de cada
+/// La composiciÃ³n fija la jerarquÃ­a de producto. El arte definitivo de cada
 /// bloque y el logotipo se incorporan como recursos independientes.
 class HomePage extends StatelessWidget {
   const HomePage({super.key, required this.onOpenSettings});
@@ -182,7 +192,7 @@ class _Quiz10Slot extends StatelessWidget {
             onTap: onTap,
             child: Ink.image(
               image: const AssetImage(
-                'assets/home/QuizAI_Home_Partida_rápida.png',
+                'assets/home/QuizAI_Home_Partida_rÃ¡pida.png',
               ),
               fit: BoxFit.cover,
               child: const SizedBox.expand(),
@@ -216,7 +226,7 @@ class _SalasHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '3 retos diarios · rankings · comunidad',
+                '3 retos diarios Â· rankings Â· comunidad',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: QuizTypography.body.copyWith(
@@ -269,7 +279,7 @@ class _SalasSlots extends StatelessWidget {
       children: [
         Expanded(child: _SalaSlot(id: 'historia', title: 'Historia')),
         SizedBox(width: QuizSpacing.sm),
-        Expanded(child: _SalaSlot(id: 'biologia', title: 'Biología')),
+        Expanded(child: _SalaSlot(id: 'biologia', title: 'BiologÃ­a')),
         SizedBox(width: QuizSpacing.sm),
         Expanded(
           child: _SalaSlot(id: 'cultura-general', title: 'Cultura\ngeneral'),
