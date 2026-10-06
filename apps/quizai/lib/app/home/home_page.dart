@@ -310,63 +310,86 @@ class _DocumentSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return ClipRRect(
       key: const Key('quizai-home-document'),
-      constraints: const BoxConstraints(minHeight: 224),
-      padding: const EdgeInsets.all(QuizSpacing.xl),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            QuizPalette.primary.withAlpha(230),
-            QuizPalette.backgroundLight.withAlpha(235),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(QuizRadii.hero),
-        border: Border.all(
-          color: QuizPalette.foreground.withAlpha(120),
-          width: 1.4,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      borderRadius: BorderRadius.circular(QuizRadii.hero),
+      child: Stack(
         children: [
-          Text(
-            'Estudia\ntu documento',
-            style: QuizTypography.brand.copyWith(
-              fontSize: 37,
-              height: 0.98,
-            ),
-          ),
-          const SizedBox(height: QuizSpacing.sm),
-          Text(
-            'PDF · DOCX · TXT · MD · …',
-            style: QuizTypography.body.copyWith(
-              color: QuizPalette.foregroundMuted,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: QuizSpacing.xs),
-          Text(
-            'Sube tu propio temario',
-            style: QuizTypography.body.copyWith(
-              color: QuizPalette.foreground,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: QuizSpacing.lg),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              key: const Key('quizai-document-button'),
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(QuizRadii.pill),
-              child: const _HomeActionLabel(
-                text: 'Subir documento',
-                icon: Icons.file_upload_outlined,
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    QuizPalette.primary.withAlpha(230),
+                    QuizPalette.backgroundLight.withAlpha(235),
+                  ],
+                ),
               ),
+            ),
+          ),
+          Positioned.fill(
+            child: Image.asset(
+              'assets/home/QuizAI_Home_Subir_Archivo.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              filterQuality: FilterQuality.high,
+              errorBuilder: (context, error, stackTrace) =>
+                  const SizedBox.shrink(),
+            ),
+          ),
+          Container(
+            constraints: const BoxConstraints(minHeight: 224),
+            padding: const EdgeInsets.all(QuizSpacing.xl),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: QuizPalette.foreground.withAlpha(150),
+                width: 1.4,
+              ),
+              borderRadius: BorderRadius.circular(QuizRadii.hero),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Estudia\ntu documento',
+                  style: QuizTypography.brand.copyWith(
+                    fontSize: 37,
+                    height: 0.98,
+                  ),
+                ),
+                const SizedBox(height: QuizSpacing.sm),
+                Text(
+                  'PDF · DOCX · PPTX · imágenes',
+                  style: QuizTypography.body.copyWith(
+                    color: QuizPalette.foregroundMuted,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: QuizSpacing.xs),
+                Text(
+                  'Sube tu propio temario',
+                  style: QuizTypography.body.copyWith(
+                    color: QuizPalette.foreground,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: QuizSpacing.lg),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    key: const Key('quizai-document-button'),
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(QuizRadii.pill),
+                    child: const _HomeActionLabel(
+                      text: 'Subir documento',
+                      icon: Icons.file_upload_outlined,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
