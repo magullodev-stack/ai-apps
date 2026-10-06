@@ -10,7 +10,7 @@ abstract final class _HomeLayout {
   static const logoHeight = 78.0;
   static const headerHeight = 88.0;
   static const heroHeight = 206.0;
-  static const documentHeight = 160.0;
+  static const documentHeight = 189.0; // 378 / 2 = 1774:887
 }
 
 class _HomeCardFrame extends StatelessWidget {
