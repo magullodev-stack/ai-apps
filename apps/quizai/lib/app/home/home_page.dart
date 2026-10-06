@@ -107,16 +107,22 @@ class _HomeHeader extends StatelessWidget {
                   children: [
                     ImageFiltered(
                       imageFilter: ui.ImageFilter.blur(
-                        sigmaX: 7,
-                        sigmaY: 7,
+                        sigmaX: 5,
+                        sigmaY: 5,
                       ),
-                      child: Opacity(
-                        opacity: 0.72,
-                        child: Image.asset(
-                          'assets/home/QuizAI_Home_LOGO.png',
-                          fit: BoxFit.contain,
-                          alignment: Alignment.centerLeft,
-                          filterQuality: FilterQuality.high,
+                      child: ColorFiltered(
+                        colorFilter: const ColorFilter.mode(
+                          Color(0xFFCE72FF),
+                          BlendMode.srcIn,
+                        ),
+                        child: Opacity(
+                          opacity: 0.78,
+                          child: Image.asset(
+                            'assets/home/QuizAI_Home_LOGO.png',
+                            fit: BoxFit.contain,
+                            alignment: Alignment.centerLeft,
+                            filterQuality: FilterQuality.high,
+                          ),
                         ),
                       ),
                     ),
@@ -343,20 +349,17 @@ class _DocumentSlot extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Abrir documento de estudio',
-      child: ClipRRect(
-        key: const Key('quizai-home-document'),
-        borderRadius: BorderRadius.circular(QuizRadii.hero),
-        child: GestureDetector(
-          key: const Key('quizai-document-button'),
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: Image.asset(
-            'assets/home/QuizAI_Home_Subir_Archivo.png',
-            width: double.infinity,
-            fit: BoxFit.fitWidth,
-            alignment: Alignment.center,
-            filterQuality: FilterQuality.high,
-          ),
+      child: GestureDetector(
+        key: const Key('quizai-document-button'),
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Image.asset(
+          key: const Key('quizai-home-document'),
+          'assets/home/QuizAI_Home_Subir_Archivo.png',
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+          alignment: Alignment.center,
+          filterQuality: FilterQuality.high,
         ),
       ),
     );
