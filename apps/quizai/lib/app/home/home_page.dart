@@ -379,37 +379,23 @@ class _DocumentSlot extends StatelessWidget {
                 ),
                 Positioned(
                   left: 20,
-                  top: 16,
+                  top: 18,
                   right: 155,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Sube tu\n',
-                              style: QuizTypography.brand.copyWith(
-                                fontSize: 24,
-                                height: 0.95,
-                                letterSpacing: -0.7,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'contenido',
-                              style: QuizTypography.brand.copyWith(
-                                color: QuizPalette.warning,
-                                fontSize: 29,
-                                height: 0.92,
-                                letterSpacing: -0.9,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        'Estudio',
+                        maxLines: 1,
+                        style: QuizTypography.brand.copyWith(
+                          fontSize: 31,
+                          height: 0.95,
+                          letterSpacing: -0.9,
                         ),
                       ),
-                      const SizedBox(height: 7),
+                      const SizedBox(height: 6),
                       Text(
-                        'Estudia para tus exámenes',
+                        'Tus archivos, tus quizzes',
                         maxLines: 2,
                         style: QuizTypography.body.copyWith(
                           color: QuizPalette.foregroundMuted,
