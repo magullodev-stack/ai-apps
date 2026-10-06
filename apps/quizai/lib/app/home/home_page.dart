@@ -379,43 +379,48 @@ class _DocumentSlot extends StatelessWidget {
                 ),
                 Positioned(
                   left: 20,
-                  top: 16,
+                  top: 0,
+                  bottom: 0,
                   right: 160,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Estudio',
-                        maxLines: 1,
-                        style: QuizTypography.brand.copyWith(
-                          fontSize: 28,
-                          height: 0.95,
-                          letterSpacing: -0.7,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Estudio',
+                          maxLines: 1,
+                          style: QuizTypography.brand.copyWith(
+                            fontSize: 28,
+                            height: 0.95,
+                            letterSpacing: -0.7,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        'Tus archivos,',
-                        maxLines: 1,
-                        style: QuizTypography.body.copyWith(
-                          color: QuizPalette.foregroundMuted,
-                          fontSize: 18,
-                          height: 1.0,
-                          fontWeight: FontWeight.w800,
+                        const SizedBox(height: 10),
+                        Text(
+                          'Tus archivos,',
+                          maxLines: 1,
+                          style: QuizTypography.body.copyWith(
+                            color: QuizPalette.foreground,
+                            fontSize: 18,
+                            height: 1.0,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'tus quizzes',
-                        maxLines: 1,
-                        style: QuizTypography.body.copyWith(
-                          color: QuizPalette.warning,
-                          fontSize: 20,
-                          height: 1.0,
-                          fontWeight: FontWeight.w900,
+                        const SizedBox(height: 3),
+                        Text(
+                          'tus quizzes',
+                          maxLines: 1,
+                          style: QuizTypography.body.copyWith(
+                            color: QuizPalette.warning,
+                            fontSize: 20,
+                            height: 1.0,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
