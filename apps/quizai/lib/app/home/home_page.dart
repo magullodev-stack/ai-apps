@@ -440,7 +440,7 @@ class _SalasSlotsState extends State<_SalasSlots>
         ? 1 - (distance * 0.16)
         : 0.84 - ((distance - 1) * 0.18);
 
-    final top = 2 + (distance * 6);
+    final top = 8 + (distance * 6);
     final opacity = distance <= 1 ? 1.0 : 0.82;
     final isCentered = distance < 0.35;
 
@@ -565,22 +565,44 @@ class _DocumentSlot extends StatelessWidget {
                   left: 20,
                   top: 0,
                   bottom: 0,
-                  right: 160,
+                  right: 145,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Estudio',
-                          maxLines: 1,
-                          style: QuizTypography.screenTitle.copyWith(
-                            color: QuizPalette.foreground,
-                            fontSize: 34,
+                        SizedBox(
+                          height: 44,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 34,
+                                height: 44,
+                                child: Center(
+                                  child: Text(
+                                    '🎓',
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Estudio',
+                                maxLines: 1,
+                                style: QuizTypography.screenTitle.copyWith(
+                                  color: QuizPalette.foreground,
+                                  fontSize: 34,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
                         Text.rich(
                           TextSpan(
                             style: QuizTypography.body.copyWith(
