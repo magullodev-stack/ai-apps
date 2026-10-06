@@ -364,12 +364,22 @@ class _DocumentSlot extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'PDF · DOCX · PPTX · JPG · PNG',
+                        'PDF · DOCX · PPTX',
                         maxLines: 1,
                         style: QuizTypography.body.copyWith(
                           color: QuizPalette.foreground,
                           fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'JPG · PNG',
+                        maxLines: 1,
+                        style: QuizTypography.body.copyWith(
+                          color: QuizPalette.foreground,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
