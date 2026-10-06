@@ -28,19 +28,25 @@ class _HomeCardFrame extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: height,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0x99D8B7FF),
-            width: 1.0,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: child,
           ),
-        ),
-        padding: const EdgeInsets.all(1),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(23),
-          child: child,
-        ),
+          IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: const Color(0x99D8B7FF),
+                  width: 1.0,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
