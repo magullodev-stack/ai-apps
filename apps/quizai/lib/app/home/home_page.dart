@@ -382,7 +382,7 @@ class _DocumentSlot extends StatelessWidget {
                   top: 18,
                   right: 155,
                   child: Text(
-                    'Prepara tus exámenes',
+                    'Sube tu contenido y estudia para tus exámenes',
                     maxLines: 2,
                     style: QuizTypography.brand.copyWith(
                       fontSize: 27,
