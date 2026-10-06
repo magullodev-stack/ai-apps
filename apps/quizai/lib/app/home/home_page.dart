@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../../modes/estudio/estudio_page.dart';
@@ -97,12 +99,35 @@ class _HomeHeader extends StatelessWidget {
             child: Container(
               key: const Key('quizai-home-logo-slot'),
               alignment: Alignment.centerLeft,
-              child: Image.asset(
-                'assets/home/QuizAI_Home_LOGO.png',
-                height: 60,
-                fit: BoxFit.contain,
-                alignment: Alignment.centerLeft,
-                filterQuality: FilterQuality.high,
+              child: SizedBox(
+                width: 210,
+                height: 68,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ImageFiltered(
+                      imageFilter: ui.ImageFilter.blur(
+                        sigmaX: 7,
+                        sigmaY: 7,
+                      ),
+                      child: Opacity(
+                        opacity: 0.72,
+                        child: Image.asset(
+                          'assets/home/QuizAI_Home_LOGO.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.centerLeft,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
+                    ),
+                    Image.asset(
+                      'assets/home/QuizAI_Home_LOGO.png',
+                      fit: BoxFit.contain,
+                      alignment: Alignment.centerLeft,
+                      filterQuality: FilterQuality.high,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -318,22 +343,19 @@ class _DocumentSlot extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Abrir documento de estudio',
-      child: AspectRatio(
-        aspectRatio: 883 / 380,
-        child: Material(
-          key: const Key('quizai-home-document'),
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(QuizRadii.hero),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            key: const Key('quizai-document-button'),
-            onTap: onTap,
-            child: Image.asset(
-              'assets/home/QuizAI_Home_Subir_Archivo.png',
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-              filterQuality: FilterQuality.high,
-            ),
+      child: ClipRRect(
+        key: const Key('quizai-home-document'),
+        borderRadius: BorderRadius.circular(QuizRadii.hero),
+        child: GestureDetector(
+          key: const Key('quizai-document-button'),
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Image.asset(
+            'assets/home/QuizAI_Home_Subir_Archivo.png',
+            width: double.infinity,
+            fit: BoxFit.fitWidth,
+            alignment: Alignment.center,
+            filterQuality: FilterQuality.high,
           ),
         ),
       ),
