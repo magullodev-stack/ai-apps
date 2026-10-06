@@ -332,17 +332,69 @@ class _DocumentSlot extends StatelessWidget {
       height: _HomeLayout.documentHeight,
       child: Semantics(
         button: true,
-        label: 'Abrir documento de estudio',
-        child: GestureDetector(
-          key: const Key('quizai-document-button'),
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: Image.asset(
-            'assets/home/QuizAI_Home_Subir_Archivo.png',
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.fill,
-            filterQuality: FilterQuality.high,
+        label: 'Subir archivo',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const Key('quizai-document-button'),
+            onTap: onTap,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/home/QuizAI_Home_Subir_Archivo.png',
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.high,
+                ),
+                Positioned(
+                  left: 20,
+                  top: 18,
+                  right: 155,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Prepárate para tus exámenes',
+                        maxLines: 2,
+                        style: QuizTypography.brand.copyWith(
+                          fontSize: 27,
+                          height: 0.95,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'PDF · DOCX · PPTX · JPG · PNG',
+                        maxLines: 1,
+                        style: QuizTypography.body.copyWith(
+                          color: QuizPalette.foreground,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tu material, tu preparación.',
+                        maxLines: 1,
+                        style: QuizTypography.body.copyWith(
+                          color: QuizPalette.foreground,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Positioned(
+                  left: 20,
+                  bottom: 16,
+                  child: _HomeActionLabel(
+                    text: 'Subir archivo',
+                    icon: Icons.file_upload_outlined,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
