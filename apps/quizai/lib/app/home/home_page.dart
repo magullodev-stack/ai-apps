@@ -213,16 +213,14 @@ class _SalasHeader extends StatelessWidget {
       key: const Key('quizai-home-salas-header'),
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Icon(
-          Icons.groups_rounded,
-          size: 48,
-          color: Color(0xFFD4B0FF),
-          shadows: [
-            Shadow(
-              color: Color(0xAA9E5CFF),
-              blurRadius: 10,
-            ),
-          ],
+        SizedBox(
+          width: 52,
+          height: 52,
+          child: Image.asset(
+            'assets/home/QuizAI_Home_Icono_Salas.png',
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
