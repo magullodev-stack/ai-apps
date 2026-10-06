@@ -158,8 +158,8 @@ class _ProfileTab extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: QuizSpacing.sm,
-          right: QuizSpacing.lg,
+          top: 28,
+          right: QuizLayout.horizontalPadding,
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
