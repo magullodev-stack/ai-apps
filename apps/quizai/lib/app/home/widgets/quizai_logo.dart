@@ -18,7 +18,7 @@ class QuizAiLogo extends StatefulWidget {
   const QuizAiLogo({
     super.key,
     this.height = 60,
-    this.assetPath = 'assets/branding/quizai_logo.png',
+    this.assetPath = 'assets/home/quizai_home_logo.png',
   });
 
   final double height;
@@ -89,7 +89,21 @@ class _QuizAiLogoState extends State<QuizAiLogo>
                     Image.asset(
                       widget.assetPath,
                       fit: BoxFit.contain,
+                      alignment: Alignment.centerLeft,
                       filterQuality: FilterQuality.high,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'QuizAI',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 38,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     IgnorePointer(
                       child: CustomPaint(
