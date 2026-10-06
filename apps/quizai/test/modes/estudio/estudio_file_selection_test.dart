@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizai/coverage/coverage_route.dart';
+import 'package:quizai/modes/estudio/estudio_document_extractor.dart';
+import 'package:quizai/modes/estudio/estudio_document_store.dart';
 import 'package:quizai/modes/estudio/estudio_file_picker.dart';
 import 'package:quizai/modes/estudio/estudio_generation.dart';
 import 'package:quizai/modes/estudio/estudio_page.dart';
+import 'package:quizai/modes/estudio/study_document.dart';
 import 'package:quizai/semantic_catalog/pivot_catalog.dart';
 
 final class _UnusedPivotGenerator implements PivotCatalogGenerator {
@@ -16,6 +19,53 @@ final class _UnusedQuestionGenerator implements EstudioQuestionGenerator {
   @override
   Future<List<EstudioQuestion>> generateQuestions(CoverageRoute route) async =>
       const <EstudioQuestion>[];
+}
+
+
+final class _FakeExtractor implements EstudioDocumentExtractor {
+  @override
+  Future<StudyDocument> extract(EstudioPickedFile file) async => StudyDocument(
+    id: 'doc-1',
+    sourceName: file.name,
+    sourceExtension: file.extension,
+    createdAt: DateTime.utc(2026, 10, 7),
+    sections: [
+      StudySection(
+        id: 's1',
+        title: 'Tema 1',
+        blocks: const [
+          StudyContentBlock(
+            id: 'b1',
+            text: 'Contenido real del tema uno.',
+            sourceLocator: 'página 1',
+          ),
+        ],
+        subsections: const [],
+      ),
+    ],
+    chunks: const [
+      StudyChunk(
+        id: 'c1',
+        sectionId: 's1',
+        subsectionId: null,
+        blockIds: ['b1'],
+        text: 'Contenido real del tema uno.',
+      ),
+    ],
+  );
+}
+
+final class _MemoryStore implements EstudioDocumentStore {
+  StudyDocument? document;
+
+  @override
+  Future<void> clear() async => document = null;
+
+  @override
+  Future<StudyDocument?> load() async => document;
+
+  @override
+  Future<void> save(StudyDocument value) async => document = value;
 }
 
 void main() {
@@ -87,6 +137,8 @@ void main() {
               extension: 'pdf',
             );
           },
+          documentExtractor: _FakeExtractor(),
+          documentStore: _MemoryStore(),
         ),
       ),
     );
@@ -98,6 +150,9 @@ void main() {
     expect(find.byKey(const Key('estudio-selected-file')), findsOneWidget);
     expect(find.text('Tema 1.pdf'), findsOneWidget);
     expect(find.text('1.5 KB'), findsOneWidget);
+    expect(find.byKey(const Key('estudio-study-document')), findsOneWidget);
+    expect(find.text('Tema 1'), findsOneWidget);
+    expect(find.text('1 sección detectada'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets('Estudio informa del límite específico del formato', (
@@ -114,6 +169,8 @@ void main() {
             sizeBytes: (10 * 1024 * 1024) + 1,
             extension: 'docx',
           ),
+          documentExtractor: _FakeExtractor(),
+          documentStore: _MemoryStore(),
         ),
       ),
     );

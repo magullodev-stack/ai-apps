@@ -100,6 +100,7 @@ class HomePage extends StatelessWidget {
           pageBuilder: (_, _, _) => EstudioPage(
             generator: dependencies.catalogGenerator,
             questionGenerator: dependencies.questionGenerator,
+            documentQuizGenerator: dependencies.documentQuizGenerator,
           ),
           transitionDuration: Duration.zero,
           reverseTransitionDuration: Duration.zero,

@@ -104,26 +104,41 @@ Home. Salir de una modalidad descarta su
 partida en memoria.
 
 
-## Estudio — selección de archivo v1
+## Estudio — archivo → StudyDocument → quiz
 
-Al abrir Estudio se muestra una caja **Subir archivo**. Al pulsarla, QuizAI abre
-el selector nativo del sistema y permite elegir un único archivo con extensión
-PDF, DOCX, PPTX, JPEG o PNG. La selección se valida también al regresar a la
-aplicación y la pantalla muestra el nombre y el tamaño del archivo elegido.
-Los límites activos de tamaño dependen del formato: **PDF 25 MB**, **DOCX
-10 MB**, **PPTX 20 MB** y **JPEG/PNG 10 MB**. Un archivo que supera el límite
-de su formato se rechaza antes de cualquier procesamiento.
+Al abrir Estudio se muestra **Subir archivo**. QuizAI permite seleccionar un
+único PDF, DOCX, PPTX, JPEG o PNG desde el selector nativo. Los límites activos
+de tamaño son **PDF 25 MB**, **DOCX 10 MB**, **PPTX 20 MB** y **JPEG/PNG
+10 MB**.
 
-La política documental de Estudio fija además **300 páginas por PDF**,
-**75.000 palabras por DOCX** y **100 diapositivas por PPTX**. Estos límites
-quedan centralizados en `EstudioMaterialPolicy` y se aplicarán cuando exista
-la inspección de contenido correspondiente. No hay límites de cantidad de
-materiales ni de almacenamiento total por usuario en esta capa: QuizAI no
-trata la selección como una biblioteca o un almacén de archivos.
+Después de seleccionar el archivo, Estudio lo lee localmente y construye un
+`StudyDocument`: una representación fiel del texto extraído, organizada en
+secciones, subsecciones y bloques con referencia a su procedencia. El
+`StudyDocument` no es un resumen y no sustituye contenido por conocimiento
+general.
 
-Esta primera capa termina en la selección: todavía no copia el archivo a
-almacenamiento propio, no persiste la selección, no extrae contenido, no
-fragmenta el documento y no realiza ninguna operación de IA.
+La extracción es específica por formato:
+
+- PDF: extrae la capa de texto por página y admite hasta **300 páginas**.
+- DOCX: lee su estructura OOXML, conserva encabezados y admite hasta
+  **75.000 palabras**.
+- PPTX: lee el OOXML de las diapositivas y admite hasta **100 diapositivas**.
+- JPEG/PNG: aplica OCR local al archivo seleccionado.
+
+Los bloques se dividen además en fragmentos técnicos internos para ejecución.
+Esa fragmentación no forma parte de la jerarquía visible: el usuario selecciona
+secciones o subsecciones reales del documento.
+
+QuizAI persiste localmente el `StudyDocument` procesado en el almacenamiento
+privado de la aplicación. No copia el archivo original a una biblioteca propia
+ni lo sube como archivo a un servidor. El original sigue donde lo tenía el
+usuario; la representación procesada permite volver a crear quizzes sin
+depender de releer ese archivo cada vez.
+
+Al pulsar **Crear quiz**, Estudio entrega a su generador únicamente el texto de
+la sección o subsección seleccionada. La generación funciona como fuente
+cerrada: pivotes, hechos, preguntas y respuestas correctas deben estar
+sustentados por ese texto y no pueden completarse con conocimiento externo.
 
 Perfil mantiene su estado provisional, sin funciones ni datos de usuario.
 Desde Ajustes se vuelve a la pestaña de origen; la navegación inferior no

@@ -1,5 +1,6 @@
 import 'package:ai_apps_ai/ai_apps_ai.dart';
 
+import '../modes/estudio/estudio_document_generation.dart';
 import '../modes/estudio/estudio_generation.dart';
 import '../modes/quiz10/production/quiz10_pipeline.dart';
 import '../semantic_catalog/pivot_catalog.dart';
@@ -49,6 +50,19 @@ final class QuizAiGenerationDependencies {
       defaultValue: 'gpt-5.6-terra',
     ),
   );
+
+  EstudioDocumentQuizGenerator get documentQuizGenerator =>
+      AiEstudioDocumentQuizGenerator(
+        client: _client,
+        catalogModel: const String.fromEnvironment(
+          'AI_APPS_CATALOG_MODEL',
+          defaultValue: 'gpt-5.6-luna',
+        ),
+        factualModel: const String.fromEnvironment(
+          'AI_APPS_FACTUAL_MODEL',
+          defaultValue: 'gpt-5.6-terra',
+        ),
+      );
 
   void close() => _client.close();
 }
