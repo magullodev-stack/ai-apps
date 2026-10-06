@@ -110,6 +110,15 @@ Al abrir Estudio se muestra una caja **Subir archivo**. Al pulsarla, QuizAI abre
 el selector nativo del sistema y permite elegir un único archivo con extensión
 PDF, DOCX, PPTX, JPEG o PNG. La selección se valida también al regresar a la
 aplicación y la pantalla muestra el nombre y el tamaño del archivo elegido.
+El límite activo de esta capa es **50 MB por archivo**; un archivo mayor se
+rechaza antes de cualquier procesamiento.
+
+La política inicial de materiales de Estudio fija además **300 páginas por
+PDF**, **300 diapositivas por PPTX**, **20 materiales por usuario** y
+**500 MB totales por usuario**. Estos límites quedan centralizados en
+`EstudioMaterialPolicy`; los límites documental y por usuario se aplicarán
+cuando existan respectivamente la inspección de contenido y la colección
+persistente de materiales. DOCX no recibe un límite artificial de páginas.
 
 Esta primera capa termina en la selección: todavía no copia el archivo a
 almacenamiento propio, no persiste la selección, no extrae contenido, no

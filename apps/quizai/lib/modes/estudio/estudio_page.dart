@@ -71,7 +71,10 @@ class _EstudioPageState extends State<EstudioPage> {
     try {
       final file = await _filePicker();
       if (!mounted || file == null) return;
+      validateEstudioPickedFile(file);
       setState(() => _selectedFile = file);
+    } on EstudioFileTooLargeException {
+      _showError('El archivo supera el límite de 50 MB.');
     } on FormatException {
       _showError('El archivo no tiene un formato compatible.');
     } catch (_) {
@@ -351,7 +354,7 @@ class _FileUploadCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text('PDF, DOCX, PPTX, JPEG o PNG'),
+                          const Text('PDF, DOCX, PPTX, JPEG o PNG · Máx. 50 MB'),
                         ],
                       ),
                     ),

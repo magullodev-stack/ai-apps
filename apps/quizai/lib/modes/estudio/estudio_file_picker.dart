@@ -1,5 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 
+abstract final class EstudioMaterialPolicy {
+  static const maxFileSizeBytes = 50 * 1024 * 1024;
+  static const maxPdfPages = 300;
+  static const maxPptxSlides = 300;
+  static const maxMaterialsPerUser = 20;
+  static const maxTotalStorageBytes = 500 * 1024 * 1024;
+}
+
 const estudioAllowedExtensions = <String>[
   'pdf',
   'docx',
@@ -8,6 +16,10 @@ const estudioAllowedExtensions = <String>[
   'jpeg',
   'png',
 ];
+
+final class EstudioFileTooLargeException implements Exception {
+  const EstudioFileTooLargeException();
+}
 
 final class EstudioPickedFile {
   const EstudioPickedFile({
@@ -35,17 +47,23 @@ Future<EstudioPickedFile?> pickEstudioFile() async {
   if (result == null || result.files.isEmpty) return null;
 
   final file = result.files.single;
-  final extension = _extensionOf(file);
-  if (!estudioAllowedExtensions.contains(extension)) {
-    throw const FormatException('Formato de archivo no compatible.');
-  }
-
-  return EstudioPickedFile(
+  final pickedFile = EstudioPickedFile(
     name: file.name,
     path: file.path,
     sizeBytes: file.size,
-    extension: extension,
+    extension: _extensionOf(file),
   );
+  validateEstudioPickedFile(pickedFile);
+  return pickedFile;
+}
+
+void validateEstudioPickedFile(EstudioPickedFile file) {
+  if (!estudioAllowedExtensions.contains(file.extension.toLowerCase())) {
+    throw const FormatException('Formato de archivo no compatible.');
+  }
+  if (file.sizeBytes > EstudioMaterialPolicy.maxFileSizeBytes) {
+    throw const EstudioFileTooLargeException();
+  }
 }
 
 String _extensionOf(PlatformFile file) {

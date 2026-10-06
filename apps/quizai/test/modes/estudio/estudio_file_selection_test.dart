@@ -19,6 +19,28 @@ final class _UnusedQuestionGenerator implements EstudioQuestionGenerator {
 }
 
 void main() {
+  test('la política de Estudio fija los límites iniciales', () {
+    expect(EstudioMaterialPolicy.maxFileSizeBytes, 50 * 1024 * 1024);
+    expect(EstudioMaterialPolicy.maxPdfPages, 300);
+    expect(EstudioMaterialPolicy.maxPptxSlides, 300);
+    expect(EstudioMaterialPolicy.maxMaterialsPerUser, 20);
+    expect(EstudioMaterialPolicy.maxTotalStorageBytes, 500 * 1024 * 1024);
+  });
+
+  test('rechaza un archivo que supera 50 MB', () {
+    expect(
+      () => validateEstudioPickedFile(
+        const EstudioPickedFile(
+          name: 'manual.pdf',
+          path: '/tmp/manual.pdf',
+          sizeBytes: (50 * 1024 * 1024) + 1,
+          extension: 'pdf',
+        ),
+      ),
+      throwsA(isA<EstudioFileTooLargeException>()),
+    );
+  });
+
   testWidgets('Estudio muestra el archivo elegido por el selector', (
     tester,
   ) async {
@@ -49,6 +71,31 @@ void main() {
     expect(find.byKey(const Key('estudio-selected-file')), findsOneWidget);
     expect(find.text('Tema 1.pdf'), findsOneWidget);
     expect(find.text('1.5 KB'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('Estudio informa cuando el archivo supera 50 MB', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EstudioPage(
+          generator: _UnusedPivotGenerator(),
+          questionGenerator: _UnusedQuestionGenerator(),
+          filePicker: () async => const EstudioPickedFile(
+            name: 'manual.pdf',
+            path: '/tmp/manual.pdf',
+            sizeBytes: (50 * 1024 * 1024) + 1,
+            extension: 'pdf',
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('estudio-upload-file')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('El archivo supera el límite de 50 MB.'), findsOneWidget);
+    expect(find.byKey(const Key('estudio-selected-file')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
