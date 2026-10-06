@@ -391,32 +391,33 @@ class _DocumentSlot extends StatelessWidget {
                         Text(
                           'Estudio',
                           maxLines: 1,
-                          style: QuizTypography.brand.copyWith(
-                            fontSize: 28,
-                            height: 0.95,
-                            letterSpacing: -0.7,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Tus archivos,',
-                          maxLines: 1,
-                          style: QuizTypography.body.copyWith(
+                          style: QuizTypography.screenTitle.copyWith(
                             color: QuizPalette.foreground,
-                            fontSize: 18,
-                            height: 1.0,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 34,
                           ),
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'tus quizzes',
-                          maxLines: 1,
-                          style: QuizTypography.body.copyWith(
-                            color: QuizPalette.warning,
-                            fontSize: 20,
-                            height: 1.0,
-                            fontWeight: FontWeight.w900,
+                        const SizedBox(height: 14),
+                        Text.rich(
+                          TextSpan(
+                            style: QuizTypography.body.copyWith(
+                              fontSize: 18,
+                              height: 1.15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            children: const [
+                              TextSpan(
+                                text: 'Tus archivos,\n',
+                                style: TextStyle(
+                                  color: QuizPalette.foreground,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'tus quizzes',
+                                style: TextStyle(
+                                  color: QuizPalette.warning,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
