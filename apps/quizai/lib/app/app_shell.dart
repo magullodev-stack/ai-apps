@@ -41,26 +41,37 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: QuizPalette.backgroundDark,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: QuizPalette.backgroundGradient,
-        ),
-        child: SafeArea(
+    final background = _selectedTab == 0
+        ? const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(
+                'assets/home/quiz10_Home_background_1080x1920.png',
+              ),
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+          )
+        : const BoxDecoration(
+            gradient: QuizPalette.backgroundGradient,
+          );
+
+    return DecoratedBox(
+      decoration: background,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
           bottom: false,
           child: _selectedTab == 0
               ? HomePage(onOpenSettings: _openSettings)
               : _ProfileTab(onOpenSettings: _openSettings),
         ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: QuizLayout.horizontalPadding,
-          vertical: QuizSpacing.sm,
-        ),
-        decoration: const BoxDecoration(color: QuizPalette.backgroundDark),
-        child: SafeArea(
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: QuizLayout.horizontalPadding,
+            vertical: QuizSpacing.sm,
+          ),
+          color: Colors.transparent,
+          child: SafeArea(
           top: false,
           child: Container(
             key: const Key('quizai-bottom-nav'),
