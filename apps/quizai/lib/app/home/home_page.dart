@@ -318,19 +318,19 @@ class _DocumentSlot extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Abrir documento de estudio',
-      child: Material(
-        key: const Key('quizai-home-document'),
-        color: Colors.transparent,
-        child: InkWell(
-          key: const Key('quizai-document-button'),
-          onTap: onTap,
+      child: AspectRatio(
+        aspectRatio: 883 / 380,
+        child: Material(
+          key: const Key('quizai-home-document'),
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(QuizRadii.hero),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(QuizRadii.hero),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: const Key('quizai-document-button'),
+            onTap: onTap,
             child: Image.asset(
               'assets/home/QuizAI_Home_Subir_Archivo.png',
-              width: double.infinity,
-              fit: BoxFit.fitWidth,
+              fit: BoxFit.contain,
               alignment: Alignment.center,
               filterQuality: FilterQuality.high,
             ),
