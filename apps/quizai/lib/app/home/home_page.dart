@@ -440,7 +440,7 @@ class _SalasSlotsState extends State<_SalasSlots>
         ? 1 - (distance * 0.16)
         : 0.84 - ((distance - 1) * 0.18);
 
-    final top = 8 + (distance * 6);
+    const top = 10.0;
     final opacity = distance <= 1 ? 1.0 : 0.82;
     final isCentered = distance < 0.35;
 
@@ -449,7 +449,7 @@ class _SalasSlotsState extends State<_SalasSlots>
       left: centerX - 64 + offset,
       top: top,
       width: 128,
-      height: 118,
+      height: 126,
       child: Transform.scale(
         scale: scale,
         child: Opacity(
