@@ -225,6 +225,7 @@ function activate(context) {
       : String(error);
 
     output.appendLine('ERROR: ' + message);
+    output.show(true);
 
     vscode.window.showErrorMessage(
       'AI-APPS Android: ' + message
