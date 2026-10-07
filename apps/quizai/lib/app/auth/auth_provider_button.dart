@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../app_theme.dart';
@@ -23,9 +21,12 @@ class AuthProviderButton extends StatelessWidget {
   };
 
   Widget _icon(double size) => switch (provider) {
-    AuthProvider.google => CustomPaint(
-      size: Size.square(size),
-      painter: const _GoogleGIconPainter(),
+    AuthProvider.google => Image.asset(
+      'assets/auth/QuizAI_Auth_Google_ICON.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
     ),
     AuthProvider.apple => Icon(
       Icons.apple,
@@ -164,65 +165,4 @@ class _NeonButtonPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _NeonButtonPainter oldDelegate) => false;
-}
-
-class _GoogleGIconPainter extends CustomPainter {
-  const _GoogleGIconPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = size.shortestSide * 0.175;
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.shortestSide - stroke) / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    Paint arc(Color color) => Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.butt;
-
-    canvas.drawArc(
-      rect,
-      math.pi * 1.05,
-      math.pi * 0.57,
-      false,
-      arc(const Color(0xFFEA4335)),
-    );
-    canvas.drawArc(
-      rect,
-      math.pi * 0.62,
-      math.pi * 0.43,
-      false,
-      arc(const Color(0xFFFBBC05)),
-    );
-    canvas.drawArc(
-      rect,
-      math.pi * 0.18,
-      math.pi * 0.52,
-      false,
-      arc(const Color(0xFF34A853)),
-    );
-    canvas.drawArc(
-      rect,
-      -math.pi * 0.28,
-      math.pi * 0.55,
-      false,
-      arc(const Color(0xFF4285F4)),
-    );
-
-    final blue = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.square;
-    canvas.drawLine(
-      Offset(center.dx, center.dy),
-      Offset(size.width - stroke * 0.22, center.dy),
-      blue,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _GoogleGIconPainter oldDelegate) => false;
 }
