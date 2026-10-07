@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../modes/estudio/estudio_page.dart';
@@ -8,13 +6,13 @@ import '../app_theme.dart';
 import '../generation_dependencies.dart';
 
 abstract final class _HomeLayout {
-  static const logoWidth = 176.0;
-  static const logoHeight = 54.0;
-  static const headerHeight = 70.0;
-  static const headerFadeHeight = 34.0;
+  static const logoWidth = 140.0;
+  static const logoHeight = 36.0;
+  static const headerHeight = 44.0;
+  static const headerFadeHeight = 24.0;
   static const heroHeight = 206.0;
   static const documentHeight = heroHeight;
-  static const bottomScrollClearance = 122.0;
+  static const bottomScrollClearance = 92.0;
 }
 
 class _HomeCardFrame extends StatelessWidget {
@@ -128,7 +126,7 @@ class HomePage extends StatelessWidget {
               key: const Key('quizai-home-scroll'),
               padding: const EdgeInsets.fromLTRB(
                 QuizLayout.horizontalPadding,
-                _HomeLayout.headerHeight + QuizSpacing.md,
+                _HomeLayout.headerHeight + _HomeLayout.headerFadeHeight,
                 QuizLayout.horizontalPadding,
                 _HomeLayout.bottomScrollClearance,
               ),
@@ -167,24 +165,20 @@ class _HomeHeader extends StatelessWidget {
       height: _HomeLayout.headerHeight + _HomeLayout.headerFadeHeight,
       child: Stack(
         children: [
-          Positioned.fill(
+          const Positioned.fill(
             child: IgnorePointer(
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                  child: const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: [0, 0.58, 1],
-                        colors: [
-                          Color(0xE838149B),
-                          Color(0xB838149B),
-                          Color(0x0038149B),
-                        ],
-                      ),
-                    ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0, 0.48, 0.78, 1],
+                    colors: [
+                      Color(0xF238149B),
+                      Color(0xD638149B),
+                      Color(0x7038149B),
+                      Color(0x0038149B),
+                    ],
                   ),
                 ),
               ),
@@ -214,26 +208,26 @@ class _HomeHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: QuizSpacing.md),
-                  ClipOval(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0x664B2C9C),
-                          border: Border.all(
-                            color: QuizPalette.foreground.withAlpha(92),
-                          ),
+                  const SizedBox(width: QuizSpacing.sm),
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0x994B2C9C),
+                        border: Border.all(
+                          color: QuizPalette.foreground.withAlpha(82),
                         ),
-                        child: IconButton(
-                          tooltip: 'Ajustes',
-                          onPressed: onOpenSettings,
-                          icon: const Icon(
-                            Icons.settings_rounded,
-                            color: QuizPalette.foreground,
-                            size: 27,
-                          ),
+                      ),
+                      child: IconButton(
+                        tooltip: 'Ajustes',
+                        padding: EdgeInsets.zero,
+                        onPressed: onOpenSettings,
+                        icon: const Icon(
+                          Icons.settings_rounded,
+                          color: QuizPalette.foreground,
+                          size: 23,
                         ),
                       ),
                     ),
