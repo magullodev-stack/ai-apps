@@ -44,7 +44,7 @@ abstract final class QuizPalette {
   static const navActiveGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFBEFFF), Color(0xFFE9CEFF)],
+    colors: [Color(0xDDFBEFFF), Color(0xC4E9CEFF)],
   );
 
   static const salaStart = Color(0xFFFFEBA0);
