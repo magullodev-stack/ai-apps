@@ -454,7 +454,7 @@ class _SalasSlotsState extends State<_SalasSlots>
     _motionController.duration =
         duration ??
         Duration(
-          milliseconds: (160 + (distance * 85)).round().clamp(160, 520),
+          milliseconds: (160 + (distance * 85)).round().clamp(160, 520).toInt(),
         );
 
     _motionController.forward(from: 0).whenCompleteOrCancel(() {
@@ -514,7 +514,7 @@ class _SalasSlotsState extends State<_SalasSlots>
 
     final distance = (target - _position).abs();
     final duration = Duration(
-      milliseconds: (220 + (distance * 95)).round().clamp(240, 680),
+      milliseconds: (220 + (distance * 95)).round().clamp(240, 680).toInt(),
     );
 
     _animateTo(target, duration: duration);
