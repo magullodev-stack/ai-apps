@@ -4,31 +4,25 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Herramienta compartida de AI-APPS.
-# Prepara un dispositivo Android físico ya conectado mediante ADB.
-# Nunca inicia un emulador.
+# Shared AI-APPS Android helper.
+# It prepares a physical Android device already paired with ADB.
+# It never starts an emulator.
 
 $sdk = $env:ANDROID_HOME
-
-if (-not $sdk) {
-    $sdk = $env:ANDROID_SDK_ROOT
-}
-
-if (-not $sdk) {
-    $sdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
-}
+if (-not $sdk) { $sdk = $env:ANDROID_SDK_ROOT }
+if (-not $sdk) { $sdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
 
 $adb = Join-Path $sdk 'platform-tools\adb.exe'
 
 if (-not (Test-Path -LiteralPath $adb)) {
-    throw "No se encuentra ADB: $adb"
+    throw "ADB not found: $adb"
 }
 
 function Get-ConnectedAndroidDevices {
     $output = & $adb devices
 
     if ($LASTEXITCODE -ne 0) {
-        throw 'No se pudo consultar ADB.'
+        throw 'Could not query ADB devices.'
     }
 
     @(
@@ -45,11 +39,7 @@ function Get-PhysicalAndroidDevices {
     )
 }
 
-$physical = @(Get-PhysicalAndroidDevices)
-
-# Si el Pixel estaba emparejado por depuración inalámbrica pero ADB todavía
-# no lo ha publicado como dispositivo, intentar recuperarlo mediante mDNS.
-if ($physical.Count -eq 0) {
+function Connect-PairedWirelessDevices {
     $mdns = & $adb mdns services 2>$null
 
     foreach ($line in @($mdns)) {
@@ -64,24 +54,26 @@ if ($physical.Count -eq 0) {
 
         & $adb connect $match.Groups['endpoint'].Value | Out-Null
     }
+}
 
+$physical = @(Get-PhysicalAndroidDevices)
+
+if ($physical.Count -eq 0) {
+    Connect-PairedWirelessDevices
     Start-Sleep -Milliseconds 750
     $physical = @(Get-PhysicalAndroidDevices)
 }
 
 if (-not [string]::IsNullOrWhiteSpace($Device)) {
     if ($Device -notin $physical) {
-        throw "El dispositivo Android físico solicitado no está conectado: $Device"
+        throw "Requested physical Android device is not connected: $Device"
     }
-
     $serial = $Device
 }
 elseif ($physical.Count -eq 1) {
     $serial = $physical[0]
 }
 elseif ($physical.Count -gt 1) {
-    # ADB puede publicar el mismo móvil mediante IP y mediante mDNS.
-    # Si hay una única identidad inalámbrica estable, se prefiere.
     $wireless = @(
         $physical |
             Where-Object { $_ -match '_adb-tls-connect\._tcp$' }
@@ -91,15 +83,15 @@ elseif ($physical.Count -gt 1) {
         $serial = $wireless[0]
     }
     else {
-        throw 'Hay varios dispositivos Android físicos conectados. Indica uno mediante -Device.'
+        throw 'Multiple physical Android devices are connected. Specify one with -Device.'
     }
 }
 else {
-    throw 'No hay ningún dispositivo Android físico conectado. Conecta el Pixel 9a mediante ADB y vuelve a intentarlo.'
+    throw 'No physical Android device is connected. Enable wireless debugging on the Pixel 9a and try again.'
 }
 
-Write-Host "Dispositivo Android físico seleccionado: $serial"
-Write-Host 'Esperando a que Android esté preparado...'
+Write-Host "Physical Android device selected: $serial"
+Write-Host 'Waiting for Android to be ready...'
 
 $ready = $false
 
@@ -107,8 +99,10 @@ for ($attempt = 0; $attempt -lt 30; $attempt++) {
     $state = (& $adb -s $serial get-state 2>$null | Out-String).Trim()
 
     if ($state -eq 'device') {
-        $boot = (& $adb -s $serial shell getprop sys.boot_completed 2>$null |
-            Out-String).Trim()
+        $boot = (
+            & $adb -s $serial shell getprop sys.boot_completed 2>$null |
+                Out-String
+        ).Trim()
 
         if ($boot -eq '1') {
             $ready = $true
@@ -120,27 +114,17 @@ for ($attempt = 0; $attempt -lt 30; $attempt++) {
 }
 
 if (-not $ready) {
-    throw "Android no está preparado en $serial."
+    throw "Android is not ready on $serial."
 }
 
-# AI-APPS trabaja con Android físico. Si quedó un emulador conectado de una
-# sesión anterior, cerrarlo para que VS Code deje de conservarlo como destino.
 $emulators = @(
     Get-ConnectedAndroidDevices |
-        Where-Object { $_ -match '^emulator-\d+
-
-foreach ($emulatorId in $emulators) {
-    & $adb -s $emulatorId emu kill 2>$null | Out-Null
-}
-
-Write-Host "Android preparado: $serial" -ForegroundColor Green
-Write-Output "AI_APPS_ANDROID_SERIAL=$serial"
- }
+        Where-Object { $_ -match '^emulator-\d+$' }
 )
 
 foreach ($emulatorId in $emulators) {
     & $adb -s $emulatorId emu kill 2>$null | Out-Null
 }
 
-Write-Host "Android preparado: $serial" -ForegroundColor Green
+Write-Host "Android ready: $serial" -ForegroundColor Green
 Write-Output "AI_APPS_ANDROID_SERIAL=$serial"
