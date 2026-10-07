@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
@@ -61,6 +63,7 @@ class _AppShellState extends State<AppShell> {
           ),
         Scaffold(
           backgroundColor: Colors.transparent,
+          extendBody: true,
           body: SafeArea(
             bottom: false,
             child: isHome
@@ -68,65 +71,88 @@ class _AppShellState extends State<AppShell> {
                 : _ProfileTab(onOpenSettings: _openSettings),
           ),
           bottomNavigationBar: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: QuizLayout.horizontalPadding,
-              vertical: QuizSpacing.sm,
+            padding: const EdgeInsets.fromLTRB(
+              QuizLayout.horizontalPadding,
+              0,
+              QuizLayout.horizontalPadding,
+              QuizSpacing.sm,
             ),
             color: Colors.transparent,
             child: SafeArea(
               top: false,
               child: Container(
-                key: const Key('quizai-bottom-nav'),
-                height: 84,
-                padding: const EdgeInsets.all(QuizSpacing.xs),
                 decoration: BoxDecoration(
-                  gradient: QuizPalette.navBackgroundGradient,
                   borderRadius: BorderRadius.circular(QuizRadii.pill),
-                  border: Border.all(color: QuizPalette.navBorder, width: 1.3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(55),
-                      blurRadius: 20,
-                      offset: const Offset(0, 7),
+                      color: Colors.black.withAlpha(50),
+                      blurRadius: 24,
+                      offset: const Offset(0, 9),
                     ),
                     BoxShadow(
-                      color: QuizPalette.primaryLight.withAlpha(45),
-                      blurRadius: 18,
+                      color: QuizPalette.primaryLight.withAlpha(42),
+                      blurRadius: 20,
                       spreadRadius: 1,
                     ),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _QuizNavItem(
-                        key: const Key('quizai-nav-inicio'),
-                        label: 'Inicio',
-                        icon: Icons.home_outlined,
-                        selectedIcon: Icons.home_rounded,
-                        selected: _selectedTab == 0,
-                        onTap: () {
-                          if (_selectedTab != 0) {
-                            setState(() => _selectedTab = 0);
-                          }
-                        },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(QuizRadii.pill),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      key: const Key('quizai-bottom-nav'),
+                      height: 78,
+                      padding: const EdgeInsets.all(QuizSpacing.xs),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xB87550D5),
+                            Color(0xA34B2C9C),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(QuizRadii.pill),
+                        border: Border.all(
+                          color: const Color(0x99FFFFFF),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _QuizNavItem(
+                              key: const Key('quizai-nav-inicio'),
+                              label: 'Inicio',
+                              icon: Icons.home_outlined,
+                              selectedIcon: Icons.home_rounded,
+                              selected: _selectedTab == 0,
+                              onTap: () {
+                                if (_selectedTab != 0) {
+                                  setState(() => _selectedTab = 0);
+                                }
+                              },
+                            ),
+                          ),
+                          Expanded(
+                            child: _QuizNavItem(
+                              key: const Key('quizai-nav-perfil'),
+                              label: 'Perfil',
+                              icon: Icons.person_outline,
+                              selectedIcon: Icons.person,
+                              selected: _selectedTab == 1,
+                              onTap: () {
+                                if (_selectedTab != 1) {
+                                  setState(() => _selectedTab = 1);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Expanded(
-                      child: _QuizNavItem(
-                        key: const Key('quizai-nav-perfil'),
-                        label: 'Perfil',
-                        icon: Icons.person_outline,
-                        selectedIcon: Icons.person,
-                        selected: _selectedTab == 1,
-                        onTap: () {
-                          if (_selectedTab != 1) {
-                            setState(() => _selectedTab = 1);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
