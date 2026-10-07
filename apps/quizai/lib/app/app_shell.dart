@@ -112,7 +112,7 @@ class _AppShellState extends State<AppShell> {
                     filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
                     child: Container(
                       key: const Key('quizai-bottom-nav'),
-                      height: 78,
+                      height: 70,
                       padding: const EdgeInsets.all(QuizSpacing.xs),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
