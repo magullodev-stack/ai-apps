@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 
 import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/interaction/quiz_page.dart';
@@ -395,22 +394,26 @@ class _SalasSlotsState extends State<_SalasSlots>
 
   static const _itemTravel = 82.0;
   static const _minimumFlingVelocity = 180.0;
-  static const _maximumLogicalVelocity = 15.0;
-  static const _friction = 0.055;
+  static const _momentumSeconds = 0.22;
+  static const _maximumMomentumItems = 4.0;
 
   late final AnimationController _motionController;
   double _position = 0;
+  double _animationFrom = 0;
+  double _animationTo = 0;
   bool _dragging = false;
 
   @override
   void initState() {
     super.initState();
-    _motionController = AnimationController.unbounded(
+    _motionController = AnimationController(
       vsync: this,
-      value: _position,
+      duration: QuizDurations.normal,
     )..addListener(() {
+        final t = Curves.easeOutCubic.transform(_motionController.value);
         setState(() {
-          _position = _motionController.value;
+          _position =
+              _animationFrom + ((_animationTo - _animationFrom) * t);
         });
       });
   }
@@ -441,36 +444,37 @@ class _SalasSlotsState extends State<_SalasSlots>
     return target;
   }
 
-  void _animateTo(double target) {
+  void _animateTo(double target, {Duration? duration}) {
     _motionController.stop();
 
-    final distance = (target - _position).abs();
-    final milliseconds = (150 + (distance * 55)).round().clamp(150, 300);
+    _animationFrom = _position;
+    _animationTo = target;
 
-    _motionController
-        .animateTo(
-          target,
-          duration: Duration(milliseconds: milliseconds),
-          curve: Curves.easeOutCubic,
-        )
-        .whenCompleteOrCancel(_normalizePosition);
+    final distance = (target - _position).abs();
+    _motionController.duration =
+        duration ??
+        Duration(
+          milliseconds: (160 + (distance * 85)).round().clamp(160, 520),
+        );
+
+    _motionController.forward(from: 0).whenCompleteOrCancel(() {
+      if (!mounted || _dragging || _motionController.isAnimating) return;
+      _normalizePosition();
+    });
   }
 
   void _normalizePosition() {
-    if (!mounted || _dragging || _motionController.isAnimating) return;
-
     final count = _salas.length.toDouble();
     var normalized = _position % count;
     if (normalized < 0) normalized += count;
 
-    if ((_motionController.value - normalized).abs() > 0.0001) {
-      _motionController.value = normalized;
+    if ((_position - normalized).abs() > 0.0001) {
+      setState(() {
+        _position = normalized;
+        _animationFrom = normalized;
+        _animationTo = normalized;
+      });
     }
-  }
-
-  void _settleToNearest() {
-    if (_dragging) return;
-    _animateTo(_position.roundToDouble());
   }
 
   void _onDragStart(DragStartDetails details) {
@@ -480,7 +484,11 @@ class _SalasSlotsState extends State<_SalasSlots>
 
   void _onDragUpdate(DragUpdateDetails details) {
     final delta = details.primaryDelta ?? 0;
-    _motionController.value = _motionController.value - (delta / _itemTravel);
+    if (delta == 0) return;
+
+    setState(() {
+      _position -= delta / _itemTravel;
+    });
   }
 
   void _onDragEnd(DragEndDetails details) {
@@ -488,37 +496,34 @@ class _SalasSlotsState extends State<_SalasSlots>
 
     final pixelVelocity = details.primaryVelocity ?? 0;
     if (pixelVelocity.abs() < _minimumFlingVelocity) {
-      _settleToNearest();
+      _animateTo(_position.roundToDouble());
       return;
     }
 
-    final logicalVelocity = (-pixelVelocity / _itemTravel)
-        .clamp(
-          -_maximumLogicalVelocity,
-          _maximumLogicalVelocity,
-        )
+    final logicalVelocity = -pixelVelocity / _itemTravel;
+    final momentum = (logicalVelocity * _momentumSeconds)
+        .clamp(-_maximumMomentumItems, _maximumMomentumItems)
         .toDouble();
 
-    final simulation = FrictionSimulation(
-      _friction,
-      _position,
-      logicalVelocity,
-      tolerance: const Tolerance(
-        distance: 0.001,
-        velocity: 0.08,
-      ),
+    var target = (_position + momentum).roundToDouble();
+
+    final nearest = _position.roundToDouble();
+    if (target == nearest) {
+      target = nearest + logicalVelocity.sign;
+    }
+
+    final distance = (target - _position).abs();
+    final duration = Duration(
+      milliseconds: (220 + (distance * 95)).round().clamp(240, 680),
     );
 
-    _motionController.animateWith(simulation).whenCompleteOrCancel(() {
-      if (!mounted || _dragging) return;
-      _settleToNearest();
-    });
+    _animateTo(target, duration: duration);
   }
 
   void _onDragCancel() {
     _dragging = false;
     _motionController.stop();
-    _settleToNearest();
+    _animateTo(_position.roundToDouble());
   }
 
   @override
