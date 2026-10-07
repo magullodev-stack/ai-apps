@@ -33,11 +33,24 @@ void main() {
         'assets/auth/QuizAI_Auth_LOGO_1080x1920.png',
         'assets/auth/QuizAI_Auth_AI-APPS_1080x1920.png',
         'assets/auth/QuizAI_Auth_Lema_1080x1920.png',
-        'assets/auth/QuizAI_Auth_Google_1080x1920.png',
-        'assets/auth/QuizAI_Auth_Apple_1080x1920.png',
-        'assets/auth/QuizAI_Auth_Email_1080x1920.png',
       ]),
     );
+
+    final google = find.byKey(const Key('quizai-auth-button-google'));
+    final apple = find.byKey(const Key('quizai-auth-button-apple'));
+    final email = find.byKey(const Key('quizai-auth-button-email'));
+    expect(google, findsOneWidget);
+    expect(apple, findsOneWidget);
+    expect(email, findsOneWidget);
+
+    final googleSize = tester.getSize(google);
+    final appleSize = tester.getSize(apple);
+    final emailSize = tester.getSize(email);
+    expect(appleSize, googleSize);
+    expect(emailSize, googleSize);
+    expect(find.text('Continuar con Google'), findsOneWidget);
+    expect(find.text('Continuar con Apple'), findsOneWidget);
+    expect(find.text('Continuar con email'), findsOneWidget);
 
     final legal = tester.widget<Text>(
       find.byKey(const Key('quizai-auth-legal')),
