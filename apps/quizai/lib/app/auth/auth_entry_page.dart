@@ -16,6 +16,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
     'assets/auth/QuizAI_Auth_background_1080x1920.png',
     'assets/auth/QuizAI_Auth_LOGO_1080x1920.png',
     'assets/auth/QuizAI_Auth_AI-APPS_1080x1920.png',
+    'assets/auth/QuizAI_Auth_Lema_1080x1920.png',
     'assets/auth/QuizAI_Auth_Google_1080x1920.png',
     'assets/auth/QuizAI_Auth_Apple_1080x1920.png',
     'assets/auth/QuizAI_Auth_Email_1080x1920.png',
@@ -61,7 +62,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   Widget build(BuildContext context) {
     const legalBase = TextStyle(
       color: Color(0xFF969696),
-      fontSize: 11,
+      fontSize: 14,
       height: 1.35,
       fontWeight: FontWeight.w500,
     );
@@ -69,7 +70,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
       color: Color(0xFFD6D6D6),
       decoration: TextDecoration.underline,
       decorationColor: Color(0xFFD6D6D6),
-      fontSize: 11,
+      fontSize: 14,
       height: 1.35,
       fontWeight: FontWeight.w700,
     );
@@ -118,7 +119,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                           ),
                           recognizer: _termsRecognizer,
                         ),
-                        const TextSpan(text: ' y la '),
+                        const TextSpan(text: '\ny la '),
                         TextSpan(
                           text: 'Política de privacidad',
                           style: legalLink.copyWith(
