@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../modes/estudio/estudio_page.dart';
@@ -6,11 +8,13 @@ import '../app_theme.dart';
 import '../generation_dependencies.dart';
 
 abstract final class _HomeLayout {
-  static const logoWidth = 238.0;
-  static const logoHeight = 78.0;
-  static const headerHeight = 88.0;
+  static const logoWidth = 176.0;
+  static const logoHeight = 54.0;
+  static const headerHeight = 70.0;
+  static const headerFadeHeight = 34.0;
   static const heroHeight = 206.0;
   static const documentHeight = heroHeight;
+  static const bottomScrollClearance = 122.0;
 }
 
 class _HomeCardFrame extends StatelessWidget {
@@ -117,26 +121,35 @@ class HomePage extends StatelessWidget {
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: QuizLayout.maxWidth),
-        child: SingleChildScrollView(
-          key: const Key('quizai-home-scroll'),
-          padding: const EdgeInsets.fromLTRB(
-            QuizLayout.horizontalPadding,
-            QuizSpacing.sm,
-            QuizLayout.horizontalPadding,
-            QuizSpacing.xl,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _HomeHeader(onOpenSettings: onOpenSettings),
-              const SizedBox(height: QuizSpacing.md),
-              _Quiz10Slot(onTap: () => _openQuiz10(context)),
-              const SizedBox(height: 10),
-              const _SalasModule(),
-              const SizedBox(height: 10),
-              _DocumentSlot(onTap: () => _openEstudio(context)),
-            ],
-          ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            SingleChildScrollView(
+              key: const Key('quizai-home-scroll'),
+              padding: const EdgeInsets.fromLTRB(
+                QuizLayout.horizontalPadding,
+                _HomeLayout.headerHeight + QuizSpacing.md,
+                QuizLayout.horizontalPadding,
+                _HomeLayout.bottomScrollClearance,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Quiz10Slot(onTap: () => _openQuiz10(context)),
+                  const SizedBox(height: 10),
+                  const _SalasModule(),
+                  const SizedBox(height: 10),
+                  _DocumentSlot(onTap: () => _openEstudio(context)),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _HomeHeader(onOpenSettings: onOpenSettings),
+            ),
+          ],
         ),
       ),
     );
@@ -151,39 +164,81 @@ class _HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: _HomeLayout.headerHeight,
-      child: Row(
+      height: _HomeLayout.headerHeight + _HomeLayout.headerFadeHeight,
+      child: Stack(
         children: [
-          Expanded(
-            child: Container(
-              key: const Key('quizai-home-logo-slot'),
-              alignment: Alignment.centerLeft,
-              child: SizedBox(
-                width: _HomeLayout.logoWidth,
-                height: _HomeLayout.logoHeight,
-                child: Image.asset(
-                  'assets/home/QuizAI_Home_LOGO.png',
-                  fit: BoxFit.contain,
-                  alignment: Alignment.centerLeft,
-                  filterQuality: FilterQuality.high,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: [0, 0.58, 1],
+                        colors: [
+                          Color(0xE838149B),
+                          Color(0xB838149B),
+                          Color(0x0038149B),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: QuizSpacing.md),
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: QuizPalette.navSurfaceEnd,
-              border: Border.all(color: QuizPalette.foreground.withAlpha(72)),
-            ),
-            child: IconButton(
-              tooltip: 'Ajustes',
-              onPressed: onOpenSettings,
-              icon: const Icon(
-                Icons.settings_rounded,
-                color: QuizPalette.foreground,
-                size: 29,
+          SizedBox(
+            height: _HomeLayout.headerHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: QuizLayout.horizontalPadding,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      key: const Key('quizai-home-logo-slot'),
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        width: _HomeLayout.logoWidth,
+                        height: _HomeLayout.logoHeight,
+                        child: Image.asset(
+                          'assets/home/QuizAI_Home_LOGO.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.centerLeft,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: QuizSpacing.md),
+                  ClipOval(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0x664B2C9C),
+                          border: Border.all(
+                            color: QuizPalette.foreground.withAlpha(92),
+                          ),
+                        ),
+                        child: IconButton(
+                          tooltip: 'Ajustes',
+                          onPressed: onOpenSettings,
+                          icon: const Icon(
+                            Icons.settings_rounded,
+                            color: QuizPalette.foreground,
+                            size: 27,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
