@@ -295,8 +295,8 @@ try {
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $receipt
         } else {
             if (-not (Test-Path -LiteralPath $adb)) { throw 'No se encuentra ADB.' }
-            # Preferir un dispositivo Android físico ya conectado. Solo iniciar
-            # un emulador cuando no haya ningún dispositivo físico disponible.
+            # Preferir un dispositivo Android físico ya conectado. No iniciar
+            # emuladores automáticamente.
             function Get-ConnectedAndroidDevices {
                 @(
                     & $adb devices |
