@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'app_shell.dart';
 import 'app_theme.dart';
+import 'auth/auth_entry_page.dart';
 
 class QuizAIApp extends StatelessWidget {
   const QuizAIApp({super.key});
@@ -11,6 +11,6 @@ class QuizAIApp extends StatelessWidget {
     title: 'QuizAI',
     debugShowCheckedModeBanner: false,
     theme: quizAITheme,
-    home: const AppShell(),
+    home: const AuthEntryPage(),
   );
 }
