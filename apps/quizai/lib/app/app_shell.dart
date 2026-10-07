@@ -74,12 +74,12 @@ class _AppShellState extends State<AppShell> {
         Scaffold(
           backgroundColor: Colors.transparent,
           extendBody: true,
-          body: SafeArea(
-            bottom: false,
-            child: isHome
-                ? HomePage(onOpenSettings: _openSettings)
-                : _ProfileTab(onOpenSettings: _openSettings),
-          ),
+          body: isHome
+              ? HomePage(onOpenSettings: _openSettings)
+              : SafeArea(
+                  bottom: false,
+                  child: _ProfileTab(onOpenSettings: _openSettings),
+                ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.fromLTRB(
               QuizLayout.horizontalPadding,
