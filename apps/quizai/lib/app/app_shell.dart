@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_theme.dart';
 import 'home/home_page.dart';
@@ -45,9 +46,18 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final isHome = _selectedTab == 0;
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: Color(0xFF16003F),
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
         if (isHome)
           Image.asset(
             'assets/home/QuizAI_Home_background_1080x1920.png',
@@ -85,13 +95,13 @@ class _AppShellState extends State<AppShell> {
                   borderRadius: BorderRadius.circular(QuizRadii.pill),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(50),
-                      blurRadius: 24,
-                      offset: const Offset(0, 9),
+                      color: Colors.black.withAlpha(38),
+                      blurRadius: 26,
+                      offset: const Offset(0, 10),
                     ),
                     BoxShadow(
-                      color: QuizPalette.primaryLight.withAlpha(42),
-                      blurRadius: 20,
+                      color: QuizPalette.primaryLight.withAlpha(26),
+                      blurRadius: 22,
                       spreadRadius: 1,
                     ),
                   ],
@@ -99,7 +109,7 @@ class _AppShellState extends State<AppShell> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(QuizRadii.pill),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
                     child: Container(
                       key: const Key('quizai-bottom-nav'),
                       height: 78,
@@ -109,14 +119,15 @@ class _AppShellState extends State<AppShell> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Color(0xB87550D5),
-                            Color(0xA34B2C9C),
+                            Color(0x4DFFFFFF),
+                            Color(0x3D8E70E8),
+                            Color(0x334B2C9C),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(QuizRadii.pill),
                         border: Border.all(
-                          color: const Color(0x99FFFFFF),
-                          width: 1.2,
+                          color: const Color(0x80FFFFFF),
+                          width: 1.1,
                         ),
                       ),
                       child: Row(
@@ -158,7 +169,8 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }
