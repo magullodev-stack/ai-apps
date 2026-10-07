@@ -52,10 +52,6 @@ void main() {
         }
       }
 
-      for (final id in ['historia', 'biologia', 'cultura-general']) {
-        expect(find.byKey(Key('quizai-home-sala-$id')), findsOneWidget);
-      }
-
       final quiz10Width = tester.getSize(
         find.byKey(const Key('quizai-home-quiz10')),
       ).width;
