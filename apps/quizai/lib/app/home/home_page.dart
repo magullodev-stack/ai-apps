@@ -12,7 +12,9 @@ abstract final class _HomeLayout {
   static const headerFadeHeight = 24.0;
   static const heroHeight = 206.0;
   static const documentHeight = heroHeight;
-  static const bottomScrollClearance = 92.0;
+  static const bottomNavHeight = 70.0;
+  static const bottomNavOuterPadding = QuizSpacing.sm;
+  static const bottomExtraClearance = 28.0;
 }
 
 class _HomeCardFrame extends StatelessWidget {
@@ -115,6 +117,17 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaPadding = MediaQuery.paddingOf(context);
+    final topInset = mediaPadding.top;
+    final bottomInset = mediaPadding.bottom;
+    final headerExtent =
+        topInset + _HomeLayout.headerHeight + _HomeLayout.headerFadeHeight;
+    final bottomClearance =
+        _HomeLayout.bottomNavHeight +
+        _HomeLayout.bottomNavOuterPadding +
+        bottomInset +
+        _HomeLayout.bottomExtraClearance;
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -124,11 +137,11 @@ class HomePage extends StatelessWidget {
           children: [
             SingleChildScrollView(
               key: const Key('quizai-home-scroll'),
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 QuizLayout.horizontalPadding,
-                _HomeLayout.headerHeight + _HomeLayout.headerFadeHeight,
+                headerExtent,
                 QuizLayout.horizontalPadding,
-                _HomeLayout.bottomScrollClearance,
+                bottomClearance,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,7 +158,10 @@ class HomePage extends StatelessWidget {
               top: 0,
               left: 0,
               right: 0,
-              child: _HomeHeader(onOpenSettings: onOpenSettings),
+              child: _HomeHeader(
+                topInset: topInset,
+                onOpenSettings: onOpenSettings,
+              ),
             ),
           ],
         ),
@@ -155,14 +171,18 @@ class HomePage extends StatelessWidget {
 }
 
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({required this.onOpenSettings});
+  const _HomeHeader({
+    required this.topInset,
+    required this.onOpenSettings,
+  });
 
+  final double topInset;
   final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: _HomeLayout.headerHeight + _HomeLayout.headerFadeHeight,
+      height: topInset + _HomeLayout.headerHeight + _HomeLayout.headerFadeHeight,
       child: Stack(
         children: [
           const Positioned.fill(
@@ -184,12 +204,14 @@ class _HomeHeader extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(
-            height: _HomeLayout.headerHeight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: QuizLayout.horizontalPadding,
-              ),
+          Padding(
+            padding: EdgeInsets.only(
+              top: topInset,
+              left: QuizLayout.horizontalPadding,
+              right: QuizLayout.horizontalPadding,
+            ),
+            child: SizedBox(
+              height: _HomeLayout.headerHeight,
               child: Row(
                 children: [
                   Expanded(
