@@ -445,7 +445,7 @@ class _SalasSlotsState extends State<_SalasSlots>
     _motionController.stop();
 
     final distance = (target - _position).abs();
-    final milliseconds = (150 + (distance * 55)).round().clamp(150, 300);
+    final milliseconds = (150 + (distance * 55)).round().clamp(150, 300) as int;
 
     _motionController
         .animateTo(
@@ -492,10 +492,12 @@ class _SalasSlotsState extends State<_SalasSlots>
       return;
     }
 
-    final logicalVelocity = (-pixelVelocity / _itemTravel).clamp(
-      -_maximumLogicalVelocity,
-      _maximumLogicalVelocity,
-    );
+    final logicalVelocity = (-pixelVelocity / _itemTravel)
+        .clamp(
+          -_maximumLogicalVelocity,
+          _maximumLogicalVelocity,
+        )
+        .toDouble();
 
     final simulation = FrictionSimulation(
       _friction,
