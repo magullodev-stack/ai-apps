@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 
 import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/interaction/quiz_page.dart';
@@ -308,7 +307,7 @@ class _SalasModule extends StatelessWidget {
         child: Column(
           children: [
             _SalasHeader(),
-            Expanded(child: _SalasSlots()),
+            Expanded(child: _SalasMomentumCarousel()),
           ],
         ),
       ),
@@ -376,15 +375,15 @@ class _SalasHeader extends StatelessWidget {
   }
 }
 
-class _SalasSlots extends StatefulWidget {
-  const _SalasSlots();
+class _SalasMomentumCarousel extends StatefulWidget {
+  const _SalasMomentumCarousel();
 
   @override
-  State<_SalasSlots> createState() => _SalasSlotsState();
+  State<_SalasMomentumCarousel> createState() =>
+      _SalasMomentumCarouselState();
 }
 
-class _SalasSlotsState extends State<_SalasSlots>
-    with SingleTickerProviderStateMixin {
+class _SalasMomentumCarouselState extends State<_SalasMomentumCarousel> {
   static const _salas = <_SalaData>[
     _SalaData(id: 'historia', title: 'Historia'),
     _SalaData(id: 'biologia', title: 'Biología'),
@@ -394,150 +393,93 @@ class _SalasSlotsState extends State<_SalasSlots>
   ];
 
   static const _itemTravel = 82.0;
-  static const _minimumFlingVelocity = 140.0;
-  static const _maximumLogicalVelocity = 16.0;
-  static const _friction = 0.075;
+  static const _initialIndex = 10000;
 
-  late final AnimationController _motionController;
-  double _position = 0;
-  bool _dragging = false;
+  late final ScrollController _scrollController;
+  double _position = _initialIndex.toDouble();
+  bool _snapping = false;
 
   @override
   void initState() {
     super.initState();
-    _motionController = AnimationController.unbounded(
-      vsync: this,
-      value: _position,
-    )..addListener(() {
-        if (!mounted || _dragging) return;
-        setState(() {
-          _position = _motionController.value;
-        });
-      });
+    _scrollController = ScrollController(
+      initialScrollOffset: _initialIndex * _itemTravel,
+    )..addListener(_handleScroll);
   }
 
   @override
   void dispose() {
-    _motionController.dispose();
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
     super.dispose();
   }
 
-  double _relativePosition(int index) {
-    final count = _salas.length.toDouble();
-    var relative = (index - _position) % count;
-    if (relative > count / 2) relative -= count;
-    if (relative < -count / 2) relative += count;
-    return relative;
-  }
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
 
-  double _targetForIndex(int index) {
-    final count = _salas.length.toDouble();
-    var target = index.toDouble();
-    while (target - _position > count / 2) {
-      target -= count;
-    }
-    while (target - _position < -count / 2) {
-      target += count;
-    }
-    return target;
-  }
-
-  void _syncControllerToPosition() {
-    if ((_motionController.value - _position).abs() > 0.0001) {
-      _motionController.value = _position;
-    }
-  }
-
-  void _animateTo(double target, {Duration? duration}) {
-    _motionController.stop();
-    _syncControllerToPosition();
-
-    final distance = (target - _position).abs();
-    final snapDuration =
-        duration ??
-        Duration(
-          milliseconds: (120 + (distance * 70)).round().clamp(120, 260).toInt(),
-        );
-
-    _motionController
-        .animateTo(
-          target,
-          duration: snapDuration,
-          curve: Curves.easeOutCubic,
-        )
-        .whenCompleteOrCancel(_normalizePosition);
-  }
-
-  void _normalizePosition() {
-    if (!mounted || _dragging || _motionController.isAnimating) return;
-
-    final count = _salas.length.toDouble();
-    var normalized = _position % count;
-    if (normalized < 0) normalized += count;
-
-    if ((_position - normalized).abs() > 0.0001) {
-      _position = normalized;
-      _motionController.value = normalized;
-    }
-  }
-
-  void _snapToNearest() {
-    if (!mounted || _dragging) return;
-    _animateTo(_position.roundToDouble());
-  }
-
-  void _onDragStart(DragStartDetails details) {
-    _dragging = true;
-    _motionController.stop();
-  }
-
-  void _onDragUpdate(DragUpdateDetails details) {
-    final delta = details.primaryDelta ?? 0;
-    if (delta == 0) return;
+    final nextPosition = _scrollController.offset / _itemTravel;
+    if ((nextPosition - _position).abs() < 0.0001) return;
 
     setState(() {
-      _position -= delta / _itemTravel;
+      _position = nextPosition;
     });
   }
 
-  void _onDragEnd(DragEndDetails details) {
-    _dragging = false;
+  int _roomIndexForItem(int itemIndex) {
+    final count = _salas.length;
+    return ((itemIndex % count) + count) % count;
+  }
 
-    final pixelVelocity = details.primaryVelocity ?? 0;
+  Future<void> _snapToNearest() async {
+    if (!_scrollController.hasClients || _snapping) return;
 
-    // A finger that has already stopped before being lifted should not create
-    // momentum. Only the velocity that still exists at release starts a fling.
-    if (pixelVelocity.abs() < _minimumFlingVelocity) {
-      _snapToNearest();
-      return;
+    final targetIndex = _position.round();
+    final targetOffset = targetIndex * _itemTravel;
+
+    if ((_scrollController.offset - targetOffset).abs() < 0.5) return;
+
+    _snapping = true;
+    try {
+      await _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutCubic,
+      );
+    } finally {
+      _snapping = false;
     }
-
-    final logicalVelocity = (-pixelVelocity / _itemTravel)
-        .clamp(-_maximumLogicalVelocity, _maximumLogicalVelocity)
-        .toDouble();
-
-    _syncControllerToPosition();
-
-    final simulation = FrictionSimulation(
-      _friction,
-      _position,
-      logicalVelocity,
-      tolerance: const Tolerance(
-        distance: 0.001,
-        velocity: 0.08,
-      ),
-    );
-
-    _motionController.animateWith(simulation).whenCompleteOrCancel(() {
-      if (!mounted || _dragging) return;
-      _snapToNearest();
-    });
   }
 
-  void _onDragCancel() {
-    _dragging = false;
-    _motionController.stop();
-    _snapToNearest();
+  Future<void> _animateToRoom(int roomIndex) async {
+    if (!_scrollController.hasClients) return;
+
+    final currentItem = _position.round();
+    final currentRoom = _roomIndexForItem(currentItem);
+    var delta = roomIndex - currentRoom;
+    final count = _salas.length;
+
+    if (delta > count / 2) delta -= count;
+    if (delta < -count / 2) delta += count;
+
+    final targetItem = currentItem + delta;
+    _snapping = true;
+    try {
+      await _scrollController.animateTo(
+        targetItem * _itemTravel,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    } finally {
+      _snapping = false;
+    }
+  }
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollEndNotification && !_snapping) {
+      _snapToNearest();
+    }
+    return false;
   }
 
   @override
@@ -547,68 +489,58 @@ class _SalasSlotsState extends State<_SalasSlots>
       height: 138,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final centerX = constraints.maxWidth / 2;
-          final paintOrder = List<int>.generate(_salas.length, (index) => index)
-            ..sort((a, b) {
-              final aDistance = _relativePosition(a).abs();
-              final bDistance = _relativePosition(b).abs();
-              return bDistance.compareTo(aDistance);
-            });
+          final horizontalPadding =
+              (constraints.maxWidth - _itemTravel) / 2;
 
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onHorizontalDragStart: _onDragStart,
-            onHorizontalDragUpdate: _onDragUpdate,
-            onHorizontalDragEnd: _onDragEnd,
-            onHorizontalDragCancel: _onDragCancel,
-            child: ClipRect(
-              child: Stack(
-                children: [
-                  for (final index in paintOrder)
-                    _buildCarouselItem(index, centerX),
-                ],
+          return NotificationListener<ScrollNotification>(
+            onNotification: _handleScrollNotification,
+            child: ListView.builder(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              physics: const ClampingScrollPhysics(),
+              clipBehavior: Clip.none,
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
               ),
+              itemExtent: _itemTravel,
+              itemBuilder: (context, itemIndex) {
+                final roomIndex = _roomIndexForItem(itemIndex);
+                final sala = _salas[roomIndex];
+                final relative = itemIndex - _position;
+                final distance = relative.abs().clamp(0.0, 2.0);
+
+                final scale = distance <= 1
+                    ? 1 - (distance * 0.16)
+                    : 0.84 - ((distance - 1) * 0.18);
+                final opacity = distance <= 1 ? 1.0 : 0.82;
+                final isCentered = distance < 0.35;
+
+                return OverflowBox(
+                  minWidth: 128,
+                  maxWidth: 128,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    key: ValueKey('quizai-home-sala-$itemIndex'),
+                    width: 128,
+                    height: 126,
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Opacity(
+                        opacity: opacity,
+                        child: _SalaSlot(
+                          id: sala.id,
+                          title: sala.title,
+                          selected: isCentered,
+                          onTap: () => _animateToRoom(roomIndex),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildCarouselItem(int index, double centerX) {
-    final sala = _salas[index];
-    final relative = _relativePosition(index);
-    final distance = relative.abs().clamp(0.0, 2.0);
-
-    final offset = distance <= 1
-        ? relative * 82
-        : relative.sign * (82 + ((distance - 1) * 62));
-
-    final scale = distance <= 1
-        ? 1 - (distance * 0.16)
-        : 0.84 - ((distance - 1) * 0.18);
-
-    const top = 10.0;
-    final opacity = distance <= 1 ? 1.0 : 0.82;
-    final isCentered = distance < 0.35;
-
-    return Positioned(
-      key: ValueKey('quizai-home-sala-${sala.id}'),
-      left: centerX - 64 + offset,
-      top: top,
-      width: 128,
-      height: 126,
-      child: Transform.scale(
-        scale: scale,
-        child: Opacity(
-          opacity: opacity,
-          child: _SalaSlot(
-            id: sala.id,
-            title: sala.title,
-            selected: isCentered,
-            onTap: () => _animateTo(_targetForIndex(index)),
-          ),
-        ),
       ),
     );
   }
