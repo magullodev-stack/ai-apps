@@ -92,6 +92,23 @@ pertenecen a `lib/app/home/`.
 El diseño se adapta al ancho disponible y permite desplazamiento vertical
 cuando la altura del dispositivo no permite mostrar todas las modalidades.
 
+## Acceso inicial
+
+QuizAI arranca en una pantalla de autenticación propia antes de entrar en la
+aplicación. La composición se reconstruye por capas 1080×1920 desde
+`assets/auth/`: fondo, logotipo de QuizAI, firma de AI-APPS y accesos visuales
+de Google, Apple y email. Todas las capas comparten el mismo lienzo para
+conservar exactamente su colocación.
+
+El texto legal se renderiza como interfaz Flutter, no como imagen. **Términos
+de uso** y **Política de privacidad** son enlaces independientes y subrayados;
+mientras no existan los documentos definitivos, muestran los mismos avisos
+provisionales que Ajustes.
+
+Los accesos de Google, Apple y email todavía son únicamente la capa visual de
+la pantalla. No se simula autenticación ni se permite entrar a Home hasta que
+la capacidad compartida de identidad esté conectada.
+
 ## Navegación
 
 Home muestra, en este orden, la cabecera con el espacio de marca y **Ajustes**,
