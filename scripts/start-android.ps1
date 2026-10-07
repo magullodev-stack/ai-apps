@@ -47,6 +47,28 @@ function Get-PhysicalAndroidDevices {
 
 $physical = @(Get-PhysicalAndroidDevices)
 
+# Si el Pixel estaba emparejado por depuración inalámbrica pero ADB todavía
+# no lo ha publicado como dispositivo, intentar recuperarlo mediante mDNS.
+if ($physical.Count -eq 0) {
+    $mdns = & $adb mdns services 2>$null
+
+    foreach ($line in @($mdns)) {
+        if ($line -notmatch '_adb-tls-connect\._tcp') { continue }
+
+        $match = [regex]::Match(
+            $line,
+            '(?<endpoint>(?:\d{1,3}\.){3}\d{1,3}:\d+)'
+        )
+
+        if (-not $match.Success) { continue }
+
+        & $adb connect $match.Groups['endpoint'].Value | Out-Null
+    }
+
+    Start-Sleep -Milliseconds 750
+    $physical = @(Get-PhysicalAndroidDevices)
+}
+
 if (-not [string]::IsNullOrWhiteSpace($Device)) {
     if ($Device -notin $physical) {
         throw "El dispositivo Android físico solicitado no está conectado: $Device"
@@ -99,6 +121,18 @@ for ($attempt = 0; $attempt -lt 30; $attempt++) {
 
 if (-not $ready) {
     throw "Android no está preparado en $serial."
+}
+
+# AI-APPS trabaja con Android físico. Si quedó un emulador conectado de una
+# sesión anterior, cerrarlo para que VS Code deje de conservarlo como destino.
+$emulators = @(
+    Get-ConnectedAndroidDevices |
+        Where-Object { $_ -match '^emulator-\d+
+ }
+)
+
+foreach ($emulatorId in $emulators) {
+    & $adb -s $emulatorId emu kill 2>$null | Out-Null
 }
 
 Write-Host "Android preparado: $serial" -ForegroundColor Green
