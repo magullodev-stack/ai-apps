@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 
 import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/interaction/quiz_page.dart';
