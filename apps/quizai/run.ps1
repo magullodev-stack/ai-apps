@@ -1,5 +1,5 @@
 param(
-    [string]$Device = 'emulator-5554',
+    [string]$Device = '',
     [string]$CatalogModel = 'gpt-5.6-luna',
     [Alias('TerraModel')]
     [string]$FactualModel = 'gpt-5.6-terra',
@@ -295,81 +295,116 @@ try {
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $receipt
         } else {
             if (-not (Test-Path -LiteralPath $adb)) { throw 'No se encuentra ADB.' }
-            # Preferir el dispositivo solicitado; si no existe, utilizar
-            # el único emulador conectado. Si no hay ninguno, iniciar
-            # el AVD instalado y esperar a que Android termine de arrancar.
-            function Get-ConnectedEmulators {
+            # Preferir un dispositivo Android físico ya conectado. Solo iniciar
+            # un emulador cuando no haya ningún dispositivo físico disponible.
+            function Get-ConnectedAndroidDevices {
                 @(
                     & $adb devices |
-                        Where-Object { $_ -match '^emulator-\d+\s+device\s*$' } |
+                        Where-Object { $_ -match '^\S+\s+device\s*$' } |
                         ForEach-Object { ($_ -split '\s+')[0] }
                 )
             }
 
-            $connected = @(Get-ConnectedEmulators)
+            function Get-ConnectedEmulators {
+                @(
+                    Get-ConnectedAndroidDevices |
+                        Where-Object { $_ -match '^emulator-\d+$' }
+                )
+            }
 
-            if ($Device -notin $connected) {
-                if ($connected.Count -eq 1) {
-                    $Device = $connected[0]
-                    Write-Host "Emulador conectado: $Device"
+            $connected = @(Get-ConnectedAndroidDevices)
+
+            if (-not [string]::IsNullOrWhiteSpace($Device)) {
+                if ($Device -notin $connected) {
+                    throw "El dispositivo solicitado no está conectado: $Device"
                 }
-                elseif ($connected.Count -gt 1) {
-                    throw "Hay varios emuladores conectados. Indica el dispositivo con -Device."
+            }
+            else {
+                $physical = @(
+                    $connected |
+                        Where-Object { $_ -notmatch '^emulator-\d+$' }
+                )
+
+                if ($physical.Count -eq 1) {
+                    $Device = $physical[0]
+                    Write-Host "Dispositivo Android físico conectado: $Device"
                 }
-                else {
-                    $emulator = Join-Path $sdk 'emulator\emulator.exe'
-
-                    if (-not (Test-Path -LiteralPath $emulator)) {
-                        throw "No se encuentra el emulador Android en $emulator"
-                    }
-
-                    $avds = @(
-                        & $emulator -list-avds |
-                            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+                elseif ($physical.Count -gt 1) {
+                    # ADB puede mostrar el mismo móvil tanto por IP como por mDNS.
+                    # En ese caso se prefiere la identidad inalámbrica estable.
+                    $wireless = @(
+                        $physical |
+                            Where-Object { $_ -match '_adb-tls-connect\._tcp$' }
                     )
 
-                    if ($avds.Count -ne 1) {
-                        throw "No hay un emulador único para iniciar. Emuladores instalados: $($avds -join ', ')"
+                    if ($wireless.Count -eq 1) {
+                        $Device = $wireless[0]
+                        Write-Host "Dispositivo Android inalámbrico conectado: $Device"
                     }
-
-                    Write-Host "Iniciando emulador Android: $($avds[0])"
-
-                    $emulatorProcess = Start-Process `
-                        -FilePath $emulator `
-                        -ArgumentList @('-avd', $avds[0]) `
-                        -PassThru
-
-                    $found = $false
-
-                    for ($attempt = 0; $attempt -lt 90; $attempt++) {
-                        Start-Sleep -Seconds 2
-                        $connected = @(Get-ConnectedEmulators)
-
-                        if ($Device -in $connected) {
-                            $found = $true
-                            break
-                        }
-
-                        if ($connected.Count -eq 1) {
-                            $Device = $connected[0]
-                            $found = $true
-                            break
-                        }
-
-                        if ($connected.Count -gt 1) {
-                            throw 'Hay varios emuladores conectados; no se puede seleccionar uno de forma segura.'
-                        }
-
-                        if ($emulatorProcess.HasExited) {
-                            throw 'El emulador se cerró durante el arranque.'
-                        }
+                    else {
+                        throw "Hay varios dispositivos Android físicos conectados. Indica el dispositivo con -Device."
                     }
+                }
+                else {
+                    $emulators = @(Get-ConnectedEmulators)
 
-                    if (-not $found) {
-                        throw 'El emulador no apareció en ADB durante los 180 segundos de espera.'
+                    if ($emulators.Count -eq 1) {
+                        $Device = $emulators[0]
+                        Write-Host "Emulador conectado: $Device"
                     }
+                    elseif ($emulators.Count -gt 1) {
+                        throw "Hay varios emuladores conectados. Indica el dispositivo con -Device."
+                    }
+                    else {
+                        $emulator = Join-Path $sdk 'emulator\emulator.exe'
 
-                    Write-Host "Emulador detectado: $Device"
+                        if (-not (Test-Path -LiteralPath $emulator)) {
+                            throw "No se encuentra el emulador Android en $emulator"
+                        }
+
+                        $avds = @(
+                            & $emulator -list-avds |
+                                Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+                        )
+
+                        if ($avds.Count -ne 1) {
+                            throw "No hay un emulador único para iniciar. Emuladores instalados: $($avds -join ', ')"
+                        }
+
+                        Write-Host "Iniciando emulador Android: $($avds[0])"
+
+                        $emulatorProcess = Start-Process `
+                            -FilePath $emulator `
+                            -ArgumentList @('-avd', $avds[0]) `
+                            -PassThru
+
+                        $found = $false
+
+                        for ($attempt = 0; $attempt -lt 90; $attempt++) {
+                            Start-Sleep -Seconds 2
+                            $emulators = @(Get-ConnectedEmulators)
+
+                            if ($emulators.Count -eq 1) {
+                                $Device = $emulators[0]
+                                $found = $true
+                                break
+                            }
+
+                            if ($emulators.Count -gt 1) {
+                                throw 'Hay varios emuladores conectados; no se puede seleccionar uno de forma segura.'
+                            }
+
+                            if ($emulatorProcess.HasExited) {
+                                throw 'El emulador se cerró durante el arranque.'
+                            }
+                        }
+
+                        if (-not $found) {
+                            throw 'El emulador no apareció en ADB durante los 180 segundos de espera.'
+                        }
+
+                        Write-Host "Emulador detectado: $Device"
+                    }
                 }
             }
 
