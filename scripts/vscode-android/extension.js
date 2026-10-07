@@ -3,15 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const childProcess = require('child_process');
 
-const EMBEDROID_ID = 'utpalbarman.embedroid';
-
 const output = vscode.window.createOutputChannel(
   'AI-APPS Android'
 );
-
-// ------------------------------------------------------------
-// IDENTIFICAR EL PROYECTO
-// ------------------------------------------------------------
 
 function getAiAppsWorkspace() {
   const folders = vscode.workspace.workspaceFolders || [];
@@ -29,24 +23,7 @@ function getAiAppsWorkspace() {
   });
 }
 
-// ------------------------------------------------------------
-// COMPROBAR SI EL VISOR YA ESTÁ ABIERTO
-// ------------------------------------------------------------
-
-function isEmbeddedViewOpen() {
-  return vscode.window.tabGroups.all.some(group =>
-    group.tabs.some(tab =>
-      tab.input instanceof vscode.TabInputWebview &&
-      tab.input.viewType === 'embedroid.embedded'
-    )
-  );
-}
-
-// ------------------------------------------------------------
-// EJECUTAR EL ARRANQUE COMPARTIDO
-// ------------------------------------------------------------
-
-function startAndroid(root) {
+function preparePhysicalAndroid(root) {
   return new Promise((resolve, reject) => {
     const script = path.join(
       root,
@@ -66,7 +43,7 @@ function startAndroid(root) {
       {
         cwd: root,
         windowsHide: true,
-        timeout: 300000,
+        timeout: 60000,
         maxBuffer: 1024 * 1024
       },
       (error, stdout, stderr) => {
@@ -84,61 +61,25 @@ function startAndroid(root) {
         }
 
         const match = stdout.match(
-          /AI_APPS_ANDROID_SERIAL=(emulator-\d+)/
+          /AI_APPS_ANDROID_SERIAL=([^\r\n]+)/
         );
 
         if (!match) {
           reject(
             new Error(
-              'El procedimiento no devolvió un emulador preparado.'
+              'El procedimiento no devolvió un dispositivo Android físico preparado.'
             )
           );
           return;
         }
 
-        resolve(match[1]);
+        resolve(match[1].trim());
       }
     );
   });
 }
 
-// ------------------------------------------------------------
-// CONFIGURAR EL VISOR INTEGRADO
-// ------------------------------------------------------------
-
-async function configureEmbeddedView(folder) {
-  const config = vscode.workspace.getConfiguration(
-    'embedroid',
-    folder.uri
-  );
-
-  // Abrir Android en el grupo de editores actual.
-  // No crear una columna lateral para el teléfono.
-
-  if (config.get('openIn') !== 'active') {
-    await config.update(
-      'openIn',
-      'active',
-      vscode.ConfigurationTarget.Workspace
-    );
-  }
-
-  // El emulador debe funcionar sin ventana externa.
-
-  if (config.get('headless') !== true) {
-    await config.update(
-      'headless',
-      true,
-      vscode.ConfigurationTarget.Workspace
-    );
-  }
-}
-
-// ------------------------------------------------------------
-// ARRANQUE DEL ENTORNO
-// ------------------------------------------------------------
-
-async function launchSelectedGame(folder) {
+async function launchSelectedGame(folder, serial) {
   const root = folder.uri.fsPath;
   const selectionFile = path.join(
     root,
@@ -155,15 +96,10 @@ async function launchSelectedGame(folder) {
     .trim()
     .toLowerCase();
 
-  // "none" permite abrir AI-APPS sin ejecutar ningún juego.
-
   if (!game || game === 'none') {
     output.appendLine('AI-APPS abierto sin juego activo.');
     return;
   }
-
-  // El selector contiene nombres de carpetas, nunca rutas
-  // ni comandos introducidos por el usuario.
 
   if (!/^[a-z][a-z0-9_-]*$/.test(game)) {
     throw new Error(
@@ -219,7 +155,9 @@ async function launchSelectedGame(folder) {
         '-ExecutionPolicy',
         'Bypass',
         '-File',
-        script
+        script,
+        '-Device',
+        serial
       ],
       {
         cwd: root
@@ -236,221 +174,30 @@ async function launchSelectedGame(folder) {
   };
 
   output.appendLine(
-    'Ejecutando juego activo: ' + game
+    'Ejecutando ' + game + ' en ' + serial
   );
 
   await vscode.tasks.executeTask(task);
 }
 
-function getSelectedGame(folder) {
-  const selectionFile = path.join(
-    folder.uri.fsPath,
-    '.ai-apps',
-    'active-game.txt'
-  );
-
-  if (!fs.existsSync(selectionFile)) {
-    return null;
-  }
-
-  const game = fs.readFileSync(selectionFile, 'utf8')
-    .trim()
-    .toLowerCase();
-
-  return game && game !== 'none' ? game : null;
-}
-
-function getAndroidPackage(folder, game) {
-  const androidDirectory = path.join(
-    folder.uri.fsPath,
-    'apps',
-    game,
-    'android',
-    'app'
-  );
-
-  for (const name of ['build.gradle.kts', 'build.gradle']) {
-    const gradlePath = path.join(androidDirectory, name);
-
-    if (!fs.existsSync(gradlePath)) {
-      continue;
-    }
-
-    const gradle = fs.readFileSync(gradlePath, 'utf8');
-    const match = gradle.match(
-      /\bapplicationId\s*=?\s*["']([a-zA-Z0-9_.]+)["']/
-    );
-
-    if (match) {
-      return match[1];
-    }
-  }
-
-  return null;
-}
-
-async function waitForGameReady(folder, serial, game) {
-  const packageId = getAndroidPackage(folder, game);
-
-  if (!packageId) {
-    output.appendLine(
-      'No se encontró el identificador Android de ' +
-      game + '. Se abrirá el visor sin esperar.'
-    );
-    return;
-  }
-
-  const sdk =
-    process.env.ANDROID_HOME ||
-    process.env.ANDROID_SDK_ROOT ||
-    path.join(
-      process.env.LOCALAPPDATA || '',
-      'Android',
-      'Sdk'
-    );
-
-  const adb = path.join(sdk, 'platform-tools', 'adb.exe');
-
-  if (!fs.existsSync(adb)) {
-    output.appendLine(
-      'No se encontró ADB para comprobar el inicio del juego.'
-    );
-    return;
-  }
-
-  output.appendLine(
-    'Esperando a que aparezca ' + game + ' en Android...'
-  );
-
-  // El arranque de Flutter puede tardar bastante más que
-  // el arranque del propio emulador. Esperar hasta 4 minutos.
-
-  for (let attempt = 0; attempt < 120; attempt++) {
-    const activity = await new Promise(resolve => {
-      childProcess.execFile(
-        adb,
-        [
-          '-s',
-          serial,
-          'shell',
-          'dumpsys',
-          'activity',
-          'activities'
-        ],
-        {
-          windowsHide: true,
-          timeout: 5000,
-          maxBuffer: 1024 * 1024
-        },
-        (error, stdout) => {
-          resolve(error ? '' : stdout || '');
-        }
-      );
-    });
-
-    // Detectar el juego como actividad visible de Android.
-
-    const visible = activity
-      .split(/\r?\n/)
-      .some(line =>
-        /topResumedActivity|mResumedActivity|ResumedActivity/.test(line) &&
-        line.includes(packageId + '/')
-      );
-
-    if (visible) {
-      output.appendLine(
-        'Juego visible en Android: ' + game
-      );
-
-      // Dar un pequeño margen a Flutter para dibujar su UI.
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }
-
-  output.appendLine(
-    'El juego no apareció durante la espera. ' +
-    'Se abrirá EmbeDroid para permitir revisar Android.'
-  );
-}
 async function startEnvironment(folder) {
-  output.appendLine('Preparando Android para AI-APPS...');
-
-  const embedroid = vscode.extensions.getExtension(
-    EMBEDROID_ID
+  output.appendLine(
+    'Preparando dispositivo Android físico para AI-APPS...'
   );
 
-  if (!embedroid) {
-    throw new Error(
-      'EmbeDroid no está instalado en VS Code.'
-    );
-  }
-
-  await configureEmbeddedView(folder);
-
-  // Preparar Android independientemente del juego.
-  // Si ya está funcionando, el script lo reutiliza.
-
-  const serial = await startAndroid(
+  const serial = await preparePhysicalAndroid(
     folder.uri.fsPath
   );
 
   output.appendLine(
-    'Android preparado: ' + serial
+    'Android físico preparado: ' + serial
   );
 
-  // Activar EmbeDroid antes de utilizar su comando.
-
-  await embedroid.activate();
-
-  // Iniciar primero el juego seleccionado. No abrir todavía
-  // la pestaña de EmbeDroid.
-
-  const activeGame = getSelectedGame(folder);
-
-  if (activeGame) {
-    await launchSelectedGame(folder);
-    await waitForGameReady(folder, serial, activeGame);
-  }
-
-  // Si VS Code ha restaurado la pestaña integrada,
-  // no abrir una segunda copia.
-
-  if (isEmbeddedViewOpen()) {
-    output.appendLine(
-      'El visor integrado ya está abierto.'
-    );
-    return;
-  }
-
-  // Abrir la pestaña del dispositivo preparado.
-
-  await vscode.commands.executeCommand(
-    'embedroid.openEmbedded',
-    {
-      device: {
-        serial: serial
-      }
-    }
-  );
-
-  output.appendLine(
-    'Visor integrado solicitado a EmbeDroid.'
-  );
+  await launchSelectedGame(folder, serial);
 }
-
-// ------------------------------------------------------------
-// ACTIVACIÓN DE LA EXTENSIÓN
-// ------------------------------------------------------------
 
 function activate(context) {
   const folder = getAiAppsWorkspace();
-
-  // La integración solamente se ejecuta en AI-APPS.
-  // No debe iniciar Android al abrir otros proyectos.
 
   if (!folder) {
     return;
