@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizai/app/app.dart';
+import 'package:quizai/app/app_shell.dart';
+import 'package:quizai/app/app_theme.dart';
 import 'package:quizai/app/settings/quiz_settings.dart';
 import 'package:quizai/app/settings/settings_components.dart';
 import 'package:quizai/app/settings/settings_page.dart';
@@ -51,7 +52,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final semantics = tester.ensureSemantics();
-      await tester.pumpWidget(const QuizAIApp());
+      await tester.pumpWidget(
+        MaterialApp(theme: quizAITheme, home: const AppShell()),
+      );
       await openSettings(tester);
       expectPreferences(tester, [true, true, false]);
       expect(
@@ -101,7 +104,9 @@ void main() {
 
       // Una nueva sesión de AppShell vuelve a los valores iniciales.
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpWidget(const QuizAIApp());
+      await tester.pumpWidget(
+        MaterialApp(theme: quizAITheme, home: const AppShell()),
+      );
       await openSettings(tester);
       expectPreferences(tester, [true, true, false]);
       semantics.dispose();
@@ -112,7 +117,9 @@ void main() {
   testWidgets(
     'Información muestra únicamente avisos provisionales y Versión no navega',
     (tester) async {
-      await tester.pumpWidget(const QuizAIApp());
+      await tester.pumpWidget(
+        MaterialApp(theme: quizAITheme, home: const AppShell()),
+      );
       await openSettings(tester);
       for (final entry in {
         'Privacidad': 'El contenido de privacidad todavía no está disponible.',
