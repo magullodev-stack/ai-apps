@@ -2,7 +2,7 @@
   "name": "ai-apps-android",
   "displayName": "AI-APPS Android",
   "description": "Detecta un dispositivo Android físico conectado y ejecuta en él la aplicación activa de AI-APPS.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "magullodev",
   "private": true,
   "engines": {
