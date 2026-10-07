@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizai/app/app.dart';
+import 'package:quizai/app/app_shell.dart';
 import 'package:quizai/app/app_theme.dart';
 import 'package:quizai/app/profile/profile_page.dart';
 import 'package:quizai/app/settings/settings_page.dart';
@@ -12,7 +12,9 @@ Future<void> pumpApp(WidgetTester tester, Size size) async {
   tester.view.physicalSize = size;
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
-  await tester.pumpWidget(const QuizAIApp());
+  await tester.pumpWidget(
+    MaterialApp(theme: quizAITheme, home: const AppShell()),
+  );
   await tester.pumpAndSettle();
 }
 
