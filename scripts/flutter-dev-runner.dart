@@ -15,7 +15,7 @@ Future<void> main(List<String> args) async {
       '--dart-define-from-file=' + options.definesFile,
     ],
     workingDirectory: options.workingDirectory,
-    runInShell: false,
+    runInShell: Platform.isWindows,
   );
 
   final controller = _FlutterMachineController(process);
