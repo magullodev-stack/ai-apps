@@ -87,10 +87,13 @@ void _configureKeyboard(_FlutterMachineController controller) {
         switch (byte) {
           case 114:
             unawaited(controller.reload(reason: 'manual'));
+            break;
           case 82:
             unawaited(controller.restart());
+            break;
           case 113:
             controller.stop();
+            break;
         }
       }
     });
@@ -143,12 +146,13 @@ final class _FlutterMachineController {
 
   final Process process;
   String? _appId;
+  var _started = false;
   var _nextRequestId = 1;
   final _reloadRequests = <int>{};
   final _restartRequests = <int>{};
   void Function()? onReady;
 
-  bool get isReady => _appId != null;
+  bool get isReady => _appId != null && _started;
 
   Future<void> reload({String reason = 'source-change'}) async {
     final appId = _appId;
@@ -221,6 +225,7 @@ final class _FlutterMachineController {
 
       if (event == 'app.start' && params is Map) {
         _appId = params['appId']?.toString();
+        _started = false;
         stdout.writeln(
           'Flutter iniciando en ' +
               (params['deviceId']?.toString() ?? 'Android') +
@@ -230,12 +235,14 @@ final class _FlutterMachineController {
       }
 
       if (event == 'app.started') {
+        _started = true;
         onReady?.call();
         continue;
       }
 
       if (event == 'app.stop') {
         _appId = null;
+        _started = false;
         continue;
       }
 
