@@ -17,8 +17,12 @@
 conectado mediante ADB. Nunca inicia un emulador.
 
 Si ADB publica el mismo móvil mediante IP y mediante mDNS, el procedimiento
-prefiere la identidad inalámbrica estable. Si no hay ningún dispositivo físico
-conectado, termina con un error explícito.
+prefiere la identidad inalámbrica estable. Si el móvil ya estaba emparejado pero
+todavía no aparece en `adb devices`, intenta recuperarlo mediante mDNS. Al
+preparar el dispositivo físico cierra los emuladores Android que hayan quedado
+conectados de sesiones anteriores, para evitar que VS Code los conserve como
+destino de Flutter. Si no puede recuperar ningún dispositivo físico, termina con
+un error explícito.
 
 `scripts/vscode-android/` contiene la integración local de VS Code.
 
@@ -31,7 +35,9 @@ La integración local se instala con
 repositorio.
 
 Si `.ai-apps/active-game.txt` contiene `none`, no se ejecuta ningún juego.
-Cada aplicación conserva su propio lanzador `apps/<juego>/run.ps1`.
+Si el selector local no existe y QuizAI está disponible, la integración usa
+QuizAI como aplicación de desarrollo por defecto. Cada aplicación conserva su
+propio lanzador `apps/<juego>/run.ps1`.
 
 El selector es local y no se publica en Git. Para consultar los diagnósticos
 del arranque, abre el panel Output de VS Code y selecciona
