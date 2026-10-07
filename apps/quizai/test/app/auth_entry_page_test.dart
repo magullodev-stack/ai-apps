@@ -51,6 +51,16 @@ void main() {
     expect(find.text('Continuar con Google'), findsOneWidget);
     expect(find.text('Continuar con Apple'), findsOneWidget);
     expect(find.text('Continuar con email'), findsOneWidget);
+    final googleIcon = tester
+        .widgetList<Image>(find.byType(Image))
+        .map((image) => image.image)
+        .whereType<AssetImage>()
+        .where(
+          (image) =>
+              image.assetName ==
+              'assets/auth/QuizAI_Auth_Google_ICON.png',
+        );
+    expect(googleIcon, hasLength(1));
 
     final legal = tester.widget<Text>(
       find.byKey(const Key('quizai-auth-legal')),
