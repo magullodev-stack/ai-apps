@@ -78,6 +78,9 @@ void main() {
       final navPosition = tester.getTopLeft(
         find.byKey(const Key('quizai-bottom-nav')),
       );
+      final headerPosition = tester.getTopLeft(
+        find.byKey(const Key('quizai-home-logo-slot')),
+      );
       await tester.drag(
         find.byKey(const Key('quizai-home-scroll')),
         const Offset(0, -250),
@@ -86,6 +89,10 @@ void main() {
       expect(
         tester.getTopLeft(find.byKey(const Key('quizai-bottom-nav'))),
         navPosition,
+      );
+      expect(
+        tester.getTopLeft(find.byKey(const Key('quizai-home-logo-slot'))),
+        headerPosition,
       );
       expect(tester.takeException(), isNull);
     });
