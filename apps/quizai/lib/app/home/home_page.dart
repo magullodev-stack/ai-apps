@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 
 import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/interaction/quiz_page.dart';
@@ -445,7 +444,7 @@ class _SalasSlotsState extends State<_SalasSlots>
     _motionController.stop();
 
     final distance = (target - _position).abs();
-    final milliseconds = (150 + (distance * 55)).round().clamp(150, 300) as int;
+    final milliseconds = (150 + (distance * 55)).round().clamp(150, 300);
 
     _motionController
         .animateTo(
