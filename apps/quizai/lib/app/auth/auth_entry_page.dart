@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app_theme.dart';
+import 'auth_provider_button.dart';
 
 class AuthEntryPage extends StatefulWidget {
   const AuthEntryPage({super.key});
@@ -17,9 +18,6 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
     'assets/auth/QuizAI_Auth_LOGO_1080x1920.png',
     'assets/auth/QuizAI_Auth_AI-APPS_1080x1920.png',
     'assets/auth/QuizAI_Auth_Lema_1080x1920.png',
-    'assets/auth/QuizAI_Auth_Google_1080x1920.png',
-    'assets/auth/QuizAI_Auth_Apple_1080x1920.png',
-    'assets/auth/QuizAI_Auth_Email_1080x1920.png',
   ];
 
   late final TapGestureRecognizer _termsRecognizer;
@@ -99,6 +97,53 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   filterQuality: FilterQuality.high,
                 ),
               ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final height = constraints.maxHeight;
+                final buttonWidth = width * 0.86;
+                final buttonHeight = buttonWidth / 5.82;
+                final left = (width - buttonWidth) / 2;
+
+                Widget providerButton({
+                  required Key key,
+                  required AuthProvider provider,
+                  required double topFactor,
+                }) {
+                  return Positioned(
+                    key: key,
+                    left: left,
+                    top: height * topFactor,
+                    width: buttonWidth,
+                    height: buttonHeight,
+                    child: AuthProviderButton(
+                      provider: provider,
+                      onPressed: () {},
+                    ),
+                  );
+                }
+
+                return Stack(
+                  children: [
+                    providerButton(
+                      key: const Key('quizai-auth-button-google'),
+                      provider: AuthProvider.google,
+                      topFactor: 0.5768,
+                    ),
+                    providerButton(
+                      key: const Key('quizai-auth-button-apple'),
+                      provider: AuthProvider.apple,
+                      topFactor: 0.6595,
+                    ),
+                    providerButton(
+                      key: const Key('quizai-auth-button-email'),
+                      provider: AuthProvider.email,
+                      topFactor: 0.7415,
+                    ),
+                  ],
+                );
+              },
+            ),
             Align(
               alignment: Alignment.bottomCenter,
               child: SafeArea(
