@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 
 import '../../modes/estudio/estudio_page.dart';
 import '../../modes/quiz10/interaction/quiz_page.dart';
@@ -392,28 +393,31 @@ class _SalasSlotsState extends State<_SalasSlots>
     _SalaData(id: 'geografia', title: 'Geografía'),
   ];
 
-  late final AnimationController _snapController;
+  static const _itemTravel = 82.0;
+  static const _minimumFlingVelocity = 180.0;
+  static const _maximumLogicalVelocity = 15.0;
+  static const _friction = 0.055;
+
+  late final AnimationController _motionController;
   double _position = 0;
-  double _animationFrom = 0;
-  double _animationTo = 0;
+  bool _dragging = false;
 
   @override
   void initState() {
     super.initState();
-    _snapController = AnimationController(
+    _motionController = AnimationController.unbounded(
       vsync: this,
-      duration: QuizDurations.normal,
+      value: _position,
     )..addListener(() {
-        final t = QuizDurations.curve.transform(_snapController.value);
         setState(() {
-          _position = _animationFrom + ((_animationTo - _animationFrom) * t);
+          _position = _motionController.value;
         });
       });
   }
 
   @override
   void dispose() {
-    _snapController.dispose();
+    _motionController.dispose();
     super.dispose();
   }
 
@@ -438,32 +442,81 @@ class _SalasSlotsState extends State<_SalasSlots>
   }
 
   void _animateTo(double target) {
-    _snapController.stop();
-    _animationFrom = _position;
-    _animationTo = target;
-    _snapController.forward(from: 0);
+    _motionController.stop();
+
+    final distance = (target - _position).abs();
+    final milliseconds = (150 + (distance * 55)).round().clamp(150, 300);
+
+    _motionController
+        .animateTo(
+          target,
+          duration: Duration(milliseconds: milliseconds),
+          curve: Curves.easeOutCubic,
+        )
+        .whenCompleteOrCancel(_normalizePosition);
+  }
+
+  void _normalizePosition() {
+    if (!mounted || _dragging || _motionController.isAnimating) return;
+
+    final count = _salas.length.toDouble();
+    var normalized = _position % count;
+    if (normalized < 0) normalized += count;
+
+    if ((_motionController.value - normalized).abs() > 0.0001) {
+      _motionController.value = normalized;
+    }
+  }
+
+  void _settleToNearest() {
+    if (_dragging) return;
+    _animateTo(_position.roundToDouble());
+  }
+
+  void _onDragStart(DragStartDetails details) {
+    _dragging = true;
+    _motionController.stop();
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    _snapController.stop();
-    setState(() {
-      _position -= (details.primaryDelta ?? 0) / 82;
-    });
+    final delta = details.primaryDelta ?? 0;
+    _motionController.value = _motionController.value - (delta / _itemTravel);
   }
 
   void _onDragEnd(DragEndDetails details) {
-    final velocity = details.primaryVelocity ?? 0;
-    double target;
+    _dragging = false;
 
-    if (velocity < -350) {
-      target = _position.ceilToDouble();
-    } else if (velocity > 350) {
-      target = _position.floorToDouble();
-    } else {
-      target = _position.roundToDouble();
+    final pixelVelocity = details.primaryVelocity ?? 0;
+    if (pixelVelocity.abs() < _minimumFlingVelocity) {
+      _settleToNearest();
+      return;
     }
 
-    _animateTo(target);
+    final logicalVelocity = (-pixelVelocity / _itemTravel).clamp(
+      -_maximumLogicalVelocity,
+      _maximumLogicalVelocity,
+    );
+
+    final simulation = FrictionSimulation(
+      _friction,
+      _position,
+      logicalVelocity,
+      tolerance: const Tolerance(
+        distance: 0.001,
+        velocity: 0.08,
+      ),
+    );
+
+    _motionController.animateWith(simulation).whenCompleteOrCancel(() {
+      if (!mounted || _dragging) return;
+      _settleToNearest();
+    });
+  }
+
+  void _onDragCancel() {
+    _dragging = false;
+    _motionController.stop();
+    _settleToNearest();
   }
 
   @override
@@ -483,8 +536,10 @@ class _SalasSlotsState extends State<_SalasSlots>
 
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart: _onDragStart,
             onHorizontalDragUpdate: _onDragUpdate,
             onHorizontalDragEnd: _onDragEnd,
+            onHorizontalDragCancel: _onDragCancel,
             child: ClipRect(
               child: Stack(
                 children: [
