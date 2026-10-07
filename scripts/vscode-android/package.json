@@ -1,8 +1,8 @@
 {
   "name": "ai-apps-android",
   "displayName": "AI-APPS Android",
-  "description": "Prepara el emulador Android compartido de AI-APPS y abre su visor integrado.",
-  "version": "0.0.1",
+  "description": "Detecta un dispositivo Android físico conectado y ejecuta en él la aplicación activa de AI-APPS.",
+  "version": "0.0.2",
   "publisher": "magullodev",
   "private": true,
   "engines": {
@@ -16,9 +16,6 @@
   ],
   "activationEvents": [
     "onStartupFinished"
-  ],
-  "extensionDependencies": [
-    "utpalbarman.embedroid"
   ],
   "main": "./extension.js"
 }
