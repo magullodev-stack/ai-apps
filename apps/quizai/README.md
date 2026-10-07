@@ -179,7 +179,7 @@ El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre
 
 La generación usa el Dart incluido en Flutter. El proyecto Android conserva su compilación independiente. El prompt y las reglas siguen en Quiz10; el esquema no envía `minItems` ni `maxItems` y el validador sigue exigiendo diez preguntas.
 
-Consulta [`ai/README.md`](../../ai/README.md) para las variables, diagnósticos, seguridad y ciclo de vida del servicio. El registro está en `.ai-apps/dart-service.log`; `scripts/run-android.ps1 -StopService` detiene el servicio local. En Flutter, `r` aplica Hot Reload, `R` reinicia la partida y `q` cierra la sesión.
+Consulta [`ai/README.md`](../../ai/README.md) para las variables, diagnósticos, seguridad y ciclo de vida del servicio. El registro está en `.ai-apps/dart-service.log`; `run.ps1 -StopService` detiene el servicio local. En desarrollo, `run.ps1` mantiene Hot Reload automático cuando cambian archivos Dart o assets durante una sincronización. `r` fuerza Hot Reload, `R` hace Hot Restart y `q` cierra la sesión.
 
 ## Comprobaciones
 
