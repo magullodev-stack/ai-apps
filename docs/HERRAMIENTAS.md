@@ -10,47 +10,32 @@
 ---
 
 
-## Emulador Android compartido
+## Android físico compartido
 
-`scripts/start-android.ps1` prepara el dispositivo Android de AI-APPS.
+`scripts/start-android.ps1` prepara un dispositivo Android físico que ya esté
+conectado mediante ADB. Nunca inicia un emulador.
 
-El procedimiento reutiliza un emulador conectado o inicia el AVD
-Medium_Phone sin ventana externa. Durante el arranque distingue los estados
-`offline` y `device`: solo consulta `sys.boot_completed` cuando ADB indica
-`device`, y tolera una desconexión transitoria entre consultas. Mantiene
-el límite de espera de 240 segundos y devuelve el identificador del
-dispositivo preparado.
-
-No ejecuta ninguna aplicación ni inicia servicios de inteligencia
-artificial.
+Si ADB publica el mismo móvil mediante IP y mediante mDNS, el procedimiento
+prefiere la identidad inalámbrica estable. Si no hay ningún dispositivo físico
+conectado, termina con un error explícito.
 
 `scripts/vscode-android/` contiene la integración local de VS Code.
 
-Al abrir el repositorio AI-APPS, esta integración ejecuta el procedimiento
-compartido y utiliza el comando público `embedroid.openEmbedded` para
-mostrar Android dentro de una pestaña del editor.
+Al abrir el repositorio AI-APPS, la integración prepara el dispositivo físico
+y ejecuta en él el juego seleccionado en `.ai-apps/active-game.txt`. No abre
+EmbeDroid ni inicia un AVD.
 
-La extensión EmbeDroid debe estar instalada.
+La integración local se instala con
+`scripts/install-vscode-android.ps1`. Su código fuente permanece en el
+repositorio.
 
-La integración local se instala en el directorio de extensiones de VS Code.
-Su código fuente permanece en el repositorio.
+Si `.ai-apps/active-game.txt` contiene `none`, no se ejecuta ningún juego.
+Cada aplicación conserva su propio lanzador `apps/<juego>/run.ps1`.
 
-El visor utiliza el grupo de editores activo, permitiendo alternar entre
-los documentos y el teléfono mediante sus pestañas.
+El selector es local y no se publica en Git. Para consultar los diagnósticos
+del arranque, abre el panel Output de VS Code y selecciona
+`AI-APPS Android`.
 
-Para consultar los diagnósticos del arranque, abrir el panel Output de
-VS Code y seleccionar `AI-APPS Android`.
-
-El emulador es una herramienta compartida. Después de prepararlo, la
-integración ejecuta el juego seleccionado en `.ai-apps/active-game.txt`.
-Si el archivo contiene `none`, no ejecuta ningún juego. Cada aplicación
-conserva su propio lanzador `apps/<juego>/run.ps1`.
-
-El selector es local y no se publica en Git. Cambiarlo permite elegir
-qué aplicación se ejecutará la próxima vez que se abra AI-APPS.
-
-La tarea existente `AI-APPS: ejecutar QuizAI con IA` sigue siendo manual
-y reutiliza Android cuando ya está conectado.
 
 ---
 
