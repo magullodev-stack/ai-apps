@@ -32,6 +32,7 @@ void main() {
         'assets/auth/QuizAI_Auth_background_1080x1920.png',
         'assets/auth/QuizAI_Auth_LOGO_1080x1920.png',
         'assets/auth/QuizAI_Auth_AI-APPS_1080x1920.png',
+        'assets/auth/QuizAI_Auth_Lema_1080x1920.png',
         'assets/auth/QuizAI_Auth_Google_1080x1920.png',
         'assets/auth/QuizAI_Auth_Apple_1080x1920.png',
         'assets/auth/QuizAI_Auth_Email_1080x1920.png',
@@ -43,7 +44,7 @@ void main() {
     );
     expect(
       legal.textSpan?.toPlainText(),
-      'Al continuar, aceptas los Términos de uso y la Política de privacidad.',
+      'Al continuar, aceptas los Términos de uso\ny la Política de privacidad.',
     );
 
     final children = (legal.textSpan as TextSpan).children!.cast<TextSpan>();
