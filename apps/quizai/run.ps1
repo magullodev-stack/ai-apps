@@ -397,8 +397,24 @@ try {
                 AI_APPS_FACTUAL_MODEL = $FactualModel
                 AI_APPS_QUIZ10_REVIEW_MODEL = $Quiz10ReviewModel
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $definesFile
-            & $flutter run -d $Device "--dart-define-from-file=$definesFile"
-            if ($LASTEXITCODE -ne 0) { throw 'Flutter terminó con un error.' }
+            $devRunner = Join-Path $repo 'scripts\flutter-dev-runner.dart'
+            if (-not (Test-Path -LiteralPath $devRunner)) {
+                throw "No se encuentra el lanzador de desarrollo Flutter: $devRunner"
+            }
+
+            & $dart $devRunner `
+                --flutter $flutter `
+                --device $Device `
+                --defines-file $definesFile `
+                --working-directory (Join-Path $repo 'apps\quizai') `
+                --watch (Join-Path $repo 'apps\quizai\lib') `
+                --watch (Join-Path $repo 'apps\quizai\assets') `
+                --watch (Join-Path $repo 'shared') `
+                --watch (Join-Path $repo 'ai\flutter_client')
+
+            if ($LASTEXITCODE -ne 0) {
+                throw 'Flutter terminó con un error.'
+            }
         }
     } finally { Pop-Location }
 } finally {
