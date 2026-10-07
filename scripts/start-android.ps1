@@ -128,6 +128,13 @@ if (-not $ready) {
 $emulators = @(
     Get-ConnectedAndroidDevices |
         Where-Object { $_ -match '^emulator-\d+
+
+foreach ($emulatorId in $emulators) {
+    & $adb -s $emulatorId emu kill 2>$null | Out-Null
+}
+
+Write-Host "Android preparado: $serial" -ForegroundColor Green
+Write-Output "AI_APPS_ANDROID_SERIAL=$serial"
  }
 )
 
