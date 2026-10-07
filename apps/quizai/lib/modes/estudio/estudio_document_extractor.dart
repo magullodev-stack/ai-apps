@@ -280,7 +280,7 @@ List<StudySection> _sectionsFromParagraphs(
         id: '${section!.id}-ss${section!.subsections.length + 1}',
         title: paragraph.text,
       );
-      section!.subsections.add(subsection!);
+      section!.subsections.add(subsection);
       continue;
     }
 
@@ -292,7 +292,7 @@ List<StudySection> _sectionsFromParagraphs(
       sourceLocator: paragraph.locator,
     );
     if (subsection != null) {
-      subsection!.blocks.add(block);
+      subsection.blocks.add(block);
     } else {
       section!.blocks.add(block);
     }
