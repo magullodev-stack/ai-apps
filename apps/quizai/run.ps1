@@ -356,54 +356,7 @@ try {
                         throw "Hay varios emuladores conectados. Indica el dispositivo con -Device."
                     }
                     else {
-                        $emulator = Join-Path $sdk 'emulator\emulator.exe'
-
-                        if (-not (Test-Path -LiteralPath $emulator)) {
-                            throw "No se encuentra el emulador Android en $emulator"
-                        }
-
-                        $avds = @(
-                            & $emulator -list-avds |
-                                Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-                        )
-
-                        if ($avds.Count -ne 1) {
-                            throw "No hay un emulador único para iniciar. Emuladores instalados: $($avds -join ', ')"
-                        }
-
-                        Write-Host "Iniciando emulador Android: $($avds[0])"
-
-                        $emulatorProcess = Start-Process `
-                            -FilePath $emulator `
-                            -ArgumentList @('-avd', $avds[0]) `
-                            -PassThru
-
-                        $found = $false
-
-                        for ($attempt = 0; $attempt -lt 90; $attempt++) {
-                            Start-Sleep -Seconds 2
-                            $emulators = @(Get-ConnectedEmulators)
-
-                            if ($emulators.Count -eq 1) {
-                                $Device = $emulators[0]
-                                $found = $true
-                                break
-                            }
-
-                            if ($emulators.Count -gt 1) {
-                                throw 'Hay varios emuladores conectados; no se puede seleccionar uno de forma segura.'
-                            }
-
-                            if ($emulatorProcess.HasExited) {
-                                throw 'El emulador se cerró durante el arranque.'
-                            }
-                        }
-
-                        if (-not $found) {
-                            throw 'El emulador no apareció en ADB durante los 180 segundos de espera.'
-                        }
-
-                        Write-Host "Emulador detectado: $Device"
+                        throw 'No hay ningún dispositivo Android conectado. Conecta el Pixel 9a y vuelve a ejecutar.'
                     }
                 }
             }
