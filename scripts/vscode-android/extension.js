@@ -87,14 +87,30 @@ async function launchSelectedGame(folder, serial) {
     'active-game.txt'
   );
 
-  if (!fs.existsSync(selectionFile)) {
-    output.appendLine('No hay juego activo seleccionado.');
-    return;
-  }
+  let game;
 
-  const game = fs.readFileSync(selectionFile, 'utf8')
-    .trim()
-    .toLowerCase();
+  if (!fs.existsSync(selectionFile)) {
+    const quizaiLauncher = path.join(
+      root,
+      'apps',
+      'quizai',
+      'run.ps1'
+    );
+
+    if (!fs.existsSync(quizaiLauncher)) {
+      output.appendLine('No hay juego activo seleccionado.');
+      return;
+    }
+
+    game = 'quizai';
+    output.appendLine(
+      'Sin selector local; se usa QuizAI como aplicación de desarrollo.'
+    );
+  } else {
+    game = fs.readFileSync(selectionFile, 'utf8')
+      .trim()
+      .toLowerCase();
+  }
 
   if (!game || game === 'none') {
     output.appendLine('AI-APPS abierto sin juego activo.');
