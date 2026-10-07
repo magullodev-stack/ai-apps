@@ -34,4 +34,4 @@ Cuando se incorpore o modifique una herramienta, actualiza su entrada en el cat�
 
 La prueba técnica móvil actual es `apps/quizai/`, un proyecto Flutter independiente. Consulta sus instrucciones operativas en `apps/quizai/README.md`. Su conservación es temporal; no desarrolles funcionalidades particulares de Quiz10 como parte de la base común.
 
-El emulador Android compartido se prepara automáticamente al abrir AI-APPS en VS Code; el juego seleccionado se ejecuta mediante su propio lanzador. Las llamadas reales a modelos y las pruebas que puedan interrumpir sesiones activas se coordinan con el usuario.
+El dispositivo Android físico conectado se prepara automáticamente al abrir AI-APPS en VS Code; el juego seleccionado se ejecuta mediante su propio lanzador y su sesión de desarrollo aplica Hot Reload automático ante cambios sincronizados de código y assets. Las llamadas reales a modelos y las pruebas que puedan interrumpir sesiones activas se coordinan con el usuario.
