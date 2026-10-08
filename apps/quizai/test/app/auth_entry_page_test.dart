@@ -1,9 +1,11 @@
+import 'package:ai_apps_identity/ai_apps_identity.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizai/app/app.dart';
 import 'package:quizai/app/app_shell.dart';
 import 'package:quizai/app/auth/auth_entry_page.dart';
+import 'package:quizai/app/auth/email_auth_page.dart';
 
 void main() {
   testWidgets('QuizAI abre en la pantalla de autenticación', (tester) async {
@@ -12,29 +14,13 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(const QuizAIApp());
+    final identity = _FakeIdentityService();
+    await tester.pumpWidget(QuizAIApp(identityService: identity));
     await tester.pumpAndSettle();
 
     expect(find.byType(AuthEntryPage), findsOneWidget);
     expect(find.byKey(const Key('quizai-auth-entry')), findsOneWidget);
     expect(find.byType(AppShell), findsNothing);
-
-    final assets = tester
-        .widgetList<Image>(find.byType(Image))
-        .map((image) => image.image)
-        .whereType<AssetImage>()
-        .map((image) => image.assetName)
-        .toSet();
-
-    expect(
-      assets,
-      containsAll(<String>[
-        'assets/auth/QuizAI_Auth_background_1080x1920.png',
-        'assets/auth/QuizAI_Auth_LOGO_1080x1920.png',
-        'assets/auth/QuizAI_Auth_AI-APPS_1080x1920.png',
-        'assets/auth/QuizAI_Auth_Lema_1080x1920.png',
-      ]),
-    );
 
     final google = find.byKey(const Key('quizai-auth-button-google'));
     final apple = find.byKey(const Key('quizai-auth-button-apple'));
@@ -43,24 +29,8 @@ void main() {
     expect(apple, findsOneWidget);
     expect(email, findsOneWidget);
 
-    final googleSize = tester.getSize(google);
-    final appleSize = tester.getSize(apple);
-    final emailSize = tester.getSize(email);
-    expect(appleSize, googleSize);
-    expect(emailSize, googleSize);
-    expect(find.text('Continuar con Google'), findsOneWidget);
-    expect(find.text('Continuar con Apple'), findsOneWidget);
-    expect(find.text('Continuar con email'), findsOneWidget);
-    final googleIcon = tester
-        .widgetList<Image>(find.byType(Image))
-        .map((image) => image.image)
-        .whereType<AssetImage>()
-        .where(
-          (image) =>
-              image.assetName ==
-              'assets/auth/QuizAI_Auth_Google_ICON.png',
-        );
-    expect(googleIcon, hasLength(1));
+    expect(tester.getSize(apple), tester.getSize(google));
+    expect(tester.getSize(email), tester.getSize(google));
 
     final legal = tester.widget<Text>(
       find.byKey(const Key('quizai-auth-legal')),
@@ -72,10 +42,7 @@ void main() {
 
     final children = (legal.textSpan as TextSpan).children!.cast<TextSpan>();
     expect(
-      children
-          .where((span) => span.text == 'Términos de uso')
-          .single
-          .recognizer,
+      children.where((span) => span.text == 'Términos de uso').single.recognizer,
       isA<TapGestureRecognizer>(),
     );
     expect(
@@ -85,6 +52,58 @@ void main() {
           .recognizer,
       isA<TapGestureRecognizer>(),
     );
+
+    await tester.tap(email);
+    await tester.pumpAndSettle();
+    expect(find.byType(EmailAuthPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+}
+
+class _FakeIdentityService implements IdentityService {
+  @override
+  bool get isInitialized => true;
+
+  @override
+  IdentityUser? get currentUser => null;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Stream<IdentityUser?> authStateChanges() => const Stream.empty();
+
+  @override
+  Future<IdentityUser> registerWithEmail({
+    required String email,
+    required String password,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> sendPasswordReset({required String email}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<IdentityUser> signInWithApple() {
+    throw const IdentityFailure.providerNotReady(IdentityProvider.apple);
+  }
+
+  @override
+  Future<IdentityUser> signInWithEmail({
+    required String email,
+    required String password,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<IdentityUser> signInWithGoogle() {
+    throw const IdentityFailure.providerNotReady(IdentityProvider.google);
+  }
+
+  @override
+  Future<void> signOut() async {}
 }

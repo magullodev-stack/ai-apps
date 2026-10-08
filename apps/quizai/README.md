@@ -95,19 +95,33 @@ cuando la altura del dispositivo no permite mostrar todas las modalidades.
 ## Acceso inicial
 
 QuizAI arranca en una pantalla de autenticación propia antes de entrar en la
-aplicación. La composición se reconstruye por capas 1080×1920 desde
-`assets/auth/`: fondo, logotipo de QuizAI, firma de AI-APPS y accesos visuales
-de Google, Apple y email. Todas las capas comparten el mismo lienzo para
-conservar exactamente su colocación.
+aplicación. La composición principal se reconstruye por capas 1080×1920 desde
+`assets/auth/`; los tres botones de acceso son un único componente Flutter
+reutilizado para conservar exactamente caja, iconos y alineación del texto.
+
+QuizAI consume la capacidad compartida `ai_apps_identity` de
+`shared/identity/`. La aplicación no depende directamente de Firebase:
+`IdentityService` define el contrato y `FirebaseIdentityService` implementa
+sesión persistente, acceso y registro con email/contraseña, recuperación de
+contraseña y cierre de sesión.
+
+**Continuar con email** abre una pantalla real con dos modos: iniciar sesión y
+crear cuenta. Cuando Firebase autentica al usuario, el estado de sesión hace que
+QuizAI entre en `AppShell`; al volver a abrir la aplicación, una sesión válida
+evita la pantalla de acceso.
+
+Google y Apple utilizan la misma API compartida, pero sus proveedores todavía
+no están conectados. Hasta incorporar sus SDK y credenciales devuelven un estado
+explícito de proveedor pendiente; no simulan autenticación.
+
+La configuración concreta del proyecto Firebase para Android/iOS todavía debe
+registrarse en QuizAI. Sin esa configuración, la UI de email está disponible
+pero el backend de autenticación responde como no configurado.
 
 El texto legal se renderiza como interfaz Flutter, no como imagen. **Términos
 de uso** y **Política de privacidad** son enlaces independientes y subrayados;
 mientras no existan los documentos definitivos, muestran los mismos avisos
 provisionales que Ajustes.
-
-Los accesos de Google, Apple y email todavía son únicamente la capa visual de
-la pantalla. No se simula autenticación ni se permite entrar a Home hasta que
-la capacidad compartida de identidad esté conectada.
 
 ## Navegación
 
@@ -117,9 +131,7 @@ el bloque **Estudia tu documento**. La barra inferior fija alterna entre
 **Inicio** y **Perfil**. Quiz10 abre su partida existente; Estudia tu documento
 abre Estudio y permite seleccionar un PDF, DOCX, PPTX, JPEG o PNG desde el
 selector nativo; las Salas todavía no navegan. La flecha de regreso vuelve a
-Home. Salir de una modalidad descarta su
-partida en memoria.
-
+Home. Salir de una modalidad descarta su partida en memoria.
 
 ## Estudio — archivo → StudyDocument → quiz
 
@@ -186,17 +198,15 @@ los tokens de `app_theme.dart`; no se trasladan a la UI compartida.
 
 ## Ejecutar con IA
 
-Con `emulator-5554` iniciado, desde la raíz del repositorio en PowerShell:
+Con el dispositivo Android preparado, desde la raíz del repositorio en PowerShell:
 
 ```powershell
 .\apps\quizai\run.ps1
 ```
 
-El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** usa este mismo procedimiento. Cambiar de pestaña o abrir Ajustes no llama al modelo; pulsar **Jugar** dentro de 🎲 Quiz10 solicita una generación.
-
-La generación usa el Dart incluido en Flutter. El proyecto Android conserva su compilación independiente. El prompt y las reglas siguen en Quiz10; el esquema no envía `minItems` ni `maxItems` y el validador sigue exigiendo diez preguntas.
-
-Consulta [`ai/README.md`](../../ai/README.md) para las variables, diagnósticos, seguridad y ciclo de vida del servicio. El registro está en `.ai-apps/dart-service.log`; `run.ps1 -StopService` detiene el servicio local. En desarrollo, `run.ps1` mantiene Hot Reload automático cuando cambian archivos Dart o assets durante una sincronización. `r` fuerza Hot Reload, `R` hace Hot Restart y `q` cierra la sesión.
+El procedimiento inicia o reutiliza el servicio Dart, conecta el dispositivo
+Android seleccionado y abre QuizAI con la configuración de desarrollo activa.
+El lanzador conserva Hot Reload automático para cambios de Dart y assets.
 
 ## Comprobaciones
 
@@ -209,83 +219,5 @@ flutter build apk --debug
 git diff --check
 ```
 
-Las pruebas de `test/app/` cubren el contrato del Design System, Nunito, la compatibilidad del tema con superficies claras, la jerarquía de Home en distintos tamaños, la navegación fija al desplazar, el cambio de pestañas y el regreso desde Quiz10 y Estudio. En Ajustes verifican las preferencias iniciales, las filas pulsables, la semántica accesible, el estado de sesión, los diálogos y el texto ampliado en pantallas estrechas. No ejecutan generaciones ni llamadas reales a modelos. El APK se genera en `build/app/outputs/flutter-apk/app-debug.apk`.
-
-Para una generación real explícita, desde la raíz:
-
-```powershell
-.\apps\quizai\run.ps1 -VerifyOnly
-```
-
-La comprobación usa `gpt-4.1-mini` y solo tiene éxito si el validador de Quiz10 acepta diez preguntas. No modifica la sesión Android. El resultado sin contenido ni credenciales queda en `.ai-apps/quizai-verification.json`.
-
-### Apertura automática desde AI-APPS
-
-AI-APPS prepara el emulador compartido al abrir VS Code. Si
-`.ai-apps/active-game.txt` contiene `quizai`, también ejecuta
-`apps/quizai/run.ps1` automáticamente en la terminal integrada.
-
-El lanzador de QuizAI conserva la preparación del servicio Dart de IA.
-Si necesita una clave OpenAI, la solicita en la terminal.
-
-Para trabajar sin abrir ningún juego, establecer `none` como juego
-activo. El archivo de selección es local y no se publica en Git.
-
-## Generación Quiz10: G → R → S → Dart
-
-El catálogo canónico se encuentra en
-`lib/modes/quiz10/production/quiz10_DART_Pi+Di.dart`: 20 pivotes P01–P20 y 34 dimensiones D01–D34 expresadas como instrucciones directas.
-
-Cada Quiz10 selecciona diez P distintas y diez D distintas. G recibe diez
-unidades independientes y simultáneas:
-
-```text
-(P, I_D, H) -> F
-(F, I_D) -> Q
-(F, Q) -> O
-```
-
-`lib/modes/quiz10/production/Quiz10_PROMPT_G.dart` contiene el prompt de generación G.
-`F` es un andamiaje factual transitorio que G materializa antes de construir la
-pregunta; no entra en H, no se envía a R ni a S y no forma parte del test final.
-`O` contiene cuatro opciones y `C` señala la correcta; internamente
-`R := O_C`. G no recibe dificultad.
-
-Cuando terminan las diez llamadas G, Dart transforma cada fila en
-`Q, R, d1, d2, d3`. `lib/modes/quiz10/production/Quiz10_PROMPT_R.dart` revisa cada
-ítem de forma independiente: se lanzan diez llamadas R simultáneas y cada una
-devuelve únicamente los campos de su propio ítem que sea necesario corregir.
-
-Dart aplica los parches R y construye el test corregido `T*`.
-`lib/modes/quiz10/production/Quiz10_PROMPT_S.dart` define S, una única llamada global
-que recibe las diez preguntas corregidas y devuelve exclusivamente su orden
-relativo de dificultad. S no corrige contenido.
-
-Dart aplica el orden de S y, al final, baraja las cuatro opciones de cada
-pregunta. La posición de la respuesta correcta que produjo G no llega al
-jugador.
-
-`H` es el histórico de pares `(Q,R)` ya usados por cruce P×D. El pipeline
-no lo actualiza hasta terminar R; guarda la pregunta y la respuesta corregidas.
-El orden posterior de S no modifica H.
-
-La pantalla Quiz10 está conectada al pipeline real. Dentro de una misma sesión,
-`Otra partida` reutiliza la instancia del pipeline y por tanto su H.
-
-Para auditar solo G:
-
-```powershell
-.\apps\quizai\run.ps1 -ProbarLuna -Muestras 20
-```
-
-Para auditar el flujo completo G → R → S → Dart:
-
-```powershell
-.\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
-```
-
-La auditoría completa conserva por test la salida de G, las diez entradas y
-salidas R, las correcciones, el test tras R, la entrada y salida S, el orden,
-el test resultante y las opciones tras el shuffle de Dart. La terminal resume
-G, R, S y TOTAL en una sola tabla por test y mantiene `CAMBIOS` con los
-valores G/R únicamente cuando R corrige campos.
+Las pruebas de `test/app/` cubren el contrato del Design System, la entrada de
+autenticación, el flujo de email, la jerarquía de Home, la navegación y Ajustes.

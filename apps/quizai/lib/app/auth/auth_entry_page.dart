@@ -1,12 +1,23 @@
+import 'package:ai_apps_identity/ai_apps_identity.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app_theme.dart';
 import 'auth_provider_button.dart';
+import 'email_auth_page.dart';
 
 class AuthEntryPage extends StatefulWidget {
-  const AuthEntryPage({super.key});
+  const AuthEntryPage({
+    super.key,
+    required this.identity,
+    required this.identityReady,
+    this.initializationError,
+  });
+
+  final IdentityService identity;
+  final bool identityReady;
+  final Object? initializationError;
 
   @override
   State<AuthEntryPage> createState() => _AuthEntryPageState();
@@ -22,6 +33,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
 
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
+  bool _providerBusy = false;
 
   @override
   void initState() {
@@ -55,6 +67,59 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
       ],
     ),
   );
+
+  Future<void> _openEmail() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => EmailAuthPage(identity: widget.identity),
+      ),
+    );
+  }
+
+  Future<void> _signInWithProvider(IdentityProvider provider) async {
+    if (_providerBusy) return;
+
+    if (!widget.identityReady) {
+      _showMessage(
+        widget.initializationError == null
+            ? 'Preparando el servicio de acceso…'
+            : 'El servicio de acceso todavía no está configurado.',
+      );
+      return;
+    }
+
+    setState(() => _providerBusy = true);
+
+    try {
+      switch (provider) {
+        case IdentityProvider.google:
+          await widget.identity.signInWithGoogle();
+        case IdentityProvider.apple:
+          await widget.identity.signInWithApple();
+        case IdentityProvider.email:
+          return;
+      }
+    } on IdentityFailure catch (failure) {
+      if (!mounted) return;
+
+      if (failure.code == IdentityFailureCode.providerNotReady) {
+        final name = provider == IdentityProvider.google ? 'Google' : 'Apple';
+        _showMessage(
+          'El acceso con $name está preparado, pero todavía falta conectar su proveedor.',
+        );
+      } else {
+        _showMessage('No se ha podido completar el acceso.');
+      }
+    } finally {
+      if (mounted) setState(() => _providerBusy = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +174,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   required Key key,
                   required AuthProvider provider,
                   required double topFactor,
+                  required VoidCallback onPressed,
                 }) {
                   return Positioned(
                     key: key,
@@ -118,7 +184,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                     height: buttonHeight,
                     child: AuthProviderButton(
                       provider: provider,
-                      onPressed: () {},
+                      onPressed: onPressed,
                     ),
                   );
                 }
@@ -129,16 +195,21 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                       key: const Key('quizai-auth-button-google'),
                       provider: AuthProvider.google,
                       topFactor: 0.5768,
+                      onPressed: () =>
+                          _signInWithProvider(IdentityProvider.google),
                     ),
                     providerButton(
                       key: const Key('quizai-auth-button-apple'),
                       provider: AuthProvider.apple,
                       topFactor: 0.6595,
+                      onPressed: () =>
+                          _signInWithProvider(IdentityProvider.apple),
                     ),
                     providerButton(
                       key: const Key('quizai-auth-button-email'),
                       provider: AuthProvider.email,
                       topFactor: 0.7415,
+                      onPressed: _openEmail,
                     ),
                   ],
                 );

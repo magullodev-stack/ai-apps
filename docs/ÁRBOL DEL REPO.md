@@ -19,6 +19,7 @@ ai-apps/
 │       ├── lib/
 │       │   ├── main.dart
 │       │   ├── app/           # Estructura general de QuizAI.
+│       │   │   ├── auth/        # Entrada y UI de autenticación propia de QuizAI.
 │       │   │   ├── interaction/ # Presentación de intervenciones de QuizAI.
 │       │   │   └── onboarding/  # Secuencias iniciales de la aplicación.
 │       │   ├── modes/         # Modalidades de QuizAI.
@@ -41,6 +42,7 @@ ai-apps/
 │   └── README.md
 │
 ├── shared/                    # Componentes compartidos de AI-APPS.
+│   ├── identity/              # Identidad y autenticación compartidas.
 │   └── ui/                    # Componentes de interfaz reutilizables.
 │
 ├── scripts/                   # Herramientas operativas compartidas.
@@ -78,7 +80,8 @@ Su funcionamiento se documenta en [`ai/README.md`](../ai/README.md).
 
 Contiene componentes compartidos por las aplicaciones cuando existe una necesidad real de reutilización.
 
-`shared/ui/` contiene componentes de interfaz reutilizables.
+`shared/identity/` contiene la capacidad técnica común de identidad y
+autenticación. `shared/ui/` contiene componentes de interfaz reutilizables.
 
 ### scripts/
 
