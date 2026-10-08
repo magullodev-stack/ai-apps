@@ -94,8 +94,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
       switch (provider) {
         case IdentityProvider.google:
           await widget.identity.signInWithGoogle();
+          break;
         case IdentityProvider.apple:
           await widget.identity.signInWithApple();
+          break;
         case IdentityProvider.email:
           return;
       }

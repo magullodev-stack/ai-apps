@@ -80,8 +80,7 @@ Su funcionamiento se documenta en [`ai/README.md`](../ai/README.md).
 
 Contiene componentes compartidos por las aplicaciones cuando existe una necesidad real de reutilización.
 
-`shared/identity/` contiene la capacidad técnica común de identidad y
-autenticación. `shared/ui/` contiene componentes de interfaz reutilizables.
+`shared/identity/` contiene la capacidad técnica común de identidad y autenticación. `shared/ui/` contiene componentes de interfaz reutilizables.
 
 ### scripts/
 
