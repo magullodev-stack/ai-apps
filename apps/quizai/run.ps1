@@ -303,11 +303,7 @@ if ($ProbarQuiz10) {
 
 # Evitar resolver dependencias en cada arranque. Flutter solo necesita
 # pub get cuando cambia alguno de los manifiestos que participan en QuizAI.
-function Test-FlutterPubGetRequired([string]$AppDirectory) {
-    $packageConfig = Join-Path $AppDirectory '.dart_tool\package_config.json'
-    if (-not (Test-Path -LiteralPath $packageConfig)) { return $true }
-
-    $resolvedAt = (Get-Item -LiteralPath $packageConfig).LastWriteTimeUtc
+function Get-FlutterDependencyFingerprint([string]$AppDirectory) {
     $inputs = @(
         (Join-Path $AppDirectory 'pubspec.yaml'),
         (Join-Path $AppDirectory 'pubspec.lock'),
@@ -317,14 +313,52 @@ function Test-FlutterPubGetRequired([string]$AppDirectory) {
         (Join-Path $repo 'ai\dart_service\pubspec.yaml')
     )
 
+    $builder = New-Object Text.StringBuilder
+
     foreach ($input in $inputs) {
-        if ((Test-Path -LiteralPath $input) -and
-            (Get-Item -LiteralPath $input).LastWriteTimeUtc -gt $resolvedAt) {
-            return $true
+        if (Test-Path -LiteralPath $input) {
+            [void]$builder.AppendLine($input)
+            [void]$builder.AppendLine(
+                (Get-Content -Raw -LiteralPath $input)
+            )
         }
     }
 
-    return $false
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes($builder.ToString())
+        return [BitConverter]::ToString(
+            $sha.ComputeHash($bytes)
+        ).Replace('-', '')
+    }
+    finally {
+        $sha.Dispose()
+    }
+}
+
+function Invoke-FlutterPubGetIfRequired([string]$AppDirectory) {
+    $stamp = Join-Path $runtime 'quizai-pub-fingerprint.txt'
+    $packageConfig = Join-Path $AppDirectory '.dart_tool\package_config.json'
+    $before = Get-FlutterDependencyFingerprint -AppDirectory $AppDirectory
+    $stored = if (Test-Path -LiteralPath $stamp) {
+        (Get-Content -Raw -LiteralPath $stamp).Trim()
+    } else {
+        ''
+    }
+
+    if ((Test-Path -LiteralPath $packageConfig) -and $stored -eq $before) {
+        Write-Host 'Dependencias Flutter ya resueltas.'
+        return
+    }
+
+    Write-Host 'Dependencias Flutter cambiadas; ejecutando pub get...'
+    & $flutter pub get
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Falló flutter pub get.'
+    }
+
+    $after = Get-FlutterDependencyFingerprint -AppDirectory $AppDirectory
+    Set-Content -LiteralPath $stamp -Value $after -Encoding ASCII -NoNewline
 }
 
 # OpenAI credentials are never inherited by Flutter or passed as dart-defines.
@@ -337,14 +371,7 @@ try {
     $appDirectory = Join-Path $repo 'apps\quizai'
     Push-Location $appDirectory
     try {
-        if (Test-FlutterPubGetRequired -AppDirectory $appDirectory) {
-            Write-Host 'Dependencias Flutter cambiadas; ejecutando pub get...'
-            & $flutter pub get
-            if ($LASTEXITCODE -ne 0) { throw 'Falló flutter pub get.' }
-        }
-        else {
-            Write-Host 'Dependencias Flutter ya resueltas; se omite pub get.'
-        }
+        Invoke-FlutterPubGetIfRequired -AppDirectory $appDirectory
         if ($VerifyOnly) {
             $receipt = Join-Path $runtime 'quiz10-verification.json'
             if (Test-Path -LiteralPath $receipt) { Remove-Item -LiteralPath $receipt }

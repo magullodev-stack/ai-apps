@@ -1,8 +1,8 @@
 {
   "name": "ai-apps-android",
   "displayName": "AI-APPS Android",
-  "description": "Prepara Android físico para AI-APPS, abre EmbeDroid cuando está instalado y ejecuta la aplicación activa.",
-  "version": "0.0.4",
+  "description": "Abre el emulador Android de desarrollo dentro de VS Code con EmbeDroid y ejecuta la aplicación activa.",
+  "version": "0.0.5",
   "publisher": "magullodev",
   "private": true,
   "engines": {
@@ -16,6 +16,9 @@
   ],
   "activationEvents": [
     "onStartupFinished"
+  ],
+  "extensionDependencies": [
+    "utpalbarman.embedroid"
   ],
   "main": "./extension.js"
 }

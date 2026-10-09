@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const childProcess = require('child_process');
 
+const EMBEDROID_ID = 'utpalbarman.embedroid';
+
 const output = vscode.window.createOutputChannel(
   'AI-APPS Android'
 );
@@ -17,18 +19,27 @@ function getAiAppsWorkspace() {
       path.basename(root).toLowerCase() === 'ai-apps' &&
       fs.existsSync(path.join(root, 'AGENTS.md')) &&
       fs.existsSync(
-        path.join(root, 'scripts', 'start-android.ps1')
+        path.join(root, 'scripts', 'start-android-emulator.ps1')
       )
     );
   });
 }
 
-function preparePhysicalAndroid(root) {
+function isEmbeddedViewOpen() {
+  return vscode.window.tabGroups.all.some(group =>
+    group.tabs.some(tab =>
+      tab.input instanceof vscode.TabInputWebview &&
+      tab.input.viewType === 'embedroid.embedded'
+    )
+  );
+}
+
+function startDevelopmentAndroid(root) {
   return new Promise((resolve, reject) => {
     const script = path.join(
       root,
       'scripts',
-      'start-android.ps1'
+      'start-android-emulator.ps1'
     );
 
     childProcess.execFile(
@@ -43,17 +54,12 @@ function preparePhysicalAndroid(root) {
       {
         cwd: root,
         windowsHide: true,
-        timeout: 60000,
+        timeout: 300000,
         maxBuffer: 1024 * 1024
       },
       (error, stdout, stderr) => {
-        if (stdout) {
-          output.appendLine(stdout);
-        }
-
-        if (stderr) {
-          output.appendLine(stderr);
-        }
+        if (stdout) output.appendLine(stdout);
+        if (stderr) output.appendLine(stderr);
 
         if (error) {
           reject(error);
@@ -61,149 +67,80 @@ function preparePhysicalAndroid(root) {
         }
 
         const match = stdout.match(
-          /AI_APPS_ANDROID_SERIAL=([^\r\n]+)/
+          /AI_APPS_ANDROID_SERIAL=(emulator-\d+)/
         );
 
         if (!match) {
           reject(
             new Error(
-              'El procedimiento no devolvió un dispositivo Android físico preparado.'
+              'El arranque no devolvió un emulador Android preparado.'
             )
           );
           return;
         }
 
-        resolve(match[1].trim());
+        resolve(match[1]);
       }
     );
   });
 }
 
+async function configureEmbeddedView(folder) {
+  const config = vscode.workspace.getConfiguration(
+    'embedroid',
+    folder.uri
+  );
 
-function findEmbeDroidExtension() {
-  return vscode.extensions.all.find(extension => {
-    const manifest = extension.packageJSON || {};
-    const haystack = [
-      extension.id,
-      manifest.name,
-      manifest.displayName,
-      manifest.description
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
+  if (config.get('openIn') !== 'active') {
+    await config.update(
+      'openIn',
+      'active',
+      vscode.ConfigurationTarget.Workspace
+    );
+  }
 
-    return haystack.includes('embedroid');
-  });
+  if (config.get('headless') !== true) {
+    await config.update(
+      'headless',
+      true,
+      vscode.ConfigurationTarget.Workspace
+    );
+  }
 }
 
-function commandScore(command) {
-  const manifestText = [
-    command.command,
-    command.title,
-    command.category
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
+async function openEmbeddedAndroid(folder, serial) {
+  const embedroid = vscode.extensions.getExtension(
+    EMBEDROID_ID
+  );
 
-  if (
-    /stop|close|disconnect|kill|settings|install|uninstall|delete|remove/.test(
-      manifestText
-    )
-  ) {
-    return -100;
+  if (!embedroid) {
+    throw new Error(
+      'EmbeDroid no está instalado: falta utpalbarman.embedroid.'
+    );
   }
 
-  let score = 0;
+  await configureEmbeddedView(folder);
+  await embedroid.activate();
 
-  if (manifestText.includes('embedroid')) {
-    score += 10;
-  }
-
-  if (/mirror|screen|device|android/.test(manifestText)) {
-    score += 8;
-  }
-
-  if (/open|show|start|launch|connect/.test(manifestText)) {
-    score += 6;
-  }
-
-  return score;
-}
-
-async function openEmbeDroid() {
-  const extension = findEmbeDroidExtension();
-
-  if (!extension) {
+  if (isEmbeddedViewOpen()) {
     output.appendLine(
-      'EmbeDroid no está instalado; se omite el espejo Android.'
+      'EmbeDroid ya está abierto.'
     );
     return;
   }
 
-  await extension.activate();
-
-  const manifest = extension.packageJSON || {};
-  const containers = manifest.contributes?.viewsContainers || {};
-  const containerCandidates = [
-    ...(containers.activitybar || []),
-    ...(containers.panel || [])
-  ];
-
-  let viewOpened = false;
-
-  for (const container of containerCandidates) {
-    if (!container?.id) {
-      continue;
+  await vscode.commands.executeCommand(
+    'embedroid.openEmbedded',
+    {
+      device: {
+        serial
+      }
     }
+  );
 
-    try {
-      await vscode.commands.executeCommand(
-        'workbench.view.extension.' + container.id
-      );
-      output.appendLine(
-        'EmbeDroid abierto en VS Code: ' + container.id
-      );
-      viewOpened = true;
-      break;
-    } catch (_) {
-      // Algunos contenedores no exponen el comando estándar; probamos
-      // los comandos declarados por la propia extensión.
-    }
-  }
-
-  const contributedCommands = manifest.contributes?.commands || [];
-  const candidates = contributedCommands
-    .map(command => ({
-      command,
-      score: commandScore(command)
-    }))
-    .filter(entry => entry.score >= 14)
-    .sort((a, b) => b.score - a.score);
-
-  for (const candidate of candidates) {
-    try {
-      await vscode.commands.executeCommand(candidate.command.command);
-      output.appendLine(
-        'EmbeDroid iniciado: ' + candidate.command.command
-      );
-      return;
-    } catch (error) {
-      output.appendLine(
-        'EmbeDroid no pudo ejecutar ' +
-          candidate.command.command +
-          ': ' +
-          String(error)
-      );
-    }
-  }
-
-  if (!viewOpened) {
-    output.appendLine(
-      'EmbeDroid está instalado, pero no expone un comando reconocible para abrirlo automáticamente.'
-    );
-  }
+  output.appendLine(
+    'EmbeDroid abierto con ' + serial
+  );
 }
 
 async function launchSelectedGame(folder, serial) {
@@ -230,9 +167,6 @@ async function launchSelectedGame(folder, serial) {
     }
 
     game = 'quizai';
-    output.appendLine(
-      'Sin selector local; se usa QuizAI como aplicación de desarrollo.'
-    );
   } else {
     game = fs.readFileSync(selectionFile, 'utf8')
       .trim()
@@ -286,7 +220,7 @@ async function launchSelectedGame(folder, serial) {
   const task = new vscode.Task(
     {
       type: 'aiAppsGame',
-      game: game
+      game
     },
     folder,
     'AI-APPS: ejecutar ' + game,
@@ -325,18 +259,18 @@ async function launchSelectedGame(folder, serial) {
 
 async function startEnvironment(folder) {
   output.appendLine(
-    'Preparando dispositivo Android físico para AI-APPS...'
+    'Preparando emulador Android de desarrollo...'
   );
 
-  const serial = await preparePhysicalAndroid(
+  const serial = await startDevelopmentAndroid(
     folder.uri.fsPath
   );
 
   output.appendLine(
-    'Android físico preparado: ' + serial
+    'Emulador preparado: ' + serial
   );
 
-  await openEmbeDroid();
+  await openEmbeddedAndroid(folder, serial);
   await launchSelectedGame(folder, serial);
 }
 
