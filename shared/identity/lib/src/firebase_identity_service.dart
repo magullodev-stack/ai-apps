@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'identity_failure.dart';
 import 'identity_service.dart';
@@ -8,6 +9,7 @@ import 'identity_user.dart';
 final class FirebaseIdentityService implements IdentityService {
   FirebaseAuth? _auth;
   bool _initialized = false;
+  bool _googleInitialized = false;
 
   @override
   bool get isInitialized => _initialized;
@@ -92,17 +94,59 @@ final class FirebaseIdentityService implements IdentityService {
   }
 
   @override
-  Future<IdentityUser> signInWithGoogle() {
-    throw const IdentityFailure.providerNotReady(IdentityProvider.google);
+  Future<IdentityUser> signInWithGoogle() async {
+    try {
+      if (!_googleInitialized) {
+        await GoogleSignIn.instance.initialize();
+        _googleInitialized = true;
+      }
+
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final idToken = googleUser.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        throw const IdentityFailure(
+          IdentityFailureCode.unknown,
+          provider: IdentityProvider.google,
+        );
+      }
+
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
+      final result = await _requireAuth.signInWithCredential(credential);
+      return _mapCredential(result);
+    } on GoogleSignInException catch (error) {
+      throw IdentityFailure(
+        IdentityFailureCode.unknown,
+        provider: IdentityProvider.google,
+        cause: error,
+      );
+    } on FirebaseAuthException catch (error) {
+      throw _mapAuthFailure(error, provider: IdentityProvider.google);
+    }
   }
 
   @override
-  Future<IdentityUser> signInWithApple() {
-    throw const IdentityFailure.providerNotReady(IdentityProvider.apple);
+  Future<IdentityUser> signInWithApple() async {
+    try {
+      final provider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+
+      final result = await _requireAuth.signInWithProvider(provider);
+      return _mapCredential(result);
+    } on FirebaseAuthException catch (error) {
+      throw _mapAuthFailure(error, provider: IdentityProvider.apple);
+    }
   }
 
   @override
-  Future<void> signOut() => _requireAuth.signOut();
+  Future<void> signOut() async {
+    await _requireAuth.signOut();
+
+    if (_googleInitialized) {
+      await GoogleSignIn.instance.signOut();
+    }
+  }
 
   FirebaseAuth get _requireAuth {
     final auth = _auth;
@@ -127,7 +171,10 @@ final class FirebaseIdentityService implements IdentityService {
     displayName: user.displayName,
   );
 
-  IdentityFailure _mapAuthFailure(FirebaseAuthException error) {
+  IdentityFailure _mapAuthFailure(
+    FirebaseAuthException error, {
+    IdentityProvider? provider,
+  }) {
     final code = switch (error.code) {
       'invalid-email' => IdentityFailureCode.invalidEmail,
       'weak-password' => IdentityFailureCode.weakPassword,
@@ -138,8 +185,15 @@ final class FirebaseIdentityService implements IdentityService {
       'invalid-credential' => IdentityFailureCode.wrongCredentials,
       'network-request-failed' => IdentityFailureCode.network,
       'too-many-requests' => IdentityFailureCode.tooManyRequests,
+      'operation-not-allowed' ||
+      'configuration-not-found' => IdentityFailureCode.notConfigured,
       _ => IdentityFailureCode.unknown,
     };
-    return IdentityFailure(code, cause: error);
+
+    return IdentityFailure(
+      code,
+      provider: provider,
+      cause: error,
+    );
   }
 }
