@@ -157,6 +157,24 @@ if (-not (Test-Path -LiteralPath $flutter) -or -not (Test-Path -LiteralPath $dar
     throw 'No se encuentra la instalación de Flutter y Dart.'
 }
 New-Item -ItemType Directory -Force -Path $runtime | Out-Null
+
+# Keep the local dev branch synchronized in the background while VS Code/QuizAI
+# is running. A lock inside the helper prevents duplicate workers.
+$autoSyncScript = Join-Path $repo 'scripts\auto-sync-dev.ps1'
+if (Test-Path -LiteralPath $autoSyncScript) {
+    $powershellCommand = Get-Command powershell.exe -ErrorAction SilentlyContinue
+    if ($powershellCommand) {
+        Start-Process -FilePath $powershellCommand.Source `
+            -ArgumentList @(
+                '-NoProfile',
+                '-ExecutionPolicy', 'Bypass',
+                '-File', ('"' + $autoSyncScript + '"')
+            ) `
+            -WorkingDirectory $repo `
+            -WindowStyle Hidden | Out-Null
+    }
+}
+
 if (-not $session) {
     $key = Get-OpenAiKey
     if ([string]::IsNullOrWhiteSpace($key)) { throw 'No se ha proporcionado una clave OpenAI.' }
