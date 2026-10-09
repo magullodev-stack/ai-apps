@@ -1,4 +1,4 @@
-package com.example.quizai
+package com.aiapps.quizai
 
 import io.flutter.embedding.android.FlutterActivity
 
