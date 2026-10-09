@@ -1,7 +1,7 @@
 {
   "name": "ai-apps-android",
   "displayName": "AI-APPS Android",
-  "description": "Detecta un dispositivo Android físico conectado y ejecuta en él la aplicación activa de AI-APPS.",
+  "description": "Prepara Android físico para AI-APPS, abre EmbeDroid cuando está instalado y ejecuta la aplicación activa.",
   "version": "0.0.4",
   "publisher": "magullodev",
   "private": true,
