@@ -1,8 +1,8 @@
 {
   "name": "ai-apps-android",
   "displayName": "AI-APPS Android",
-  "description": "Abre el emulador Android de desarrollo dentro de VS Code con EmbeDroid y ejecuta la aplicación activa.",
-  "version": "0.0.5",
+  "description": "Abre Android dentro de VS Code con EmbeDroid y lanza QuizAI.",
+  "version": "0.1.0",
   "publisher": "magullodev",
   "private": true,
   "engines": {
