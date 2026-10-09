@@ -31,9 +31,35 @@ Future<void> main(List<String> args) async {
     stdout.writeln(
       'Cambio nativo/dependencias detectado: ' +
           _relativePath(options.workingDirectory, path) +
-          '. Reiniciando Flutter...',
+          '. Preparando reinicio completo...',
     );
-    controller.requestRelaunch();
+
+    unawaited(() async {
+      final normalized = path.replaceAll('\\', '/').toLowerCase();
+      if (normalized.endsWith('/pubspec.yaml') ||
+          normalized.endsWith('/pubspec.lock')) {
+        final result = await Process.run(
+          options.flutter,
+          ['pub', 'get'],
+          workingDirectory: options.workingDirectory,
+          runInShell: Platform.isWindows,
+        );
+
+        if (result.stdout.toString().trim().isNotEmpty) {
+          stdout.write(result.stdout);
+        }
+        if (result.stderr.toString().trim().isNotEmpty) {
+          stderr.write(result.stderr);
+        }
+        if (result.exitCode != 0) {
+          stderr.writeln('flutter pub get fallo; no se reinicia la app.');
+          relaunchRequested = false;
+          return;
+        }
+      }
+
+      controller.requestRelaunch();
+    }());
   }
 
   void scheduleReload(String path) {
@@ -87,7 +113,7 @@ Future<void> main(List<String> args) async {
   }
 
   if (controller.relaunchRequested) {
-    exitCode = 87;
+    exitCode = 86;
   } else if (controller.stopRequested) {
     exitCode = 0;
   } else if (controller.lostConnection) {
