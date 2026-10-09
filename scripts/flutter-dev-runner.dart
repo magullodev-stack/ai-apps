@@ -22,6 +22,19 @@ Future<void> main(List<String> args) async {
   final watchers = <StreamSubscription<FileSystemEvent>>[];
   Timer? debounce;
   var pendingReload = false;
+  var relaunchRequested = false;
+
+  void scheduleRelaunch(String path) {
+    if (relaunchRequested) return;
+    relaunchRequested = true;
+    debounce?.cancel();
+    stdout.writeln(
+      'Cambio nativo/dependencias detectado: ' +
+          _relativePath(options.workingDirectory, path) +
+          '. Reiniciando Flutter...',
+    );
+    controller.requestRelaunch();
+  }
 
   void scheduleReload(String path) {
     debounce?.cancel();
@@ -45,7 +58,9 @@ Future<void> main(List<String> args) async {
 
     watchers.add(
       directory.watch(recursive: true).listen((event) {
-        if (_shouldReload(event.path)) {
+        if (_requiresRelaunch(event.path)) {
+          scheduleRelaunch(event.path);
+        } else if (_shouldReload(event.path)) {
           scheduleReload(event.path);
         }
       }),
@@ -71,7 +86,9 @@ Future<void> main(List<String> args) async {
     await watcher.cancel();
   }
 
-  if (controller.stopRequested) {
+  if (controller.relaunchRequested) {
+    exitCode = 87;
+  } else if (controller.stopRequested) {
     exitCode = 0;
   } else if (controller.lostConnection) {
     exitCode = 86;
@@ -106,6 +123,40 @@ void _configureKeyboard(_FlutterMachineController controller) {
   } catch (_) {
     // El hot reload automatico no depende de la entrada interactiva.
   }
+}
+
+bool _requiresRelaunch(String path) {
+  final normalized = path.replaceAll('\\', '/').toLowerCase();
+
+  if (normalized.contains('/build/') ||
+      normalized.contains('/.dart_tool/') ||
+      normalized.contains('/.git/')) {
+    return false;
+  }
+
+  final fileName = normalized.split('/').last;
+  if (fileName == 'pubspec.yaml' || fileName == 'pubspec.lock') {
+    return true;
+  }
+
+  if (normalized.contains('/android/')) {
+    return fileName == 'androidmanifest.xml' ||
+        fileName == 'google-services.json' ||
+        fileName.endsWith('.gradle') ||
+        fileName.endsWith('.gradle.kts') ||
+        fileName.endsWith('.properties');
+  }
+
+  if (normalized.contains('/ios/')) {
+    return fileName == 'info.plist' ||
+        fileName == 'googleService-info.plist'.toLowerCase() ||
+        fileName == 'podfile' ||
+        fileName == 'podfile.lock' ||
+        fileName.endsWith('.entitlements') ||
+        fileName.endsWith('.pbxproj');
+  }
+
+  return false;
 }
 
 bool _shouldReload(String path) {
@@ -155,6 +206,7 @@ final class _FlutterMachineController {
   var _started = false;
   var _lostConnection = false;
   var _stopRequested = false;
+  var _relaunchRequested = false;
   var _nextRequestId = 1;
   final _reloadRequests = <int>{};
   final _restartRequests = <int>{};
@@ -163,6 +215,7 @@ final class _FlutterMachineController {
   bool get isReady => _appId != null && _started;
   bool get lostConnection => _lostConnection;
   bool get stopRequested => _stopRequested;
+  bool get relaunchRequested => _relaunchRequested;
 
   Future<void> reload({String reason = 'source-change'}) async {
     final appId = _appId;
@@ -200,6 +253,11 @@ final class _FlutterMachineController {
         'debounce': true,
       },
     );
+  }
+
+  void requestRelaunch() {
+    _relaunchRequested = true;
+    process.kill();
   }
 
   void stop() {
