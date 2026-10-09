@@ -21,11 +21,50 @@ Get-ChildItem -LiteralPath $extensionsRoot -Directory -ErrorAction SilentlyConti
     } |
     Remove-Item -Recurse -Force
 
+$alreadyLinked = $false
+
 if (Test-Path -LiteralPath $target) {
-    Remove-Item -LiteralPath $target -Recurse -Force
+    $item = Get-Item -LiteralPath $target -Force
+    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+        try {
+            $resolvedTarget = (Get-Item -LiteralPath $target -Force).Target
+            if ($resolvedTarget -is [array]) {
+                $resolvedTarget = $resolvedTarget[0]
+            }
+
+            if ($resolvedTarget) {
+                $resolvedTarget = [IO.Path]::GetFullPath(
+                    (Join-Path (Split-Path $target -Parent) $resolvedTarget)
+                )
+                $sourceFull = [IO.Path]::GetFullPath($source)
+
+                if ($resolvedTarget.TrimEnd('\') -ieq $sourceFull.TrimEnd('\')) {
+                    $alreadyLinked = $true
+                }
+            }
+        }
+        catch {
+            $alreadyLinked = $false
+        }
+    }
+
+    if (-not $alreadyLinked) {
+        Remove-Item -LiteralPath $target -Recurse -Force
+    }
 }
 
-Copy-Item -LiteralPath $source -Destination $target -Recurse -Force
+if (-not $alreadyLinked) {
+    try {
+        New-Item -ItemType Junction -Path $target -Target $source | Out-Null
+        Write-Host "Extensión AI-APPS Android enlazada al repo: $target" -ForegroundColor Green
+    }
+    catch {
+        Copy-Item -LiteralPath $source -Destination $target -Recurse -Force
+        Write-Warning 'No se pudo crear el enlace de desarrollo; se instaló una copia.'
+    }
+}
+else {
+    Write-Host 'Extensión AI-APPS Android ya enlazada al repo.'
+}
 
-Write-Host "Extensión AI-APPS Android instalada en: $target" -ForegroundColor Green
-Write-Host 'Reinicia VS Code para cargar la versión nueva.'
+Write-Host 'Reinicia o recarga VS Code para cargar cambios del código de la extensión.'
