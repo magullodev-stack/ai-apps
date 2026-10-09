@@ -8,30 +8,29 @@
 | Sincronización continua de `dev` | Mantener `dev` local y `origin/dev` sincronizados en segundo plano mientras QuizAI está en desarrollo. Aplica cambios remotos automáticamente y, tras unos segundos sin cambios locales, crea un commit de sincronización y lo publica. | [`scripts/auto-sync-dev.ps1`](../scripts/auto-sync-dev.ps1) | Se inicia automáticamente desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
 | Sincronizar `dev` manualmente | Herramienta de recuperación/fallback para forzar una sincronización bidireccional cuando la sincronización continua no está activa. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Solo para recuperación o diagnóstico. |
 | Flutter Dev Runner | Ejecutar `flutter run --machine`, vigilar código y assets de QuizAI y de sus dependencias locales y solicitar Hot Reload al proceso Flutter después de cambios en disco. | [`scripts/flutter-dev-runner.dart`](../scripts/flutter-dev-runner.dart) | Se inicia desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
-| EmbeDroid en VS Code | Mostrar y controlar el mismo Android físico usado por Flutter dentro de VS Code para desarrollo visual, interacción y capturas rápidas. | Extensión externa EmbeDroid + [`scripts/vscode-android/`](../scripts/vscode-android/) | Se abre automáticamente al iniciar AI-APPS si EmbeDroid está instalado. |
+| EmbeDroid en VS Code | Mostrar y controlar el AVD local de desarrollo dentro de una pestaña de VS Code para interacción y capturas rápidas. | Extensión `utpalbarman.embedroid` + [`scripts/vscode-android/`](../scripts/vscode-android/) | Se abre automáticamente al iniciar AI-APPS. |
 
 ---
 
 
-## Android físico compartido
+## Android de desarrollo y dispositivo físico
 
-`scripts/start-android.ps1` prepara un dispositivo Android físico que ya esté
-conectado mediante ADB. Nunca inicia un emulador.
+El desarrollo cotidiano usa un **AVD local** dentro de VS Code.
+`scripts/start-android-emulator.ps1` reutiliza un emulador ya arrancado o inicia
+`Medium_Phone` en modo headless. La integración
+`scripts/vscode-android/` abre ese dispositivo con el comando público
+`embedroid.openEmbedded` de la extensión `utpalbarman.embedroid` y ejecuta
+QuizAI en ese mismo emulador.
 
-Si ADB publica el mismo móvil mediante IP y mediante mDNS, el procedimiento
-prefiere la identidad inalámbrica estable. Si el móvil ya estaba emparejado pero
-todavía no aparece en `adb devices`, intenta recuperarlo mediante mDNS. Al
-preparar el dispositivo físico cierra los emuladores Android que hayan quedado
-conectados de sesiones anteriores, para evitar que VS Code los conserve como
-destino de Flutter. Si no puede recuperar ningún dispositivo físico, termina con
-un error explícito.
+Esto evita que el ciclo normal de edición dependa de ADB inalámbrico ni del
+Pixel físico. El emulador permanece disponible aunque se cierre VS Code y se
+reutiliza en la siguiente apertura cuando sigue conectado.
+
+`scripts/start-android.ps1` se conserva para preparar el Android físico cuando
+se quiera validar en el Pixel. El dispositivo real queda como destino de
+comprobaciones finales, no como requisito para cada cambio de UI o lógica.
 
 `scripts/vscode-android/` contiene la integración local de VS Code.
-
-Al abrir el repositorio AI-APPS, la integración prepara el dispositivo físico,
-abre EmbeDroid cuando la extensión está instalada y ejecuta en ese mismo
-dispositivo el juego seleccionado en `.ai-apps/active-game.txt`. No inicia un
-AVD: EmbeDroid actúa como espejo/control del Android físico usado por Flutter.
 
 La integración local se instala con
 `scripts/install-vscode-android.ps1`. El instalador enlaza la extensión local
@@ -123,16 +122,11 @@ y assets no requieren sincronización manual ni reinicio.
 
 ## Flujo visual con EmbeDroid
 
-Para el desarrollo cotidiano, QuizAI sigue ejecutándose en el Pixel físico.
-EmbeDroid no sustituye al dispositivo ni crea otro emulador: muestra dentro de
-VS Code la pantalla del mismo Android que Flutter utiliza por ADB.
-
-La integración de AI-APPS localiza EmbeDroid dinámicamente entre las extensiones
-instaladas, activa su extensión y abre su contenedor de vistas. Si EmbeDroid
-expone un comando claro de apertura, conexión o mirroring, la integración lo
-ejecuta también. Esto evita depender de un identificador concreto de marketplace.
+Para el desarrollo cotidiano, QuizAI se ejecuta en el AVD local preparado por
+AI-APPS. EmbeDroid abre ese emulador dentro del editor mediante
+`embedroid.openEmbedded`, el mismo flujo que ya utilizaba el repositorio antes
+de pasar temporalmente al Pixel físico.
 
 El objetivo del flujo es: cambios de código → autosync/local → Hot Reload →
-visualización inmediata en EmbeDroid → captura desde el PC. El teléfono físico
-queda para comprobaciones finales o cuando se quiera contrastar el resultado
-real fuera del espejo.
+visualización inmediata en EmbeDroid → captura desde el PC. El Pixel físico
+queda para comprobaciones finales.
