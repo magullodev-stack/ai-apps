@@ -435,18 +435,33 @@ try {
                 throw "No se encuentra el lanzador de desarrollo Flutter: $devRunner"
             }
 
-            & $dart $devRunner `
-                --flutter $flutter `
-                --device $Device `
-                --defines-file $definesFile `
-                --working-directory (Join-Path $repo 'apps\quizai') `
-                --watch (Join-Path $repo 'apps\quizai\lib') `
-                --watch (Join-Path $repo 'apps\quizai\assets') `
-                --watch (Join-Path $repo 'shared') `
-                --watch (Join-Path $repo 'ai\flutter_client')
+            $maxFlutterLaunchAttempts = 3
+            for ($launchAttempt = 1; $launchAttempt -le $maxFlutterLaunchAttempts; $launchAttempt++) {
+                & $dart $devRunner `
+                    --flutter $flutter `
+                    --device $Device `
+                    --defines-file $definesFile `
+                    --working-directory (Join-Path $repo 'apps\quizai') `
+                    --watch (Join-Path $repo 'apps\quizai\lib') `
+                    --watch (Join-Path $repo 'apps\quizai\assets') `
+                    --watch (Join-Path $repo 'shared') `
+                    --watch (Join-Path $repo 'ai\flutter_client')
 
-            if ($LASTEXITCODE -ne 0) {
-                throw 'Flutter terminó con un error.'
+                $runnerExitCode = $LASTEXITCODE
+
+                if ($runnerExitCode -eq 86 -and
+                    $launchAttempt -lt $maxFlutterLaunchAttempts) {
+                    Write-Warning "Se perdió la conexión con $Device. Reintentando Flutter sin reiniciar VS Code..."
+                    & $adb connect $Device 2>$null | Out-Null
+                    Start-Sleep -Seconds 2
+                    continue
+                }
+
+                if ($runnerExitCode -ne 0) {
+                    throw "Flutter terminó con un error (código $runnerExitCode)."
+                }
+
+                break
             }
         }
     } finally { Pop-Location }

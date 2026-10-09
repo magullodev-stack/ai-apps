@@ -71,7 +71,13 @@ Future<void> main(List<String> args) async {
     await watcher.cancel();
   }
 
-  exitCode = code;
+  if (controller.stopRequested) {
+    exitCode = 0;
+  } else if (controller.lostConnection) {
+    exitCode = 86;
+  } else {
+    exitCode = code;
+  }
 }
 
 void _configureKeyboard(_FlutterMachineController controller) {
@@ -141,18 +147,22 @@ final class _FlutterMachineController {
     process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
-        .listen((line) => stderr.writeln(line));
+        .listen(_handleStderr);
   }
 
   final Process process;
   String? _appId;
   var _started = false;
+  var _lostConnection = false;
+  var _stopRequested = false;
   var _nextRequestId = 1;
   final _reloadRequests = <int>{};
   final _restartRequests = <int>{};
   void Function()? onReady;
 
   bool get isReady => _appId != null && _started;
+  bool get lostConnection => _lostConnection;
+  bool get stopRequested => _stopRequested;
 
   Future<void> reload({String reason = 'source-change'}) async {
     final appId = _appId;
@@ -193,6 +203,7 @@ final class _FlutterMachineController {
   }
 
   void stop() {
+    _stopRequested = true;
     process.kill();
   }
 
@@ -213,6 +224,10 @@ final class _FlutterMachineController {
   }
 
   void _handleStdout(String line) {
+    if (line.contains('Lost connection to device.')) {
+      _lostConnection = true;
+    }
+
     final decoded = _tryDecode(line);
     if (decoded == null) {
       if (line.trim().isNotEmpty) stdout.writeln(line);
@@ -273,6 +288,15 @@ final class _FlutterMachineController {
       } else if (_restartRequests.remove(id)) {
         _printRestartResult(message, fullRestart: true);
       }
+    }
+  }
+
+  void _handleStderr(String line) {
+    if (line.contains('Lost connection to device.')) {
+      _lostConnection = true;
+    }
+    if (line.trim().isNotEmpty) {
+      stderr.writeln(line);
     }
   }
 
