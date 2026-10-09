@@ -34,6 +34,40 @@ function isEmbeddedViewOpen() {
   );
 }
 
+function startAutoSync(root) {
+  const script = path.join(
+    root,
+    'scripts',
+    'auto-sync-dev.ps1'
+  );
+
+  if (!fs.existsSync(script)) {
+    return;
+  }
+
+  const child = childProcess.spawn(
+    'powershell.exe',
+    [
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-File',
+      script
+    ],
+    {
+      cwd: root,
+      detached: true,
+      windowsHide: true,
+      stdio: 'ignore'
+    }
+  );
+
+  child.unref();
+  output.appendLine(
+    'Sincronización continua de dev iniciada.'
+  );
+}
+
 function startDevelopmentAndroid(root) {
   return new Promise((resolve, reject) => {
     const script = path.join(
@@ -280,6 +314,8 @@ function activate(context) {
   if (!folder) {
     return;
   }
+
+  startAutoSync(folder.uri.fsPath);
 
   startEnvironment(folder).catch(error => {
     const message = error instanceof Error
