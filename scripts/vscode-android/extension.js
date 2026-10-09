@@ -79,6 +79,133 @@ function preparePhysicalAndroid(root) {
   });
 }
 
+
+function findEmbeDroidExtension() {
+  return vscode.extensions.all.find(extension => {
+    const manifest = extension.packageJSON || {};
+    const haystack = [
+      extension.id,
+      manifest.name,
+      manifest.displayName,
+      manifest.description
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes('embedroid');
+  });
+}
+
+function commandScore(command) {
+  const manifestText = [
+    command.command,
+    command.title,
+    command.category
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (
+    /stop|close|disconnect|kill|settings|install|uninstall|delete|remove/.test(
+      manifestText
+    )
+  ) {
+    return -100;
+  }
+
+  let score = 0;
+
+  if (manifestText.includes('embedroid')) {
+    score += 10;
+  }
+
+  if (/mirror|screen|device|android/.test(manifestText)) {
+    score += 8;
+  }
+
+  if (/open|show|start|launch|connect/.test(manifestText)) {
+    score += 6;
+  }
+
+  return score;
+}
+
+async function openEmbeDroid() {
+  const extension = findEmbeDroidExtension();
+
+  if (!extension) {
+    output.appendLine(
+      'EmbeDroid no está instalado; se omite el espejo Android.'
+    );
+    return;
+  }
+
+  await extension.activate();
+
+  const manifest = extension.packageJSON || {};
+  const containers = manifest.contributes?.viewsContainers || {};
+  const containerCandidates = [
+    ...(containers.activitybar || []),
+    ...(containers.panel || [])
+  ];
+
+  let viewOpened = false;
+
+  for (const container of containerCandidates) {
+    if (!container?.id) {
+      continue;
+    }
+
+    try {
+      await vscode.commands.executeCommand(
+        'workbench.view.extension.' + container.id
+      );
+      output.appendLine(
+        'EmbeDroid abierto en VS Code: ' + container.id
+      );
+      viewOpened = true;
+      break;
+    } catch (_) {
+      // Algunos contenedores no exponen el comando estándar; probamos
+      // los comandos declarados por la propia extensión.
+    }
+  }
+
+  const contributedCommands = manifest.contributes?.commands || [];
+  const candidates = contributedCommands
+    .map(command => ({
+      command,
+      score: commandScore(command)
+    }))
+    .filter(entry => entry.score >= 14)
+    .sort((a, b) => b.score - a.score);
+
+  for (const candidate of candidates) {
+    try {
+      await vscode.commands.executeCommand(candidate.command.command);
+      output.appendLine(
+        'EmbeDroid iniciado: ' + candidate.command.command
+      );
+      return;
+    } catch (error) {
+      output.appendLine(
+        'EmbeDroid no pudo ejecutar ' +
+          candidate.command.command +
+          ': ' +
+          String(error)
+      );
+    }
+  }
+
+  if (!viewOpened) {
+    output.appendLine(
+      'EmbeDroid está instalado, pero no expone un comando reconocible para abrirlo automáticamente.'
+    );
+  }
+}
+
 async function launchSelectedGame(folder, serial) {
   const root = folder.uri.fsPath;
   const selectionFile = path.join(
@@ -209,6 +336,7 @@ async function startEnvironment(folder) {
     'Android físico preparado: ' + serial
   );
 
+  await openEmbeDroid();
   await launchSelectedGame(folder, serial);
 }
 
