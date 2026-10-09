@@ -155,7 +155,18 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            for (final asset in _layers)
+            IgnorePointer(
+              child: Transform.scale(
+                scale: 1.20,
+                child: Image.asset(
+                  _layers.first,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            ),
+            for (final asset in _layers.skip(1))
               IgnorePointer(
                 child: Image.asset(
                   asset,
@@ -223,33 +234,38 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
-                  child: Text.rich(
-                    TextSpan(
-                      style: legalBase.copyWith(
-                        fontFamily: QuizTypography.family,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text.rich(
+                      TextSpan(
+                        style: legalBase.copyWith(
+                          fontFamily: QuizTypography.family,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Al continuar, aceptas los '),
+                          TextSpan(
+                            text: 'Términos de uso',
+                            style: legalLink.copyWith(
+                              fontFamily: QuizTypography.family,
+                            ),
+                            recognizer: _termsRecognizer,
+                          ),
+                          const TextSpan(text: '\ny la '),
+                          TextSpan(
+                            text: 'Política de privacidad',
+                            style: legalLink.copyWith(
+                              fontFamily: QuizTypography.family,
+                            ),
+                            recognizer: _privacyRecognizer,
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
                       ),
-                      children: [
-                        const TextSpan(text: 'Al continuar, aceptas los '),
-                        TextSpan(
-                          text: 'Términos de uso',
-                          style: legalLink.copyWith(
-                            fontFamily: QuizTypography.family,
-                          ),
-                          recognizer: _termsRecognizer,
-                        ),
-                        const TextSpan(text: '\ny la '),
-                        TextSpan(
-                          text: 'Política de privacidad',
-                          style: legalLink.copyWith(
-                            fontFamily: QuizTypography.family,
-                          ),
-                          recognizer: _privacyRecognizer,
-                        ),
-                        const TextSpan(text: '.'),
-                      ],
+                      key: const Key('quizai-auth-legal'),
+                      maxLines: 2,
+                      softWrap: false,
+                      textAlign: TextAlign.center,
                     ),
-                    key: const Key('quizai-auth-legal'),
-                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
