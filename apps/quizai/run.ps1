@@ -346,9 +346,17 @@ function Invoke-FlutterPubGetIfRequired([string]$AppDirectory) {
         ''
     }
 
-    if ((Test-Path -LiteralPath $packageConfig) -and $stored -eq $before) {
-        Write-Host 'Dependencias Flutter ya resueltas.'
-        return
+    if (Test-Path -LiteralPath $packageConfig) {
+        if ($stored -eq $before) {
+            Write-Host 'Dependencias Flutter ya resueltas.'
+            return
+        }
+
+        if ([string]::IsNullOrWhiteSpace($stored)) {
+            Set-Content -LiteralPath $stamp -Value $before -Encoding ASCII -NoNewline
+            Write-Host 'Dependencias Flutter ya resueltas; inicializada la huella local.'
+            return
+        }
     }
 
     Write-Host 'Dependencias Flutter cambiadas; ejecutando pub get...'

@@ -17,7 +17,9 @@ if (-not (Test-Path -LiteralPath $adb)) {
 }
 
 if (-not (Test-Path -LiteralPath $emulator)) {
-    throw "No se encuentra Android Emulator: $emulator"
+    Write-Warning "Android Emulator no está instalado; se usará el dispositivo físico con EmbeDroid."
+    & (Join-Path $PSScriptRoot 'start-android.ps1')
+    exit $LASTEXITCODE
 }
 
 function Get-ConnectedEmulators {
@@ -69,12 +71,19 @@ else {
         throw 'No se pudo consultar la lista de AVD.'
     }
 
+    if ($avds.Count -eq 0) {
+        Write-Warning 'No hay ningún AVD configurado; se usará el dispositivo físico con EmbeDroid.'
+        & (Join-Path $PSScriptRoot 'start-android.ps1')
+        exit $LASTEXITCODE
+    }
+
     if ($AvdName -notin $avds) {
         if ($avds.Count -eq 1) {
             $AvdName = $avds[0]
         }
         else {
-            throw "No se encuentra el AVD '$AvdName'. Disponibles: $($avds -join ', ')"
+            $AvdName = $avds[0]
+            Write-Warning "No existe '$($PSBoundParameters['AvdName'])'; se usará '$AvdName'."
         }
     }
 

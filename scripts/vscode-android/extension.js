@@ -67,13 +67,13 @@ function startDevelopmentAndroid(root) {
         }
 
         const match = stdout.match(
-          /AI_APPS_ANDROID_SERIAL=(emulator-\d+)/
+          /AI_APPS_ANDROID_SERIAL=([^\r\n]+)/
         );
 
         if (!match) {
           reject(
             new Error(
-              'El arranque no devolvió un emulador Android preparado.'
+              'El arranque no devolvió un dispositivo Android preparado.'
             )
           );
           return;
@@ -259,7 +259,7 @@ async function launchSelectedGame(folder, serial) {
 
 async function startEnvironment(folder) {
   output.appendLine(
-    'Preparando emulador Android de desarrollo...'
+    'Preparando Android de desarrollo...'
   );
 
   const serial = await startDevelopmentAndroid(
@@ -267,7 +267,7 @@ async function startEnvironment(folder) {
   );
 
   output.appendLine(
-    'Emulador preparado: ' + serial
+    'Android preparado: ' + serial
   );
 
   await openEmbeddedAndroid(folder, serial);
