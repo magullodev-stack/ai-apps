@@ -45,11 +45,10 @@ class AuthProviderButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: _label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: const StadiumBorder(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        child: SizedBox.expand(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final height = constraints.maxHeight;

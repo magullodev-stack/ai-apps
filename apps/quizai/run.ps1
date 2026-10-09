@@ -270,6 +270,32 @@ if ($ProbarQuiz10) {
     return
 }
 
+# Evitar resolver dependencias en cada arranque. Flutter solo necesita
+# pub get cuando cambia alguno de los manifiestos que participan en QuizAI.
+function Test-FlutterPubGetRequired([string]$AppDirectory) {
+    $packageConfig = Join-Path $AppDirectory '.dart_tool\package_config.json'
+    if (-not (Test-Path -LiteralPath $packageConfig)) { return $true }
+
+    $resolvedAt = (Get-Item -LiteralPath $packageConfig).LastWriteTimeUtc
+    $inputs = @(
+        (Join-Path $AppDirectory 'pubspec.yaml'),
+        (Join-Path $AppDirectory 'pubspec.lock'),
+        (Join-Path $repo 'shared\identity\pubspec.yaml'),
+        (Join-Path $repo 'shared\ui\pubspec.yaml'),
+        (Join-Path $repo 'ai\flutter_client\pubspec.yaml'),
+        (Join-Path $repo 'ai\dart_service\pubspec.yaml')
+    )
+
+    foreach ($input in $inputs) {
+        if ((Test-Path -LiteralPath $input) -and
+            (Get-Item -LiteralPath $input).LastWriteTimeUtc -gt $resolvedAt) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 # OpenAI credentials are never inherited by Flutter or passed as dart-defines.
 $previousClientEnv = @{}
 foreach ($name in @('AI_APPS_AI_API_KEY','OPENAI_API_KEY','AI_APPS_GAME_TOKEN','AI_APPS_AI_URL','AI_APPS_LUNA_MODEL','ADB_SERVER_SOCKET')) {
@@ -277,10 +303,17 @@ foreach ($name in @('AI_APPS_AI_API_KEY','OPENAI_API_KEY','AI_APPS_GAME_TOKEN','
 }
 try {
     Remove-Item Env:AI_APPS_AI_API_KEY, Env:OPENAI_API_KEY, Env:ADB_SERVER_SOCKET -ErrorAction SilentlyContinue
-    Push-Location (Join-Path $repo 'apps\quizai')
+    $appDirectory = Join-Path $repo 'apps\quizai'
+    Push-Location $appDirectory
     try {
-        & $flutter pub get
-        if ($LASTEXITCODE -ne 0) { throw 'Falló flutter pub get.' }
+        if (Test-FlutterPubGetRequired -AppDirectory $appDirectory) {
+            Write-Host 'Dependencias Flutter cambiadas; ejecutando pub get...'
+            & $flutter pub get
+            if ($LASTEXITCODE -ne 0) { throw 'Falló flutter pub get.' }
+        }
+        else {
+            Write-Host 'Dependencias Flutter ya resueltas; se omite pub get.'
+        }
         if ($VerifyOnly) {
             $receipt = Join-Path $runtime 'quiz10-verification.json'
             if (Test-Path -LiteralPath $receipt) { Remove-Item -LiteralPath $receipt }
