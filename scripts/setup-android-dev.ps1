@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
 $AvdName = 'AI_APPS_Dev'
-$SystemImage = 'system-images;android-34;google_apis;x86_64'
+$SystemImage = 'system-images;android-36;google_apis_playstore;x86_64'
 
 $sdk = $env:ANDROID_HOME
 if (-not $sdk) { $sdk = $env:ANDROID_SDK_ROOT }
@@ -28,10 +28,9 @@ if (-not (Test-Path -LiteralPath $emulator)) {
 }
 
 $avdManager = Find-Tool 'avdmanager.bat'
-$sdkManager = Find-Tool 'sdkmanager.bat'
 
-if (-not $avdManager -or -not $sdkManager) {
-    throw 'Faltan Android SDK Command-line Tools (sdkmanager/avdmanager).'
+if (-not $avdManager) {
+    throw 'Falta Android SDK Command-line Tools (avdmanager).'
 }
 
 $existing = @(& $emulator -list-avds | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim() })
@@ -42,9 +41,6 @@ if ($AvdName -in $existing) {
 }
 
 Write-Host 'Preparando Android de desarrollo por primera vez...'
-
-1..50 | ForEach-Object { 'y' } | & $sdkManager "--sdk_root=$sdk" $SystemImage
-if ($LASTEXITCODE -ne 0) { throw "No se pudo instalar $SystemImage." }
 
 $createArgs = @('create','avd','-n',$AvdName,'-k',$SystemImage,'--force')
 'no' | & $avdManager @createArgs
