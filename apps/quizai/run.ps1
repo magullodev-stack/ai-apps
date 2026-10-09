@@ -158,19 +158,6 @@ if (-not (Test-Path -LiteralPath $flutter) -or -not (Test-Path -LiteralPath $dar
 }
 New-Item -ItemType Directory -Force -Path $runtime | Out-Null
 
-# Keep the AI-APPS VS Code integration linked to the repository. This makes
-# future extension changes available on the next VS Code reload without a
-# manual reinstall.
-$vscodeInstaller = Join-Path $repo 'scripts\install-vscode-android.ps1'
-if (Test-Path -LiteralPath $vscodeInstaller) {
-    try {
-        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $vscodeInstaller | Out-Null
-    }
-    catch {
-        Write-Warning "No se pudo actualizar la integración local de VS Code: $($_.Exception.Message)"
-    }
-}
-
 # Keep the local dev branch synchronized in the background while VS Code/QuizAI
 # is running. A lock inside the helper prevents duplicate workers.
 $autoSyncScript = Join-Path $repo 'scripts\auto-sync-dev.ps1'
