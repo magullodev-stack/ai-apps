@@ -142,7 +142,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: Colors.black,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.black,
@@ -152,9 +152,12 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
       child: Scaffold(
         key: const Key('quizai-auth-entry'),
         backgroundColor: Colors.black,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
+        body: SafeArea(
+          top: true,
+          bottom: false,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
             IgnorePointer(
               child: Transform.scale(
                 scale: 1.20,
@@ -270,7 +273,8 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
