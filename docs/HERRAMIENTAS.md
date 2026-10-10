@@ -4,6 +4,7 @@
 
 | Herramienta | Finalidad | Ubicación | Instrucciones |
 | --- | --- | --- | --- |
+| Desarrollo persistente | Preparar Android, Dart y QuizAI al iniciar sesión, con una única sesión Flutter y Hot Reload automático fuera de VS Code. | [`scripts/start-dev-session.ps1`](../scripts/start-dev-session.ps1) y [`scripts/install-dev-session.ps1`](../scripts/install-dev-session.ps1) | Apartado de arranque persistente de este documento. |
 | QuizAI con IA | Iniciar o reutilizar el servicio Dart, ejecutar QuizAI en el dispositivo Android seleccionado y mantener Hot Reload automático durante el desarrollo; auditar Luna con `-ProbarLuna -Muestras N`, auditar el pipeline Luna→revisor→Dart con `-ProbarQuiz10 -Muestras N` y detener el servicio con `-StopService`. | [`apps/quizai/run.ps1`](../apps/quizai/run.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
 | Sincronización continua de `dev` | Mantener `dev` local y `origin/dev` sincronizados en segundo plano mientras QuizAI está en desarrollo. Aplica cambios remotos automáticamente y, tras unos segundos sin cambios locales, crea un commit de sincronización y lo publica. | [`scripts/auto-sync-dev.ps1`](../scripts/auto-sync-dev.ps1) | Se inicia automáticamente desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
 | Sincronizar `dev` manualmente | Herramienta de recuperación/fallback para forzar una sincronización bidireccional cuando la sincronización continua no está activa. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Solo para recuperación o diagnóstico. |
@@ -13,52 +14,58 @@
 ---
 
 
-## Android de desarrollo y dispositivo físico
+## Arranque persistente y Android de desarrollo
 
-El desarrollo cotidiano usa un **AVD local** dentro de VS Code.
-`scripts/start-android-emulator.ps1` reutiliza un emulador ya arrancado o inicia
-`Medium_Phone` en modo headless. La integración
-`scripts/vscode-android/` abre ese dispositivo con el comando público
-`embedroid.openEmbedded` de la extensión `utpalbarman.embedroid` y ejecuta
-QuizAI en ese mismo emulador.
+Instala una vez la tarea **AI-APPS Development** desde PowerShell, sin administrador:
 
-Esto evita que el ciclo normal de edición dependa de ADB inalámbrico ni del
-Pixel físico. El emulador permanece disponible aunque se cierre VS Code y se
-reutiliza en la siguiente apertura cuando sigue conectado.
+```powershell
+.\scripts\install-dev-session.ps1
+Start-ScheduledTask -TaskName 'AI-APPS Development'
+```
 
-`scripts/start-android.ps1` se conserva para preparar el Android físico cuando
-se quiera validar en el Pixel. El dispositivo real queda como destino de
-comprobaciones finales, no como requisito para cada cambio de UI o lógica.
+La tarea usa la sesión interactiva del usuario actual, sin contraseña guardada,
+con privilegios limitados y PowerShell oculto/no interactivo. Arranca al iniciar
+sesión, ignora nuevas ejecuciones mientras está activa (`IgnoreNew`), no tiene
+límite temporal y no se detiene por inactividad ni al pasar a batería.
+Su entrada mínima, `scripts/start-dev-session.ps1`, ejecuta en orden
+`scripts/start-ai-apps-android.ps1` y `apps/quizai/run.ps1 -Device emulator-5554`.
+El primero reutiliza el emulador o prepara el AVD `AI_APPS_Dev` sin ventana;
+el segundo prepara/reutiliza Dart y mantiene el Flutter Dev Runner existente.
 
-`scripts/vscode-android/` contiene la integración local de VS Code.
+El registro `.ai-apps/dev-session.log` contiene estados, errores por etapa y
+confirmaciones de Hot Reload. Solo conserva mensajes conocidos: no vuelca logs
+de la app, excepciones completas, claves, tokens ni defines. Para diagnosticar
+un fallo detallado, detén la tarea y ejecuta el lanzador en PowerShell.
+El lanzador necesita la clave previamente guardada con DPAPI para este usuario
+o una variable de entorno válida; el arranque oculto no solicita credenciales.
 
-La integración local se instala con
-`scripts/install-vscode-android.ps1`. El instalador enlaza la extensión local
-de AI-APPS directamente con `scripts/vscode-android/`, de modo que futuras
-actualizaciones del código de la integración no requieren copiarla de nuevo;
-basta recargar VS Code para que la extensión host vuelva a cargar JavaScript.
-`apps/quizai/run.ps1` mantiene ese enlace automáticamente.
+VS Code únicamente abre el Android existente con `embedroid.openEmbedded`.
+Cerrar o reabrir el editor no inicia Flutter, Dart ni Gradle. Un fallo del visor
+se registra en Output → `AI-APPS Android` y no afecta a la sesión persistente.
+El antiguo selector `.ai-apps/active-game.txt` ya no controla este arranque.
+La integración se enlaza al repositorio con `scripts/install-vscode-android.ps1`;
+recarga o reabre VS Code después de modificar su JavaScript.
 
-Si `.ai-apps/active-game.txt` contiene `none`, no se ejecuta ningún juego.
-Si el selector local no existe y QuizAI está disponible, la integración usa
-QuizAI como aplicación de desarrollo por defecto. Cada aplicación conserva su
-propio lanzador `apps/<juego>/run.ps1`.
+Para consultar o detener la sesión:
 
-El selector es local y no se publica en Git. Para consultar los diagnósticos
-del arranque, abre el panel Output de VS Code y selecciona
-`AI-APPS Android`.
+```powershell
+Get-ScheduledTask -TaskName 'AI-APPS Development'
+Get-ScheduledTaskInfo -TaskName 'AI-APPS Development'
+Stop-ScheduledTask -TaskName 'AI-APPS Development'
+```
 
+No ejecutes `start-dev-session.ps1` directamente ni otro `flutter run` mientras
+la tarea esté activa: la exclusión la proporciona el Programador de tareas.
+Antes de una prueba manual, detén la tarea y confirma que han terminado el
+runner y su Flutter; después restaura con `Start-ScheduledTask`. El servicio
+Dart puede reutilizarse. Su parada explícita sigue siendo `run.ps1 -StopService`.
+La sesión dura hasta detenerla, cerrar la sesión de Windows o apagar el equipo;
+al siguiente inicio de sesión vuelve a prepararse.
+
+`scripts/start-android.ps1` conserva la preparación del dispositivo físico para
+las comprobaciones que lo requieran.
 
 ---
-
-
-
-
-
-
-
-
-
 ## COMMIT
 
 .\scripts\sync-dev.ps1
@@ -86,9 +93,9 @@ assets de QuizAI y las dependencias locales compartidas usadas por la app.
 Cuando `git pull` o `scripts/sync-dev.ps1` modifica esos archivos, el
 runner agrupa los eventos y solicita automáticamente un Hot Reload incremental
 a la sesión Flutter activa. No es necesario pulsar `r` después de cada
-sincronización.
+sincronización. La vigilancia funciona también en la tarea oculta, sin terminal ni VS Code.
 
-La terminal conserva los atajos manuales: `r` fuerza Hot Reload, `R` hace
+En una ejecución manual en PowerShell, la terminal conserva los atajos: `r` fuerza Hot Reload, `R` hace
 Hot Restart y `q` termina la sesión. Los cambios de dependencias, configuración
 nativa o `pubspec.yaml` pueden requerir reiniciar la sesión de desarrollo.
 

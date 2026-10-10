@@ -205,7 +205,7 @@ Con `emulator-5554` iniciado, desde la raíz del repositorio en PowerShell:
 .\apps\quizai\run.ps1
 ```
 
-El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. La tarea manual de VS Code **AI-APPS: ejecutar QuizAI con IA** usa este mismo procedimiento. Cambiar de pestaña o abrir Ajustes no llama al modelo; pulsar **Jugar** dentro de 🎲 Quiz10 solicita una generación.
+El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. El arranque cotidiano usa la tarea de Windows **AI-APPS Development**; no ejecutes este lanzador manualmente mientras esté activa. Cambiar de pestaña o abrir Ajustes no llama al modelo; pulsar **Jugar** dentro de 🎲 Quiz10 solicita una generación.
 
 La generación usa el Dart incluido en Flutter. El proyecto Android conserva su compilación independiente. El prompt y las reglas siguen en Quiz10; el esquema no envía `minItems` ni `maxItems` y el validador sigue exigiendo diez preguntas.
 
@@ -232,18 +232,18 @@ Para una generación real explícita, desde la raíz:
 
 La comprobación usa `gpt-4.1-mini` y solo tiene éxito si el validador de Quiz10 acepta diez preguntas. No modifica la sesión Android. El resultado sin contenido ni credenciales queda en `.ai-apps/quizai-verification.json`.
 
-### Apertura automática desde AI-APPS
+### Sesión persistente de desarrollo
 
-AI-APPS prepara el emulador compartido al abrir VS Code. Si
-`.ai-apps/active-game.txt` contiene `quizai`, también ejecuta
-`apps/quizai/run.ps1` automáticamente en la terminal integrada.
+La tarea de Windows `AI-APPS Development` prepara `emulator-5554` y ejecuta
+este lanzador al iniciar sesión. Dart y Flutter permanecen activos al cerrar
+VS Code; reabrir el editor solo abre la visualización con EmbeDroid.
+Hot Reload vigila Dart y assets sin depender de la terminal integrada.
 
-El lanzador de QuizAI conserva la preparación del servicio Dart de IA.
-Si necesita una clave OpenAI, la solicita en la terminal.
-
-Para trabajar sin abrir ningún juego, establecer `none` como juego
-activo. El archivo de selección es local y no se publica en Git.
-
+Instalación y control: consulta [`docs/HERRAMIENTAS.md`](../../docs/HERRAMIENTAS.md).
+Antes de ejecutar `flutter run` manualmente en el mismo dispositivo, detén la
+tarea y confirma que Flutter terminó; al finalizar restaura la tarea.
+El arranque no interactivo requiere la clave DPAPI del usuario o una variable
+válida, según el lanzador actual. No solicita claves en una terminal oculta.
 ## Generación Quiz10: G → R → S → Dart
 
 El catálogo canónico se encuentra en

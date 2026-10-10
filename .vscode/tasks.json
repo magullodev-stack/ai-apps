@@ -24,18 +24,15 @@
       }
     },
     {
-      "label": "AI-APPS: ejecutar QuizAI con IA",
+      "label": "AI-APPS: preparar desarrollo persistente",
       "type": "shell",
       "command": "powershell.exe",
       "args": [
         "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\apps\\quizai\\run.ps1"
+        "-Command",
+        "Start-ScheduledTask -TaskName 'AI-APPS Development'"
       ],
       "problemMatcher": [],
-      "isBackground": true,
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",

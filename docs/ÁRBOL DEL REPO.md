@@ -46,6 +46,10 @@ ai-apps/
 │   └── ui/                    # Componentes de interfaz reutilizables.
 │
 ├── scripts/                   # Herramientas operativas compartidas.
+│   ├── install-dev-session.ps1 # Instala la tarea de Windows por usuario.
+│   ├── start-dev-session.ps1   # Entrada mínima de la sesión persistente.
+│   ├── start-ai-apps-android.ps1 # Prepara emulator-5554.
+│   ├── flutter-dev-runner.dart # Vigila archivos y aplica Hot Reload.
 │   ├── start-android.ps1
 │   ├── sync-dev.ps1
 │   └── vscode-android/
@@ -84,7 +88,7 @@ Contiene componentes compartidos por las aplicaciones cuando existe una necesida
 
 ### scripts/
 
-Contiene procedimientos y herramientas operativas compartidas por el repositorio.
+Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de QuizAI. `vscode-android/` solo abre EmbeDroid sobre el dispositivo existente.
 
 ### docs/
 
