@@ -490,17 +490,25 @@ try {
 
             $maxFlutterLaunchAttempts = 3
             for ($launchAttempt = 1; $launchAttempt -le $maxFlutterLaunchAttempts; $launchAttempt++) {
-                & $dart $devRunner `
-                    --flutter $flutter `
-                    --device $Device `
-                    --defines-file $definesFile `
-                    --working-directory (Join-Path $repo 'apps\quizai') `
-                    --watch (Join-Path $repo 'apps\quizai\lib') `
-                    --watch (Join-Path $repo 'apps\quizai\assets') `
-                    --watch (Join-Path $repo 'shared') `
-                    --watch (Join-Path $repo 'ai\flutter_client')
-
-                $runnerExitCode = $LASTEXITCODE
+                # Windows PowerShell convierte stderr nativo redirigido en
+                # ErrorRecord (incluidas advertencias de Java/Gradle). Con Stop
+                # abortaria una sesion oculta valida antes de leer su exit code.
+                $runnerErrorAction = $ErrorActionPreference
+                try {
+                    $ErrorActionPreference = 'Continue'
+                    & $dart $devRunner `
+                        --flutter $flutter `
+                        --device $Device `
+                        --defines-file $definesFile `
+                        --working-directory (Join-Path $repo 'apps\quizai') `
+                        --watch (Join-Path $repo 'apps\quizai\lib') `
+                        --watch (Join-Path $repo 'apps\quizai\assets') `
+                        --watch (Join-Path $repo 'shared') `
+                        --watch (Join-Path $repo 'ai\flutter_client')
+                    $runnerExitCode = $LASTEXITCODE
+                } finally {
+                    $ErrorActionPreference = $runnerErrorAction
+                }
 
                 if ($runnerExitCode -eq 86 -and
                     $launchAttempt -lt $maxFlutterLaunchAttempts) {

@@ -27,6 +27,8 @@ La tarea usa la sesión interactiva del usuario actual, sin contraseña guardada
 con privilegios limitados y PowerShell oculto/no interactivo. Arranca al iniciar
 sesión, ignora nuevas ejecuciones mientras está activa (`IgnoreNew`), no tiene
 límite temporal y no se detiene por inactividad ni al pasar a batería.
+La configuración corresponde a las opciones del
+[Programador de tareas de Windows](https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/new-scheduledtasksettingsset).
 Su entrada mínima, `scripts/start-dev-session.ps1`, ejecuta en orden
 `scripts/start-ai-apps-android.ps1` y `apps/quizai/run.ps1 -Device emulator-5554`.
 El primero reutiliza el emulador o prepara el AVD `AI_APPS_Dev` sin ventana;
@@ -57,8 +59,13 @@ Stop-ScheduledTask -TaskName 'AI-APPS Development'
 No ejecutes `start-dev-session.ps1` directamente ni otro `flutter run` mientras
 la tarea esté activa: la exclusión la proporciona el Programador de tareas.
 Antes de una prueba manual, detén la tarea y confirma que han terminado el
-runner y su Flutter; después restaura con `Start-ScheduledTask`. El servicio
-Dart puede reutilizarse. Su parada explícita sigue siendo `run.ps1 -StopService`.
+runner y su Flutter; después restaura con `Start-ScheduledTask`.
+Windows puede dejar hijos nativos vivos después de `Stop-ScheduledTask`:
+comprueba sus PID con `Get-CimInstance Win32_Process` y detén con `Stop-Process`
+solo el runner y los procesos Flutter de esta sesión antes de iniciar otra.
+No detengas el emulador ni un Dart que pertenezca al servicio o al editor.
+El servicio Dart puede reutilizarse. Su parada explícita sigue siendo
+`run.ps1 -StopService`.
 La sesión dura hasta detenerla, cerrar la sesión de Windows o apagar el equipo;
 al siguiente inicio de sesión vuelve a prepararse.
 

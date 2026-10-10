@@ -205,7 +205,7 @@ Con `emulator-5554` iniciado, desde la raíz del repositorio en PowerShell:
 .\apps\quizai\run.ps1
 ```
 
-El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Busca la clave OpenAI en el entorno y, si falta, la solicita con entrada oculta. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. El arranque cotidiano usa la tarea de Windows **AI-APPS Development**; no ejecutes este lanzador manualmente mientras esté activa. Cambiar de pestaña o abrir Ajustes no llama al modelo; pulsar **Jugar** dentro de 🎲 Quiz10 solicita una generación.
+El procedimiento inicia o reutiliza el servicio Dart, conecta el emulador y abre QuizAI con la configuración de desarrollo de `gpt-4.1-mini`. Recupera la clave OpenAI cifrada con DPAPI para el usuario actual o desde el entorno; si falta, termina con instrucciones para guardarla con `-SaveKeyFromClipboard`. No es necesario introducir un token; la clave no se incluye en Flutter ni en el APK. El arranque cotidiano usa la tarea de Windows **AI-APPS Development**; no ejecutes este lanzador manualmente mientras esté activa. Cambiar de pestaña o abrir Ajustes no llama al modelo; pulsar **Jugar** dentro de 🎲 Quiz10 solicita una generación.
 
 La generación usa el Dart incluido en Flutter. El proyecto Android conserva su compilación independiente. El prompt y las reglas siguen en Quiz10; el esquema no envía `minItems` ni `maxItems` y el validador sigue exigiendo diez preguntas.
 
