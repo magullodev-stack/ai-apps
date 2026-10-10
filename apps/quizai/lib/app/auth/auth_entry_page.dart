@@ -171,11 +171,15 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             ),
             for (final asset in _layers.skip(1))
               IgnorePointer(
-                child: Image.asset(
-                  asset,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                  filterQuality: FilterQuality.high,
+                child: Transform.scale(
+                  scale: asset == _layers[1] ? 0.85 : 1.0,
+                  alignment: const Alignment(0, -0.45),
+                  child: Image.asset(
+                    asset,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                    filterQuality: FilterQuality.high,
+                  ),
                 ),
               ),
             LayoutBuilder(
