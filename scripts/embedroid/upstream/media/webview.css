@@ -1,0 +1,184 @@
+:root {
+  color-scheme: light dark;
+  --ap-accent: var(--vscode-progressBar-background, #3794ff);
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-foreground, #ccc);
+  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Toolbar: quiet ghost icon buttons ---- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  background: var(--vscode-editorGroupHeader-tabsBackground, transparent);
+}
+#toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--vscode-icon-foreground, #c5c5c5);
+  opacity: 0.8;
+  cursor: pointer;
+  transition: background 0.12s ease, opacity 0.12s ease, transform 0.06s ease;
+}
+#toolbar button:hover {
+  opacity: 1;
+  background: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.1));
+}
+#toolbar button:active {
+  transform: scale(0.92);
+}
+#toolbar button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, #3794ff);
+  outline-offset: -1px;
+}
+#toolbar button svg {
+  display: block;
+}
+
+/* ---- Stage / screen ---- */
+#stage {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 12px;
+  position: relative;
+}
+#screen {
+  display: none; /* revealed by the webview once the first frame is decoded */
+  outline: none;
+  background: #000;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  touch-action: none;
+}
+
+/* ---- Minimal indeterminate line loader ---- */
+#loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  pointer-events: none;
+}
+.line-loader {
+  position: relative;
+  width: 180px;
+  height: 2px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--vscode-foreground, #ccc) 14%, transparent);
+}
+.line-loader::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 36%;
+  border-radius: inherit;
+  background: var(--ap-accent);
+  animation: ap-slide 1.15s cubic-bezier(0.65, 0.05, 0.36, 1) infinite;
+}
+#loaderMsg {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  max-width: 80%;
+  text-align: center;
+  line-height: 1.5;
+  color: var(--vscode-descriptionForeground, #9d9d9d);
+}
+#loaderDetail {
+  font-size: 11px;
+  max-width: 78%;
+  text-align: center;
+  line-height: 1.5;
+  color: var(--vscode-descriptionForeground, #8c8c8c);
+  opacity: 0.85;
+  word-break: break-word;
+}
+#loaderDetail:empty {
+  display: none;
+}
+#retryBtn {
+  pointer-events: auto;
+  margin-top: 4px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vscode-button-foreground, #fff);
+  background: var(--vscode-button-background, #0e639c);
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease;
+}
+#retryBtn:hover {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}
+#retryBtn:active {
+  transform: scale(0.97);
+}
+#retryBtn[hidden] {
+  display: none;
+}
+
+/* Playful "failed" state — calm color hierarchy, no alarming red.
+   icon (amber, attention) → headline (foreground) → detail (muted) → button (accent). */
+.fail-icon {
+  display: none;
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+#loader.error .line-loader { display: none; }
+#loader.error .fail-icon {
+  display: block;
+  transform-origin: 50% 60%;
+  animation: ap-wobble 2.6s ease-in-out infinite;
+}
+#loader.error #loaderMsg {
+  color: var(--vscode-foreground, #ccc);
+  font-size: 14px;
+  font-weight: 600;
+}
+@keyframes ap-wobble {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #loader.error .fail-icon { animation: none; }
+}
+
+@keyframes ap-slide {
+  0% { transform: translateX(-130%); }
+  60%, 100% { transform: translateX(400%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .line-loader::before { animation-duration: 2.4s; }
+}

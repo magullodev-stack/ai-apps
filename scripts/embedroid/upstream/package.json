@@ -1,0 +1,274 @@
+{
+	"name": "embedroid",
+	"displayName": "EmbeDroid - Embedded Android Emulator",
+	"description": "Run Android emulation inside VS Code — where it belongs. Mirror and control an Android emulator or device in an editor tab, with no separate window. Built for Flutter & React Native, powered by scrcpy: touch, keyboard, rotate and screenshots.",
+	"version": "1.0.2",
+	"publisher": "utpalbarman",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/utpal-barman/embedroid-vscode-plugin.git"
+	},
+	"bugs": {
+		"url": "https://github.com/utpal-barman/embedroid-vscode-plugin/issues"
+	},
+	"homepage": "https://github.com/utpal-barman/embedroid-vscode-plugin#readme",
+	"icon": "media/icon.png",
+	"engines": {
+		"vscode": "^1.85.0"
+	},
+	"galleryBanner": {
+		"color": "#0e1626",
+		"theme": "dark"
+	},
+	"categories": [
+		"Debuggers",
+		"Testing",
+		"Other"
+	],
+	"keywords": [
+		"android emulator",
+		"vscode emulator",
+		"embedded emulator",
+		"emulator",
+		"android",
+		"avd",
+		"flutter",
+		"react native",
+		"react-native",
+		"scrcpy",
+		"adb",
+		"android device",
+		"device mirror",
+		"screen mirror",
+		"emulator embedded",
+		"run android",
+		"mobile"
+	],
+	"main": "./dist/extension.js",
+	"activationEvents": [],
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "embedroid",
+					"title": "Android Emulator",
+					"icon": "media/activitybar-icon.svg"
+				}
+			]
+		},
+		"views": {
+			"embedroid": [
+				{
+					"id": "embedroid.devices",
+					"name": "Devices & AVDs",
+					"icon": "media/activitybar-icon.svg",
+					"contextualTitle": "Android Emulator"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "embedroid.devices",
+				"contents": "No Android emulators found.\n\nYou need at least one Android Virtual Device (AVD) installed to see it here. Create one in **Android Studio → Device Manager** (the AVD Manager), then refresh.\n\n[Refresh list](command:embedroid.refresh)\n[Open Settings](command:embedroid.openSettings)\n\nNew to this? [How to create an emulator](https://developer.android.com/studio/run/managing-avds)"
+			}
+		],
+		"commands": [
+			{
+				"command": "embedroid.refresh",
+				"title": "Refresh",
+				"category": "Android Emulator",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "embedroid.boot",
+				"title": "Boot AVD…",
+				"category": "Android Emulator",
+				"icon": "$(run)"
+			},
+			{
+				"command": "embedroid.bootItem",
+				"title": "Boot",
+				"category": "Android Emulator",
+				"icon": "$(run)"
+			},
+			{
+				"command": "embedroid.bootWithOptions",
+				"title": "Boot with Options…",
+				"category": "Android Emulator",
+				"icon": "$(run-all)"
+			},
+			{
+				"command": "embedroid.openEmbedded",
+				"title": "Open Embedded View",
+				"category": "Android Emulator",
+				"icon": "$(device-mobile)"
+			},
+			{
+				"command": "embedroid.stop",
+				"title": "Stop Device",
+				"category": "Android Emulator",
+				"icon": "$(debug-stop)"
+			},
+			{
+				"command": "embedroid.coldBoot",
+				"title": "Cold Boot AVD…",
+				"category": "Android Emulator"
+			},
+			{
+				"command": "embedroid.wipeData",
+				"title": "Wipe Data & Boot AVD…",
+				"category": "Android Emulator"
+			},
+			{
+				"command": "embedroid.openSettings",
+				"title": "Open Settings",
+				"category": "Android Emulator",
+				"icon": "$(gear)"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "embedroid.boot",
+					"when": "view == embedroid.devices",
+					"group": "navigation@1"
+				},
+				{
+					"command": "embedroid.refresh",
+					"when": "view == embedroid.devices",
+					"group": "navigation@2"
+				},
+				{
+					"command": "embedroid.openSettings",
+					"when": "view == embedroid.devices",
+					"group": "navigation@3"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "embedroid.bootItem",
+					"when": "view == embedroid.devices && viewItem == avd",
+					"group": "inline@1"
+				},
+				{
+					"command": "embedroid.bootWithOptions",
+					"when": "view == embedroid.devices && viewItem == avd",
+					"group": "boot@1"
+				},
+				{
+					"command": "embedroid.coldBoot",
+					"when": "view == embedroid.devices && viewItem == avd",
+					"group": "boot@2"
+				},
+				{
+					"command": "embedroid.wipeData",
+					"when": "view == embedroid.devices && viewItem == avd",
+					"group": "boot@3"
+				},
+				{
+					"command": "embedroid.openEmbedded",
+					"when": "view == embedroid.devices && viewItem =~ /^device/",
+					"group": "inline@1"
+				},
+				{
+					"command": "embedroid.stop",
+					"when": "view == embedroid.devices && viewItem == device-emulator",
+					"group": "inline@2"
+				}
+			]
+		},
+		"configuration": {
+			"title": "Embedded Android Emulator",
+			"properties": {
+				"embedroid.sdkPath": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "Path to the Android SDK root. If empty, `ANDROID_HOME`/`ANDROID_SDK_ROOT` and common OS defaults are used."
+				},
+				"embedroid.transport": {
+					"type": "string",
+					"enum": [
+						"scrcpy",
+						"grpc"
+					],
+					"default": "scrcpy",
+					"description": "Video/input transport for the embedded view. 'scrcpy' works for emulators and physical devices; 'grpc' (planned) is emulator-only."
+				},
+				"embedroid.scrcpyServerPath": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "Optional override path to a `scrcpy-server` jar. **Not required** — a server is bundled with the extension and pushed to the device via adb, so scrcpy does **not** need to be installed on your machine."
+				},
+				"embedroid.maxFps": {
+					"type": "number",
+					"default": 60,
+					"description": "Maximum stream frame rate."
+				},
+				"embedroid.maxBitrateMbps": {
+					"type": "number",
+					"default": 8,
+					"description": "Maximum video bitrate in Mbps."
+				},
+				"embedroid.gpuMode": {
+					"type": "string",
+					"enum": [
+						"auto",
+						"host",
+						"swiftshader_indirect"
+					],
+					"default": "auto",
+					"description": "Emulator GPU mode when booting headless."
+				},
+				"embedroid.openIn": {
+					"type": "string",
+					"enum": [
+						"beside",
+						"active"
+					],
+					"enumDescriptions": [
+						"Open the embedded view side by side (in a split to the right).",
+						"Open the embedded view in the currently active editor group."
+					],
+					"default": "beside",
+					"description": "Where to open the embedded device view."
+				},
+				"embedroid.headless": {
+					"type": "boolean",
+					"default": true,
+					"description": "Boot the emulator headless (-no-window) so no separate OS window appears."
+				},
+				"embedroid.verboseLogging": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable verbose logging in the 'Android Emulator' output channel."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run build",
+		"build": "node esbuild.js --production",
+		"watch": "node esbuild.js --watch",
+		"compile": "tsc -p ./ --noEmit",
+		"lint": "eslint src --ext ts",
+		"package": "vsce package",
+		"vsce:publish": "vsce publish"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.0",
+		"@types/vscode": "^1.85.0",
+		"@types/ws": "^8.5.10",
+		"@vscode/vsce": "^3.9.2",
+		"esbuild": "^0.20.0",
+		"typescript": "^5.4.0"
+	},
+	"dependencies": {
+		"ws": "^8.16.0"
+	},
+	"__metadata": {
+		"installedTimestamp": 1791569407407,
+		"targetPlatform": "undefined",
+		"size": 226318
+	}
+}

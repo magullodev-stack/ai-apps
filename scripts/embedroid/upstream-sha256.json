@@ -1,0 +1,11 @@
+{
+    ".vsixmanifest":  "d69c9b3fba3ae17a85044ac0e845d1b6ad391f34a6a202f7af3a22df3f51973a",
+    "dist/extension.js":  "3d0749895412a266910a5ddb0d76cd5da257e4524ddd503cbfd0fc5e2fd6c58a",
+    "LICENSE.txt":  "96f4f2d951d7a40db6da130634ccaab3a2c16fa3488a3a3b0651f447036159f6",
+    "media/activitybar-icon.svg":  "84f32546aec2141a708ffbd50909e8f7e745d1490838e367afa110a461fe9a0d",
+    "media/icon.png":  "78a5955715e6c13638c86248ed2171a44dda8f98ba8847f816df1cb6e8a21076",
+    "media/vendor/scrcpy-server-v3.2.jar":  "b920e0ea01936bf2482f4ba2fa985c22c13c621999e3d33b45baa5acfc1ea3d0",
+    "media/webview.css":  "950a8842cb202dd043067507bd65ae08f939bd51d25c9ca50afd3ad89beb310b",
+    "media/webview.js":  "09d614585b1c8f638daaba9dd5070e44b746dee4e5b1f2a81436d998beb007d1",
+    "package.json":  "0220388c52d4c722f0ef0d1a61669aa036ed55b0704290373f86061253110b60"
+}
