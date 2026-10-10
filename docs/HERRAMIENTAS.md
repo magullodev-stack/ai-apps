@@ -9,7 +9,7 @@
 | Sincronización continua de `dev` | Mantener `dev` local y `origin/dev` sincronizados en segundo plano mientras QuizAI está en desarrollo. Aplica cambios remotos automáticamente y, tras unos segundos sin cambios locales, crea un commit de sincronización y lo publica. | [`scripts/auto-sync-dev.ps1`](../scripts/auto-sync-dev.ps1) | Se inicia automáticamente desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
 | Sincronizar `dev` manualmente | Herramienta de recuperación/fallback para forzar una sincronización bidireccional cuando la sincronización continua no está activa. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Solo para recuperación o diagnóstico. |
 | Flutter Dev Runner | Ejecutar `flutter run --machine`, vigilar código y assets de QuizAI y de sus dependencias locales y solicitar Hot Reload al proceso Flutter después de cambios en disco. | [`scripts/flutter-dev-runner.dart`](../scripts/flutter-dev-runner.dart) | Se inicia desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
-| EmbeDroid en VS Code | Mostrar y controlar el AVD local de desarrollo dentro de una pestaña de VS Code para interacción y capturas rápidas. | Extensión `utpalbarman.embedroid` + [`scripts/vscode-android/`](../scripts/vscode-android/) | Apertura automática solicitada al iniciar AI-APPS; restauración fiable no validada en 1.0.2. [Diagnóstico y alternativa](../scripts/vscode-android/README.md). |
+| EmbeDroid en VS Code | Mostrar y controlar el AVD local de desarrollo dentro de una pestaña de VS Code para interacción y capturas rápidas. | Extensión `utpalbarman.embedroid` + [`scripts/vscode-android/`](../scripts/vscode-android/) | Dos reaperturas completas confirmadas por el usuario el 10 de octubre de 2026. [Verificación, diagnóstico y alternativa](../scripts/vscode-android/README.md). |
 
 ---
 
@@ -75,6 +75,16 @@ al siguiente inicio de sesión vuelve a prepararse.
 
 `scripts/start-android.ps1` conserva la preparación del dispositivo físico para
 las comprobaciones que lo requieran.
+
+Verificación completada el 10 de octubre de 2026: el usuario confirmó dos
+cierres y reaperturas completos de VS Code con QuizAI visible y funcional,
+sin ejecutar Flutter ni detener la tarea. La comprobación posterior confirmó
+los mismos procesos de Android, QuizAI, Dart y Flutter, sin una nueva
+compilación en `dev-session.log`, y Hot Reload automático después de un cambio
+Dart temporal restaurado. La ejecución manual independiente de
+`flutter run -d emulator-5554` y la restauración de la tarea se habían
+comprobado antes de estos ciclos. El diagnóstico previo de EmbeDroid se
+conserva como incidencia intermitente; no invalida los dos ciclos confirmados.
 
 ---
 ## COMMIT
@@ -145,11 +155,12 @@ AI-APPS. EmbeDroid abre ese emulador dentro del editor mediante
 `embedroid.openEmbedded`, el mismo flujo que ya utilizaba el repositorio antes
 de pasar temporalmente al Pixel físico.
 
-La versión 1.0.2 instalada no garantiza restauración automática tras un
-cierre completo del editor. Una pestaña abierta no acredita una transmisión
-activa. El [diagnóstico de la integración](../scripts/vscode-android/README.md)
-recoge el fallo del transporte, las comprobaciones ADB y la alternativa de
+Las dos reaperturas completas confirmadas por el usuario superaron la prueba
+de aceptación con la versión 1.0.2 instalada. El
+[diagnóstico de la integración](../scripts/vscode-android/README.md) conserva
+los fallos intermitentes anteriores del transporte y la alternativa de
 visualización con scrcpy sobre el mismo emulador, sin recompilar QuizAI.
+Una pestaña abierta por sí sola no acredita una transmisión activa.
 
 El objetivo del flujo es: cambios de código → autosync/local → Hot Reload →
 visualización inmediata en EmbeDroid → captura desde el PC. El Pixel físico

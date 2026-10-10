@@ -8,8 +8,11 @@ arranca QuizAI.
 ## Limitación de EmbeDroid 1.0.2
 
 Diagnóstico del 10 de octubre de 2026 con VS Code 1.141.0 y la extensión
-instalada `utpalbarman.embedroid` 1.0.2. La aparición automática y fiable de
-QuizAI después de cerrar completamente VS Code **no está validada**.
+instalada `utpalbarman.embedroid` 1.0.2. Después de este diagnóstico, el usuario
+confirmó dos cierres y reaperturas completos con QuizAI visible y funcional,
+sin ejecutar Flutter ni detener la tarea. **Los dos ciclos de aceptación están
+superados**. Se conserva el diagnóstico del fallo intermitente observado antes;
+esta verificación no implica que el transporte de EmbeDroid haya sido corregido.
 
 Una pestaña existente no demuestra que haya una conexión de vídeo activa.
 El guard `alreadyOpen` omitiría la apertura para `embedroid.embedded`, pero
@@ -61,9 +64,31 @@ que el guard omite el comando con `embedroid.embedded` y lo ejecuta con
 `mainThreadWebview-embedroid.embedded`. Es una comprobación de la condición,
 no una prueba visual de restauración.
 
-Los dos ciclos nuevos de cierre y reapertura completos siguen pendientes:
-el control nativo de ventanas no estuvo disponible durante el diagnóstico.
-Los registros anteriores no sustituyen esos dos ciclos de aceptación.
+### Cierre de la verificación
+
+El 10 de octubre de 2026, el usuario confirmó que cerró y reabrió completamente
+VS Code dos veces: QuizAI apareció y funcionó correctamente en ambas aperturas.
+No ejecutó Flutter ni detuvo **AI-APPS Development**. Estos ciclos fueron
+realizados y observados por el usuario; el agente comprobó después el estado
+de los procesos y los registros, sin cerrar de nuevo el editor.
+
+La comprobación posterior mantuvo los PID ya observados: emulador `22120`,
+QuizAI `5478`, servicio Dart `26616`, entrada persistente `25748`, runner `8448`
+y Flutter `24348`. Android conservaba su identificador de arranque y QuizAI
+estaba en primer plano; `/health` confirmó el servicio Dart. El registro
+persistente no contiene nuevos arranques ni compilaciones después de las
+13:52:21. Los PID son evidencia de esta comprobación, no valores de configuración.
+
+En la sesión de VS Code `20261010T141931`, EmbeDroid estableció vídeo H.264
+en el primer intento a las 14:19:36 Europe/Madrid, sin cierre posterior en el
+registro consultado. Un cambio Dart temporal y su restauración generaron Hot
+Reload automático completado a las 14:21:41 y 14:21:42, manteniendo el mismo
+ejecutor Flutter. El archivo se restauró y `git diff --check` pasó.
+
+La prueba manual independiente `flutter run -d emulator-5554`, el Hot Reload
+visual de Dart y assets y la restauración de la sesión persistente ya se habían
+completado antes de estos dos ciclos. El informe local actualizado está en
+`.ai-apps/dev-session-verification.json`, excluido de Git y sin credenciales.
 
 ## Recuperación y alternativa
 
