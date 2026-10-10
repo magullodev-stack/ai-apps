@@ -1,11 +1,11 @@
-param(
+﻿param(
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '../../.ai-apps/embedroid')
 )
 
 $ErrorActionPreference = 'Stop'
 $utf8 = New-Object Text.UTF8Encoding($false)
 $upstream = Join-Path $PSScriptRoot 'upstream'
-$hashes = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'upstream-sha256.json') | ConvertFrom-Json
+$hashes = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $PSScriptRoot 'upstream-sha256.json') | ConvertFrom-Json
 
 # Fail closed when importing a different release; never silently patch a new
 # bundle whose transport or protocol may have changed.
@@ -31,7 +31,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'scid.cjs') -Destination $extens
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'README.md') -Destination (Join-Path $extension 'readme.md') -Force
 [IO.File]::WriteAllText((Join-Path $extension 'dist/extension.js'), $bundle, $utf8)
 
-$manifest = Get-Content -Raw -LiteralPath (Join-Path $upstream 'package.json') | ConvertFrom-Json
+$manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $upstream 'package.json') | ConvertFrom-Json
 $manifest.name = 'ai-apps-embedroid'
 $manifest.publisher = 'magullodev'
 $manifest.version = '1.0.3'
@@ -86,14 +86,22 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $vsix = Join-Path $output 'ai-apps-embedroid-1.0.3.vsix'
 $stream = [IO.File]::Open($vsix, [IO.FileMode]::Create)
 $zip = New-Object IO.Compression.ZipArchive($stream, [IO.Compression.ZipArchiveMode]::Create)
+$fixedTimestamp = [DateTimeOffset]'2000-01-01T00:00:00+00:00'
 try {
-    foreach ($entry in @{ 'extension.vsixmanifest' = $vsixManifest; '[Content_Types].xml' = $contentTypes }.GetEnumerator()) {
-        $writer = New-Object IO.StreamWriter($zip.CreateEntry($entry.Key).Open(), $utf8)
+    foreach ($entry in ([ordered]@{ 'extension.vsixmanifest' = $vsixManifest; '[Content_Types].xml' = $contentTypes }).GetEnumerator()) {
+        $zipEntry = $zip.CreateEntry($entry.Key)
+        $zipEntry.LastWriteTime = $fixedTimestamp
+        $writer = New-Object IO.StreamWriter($zipEntry.Open(), $utf8)
         try { $writer.Write($entry.Value) } finally { $writer.Dispose() }
     }
     foreach ($file in Get-ChildItem -LiteralPath $extension -File -Recurse | Sort-Object FullName) {
         $relative = $file.FullName.Substring($extension.Length + 1).Replace('\', '/')
-        [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file.FullName, "extension/$relative") | Out-Null
+        $zipEntry = $zip.CreateEntry("extension/$relative")
+        $zipEntry.LastWriteTime = $fixedTimestamp
+        $inputStream = [IO.File]::OpenRead($file.FullName)
+        $entryStream = $zipEntry.Open()
+        try { $inputStream.CopyTo($entryStream) }
+        finally { $entryStream.Dispose(); $inputStream.Dispose() }
     }
 }
 finally { $zip.Dispose(); $stream.Dispose() }

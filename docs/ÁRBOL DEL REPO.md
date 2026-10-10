@@ -52,6 +52,8 @@ ai-apps/
 │   ├── flutter-dev-runner.dart # Vigila archivos y aplica Hot Reload.
 │   ├── start-android.ps1
 │   ├── sync-dev.ps1
+│   ├── embedroid/               # EmbeDroid mantenido, paquete base y pruebas.
+│   ├── install-embedroid.ps1     # Instala el visor corregido y la integración.
 │   └── vscode-android/
 │
 ├── docs/                      # Documentación general de AI-APPS.
@@ -88,7 +90,7 @@ Contiene componentes compartidos por las aplicaciones cuando existe una necesida
 
 ### scripts/
 
-Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de QuizAI. `vscode-android/` solo abre EmbeDroid sobre el dispositivo existente.
+Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de QuizAI. `vscode-android/` solo abre EmbeDroid sobre el dispositivo existente. `embedroid/` conserva y construye la distribución corregida del visor, con pruebas del transporte; `install-embedroid.ps1` la instala con identidad propia.
 
 ### docs/
 

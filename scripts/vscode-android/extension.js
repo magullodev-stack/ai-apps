@@ -2,7 +2,7 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 
-const EMBEDROID_ID = 'utpalbarman.embedroid';
+const EMBEDROID_ID = 'magullodev.ai-apps-embedroid';
 const output = vscode.window.createOutputChannel('AI-APPS Android');
 
 function getWorkspace() {

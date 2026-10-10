@@ -1,0 +1,6 @@
+# Preserve the imported package byte for byte so its SHA-256 checks also work
+# in fresh Windows clones with core.autocrlf enabled.
+upstream/** -text
+# The official Apache license includes a final blank line. Preserve it and
+# its hash while allowing the repository's whitespace check for this file.
+upstream/media/vendor/LICENSE-scrcpy.txt whitespace=-blank-at-eof

@@ -9,7 +9,8 @@
 | Sincronización continua de `dev` | Mantener `dev` local y `origin/dev` sincronizados en segundo plano mientras QuizAI está en desarrollo. Aplica cambios remotos automáticamente y, tras unos segundos sin cambios locales, crea un commit de sincronización y lo publica. | [`scripts/auto-sync-dev.ps1`](../scripts/auto-sync-dev.ps1) | Se inicia automáticamente desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
 | Sincronizar `dev` manualmente | Herramienta de recuperación/fallback para forzar una sincronización bidireccional cuando la sincronización continua no está activa. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Solo para recuperación o diagnóstico. |
 | Flutter Dev Runner | Ejecutar `flutter run --machine`, vigilar código y assets de QuizAI y de sus dependencias locales y solicitar Hot Reload al proceso Flutter después de cambios en disco. | [`scripts/flutter-dev-runner.dart`](../scripts/flutter-dev-runner.dart) | Se inicia desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
-| EmbeDroid en VS Code | Mostrar y controlar el AVD local de desarrollo dentro de una pestaña de VS Code para interacción y capturas rápidas. | Extensión `utpalbarman.embedroid` + [`scripts/vscode-android/`](../scripts/vscode-android/) | Dos reaperturas completas confirmadas por el usuario el 10 de octubre de 2026. [Verificación, diagnóstico y alternativa](../scripts/vscode-android/README.md). |
+| EmbeDroid en VS Code | Mostrar y controlar el AVD existente dentro de VS Code, con scid de 31 bits. | Distribución `magullodev.ai-apps-embedroid` + [`scripts/vscode-android/`](../scripts/vscode-android/) | [Corrección, instalación y validación](../scripts/vscode-android/README.md). |
+| Construir y validar EmbeDroid | Mantener y reinstalar la distribución corregida sin parches locales en la extensión instalada. | [`scripts/embedroid/`](../scripts/embedroid/) y [`scripts/install-embedroid.ps1`](../scripts/install-embedroid.ps1) | [Procedencia, pruebas y actualizaciones](../scripts/embedroid/README.md). |
 
 ---
 
@@ -45,9 +46,9 @@ VS Code únicamente abre el Android existente con `embedroid.openEmbedded`.
 Cerrar o reabrir el editor no inicia Flutter, Dart ni Gradle. Un fallo del visor
 no afecta a la sesión persistente. Los errores de solicitud se registran en
 Output → `AI-APPS Android`; los errores de transmisión, en `Android Emulator`
-y en la propia pestaña. EmbeDroid 1.0.2 puede cerrar una transmisión nueva
-después de reabrir VS Code y no ofrece una reconexión pública automatizable.
-Consulta la [limitación técnica y la recuperación manual](../scripts/vscode-android/README.md).
+y en la propia pestaña. La distribución mantenida corrige los dos generadores
+de `scid` de EmbeDroid 1.0.2 y conserva identificadores de 31 bits admitidos
+por scrcpy. Consulta la [corrección y sus pruebas](../scripts/vscode-android/README.md).
 El antiguo selector `.ai-apps/active-game.txt` ya no controla este arranque.
 La integración se enlaza al repositorio con `scripts/install-vscode-android.ps1`;
 recarga o reabre VS Code después de modificar su JavaScript.
@@ -155,12 +156,19 @@ AI-APPS. EmbeDroid abre ese emulador dentro del editor mediante
 `embedroid.openEmbedded`, el mismo flujo que ya utilizaba el repositorio antes
 de pasar temporalmente al Pixel físico.
 
-Las dos reaperturas completas confirmadas por el usuario superaron la prueba
-de aceptación con la versión 1.0.2 instalada. El
-[diagnóstico de la integración](../scripts/vscode-android/README.md) conserva
-los fallos intermitentes anteriores del transporte y la alternativa de
-visualización con scrcpy sobre el mismo emulador, sin recompilar QuizAI.
-Una pestaña abierta por sí sola no acredita una transmisión activa.
+El rechazo intermitente de identificadores `scid` de 32 bits en EmbeDroid
+1.0.2 se confirmó de nuevo a las 14:47 del 10 de octubre de 2026 y se corrigió
+en el transporte. `scripts/install-embedroid.ps1` instala la distribución
+`magullodev.ai-apps-embedroid` 1.0.3, mantenida en el repositorio con hashes,
+constructor de VSIX y pruebas. Su identidad propia evita que una actualización
+de la extensión original sobrescriba el arreglo. Recarga VS Code después de
+instalarla; Android y Flutter siguen activos.
+
+Las pruebas cubren identificadores límite, 100.000 valores aleatorios, tres
+transmisiones reales de diez segundos y reaperturas de un perfil aislado de
+VS Code con webviews reales. El [diagnóstico actualizado](../scripts/vscode-android/README.md)
+detalla la evidencia y distingue esa validación de una recarga del editor
+principal. Una pestaña abierta por sí sola no acredita una transmisión activa.
 
 El objetivo del flujo es: cambios de código → autosync/local → Hot Reload →
 visualización inmediata en EmbeDroid → captura desde el PC. El Pixel físico
