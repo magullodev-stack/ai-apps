@@ -77,7 +77,7 @@ def ensure_running():
     return health
 
 
-def generate(model, prompt):
+def generate(model, prompt, *, image=None):
     if len(prompt) > 31_000:
         raise RuntimeError("La conversación supera la longitud aceptada por el servicio.")
     request = {
@@ -86,6 +86,7 @@ def generate(model, prompt):
         "input": prompt,
         "schemaName": "creativeSpeech",
         "schema": SCHEMA,
+        **({"image": image} if image is not None else {}),
     }
     response = _request("/v1/generate", data=json.dumps(request, ensure_ascii=False).encode("utf-8"))
     if not isinstance(response, dict) or not isinstance(response.get("text"), str):
@@ -116,11 +117,12 @@ ACTION_SCHEMA = {
 }
 
 
-def generate_action(model, prompt):
+def generate_action(model, prompt, *, image=None):
     """Structured tool intent; ChatDev executes the resulting native ToolCallPayload."""
     payload = {
         "application": "agentlab", "model": model, "input": prompt,
         "schemaName": "creativeAction", "schema": ACTION_SCHEMA,
+        **({"image": image} if image is not None else {}),
     }
     response = _request("/v1/generate",
                         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"))

@@ -87,7 +87,8 @@ class AiService {
       }
       if (request.method == 'GET' && request.uri.path == '/health') {
         await _send(request, 200,
-            {'service': 'ai-apps-dart', 'protocol': 1, 'pid': pid});
+            {'service': 'ai-apps-dart', 'protocol': 1, 'pid': pid,
+             'capabilities': {'imageInput': true}});
         return;
       }
       if (request.uri.path != '/v1/generate') {
@@ -101,7 +102,7 @@ class AiService {
       final bytes = <int>[];
       await for (final chunk in request.timeout(const Duration(seconds: 10))) {
         bytes.addAll(chunk);
-        if (bytes.length > 65536) {
+        if (bytes.length > 5 * 1024 * 1024) {
           await _send(request, 413, {'error': 'request_too_large'});
           return;
         }
@@ -132,6 +133,31 @@ class AiService {
           body['schema'] is! Map<String, dynamic>) {
         await _send(request, 400, {'error': 'invalid_request'});
         return;
+      }
+      // Image bytes are supplied only by the authenticated creative laboratory.
+      // Validate before forwarding to Responses; never log pixel payloads.
+      final image = body['image'];
+      if (image != null) {
+        if (body['application'] != 'agentlab' ||
+            image is! Map<String, dynamic> ||
+            image['mimeType'] != 'image/png' ||
+            image['data'] is! String ||
+            (image['data'] as String).length > 4194304) {
+          await _send(request, 400, {'error': 'invalid_image'});
+          return;
+        }
+        try {
+          final raw = base64Decode(image['data'] as String);
+          const signature = [137, 80, 78, 71, 13, 10, 26, 10];
+          if (raw.length < 24 || raw.length > 3145728 ||
+              !List.generate(signature.length, (i) => i)
+                  .every((i) => raw[i] == signature[i])) {
+            throw const FormatException('Invalid PNG');
+          }
+        } on FormatException {
+          await _send(request, 400, {'error': 'invalid_image'});
+          return;
+        }
       }
       final watch = Stopwatch()..start();
       http = HttpClient()..connectionTimeout = const Duration(seconds: 10);
@@ -172,7 +198,21 @@ class AiService {
     upstream.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_apiKey');
     upstream.write(jsonEncode({
       'model': body['model'],
-      'input': body['input'],
+      'input': body['image'] is Map
+          ? [
+              {
+                'role': 'user',
+                'content': [
+                  {'type': 'input_text', 'text': body['input']},
+                  {
+                    'type': 'input_image',
+                    'image_url': 'data:image/png;base64,' +
+                        (body['image']['data'] as String),
+                  },
+                ],
+              }
+            ]
+          : body['input'],
       'store': false,
       'text': {
         'format': {

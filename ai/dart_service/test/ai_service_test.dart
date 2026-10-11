@@ -138,6 +138,43 @@ void main() {
     });
   }
 
+  test('envía un PNG nativo junto al texto, solo desde agentlab', () async {
+    final bytes = [137, 80, 78, 71, 13, 10, 26, 10, ...List.filled(20, 0)];
+    final encoded = base64Encode(bytes);
+    final served = provider.first.then((request) async {
+      final incoming = jsonDecode(await utf8.decoder.bind(request).join());
+      final messages = incoming['input'] as List;
+      expect(messages.length, 1);
+      final content = messages.first['content'] as List;
+      expect(content.first['type'], 'input_text');
+      expect(content.first['text'], 'Generate a value');
+      expect(content.last['type'], 'input_image');
+      expect(content.last['image_url'], 'data:image/png;base64,$encoded');
+      request.response.write(jsonEncode({
+        'status': 'completed',
+        'output': [{'content': [{'type': 'output_text', 'text': '{"value":"ok"}'}]}]
+      }));
+      await request.response.close();
+    });
+    final result = await call(payload: {
+      ...body,
+      'application': 'agentlab',
+      'image': {'mimeType': 'image/png', 'data': encoded},
+    });
+    await served;
+    expect(result.status, 200);
+    expect(jsonEncode(logs), isNot(contains(encoded)));
+    expect((await call(payload: {
+      ...body,
+      'image': {'mimeType': 'image/png', 'data': encoded},
+    })).status, 400);
+    expect((await call(payload: {
+      ...body,
+      'application': 'agentlab',
+      'image': {'mimeType': 'image/png', 'data': 'not-png'},
+    })).status, 400);
+  });
+
   test('autenticación y rutas se comprueban antes de llamar al proveedor',
       () async {
     expect((await call(authorization: null)).status, 401);
