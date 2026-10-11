@@ -232,7 +232,15 @@ if (-not $session) {
     }
 }
 if (-not $ProbarLuna -and -not $ProbarQuiz10) { Write-Host "Servicio Dart preparado: $($session.endpoint)" }
-if ($RefreshServiceOnly) { return }
+if ($RefreshServiceOnly) {
+    $updated = Invoke-RestMethod -Uri "$($session.endpoint)/health" `
+        -Headers @{ Authorization = "Bearer $($session.token)" } -TimeoutSec 3
+    if ($updated.pid -ne $session.pid -or $updated.capabilities.imageInput -ne $true) {
+        throw 'La versión nueva del servicio Dart no ha quedado activa.'
+    }
+    Write-Host 'Servicio Dart actualizado: imágenes habilitadas; puerto y token conservados.'
+    return
+}
 
 if ($Pivots) {
     Push-Location (Join-Path $repo 'apps\\quizai')
