@@ -34,9 +34,8 @@ class CreativeShared(ModelProvider):
                 "No digas que has creado o abierto algo si no lo has hecho con una herramienta. "
                 "Después de una llamada recibirás el resultado de la herramienta. "
                 "Texto natural en speech; acción en tool, path y content. "
-                "Si debes construir, escribe código con room_write, y puedes ejecutarlo con room_launch. "
-                "Prioriza una creación visual, interactiva y sorprendente. "
-                "No redactes auditorías ni planes de trabajo.\n\n"
+                "Si eliges escribir código, puedes usar room_write y luego room_launch para probarlo. "
+                "La decisión de construir o conversar es tuya.\n\n"
             )
             answer, usage = generate_action(self.model_name, instruction + prompt)
             tool = answer["tool"]

@@ -12,21 +12,17 @@ import uuid
 from lab import ROOT, RUNS, CREATIVE_RUNS, git, prepare_workspace, verify_chatdev
 
 VOICES = (
-    ("Chispa", "Imagina experiencias interactivas inesperadas, sensoriales y juguetonas. "
-     "Evita utilidades genéricas y aplicaciones administrativas. Haz propuestas que den ganas de verlas."),
-    ("Caos", "Eres un colaborador creativo inconformista. Responde de verdad a las ideas anteriores: "
-     "combina, contradice, transforma y arriesga. No hagas revisión de calidad ni informes."),
-    ("Materia", "Piensas con movimiento, color, sonido y tacto. Convierte lo que se conversa en "
-     "experiencias que puedan vivir en una pantalla. Propón un gesto visual concreto, no un plan de ingeniería."),
+    ("Chispa", "Te atraen las posibilidades inesperadas, la intuición y el juego."),
+    ("Caos", "Tiendes a cuestionar convenciones, combinar ideas y cambiar de perspectiva."),
+    ("Materia", "Te interesan la materialidad, el movimiento, los gestos y lo tangible."),
 )
 
 COMMON = (
-    "Estás conversando con otros agentes en un taller de arte interactivo. "
-    "No eres un supervisor ni un gestor de tareas. Puedes discrepar, sorprender y cambiar de dirección. "
-    "Habla en español, con naturalidad y brevedad. Nada de listas de verificación, auditorías, "
-    "documentación, pruebas obligatorias ni relatos técnicos. "
-    "Puedes proponer cambios concretos a la experiencia y responder libremente. "
-    "No menciones otros proyectos."
+    "Compartes con otros agentes un espacio de exploración. "
+    "No hay encargo artístico, tema ni resultado predeterminado. "
+    "Puedes conversar, disentir, experimentar y utilizar las herramientas "
+    "disponibles cuando lo consideres interesante. Tampoco hay obligación de programar. "
+    "Habla en español con naturalidad."
 )
 
 WORKSPACE_RULES = (
@@ -61,7 +57,7 @@ def creative_rooms():
 def latest_room():
     rooms = creative_rooms()
     if not rooms:
-        raise ValueError("Aún no hay experiencias creativas. Empieza con -Idea.")
+        raise ValueError("Aún no hay experiencias creativas.")
     return rooms[0]
 
 
@@ -74,7 +70,7 @@ def list_rooms():
     for room in rooms[:12]:
         try:
             state = json.loads((room / "room.json").read_text(encoding="utf-8"))
-            idea = str(state.get("idea") or "Sin título").replace("\n", " ")[:75]
+            idea = str(state.get("idea") or "Exploración libre").replace("\n", " ")[:75]
             mode = "Flutter" if (room / "workspace" / "pubspec.yaml").is_file() else "Ideas"
             meter = room_meter(state, room=room)
             spent = (" · aprox. US$" + format(
@@ -96,15 +92,15 @@ def open_room(args):
         state = json.loads((room / "room.json").read_text(encoding="utf-8"))
         if any(str(item.get("text", "")).casefold().startswith("error calling model ")
                for item in state.get("conversation", [])):
-            raise ValueError("Esta sala contiene solo respuestas fallidas; comienza una sala nueva con -Idea")
+            raise ValueError("Esta sala contiene solo respuestas fallidas; comienza una sala nueva")
         if args.idea or args.flutter:
             raise ValueError("Al continuar una sala no repitas -Idea ni -Flutter")
         if args.model:
             state["model"] = args.model
             save(room, state)
         return room, state
-    if not args.idea or not args.idea.strip():
-        raise ValueError("Indica -Idea para comenzar o -Room para continuar")
+    if not (args.idea and args.idea.strip()) and not (args.flutter and args.build):
+        raise ValueError("Indica -Idea o inicia una exploración libre con -Flutter -Build")
     room = CREATIVE_RUNS / ("creative_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "_" + uuid.uuid4().hex[:6])
     room.mkdir()
     (room / "manifest.json").write_text(
@@ -124,7 +120,7 @@ def open_room(args):
         git(workspace, "add", "-A")
         git(workspace, "commit", "-m", "Empty creative space")
     (workspace / "AGENTS.md").write_text(WORKSPACE_RULES, encoding="utf-8")
-    state = {"idea": args.idea.strip(), "provider": "shared",
+    state = {"idea": (args.idea or "").strip(), "provider": "shared",
              "model": args.model or "gpt-5.6-luna",
              "conversation": []}
     save(room, state)
@@ -227,10 +223,13 @@ def speak(room, state, name, character):
     recent = state["conversation"][-10:]
     conversation = "\n\n".join(item["name"] + ": " + item["text"] for item in recent)
     observation = (state.get("observations") or [""])[-1]
-    prompt = ("Semilla inicial: " + state["idea"] + "\n\n" +
-              ("Lo que habéis imaginado hasta ahora:\n" + conversation[-9000:] + "\n\n" if conversation else "") +
-              ("Última impresión del observador que probó la experiencia: " + observation + "\n\n" if observation else "") +
-              "Ahora habla tú, " + name + ", dirigiéndote a los demás.")
+    prompt = (
+        ("Propuesta aportada por la persona: " + state["idea"] + "\n\n" if state["idea"] else
+         "No hay un encargo ni un tema inicial.\n\n") +
+        ("Conversación hasta ahora:\n" + conversation[-9000:] + "\n\n" if conversation else "") +
+        ("Observación de quien probó la experiencia: " + observation + "\n\n" if observation else "") +
+        "Te toca participar en la conversación."
+    )
     before = Path.cwd()
     try:
         os.chdir(room)
@@ -269,18 +268,16 @@ def studio_round(room, state, *, android):
     )
     feedback = (state.get("observations") or [""])[-1]
     prompt = (
-        "Idea inicial: " + state["idea"] +
-        "\n\nConversación anterior:\n" + history[-8500:] +
-        ("\n\nOpinión de quien acaba de usar el prototipo: " + feedback if feedback else "") +
-        "\n\nEstá disponible un proyecto Flutter real en workspace. "
-        "Tenéis herramientas de ChatDev para leer y escribir Dart, analizar errores, "
-        "ejecutar el proyecto y observar el estado de Android. "
-        "Hablad y colaborad como artistas, no como gestores. "
-        "Conseguid una experiencia visible y táctil, no una descripción. "
-        "Si lib/main.dart todavía es la plantilla vacía, transformadla con room_write. "
-        "Cada participante puede intervenir en el código y mejorar lo que han creado los demás. "
-        + ("Podéis abrir vuestro emulador con room_launch y revisar su estado con room_observe."
-           if android else "Por ahora no abras Android; escribe y analiza el código.")
+        ("Propuesta de la persona: " + state["idea"] + "\n\n" if state["idea"] else
+         "No hay tema, idea inicial ni encargo de crear algo.\n\n") +
+        ("Conversación anterior:\n" + history[-8500:] + "\n\n" if history else "") +
+        ("Observación de la persona: " + feedback + "\n\n" if feedback else "") +
+        "Compartís un proyecto Flutter aislado y herramientas para leer y modificar "
+        "archivos Dart, comprobar errores y, si os interesa, probar lo que hagáis. "
+        "Decidid entre vosotros qué explorar, si deseáis construir algo y cuándo. "
+        "No es obligatorio escribir código ni seguir una dirección concreta. "
+        + ("Tenéis un emulador propio disponible para iniciar o consultar."
+           if android else "En esta sesión el emulador no está habilitado.")
     )
     if "studio_ledger_start" not in state:
         state["studio_ledger_start"] = len(state["conversation"])
@@ -296,18 +293,9 @@ def studio_round(room, state, *, android):
                 task_prompt=prompt,
                 variables={
                     "CREATIVE_MODEL": state["model"],
-                    "CHISPA_ROLE": COMMON.replace(
-                        "No menciones herramientas ni otros proyectos.",
-                        "Usa las herramientas del experimento cuando quieras crear o transformar algo."
-                    ) + "\n\n" + VOICES[0][1],
-                    "CAOS_ROLE": COMMON.replace(
-                        "No menciones herramientas ni otros proyectos.",
-                        "Puedes cambiar directamente el código, aunque otros agentes tengan otra opinión."
-                    ) + "\n\n" + VOICES[1][1],
-                    "MATERIA_ROLE": COMMON.replace(
-                        "No menciones herramientas ni otros proyectos.",
-                        "Puedes tocar archivos Flutter y probar la experiencia cuando quieras."
-                    ) + "\n\n" + VOICES[2][1],
+                    "CHISPA_ROLE": COMMON + "\n\n" + VOICES[0][1],
+                    "CAOS_ROLE": COMMON + "\n\n" + VOICES[1][1],
+                    "MATERIA_ROLE": COMMON + "\n\n" + VOICES[2][1],
                 },
                 session_name="studio_" + str(len(state["conversation"]) + 1),
                 log_level="ERROR",
@@ -442,7 +430,7 @@ def main():
     studio = args.build
     if studio:
         if not args.flutter and not (room / "workspace" / "pubspec.yaml").is_file():
-            print("La sala existente no es Flutter. Empieza con -Idea ... -Flutter -Build.",
+            print("La sala existente no es Flutter. Inicia una nueva con -Flutter -Build.",
                   file=sys.stderr)
             return 2
         os.environ["MAC_FUNCTIONS_DIR"] = str(ROOT / "creative_tools")
@@ -468,15 +456,12 @@ def main():
                     speak(room, state, name, character)
         if studio:
             file = room / "workspace" / "lib" / "main.dart"
-            if not file.is_file():
-                raise RuntimeError("Los agentes no han creado ningún archivo Flutter.")
             changes = git(room / "workspace", "status", "--porcelain", "--untracked-files=all", "--", "lib")
-            if not changes.strip():
-                raise RuntimeError(
-                    "Los agentes conversaron pero no editaron Flutter. "
-                    "La aplicación de plantilla permanece sin cambios."
-                )
-            print("Flutter modificado: " + str(file), flush=True)
+            if changes.strip():
+                print("Los agentes modificaron el proyecto Flutter: " + str(file), flush=True)
+            else:
+                print("Los agentes no editaron Flutter en este ciclo; "
+                      "la decisión queda reflejada en su conversación.", flush=True)
             from lab_android import AndroidExperiment
             if args.android:
                 controller = AndroidExperiment(room)
@@ -490,7 +475,8 @@ def main():
         return 1
     finally:
         show_spending(room_meter(state, room=room), completed=completed)
-    print("Para continuar: .\\agent-lab\\creative.ps1 -Latest -Build -Android -Rounds 1")
+    print("Para continuar la sala, usa -Latest -Build -Android -Rounds 1.")
+    print("Si prefieres descartarla, usa -Latest -Discard.")
     print("Experiencia: " + str(room))
     print("Conversación: " + str(room / "conversacion.md"))
     return 0
