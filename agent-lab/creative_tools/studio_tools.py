@@ -88,6 +88,16 @@ def room_analyze() -> str:
     env = runtime_env()
     env["FLUTTER_SUPPRESS_ANALYTICS"] = "true"
     try:
+        project = _room() / "workspace"
+        if not (project / ".dart_tool" / "package_config.json").is_file():
+            prep = subprocess.run(
+                [exe, "--no-version-check", "--suppress-analytics",
+                 "pub", "get", "--offline"],
+                cwd=project, env=env, capture_output=True,
+                text=True, encoding="utf-8", errors="replace", timeout=100,
+            )
+            if prep.returncode:
+                return "Flutter no pudo preparar el SDK sin red:\n" + (prep.stdout + prep.stderr)[-2000:]
         p = subprocess.run(
             [exe, "--no-version-check", "--suppress-analytics",
              "analyze", "--no-pub", "lib"],

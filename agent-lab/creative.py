@@ -309,9 +309,18 @@ def studio_round(room, state, *, android):
                 task_prompt=prompt,
                 variables={
                     "CREATIVE_MODEL": state["model"],
-                    "CHISPA_ROLE": COMMON + "\n\n" + VOICES[0][1],
-                    "CAOS_ROLE": COMMON + "\n\n" + VOICES[1][1],
-                    "MATERIA_ROLE": COMMON + "\n\n" + VOICES[2][1],
+                    "CHISPA_ROLE": COMMON.replace(
+                        "No menciones herramientas ni otros proyectos.",
+                        "Usa las herramientas del experimento cuando quieras crear o transformar algo."
+                    ) + "\n\n" + VOICES[0][1],
+                    "CAOS_ROLE": COMMON.replace(
+                        "No menciones herramientas ni otros proyectos.",
+                        "Puedes cambiar directamente el código, aunque otros agentes tengan otra opinión."
+                    ) + "\n\n" + VOICES[1][1],
+                    "MATERIA_ROLE": COMMON.replace(
+                        "No menciones herramientas ni otros proyectos.",
+                        "Puedes tocar archivos Flutter y probar la experiencia cuando quieras."
+                    ) + "\n\n" + VOICES[2][1],
                 },
                 session_name="studio_" + str(len(state["conversation"]) + 1),
                 log_level="ERROR",
@@ -551,7 +560,13 @@ def main():
             file = room / "workspace" / "lib" / "main.dart"
             if not file.is_file():
                 raise RuntimeError("Los agentes no han creado ningún archivo Flutter.")
-            print("Flutter: " + str(file), flush=True)
+            changes = git(room / "workspace", "status", "--porcelain", "--untracked-files=all")
+            if not changes.strip():
+                raise RuntimeError(
+                    "Los agentes conversaron pero no editaron Flutter. "
+                    "La aplicación de plantilla permanece sin cambios."
+                )
+            print("Flutter modificado: " + str(file), flush=True)
             from lab_android import AndroidExperiment
             if args.android:
                 controller = AndroidExperiment(room)
