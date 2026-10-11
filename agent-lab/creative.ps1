@@ -1,7 +1,7 @@
 param(
     [string]$Idea,
     [string]$Room,
-    [ValidateSet('openai', 'gemini')][string]$Provider = 'openai',
+    [ValidateSet('shared', 'openai', 'gemini')][string]$Provider = 'shared',
     [string]$Model,
     [ValidateRange(1, 50)][int]$Rounds = 10,
     [switch]$Flutter,
@@ -17,11 +17,12 @@ if ($Room) {
     $statePath = Join-Path (Resolve-Path -LiteralPath $Room).Path 'room.json'
     if (Test-Path -LiteralPath $statePath) {
         $savedRoom = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ($savedRoom.provider -in @('openai', 'gemini')) { $credentialProvider = $savedRoom.provider }
+        if ($savedRoom.provider -in @('shared', 'openai', 'gemini')) { $credentialProvider = $savedRoom.provider }
     }
 }
-$keyName = if ($credentialProvider -eq 'gemini') { 'GEMINI_API_KEY' } else { 'OPENAI_API_KEY' }
 $addedKey = $false
+if ($credentialProvider -ne 'shared') {
+$keyName = if ($credentialProvider -eq 'gemini') { 'GEMINI_API_KEY' } else { 'OPENAI_API_KEY' }
 if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($keyName, 'Process'))) {
     $secrets = Join-Path $PSScriptRoot '.secrets'
     $secretPath = Join-Path $secrets "creative-$credentialProvider.key.dpapi"
@@ -52,6 +53,7 @@ if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($keyName,
         if ($handle -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($handle) }
         Remove-Variable plaintext -ErrorAction SilentlyContinue
     }
+}
 }
 
 $ErrorActionPreference = 'Stop'

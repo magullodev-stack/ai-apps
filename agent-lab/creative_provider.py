@@ -4,6 +4,10 @@ import os
 from openai import BadRequestError
 from runtime.node.agent.providers.base import ProviderRegistry
 from runtime.node.agent.providers.openai_provider import OpenAIProvider
+from runtime.node.agent.providers.base import ModelProvider
+from runtime.node.agent.providers.response import ModelResponse
+from entity.messages import Message, MessageRole
+from utils.token_tracker import TokenUsage
 
 
 class CreativeOpenAI(OpenAIProvider):
@@ -46,7 +50,51 @@ class CreativeOpenAI(OpenAIProvider):
         return super().create_client()
 
 
+
+class CreativeShared(ModelProvider):
+    """Native ChatDev provider backed by the already-running AI-APPS Dart service."""
+
+    def create_client(self):
+        return None
+
+    def call_model(self, client, conversation, timeline, tool_specs=None, **kwargs):
+        if tool_specs:
+            raise RuntimeError("La sala creativa no utiliza herramientas de ejecución.")
+        from shared_ai import generate
+        prompt = "\n\n".join(
+            f"{message.role.value.upper()}: {message.text_content()}"
+            for message in conversation if message.text_content().strip()
+        )
+        reply, usage = generate(self.model_name, prompt)
+        tracker = getattr(self.config, "token_tracker", None)
+        if tracker and isinstance(usage, dict):
+            incoming = usage.get("inputTokens")
+            outgoing = usage.get("outputTokens")
+            if isinstance(incoming, int) and isinstance(outgoing, int):
+                tokens = TokenUsage(
+                    input_tokens=incoming, output_tokens=outgoing,
+                    total_tokens=incoming + outgoing
+                )
+                tracker.record_usage(
+                    getattr(self.config, "node_id", "voice"), self.model_name,
+                    tokens, provider="ai-apps-shared"
+                )
+        return ModelResponse(
+            message=Message(content=reply, role=MessageRole.ASSISTANT),
+            raw_response={"usage": usage},
+        )
+
+    def extract_token_usage(self, response):
+        usage = response.get("usage", {}) if isinstance(response, dict) else {}
+        return TokenUsage(
+            input_tokens=usage.get("inputTokens", 0),
+            output_tokens=usage.get("outputTokens", 0),
+            total_tokens=usage.get("totalTokens", 0),
+        )
+
 def register():
+    if ProviderRegistry.get_provider("lab_creative_shared") is None:
+        ProviderRegistry.register("lab_creative_shared", CreativeShared)
     if ProviderRegistry.get_provider("lab_creative_openai") is None:
         ProviderRegistry.register("lab_creative_openai", CreativeOpenAI)
     try:

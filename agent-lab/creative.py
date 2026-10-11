@@ -73,7 +73,7 @@ def open_room(args):
         git(workspace, "commit", "-m", "Empty creative space")
     (workspace / "AGENTS.md").write_text(WORKSPACE_RULES, encoding="utf-8")
     state = {"idea": args.idea.strip(), "provider": args.provider,
-             "model": args.model or ("gemini-2.5-flash" if args.provider == "gemini" else "gpt-5-nano"),
+             "model": args.model or ("gemini-2.5-flash" if args.provider == "gemini" else "gpt-5.6-luna" if args.provider == "shared" else "gpt-5-nano"),
              "conversation": []}
     save(room, state)
     return room, state
@@ -257,7 +257,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--idea")
     parser.add_argument("--room")
-    parser.add_argument("--provider", choices=("openai", "gemini"), default="openai")
+    parser.add_argument("--provider", choices=("shared", "openai", "gemini"), default="shared")
     parser.add_argument("--model")
     parser.add_argument("--rounds", type=int, default=10, help="Rondas completas de Chispa, Caos y Materia")
     parser.add_argument("--flutter", action="store_true")
@@ -267,31 +267,43 @@ def main():
     parser.add_argument("--probe", action="store_true", help="Una llamada directa para diagnosticar la API sin ChatDev")
     args = parser.parse_args()
     if args.probe:
+        if args.provider == "shared":
+            from shared_ai import probe
+            return probe(args.model or "gpt-5.6-luna")
         if args.provider != "openai":
-            parser.error("--probe está disponible para OpenAI")
+            parser.error("--probe solo está disponible para shared u openai")
         return probe_openai(args.model or "gpt-5-nano")
     if not 1 <= args.rounds <= 50:
         parser.error("--rounds debe estar entre 1 y 50")
     if args.android and not args.build:
         parser.error("--android necesita --build")
-    # Never prepare Flutter or create a room if there is no model connection.
-    if not args.room:
+    # Check connection before creating a room or spending any model tokens.
+    if args.provider == "shared":
+        from shared_ai import ensure_running
+        try:
+            ensure_running()
+        except RuntimeError as exc:
+            print("Servicio compartido no disponible: " + str(exc), file=sys.stderr)
+            return 2
+    elif not args.room:
         requested_key = "OPENAI_API_KEY" if args.provider == "openai" else "GEMINI_API_KEY"
         if not os.environ.get(requested_key):
-            print("Falta " + requested_key +
-                  ". Esta conexión usa una API independiente de Codex; puede tener coste.", file=sys.stderr)
+            print("Falta " + requested_key, file=sys.stderr)
             return 2
     verify_chatdev()
     room, state = open_room(args)
-    key = "OPENAI_API_KEY" if state["provider"] == "openai" else "GEMINI_API_KEY"
-    if not os.environ.get(key):
-        print("Falta " + key + " para continuar esta sala.", file=sys.stderr)
-        return 2
+    if state["provider"] != "shared":
+        key = "OPENAI_API_KEY" if state["provider"] == "openai" else "GEMINI_API_KEY"
+        if not os.environ.get(key):
+            print("Falta " + key + " para continuar esta sala.", file=sys.stderr)
+            return 2
     sys.path.insert(0, str(ROOT / ".deps" / "chatdev"))
     import creative_provider
     creative_provider.register()
     print(f"Sala: {room}", flush=True)
     print(f"Modelo: {state['model']} · {args.rounds} rondas · {args.rounds * 3} intervenciones", flush=True)
+    if state["provider"] == "shared":
+        print("Conectado al servicio Dart de IA compartida de AI-APPS.", flush=True)
     print("Las respuestas aparecen al completarse; no se transmiten palabra por palabra.", flush=True)
     suggestion = None
     # Include earlier successful turns if this is a continuation of the same room.
