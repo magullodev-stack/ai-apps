@@ -1,0 +1,17 @@
+version: 0.4.0
+graph:
+  id: agent_lab_creative_turn
+  start: [voice]
+  end: [voice]
+  log_level: ERROR
+  nodes:
+    - id: voice
+      type: agent
+      config:
+        provider: ${CREATIVE_PROVIDER}
+        name: ${CREATIVE_MODEL}
+        api_key: ""
+        role: ${CREATIVE_ROLE}
+        retry:
+          enabled: false
+  edges: []
