@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 import io
 import json
 import os
+import hashlib
+import shutil
 from pathlib import Path
 import sys
 import uuid
@@ -101,6 +103,17 @@ def open_room(args):
         return room, state
     if not (args.idea and args.idea.strip()) and not (args.flutter and args.build):
         raise ValueError("Indica -Idea o inicia una exploración libre con -Flutter -Build")
+    seed_data = None
+    seed_metadata = None
+    if args.image:
+        from vision import png_metadata
+        source = Path(args.image).expanduser().resolve(strict=True)
+        if not source.is_file() or source.suffix.lower() != ".png":
+            raise ValueError("La referencia visual debe ser un archivo PNG")
+        if source.stat().st_size > 3 * 1024 * 1024:
+            raise ValueError("La referencia supera el límite de 3 MiB")
+        seed_data = source.read_bytes()
+        seed_metadata = png_metadata(seed_data)
     room = CREATIVE_RUNS / ("creative_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "_" + uuid.uuid4().hex[:6])
     room.mkdir()
     (room / "manifest.json").write_text(
@@ -123,12 +136,29 @@ def open_room(args):
     state = {"idea": (args.idea or "").strip(), "provider": "shared",
              "model": args.model or "gpt-5.6-luna",
              "conversation": []}
+    if seed_data is not None:
+        (room / "seed.png").write_bytes(seed_data)
+        state["seed_image"] = {"file": "seed.png", **seed_metadata}
     save(room, state)
     return room, state
 
 
 def save(room, state):
     (room / "room.json").write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def seed_path(room, state):
+    """The user's original image, never a screenshot or a textual interpretation."""
+    visual = state.get("seed_image")
+    if not visual:
+        return None
+    if visual.get("file") != "seed.png":
+        raise ValueError("Referencia visual de la sala no reconocida")
+    path = room / "seed.png"
+    data = path.read_bytes()
+    if hashlib.sha256(data).hexdigest() != visual.get("sha256"):
+        raise ValueError("La imagen original de la sala ha cambiado")
+    return path
 
 
 def actual_tokens(result):
@@ -241,6 +271,7 @@ def speak(room, state, name, character):
                 variables={"CREATIVE_MODEL": state["model"],
                            "CREATIVE_ROLE": COMMON + "\n\nTu personalidad: " + character},
                 session_name="creative_" + str(len(state["conversation"]) + 1),
+                attachments=[seed_path(room, state)] if state.get("seed_image") else [],
                 log_level="ERROR",
             )
     finally:
@@ -268,8 +299,10 @@ def studio_round(room, state, *, android):
     )
     feedback = (state.get("observations") or [""])[-1]
     prompt = (
-        ("Propuesta de la persona: " + state["idea"] + "\n\n" if state["idea"] else
-         "No hay tema, idea inicial ni encargo de crear algo.\n\n") +
+        ("Texto original aportado por la persona:\n" + state["idea"] + "\n\n" if state["idea"] else
+         "No hay texto inicial ni encargo de crear algo.\n\n") +
+        ("Hay una imagen original de referencia adjunta; obsérvala directamente.\n\n"
+         if state.get("seed_image") else "") +
         ("Conversación anterior:\n" + history[-8500:] + "\n\n" if history else "") +
         ("Observación de la persona: " + feedback + "\n\n" if feedback else "") +
         "Compartís un proyecto Flutter aislado y herramientas para leer y modificar "
@@ -298,6 +331,7 @@ def studio_round(room, state, *, android):
                     "MATERIA_ROLE": COMMON + "\n\n" + VOICES[2][1],
                 },
                 session_name="studio_" + str(len(state["conversation"]) + 1),
+                attachments=[seed_path(room, state)] if state.get("seed_image") else [],
                 log_level="ERROR",
             )
     finally:
@@ -340,6 +374,8 @@ def studio_round(room, state, *, android):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--idea")
+    parser.add_argument("--text-file", help="Texto original de la persona en UTF-8")
+    parser.add_argument("--image", help="PNG original aportado por la persona")
     parser.add_argument("--room")
     parser.add_argument("--latest", action="store_true", help="Última experiencia, sin buscar su carpeta")
     parser.add_argument("--list-rooms", action="store_true", help="Mostrar experiencias sin archivos internos")
@@ -354,6 +390,15 @@ def main():
     parser.add_argument("--probe", action="store_true", help="Comprobar el servicio de IA compartido")
     parser.add_argument("--cost-only", action="store_true", help="Mostrar el precio de una sala sin hacer llamadas")
     args = parser.parse_args()
+    if args.text_file:
+        if args.idea or args.room or args.latest:
+            parser.error("--text-file inicia una sala nueva y no combina con --idea")
+        source = Path(args.text_file).expanduser().resolve(strict=True)
+        if not source.is_file() or source.stat().st_size > 30000:
+            parser.error("--text-file debe ser un texto UTF-8 de hasta 30000 bytes")
+        args.idea = source.read_text(encoding="utf-8")
+    if args.image and (args.room or args.latest):
+        parser.error("--image inicia una sala nueva; al continuar se conserva la imagen original")
     if args.list_rooms:
         list_rooms()
         return 0
@@ -414,7 +459,10 @@ def main():
     # Validate the existing shared AI service before any model calls.
     from shared_ai import ensure_running
     try:
-        ensure_running()
+        health = ensure_running()
+        if args.image and not health.get("capabilities", {}).get("imageInput"):
+            raise RuntimeError("El servicio Dart sigue ejecutando una versión sin imágenes. "
+                               "Reinicia la sesión de AI-APPS para cargar el servicio actualizado.")
     except RuntimeError as exc:
         print("Servicio compartido no disponible: " + str(exc), file=sys.stderr)
         return 2
@@ -424,6 +472,18 @@ def main():
         print("Esta sala antigua usaba una conexión ya retirada. "
               "Se conserva para consultar transcripciones y costes.", file=sys.stderr)
         return 2
+    if state.get("seed_image"):
+        if not health.get("capabilities", {}).get("imageInput"):
+            print("El servicio Dart activo todavía no admite imágenes; reinicia AI-APPS.",
+                  file=sys.stderr)
+            return 2
+        original = seed_path(room, state)
+        os.environ["AGENTLAB_SEED_IMAGE"] = str(original)
+        os.environ["AGENTLAB_SEED_SHA256"] = state["seed_image"]["sha256"]
+        os.environ["AGENTLAB_ROOM"] = str(room)
+    else:
+        os.environ.pop("AGENTLAB_SEED_IMAGE", None)
+        os.environ.pop("AGENTLAB_SEED_SHA256", None)
     if args.feedback:
         state.setdefault("observations", []).append(args.feedback[:1800])
         save(room, state)
@@ -442,6 +502,9 @@ def main():
     print(f"Sala: {room}", flush=True)
     print(f"Modelo: {state['model']} · {args.rounds} rondas · {args.rounds * 3} intervenciones", flush=True)
     print("Conectado al servicio Dart de IA compartida de AI-APPS.", flush=True)
+    if state.get("seed_image"):
+        print("Semilla visual: PNG original adjunto a ChatDev y enviado al modelo.",
+              flush=True)
     print("Las respuestas aparecen al completarse; no se transmiten palabra por palabra.", flush=True)
     completed = False
     try:

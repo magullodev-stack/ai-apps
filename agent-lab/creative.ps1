@@ -1,5 +1,7 @@
 param(
     [string]$Idea,
+    [string]$TextFile,
+    [string]$Image,
     [string]$Room,
     [switch]$Latest,
     [switch]$Lista,
@@ -28,6 +30,8 @@ $python = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) { throw 'Instala primero agent-lab con install.ps1.' }
 $arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--rounds', "$Rounds")
 if ($Idea) { $arguments += @('--idea', $Idea) }
+if ($TextFile) { $arguments += @('--text-file', (Resolve-Path -LiteralPath $TextFile).Path) }
+if ($Image) { $arguments += @('--image', (Resolve-Path -LiteralPath $Image).Path) }
 if ($Feedback) { $arguments += @('--feedback', $Feedback) }
 if ($Room) { $arguments += @('--room', (Resolve-Path -LiteralPath $Room).Path) }
 if ($Latest) { $arguments += '--latest' }

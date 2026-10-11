@@ -1,11 +1,33 @@
 """AI-APPS shared Dart service provider for ChatDev creative agents."""
 import json
 import uuid
+import os
+import base64
+import hashlib
+from pathlib import Path
 
 from entity.messages import Message, MessageRole, ToolCallPayload
 from runtime.node.agent.providers.base import ModelProvider, ProviderRegistry
 from runtime.node.agent.providers.response import ModelResponse
 from utils.token_tracker import TokenUsage
+
+
+def seed_image_payload():
+    """Send the original image bytes to the AI, not a written visual summary."""
+    raw = os.environ.get("AGENTLAB_SEED_IMAGE")
+    if not raw:
+        return None
+    expected = os.environ.get("AGENTLAB_SEED_SHA256")
+    room = os.environ.get("AGENTLAB_ROOM")
+    if not expected or not room:
+        raise RuntimeError("La imagen de referencia no tiene identidad verificable")
+    path = Path(raw).resolve(strict=True)
+    if path != Path(room).resolve(strict=True) / "seed.png":
+        raise RuntimeError("La imagen no corresponde a esta sala creativa")
+    data = path.read_bytes()
+    if len(data) > 3 * 1024 * 1024 or hashlib.sha256(data).hexdigest() != expected:
+        raise RuntimeError("La imagen original ha cambiado durante el experimento")
+    return {"mimeType": "image/png", "data": base64.b64encode(data).decode("ascii")}
 
 
 class CreativeShared(ModelProvider):
@@ -21,6 +43,7 @@ class CreativeShared(ModelProvider):
             for message in conversation if message.text_content().strip()
         )[-28500:]
         available = {spec.name for spec in (tool_specs or [])}
+        image = seed_image_payload()
         if available:
             actions = ", ".join(sorted(available))
             instruction = (
@@ -36,10 +59,12 @@ class CreativeShared(ModelProvider):
                 "No digas que has creado o abierto algo si no lo has hecho con una herramienta. "
                 "Después de una llamada recibirás el resultado de la herramienta. "
                 "Texto natural en speech; acción en tool, path y content. "
+                "Cuando existe imagen aportada por la persona, se adjunta como imagen real a "
+                "la solicitud: obsérvala directamente, sin reconstruirla desde el texto. "
                 "Si eliges escribir código, puedes usar room_write y luego room_launch para probarlo. "
                 "La decisión de construir o conversar es tuya.\n\n"
             )
-            answer, usage = generate_action(self.model_name, instruction + prompt)
+            answer, usage = generate_action(self.model_name, instruction + prompt, image=image)
             tool = answer["tool"]
             if tool != "none" and tool not in available:
                 tool = "none"
@@ -57,7 +82,7 @@ class CreativeShared(ModelProvider):
             message = Message(content=answer["speech"], role=MessageRole.ASSISTANT,
                               tool_calls=calls)
         else:
-            reply, usage = generate(self.model_name, prompt)
+            reply, usage = generate(self.model_name, prompt, image=image)
             message = Message(content=reply, role=MessageRole.ASSISTANT)
         from creative_live import publish
         publish("model",
