@@ -1,4 +1,4 @@
-"""A room for ChatDev agents to imagine together, with optional Codex creation."""
+"""Creative room powered by ChatDev and AI-APPS shared AI service."""
 import argparse
 import contextlib
 from datetime import datetime, timezone
@@ -6,8 +6,6 @@ import io
 import json
 import os
 from pathlib import Path
-import re
-import shutil
 import sys
 import uuid
 
@@ -127,8 +125,8 @@ def open_room(args):
         git(workspace, "add", "-A")
         git(workspace, "commit", "-m", "Empty creative space")
     (workspace / "AGENTS.md").write_text(WORKSPACE_RULES, encoding="utf-8")
-    state = {"idea": args.idea.strip(), "provider": args.provider,
-             "model": args.model or ("gemini-2.5-flash" if args.provider == "gemini" else "gpt-5.6-luna" if args.provider == "shared" else "gpt-5-nano"),
+    state = {"idea": args.idea.strip(), "provider": "shared",
+             "model": args.model or "gpt-5.6-luna",
              "conversation": []}
     save(room, state)
     return room, state
@@ -242,7 +240,7 @@ def speak(room, state, name, character):
             result = sdk.run_workflow(
                 ROOT / "workflows" / "creative_turn.yaml",
                 task_prompt=prompt,
-                variables={"CREATIVE_PROVIDER": "lab_creative_" + state["provider"],
+                variables={"CREATIVE_PROVIDER": "lab_creative_shared",
                            "CREATIVE_MODEL": state["model"],
                            "CREATIVE_ROLE": COMMON + "\n\nTu personalidad: " + character},
                 session_name="creative_" + str(len(state["conversation"]) + 1),
@@ -262,72 +260,7 @@ def speak(room, state, name, character):
     state["conversation"].append({"name": name, "model": state["model"], "text": answer, "usage": usage})
     save(room, state)
     print("\n" + name + ":\n" + answer + "\n", flush=True)
-    match = re.search(r"(?im)^CREAR:\s*(.+)$", answer)
-    return (match.group(1).strip() if match else None), usage
-
-
-def materialize(room, state, idea):
-    """One creative Luna call writes only lib/main.dart in the isolated Flutter app."""
-    from shared_ai import generate_flutter
-    from lab_android import flutter_package
-    project = room / "workspace"
-    if flutter_package(project) is None:
-        raise RuntimeError(
-            "La sala no contiene Flutter. Crea una nueva con -Flutter para verla en Android."
-        )
-    file = project / "lib" / "main.dart"
-    previous = file.read_text(encoding="utf-8") if file.exists() else ""
-    history = "\n\n".join(
-        item["name"] + ": " + item["text"]
-        for item in state["conversation"][-9:]
-    )
-    prompt = (
-        "Eres Luna, una herramienta creativa que convierte el diálogo de tres "
-        "artistas-agentes en una experiencia móvil Flutter REAL, no un boceto.\n"
-        "Su idea actual es: " + (idea or " / ".join(state["idea"].splitlines())) +
-        "\nSu conversación:\n" + history[-10_000:] +
-        "\n\nDevuelve SOLO el archivo completo lib/main.dart. "
-        "Construye una escena expresiva, cinematográfica, con animación continua "
-        "e interacción táctil. Prioriza la idea estética y el movimiento, "
-        "no pantallas de texto, menús, contadores ni botones genéricos. "
-        "Usa CustomPainter, AnimationController o similares cuando aporten vida. "
-        "Admite varios gestos y varios elementos móviles. "
-        "Utiliza exclusivamente Flutter SDK y dart:math / dart:ui / dart:async. "
-        "No importes paquetes externos ni uses archivos, red, procesos, assets, "
-        "plugins o dispositivos. Debe arrancar con void main() y runApp(), "
-        "compilar en Flutter estable y tener MaterialApp o WidgetsApp. "
-        "No escribas documentación ni pruebas."
-    )
-    if previous:
-        prompt += (
-            "\n\nEsta es la experiencia actual. EVOLUCIÓNALA, no empieces de cero "
-            "salvo que los agentes cambien radicalmente de dirección:\n" + previous[-16_000:]
-        )
-    print("\nLuna está materializando la experiencia en Flutter...", flush=True)
-    code, usage = generate_flutter(state["model"], prompt)
-    # The provider has already charged for generation, even if we reject its code.
-    state.setdefault("creations", []).append({
-        "model": state["model"],
-        "usage": {"input": usage.get("inputTokens"), "output": usage.get("outputTokens")},
-        "idea": idea,
-    })
-    save(room, state)
-    import re as _re
-    imports = _re.findall(r"^\s*(?:import|export|part)\s+['\"]([^'\"]+)['\"]", code, flags=_re.M)
-    allowed = {"package:flutter/material.dart", "package:flutter/widgets.dart",
-               "package:flutter/painting.dart", "package:flutter/animation.dart",
-               "package:flutter/gestures.dart", "package:flutter/scheduler.dart",
-               "dart:math", "dart:ui", "dart:async"}
-    if any(uri not in allowed for uri in imports) or _re.search(
-        r"\b(?:Process|HttpClient|Socket|File\s*\(|Directory\s*\(|Isolate)\b", code
-    ):
-        raise RuntimeError("Luna intentó incluir dependencias o capacidades ajenas al experimento.")
-    if "void main(" not in code or "runApp(" not in code:
-        raise RuntimeError("Luna no devolvió una aplicación Flutter ejecutable.")
-    file.write_text(code, encoding="utf-8")
-    print("Experiencia creada en " + str(file), flush=True)
-    return True
-
+    return usage
 
 
 def studio_round(room, state, *, android):
@@ -418,101 +351,6 @@ def studio_round(room, state, *, android):
     return result
 
 
-def build(room, idea, executable):
-    from bridge import invoke_codex
-    if not shutil.which(executable):
-        raise FileNotFoundError("No se encuentra Codex. La conversación se ha conservado.")
-    folder = room / "builds"
-    folder.mkdir(exist_ok=True)
-    artifact = folder / f"{len(list(folder.iterdir())) + 1:03d}"
-    artifact.mkdir()
-    result = invoke_codex(
-        {"executor": "codex", "codex": executable, "model": None, "timeout": 120},
-        room / "workspace", artifact,
-        "Da vida a esta idea dentro de este workspace: " + idea +
-        "\nConstruye o transforma directamente la experiencia interactiva. "
-        "Prefiere impacto visual y una primera versión visible a complejidad. "
-        "No hagas informes, auditorías, documentación ni baterías de pruebas. "
-        "No toques archivos fuera del workspace, ni inicies Android, ni hagas commits.",
-    )
-    if result["status"] != "completed":
-        print("Codex no pudo construir ahora. La sala y sus ideas siguen disponibles.", file=sys.stderr)
-        return False
-    print("La creación ha cambiado. Puedes verla o continuar la conversación.", flush=True)
-    return True
-
-
-def probe_openai(model):
-    """One minimal request that bypasses ChatDev and the custom provider."""
-    from openai import OpenAI, APIStatusError
-
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("Falta OPENAI_API_KEY.", file=sys.stderr)
-        return 2
-
-    print("Probando una única solicitud directa a OpenAI con " + model + "...", flush=True)
-    client = OpenAI(api_key=api_key, base_url="https://api.openai.com/v1",
-                    max_retries=0, timeout=30)
-    try:
-        reply = client.responses.create(
-            model=model, input="Responde únicamente con HOLA.",
-            max_output_tokens=256,
-        )
-    except APIStatusError as exc:
-        response = exc.response
-        try:
-            payload = response.json()
-        except (ValueError, AttributeError):
-            payload = None
-
-        details = payload.get("error", payload) if isinstance(payload, dict) else {}
-        if not isinstance(details, dict):
-            details = {"message": str(details)}
-
-        # Unlike the old probe, show the actual response if it is not JSON.
-        # Redact credentials before displaying any text returned by a gateway.
-        def safe(value):
-            string = str(value).replace(api_key, "[CLAVE_OCULTA]")
-            string = re.sub(r"sk-[A-Za-z0-9_-]{12,}", "[CLAVE_OCULTA]", string)
-            string = re.sub(r"(?i)Bearer\s+[^\s,;]+", "Bearer [CLAVE_OCULTA]", string)
-            return string[:900]
-
-        print(f"Solicitud rechazada: HTTP {exc.status_code}", file=sys.stderr)
-        print("  Content-Type: " + safe(response.headers.get("content-type", "ausente")),
-              file=sys.stderr)
-        print("  Request-ID: " + safe(
-            response.headers.get("x-request-id") or
-            getattr(exc, "request_id", None) or "ausente"),
-            file=sys.stderr)
-        for field in ("message", "type", "code", "param"):
-            if details.get(field):
-                print(f"  {field}: {safe(details[field])}", file=sys.stderr)
-
-        if not any(details.get(field) for field in ("message", "type", "code", "param")):
-            body = response.text or getattr(exc, "body", None)
-            if body:
-                print("  Respuesta original: " + safe(body), file=sys.stderr)
-            else:
-                print("  Respuesta original: vacía", file=sys.stderr)
-
-        if response.headers.get("via"):
-            print("  La respuesta pasó por un intermediario HTTP.", file=sys.stderr)
-        return 1
-    except Exception as exc:
-        print(f"No se pudo conectar: {type(exc).__name__}: {str(exc)[:500]}", file=sys.stderr)
-        return 1
-    usage = getattr(reply, "usage", None)
-    tokens_in = getattr(usage, "input_tokens", None) if usage else None
-    tokens_out = getattr(usage, "output_tokens", None) if usage else None
-    print("OpenAI responde correctamente. Modelo: " + str(reply.model), flush=True)
-    print("Texto: " + repr((reply.output_text or "")[:180]), flush=True)
-    if tokens_in is not None and tokens_out is not None:
-        print(f"Tokens de esta única prueba: {tokens_in} entrada, {tokens_out} salida.",
-              flush=True)
-    return 0
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--idea")
@@ -520,15 +358,13 @@ def main():
     parser.add_argument("--latest", action="store_true", help="Última experiencia, sin buscar su carpeta")
     parser.add_argument("--list-rooms", action="store_true", help="Mostrar experiencias sin archivos internos")
     parser.add_argument("--transcript", action="store_true", help="Leer la conversación sin gastar tokens")
-    parser.add_argument("--provider", choices=("shared", "openai", "gemini"), default="shared")
     parser.add_argument("--model")
     parser.add_argument("--rounds", type=int, default=10, help="Rondas completas de Chispa, Caos y Materia")
     parser.add_argument("--feedback", help="Observación sobre lo que aparece en el emulador")
     parser.add_argument("--flutter", action="store_true")
     parser.add_argument("--build", action="store_true")
     parser.add_argument("--android", action="store_true")
-    parser.add_argument("--codex", default="codex")
-    parser.add_argument("--probe", action="store_true", help="Una llamada directa para diagnosticar la API sin ChatDev")
+    parser.add_argument("--probe", action="store_true", help="Comprobar el servicio de IA compartido")
     parser.add_argument("--cost-only", action="store_true", help="Mostrar el precio de una sala sin hacer llamadas")
     args = parser.parse_args()
     if args.list_rooms:
@@ -558,44 +394,33 @@ def main():
         show_spending(room_meter(state, room=Path(args.room)), state["provider"], state["model"], completed=True)
         return 0
     if args.probe:
-        if args.provider == "shared":
-            from shared_ai import probe
-            return probe(args.model or "gpt-5.6-luna")
-        if args.provider != "openai":
-            parser.error("--probe solo está disponible para shared u openai")
-        return probe_openai(args.model or "gpt-5-nano")
+        from shared_ai import probe
+        return probe(args.model or "gpt-5.6-luna")
     if not 1 <= args.rounds <= 50:
         parser.error("--rounds debe estar entre 1 y 50")
     if args.android and not args.build:
         parser.error("--android necesita --build")
     if args.android and not (args.flutter or args.room):
         parser.error("--android necesita --flutter en una sala nueva")
-    if args.build and args.provider == "shared" and not (args.flutter or args.room):
+    if args.build and not (args.flutter or args.room):
         parser.error("Para crear con ChatDev debes indicar -Flutter o continuar una sala Flutter")
-    # Check connection before creating a room or spending any model tokens.
-    if args.provider == "shared":
-        from shared_ai import ensure_running
-        try:
-            ensure_running()
-        except RuntimeError as exc:
-            print("Servicio compartido no disponible: " + str(exc), file=sys.stderr)
-            return 2
-    elif not args.room:
-        requested_key = "OPENAI_API_KEY" if args.provider == "openai" else "GEMINI_API_KEY"
-        if not os.environ.get(requested_key):
-            print("Falta " + requested_key, file=sys.stderr)
-            return 2
+    # Validate the existing shared AI service before any model calls.
+    from shared_ai import ensure_running
+    try:
+        ensure_running()
+    except RuntimeError as exc:
+        print("Servicio compartido no disponible: " + str(exc), file=sys.stderr)
+        return 2
     verify_chatdev()
     room, state = open_room(args)
-    if state["provider"] != "shared":
-        key = "OPENAI_API_KEY" if state["provider"] == "openai" else "GEMINI_API_KEY"
-        if not os.environ.get(key):
-            print("Falta " + key + " para continuar esta sala.", file=sys.stderr)
-            return 2
+    if state.get("provider") != "shared":
+        print("Esta sala antigua usaba una conexión ya retirada. "
+              "Se conserva para consultar transcripciones y costes.", file=sys.stderr)
+        return 2
     if args.feedback:
         state.setdefault("observations", []).append(args.feedback[:1800])
         save(room, state)
-    studio = args.build and state["provider"] == "shared"
+    studio = args.build
     if studio:
         if not args.flutter and not (room / "workspace" / "pubspec.yaml").is_file():
             print("La sala existente no es Flutter. Empieza con -Idea ... -Flutter -Build.",
@@ -609,10 +434,8 @@ def main():
     creative_provider.register()
     print(f"Sala: {room}", flush=True)
     print(f"Modelo: {state['model']} · {args.rounds} rondas · {args.rounds * 3} intervenciones", flush=True)
-    if state["provider"] == "shared":
-        print("Conectado al servicio Dart de IA compartida de AI-APPS.", flush=True)
+    print("Conectado al servicio Dart de IA compartida de AI-APPS.", flush=True)
     print("Las respuestas aparecen al completarse; no se transmiten palabra por palabra.", flush=True)
-    suggestion = None
     completed = False
     try:
         for round_number in range(1, args.rounds + 1):
@@ -623,18 +446,8 @@ def main():
                 for _ in VOICES:
                     name, character = VOICES[len(state["conversation"]) % len(VOICES)]
                     print(f"\n{name} está pensando...", flush=True)
-                    proposal, _usage = speak(room, state, name, character)
-                    if proposal:
-                        suggestion = proposal
-        if args.build and not studio:
-            if not build(room, suggestion or state["idea"], args.codex):
-                raise RuntimeError("No se pudo crear la experiencia.")
-            if args.android:
-                from lab_android import AndroidExperiment
-                print("Abriendo la experiencia en el emulador Android...", flush=True)
-                output = AndroidExperiment(room).start()
-                print("Emulador: " + output.get("status", "desconocido"), flush=True)
-        elif studio:
+                    speak(room, state, name, character)
+        if studio:
             file = room / "workspace" / "lib" / "main.dart"
             if not file.is_file():
                 raise RuntimeError("Los agentes no han creado ningún archivo Flutter.")

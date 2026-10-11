@@ -138,32 +138,6 @@ def generate_action(model, prompt):
     return action, response.get("usage") or {}
 
 
-def generate_flutter(model, prompt):
-    """Ask the same AI-APPS service for a single self-contained Flutter entrypoint."""
-    schema = {
-        "type": "object",
-        "properties": {"mainDart": {"type": "string"}},
-        "required": ["mainDart"],
-        "additionalProperties": False,
-    }
-    payload = {
-        "application": "agentlab", "model": model, "input": prompt,
-        "schemaName": "creativeFlutter", "schema": schema,
-    }
-    response = _request(
-        "/v1/generate",
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-    )
-    try:
-        output = json.loads(response["text"])
-        code = output["mainDart"]
-    except (TypeError, ValueError, KeyError) as exc:
-        raise RuntimeError("Luna no devolvió código Flutter válido.") from exc
-    if not isinstance(code, str) or len(code) < 100 or len(code) > 42_000:
-        raise RuntimeError("El código Flutter recibido tiene un tamaño inesperado.")
-    return code, response.get("usage") or {}
-
-
 def probe(model):
     try:
         ensure_running()
