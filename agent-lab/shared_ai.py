@@ -100,6 +100,44 @@ def generate(model, prompt):
     return text.strip(), response.get("usage") or {}
 
 
+ACTION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "speech": {"type": "string"},
+        "tool": {"type": "string", "enum": [
+            "none", "room_list", "room_read", "room_write", "room_analyze",
+            "room_launch", "room_observe",
+        ]},
+        "path": {"type": "string"},
+        "content": {"type": "string"},
+    },
+    "required": ["speech", "tool", "path", "content"],
+    "additionalProperties": False,
+}
+
+
+def generate_action(model, prompt):
+    """Structured tool intent; ChatDev executes the resulting native ToolCallPayload."""
+    payload = {
+        "application": "agentlab", "model": model, "input": prompt,
+        "schemaName": "creativeAction", "schema": ACTION_SCHEMA,
+    }
+    response = _request("/v1/generate",
+                        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+    try:
+        action = json.loads(response["text"])
+        if not isinstance(action, dict):
+            raise ValueError("Not a map")
+        if action["tool"] not in ACTION_SCHEMA["properties"]["tool"]["enum"]:
+            raise ValueError("Unknown tool")
+        for field in ("speech", "path", "content"):
+            if not isinstance(action[field], str):
+                raise ValueError("Invalid action text")
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("Luna no devolvió una acción válida para ChatDev.") from exc
+    return action, response.get("usage") or {}
+
+
 def generate_flutter(model, prompt):
     """Ask the same AI-APPS service for a single self-contained Flutter entrypoint."""
     schema = {

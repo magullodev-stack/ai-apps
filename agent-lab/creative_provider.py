@@ -5,6 +5,9 @@ from openai import BadRequestError
 from runtime.node.agent.providers.base import ProviderRegistry
 from runtime.node.agent.providers.openai_provider import OpenAIProvider
 from runtime.node.agent.providers.base import ModelProvider
+from entity.messages import ToolCallPayload
+import json
+import uuid
 from runtime.node.agent.providers.response import ModelResponse
 from entity.messages import Message, MessageRole
 from utils.token_tracker import TokenUsage
@@ -58,14 +61,49 @@ class CreativeShared(ModelProvider):
         return None
 
     def call_model(self, client, conversation, timeline, tool_specs=None, **kwargs):
-        if tool_specs:
-            raise RuntimeError("La sala creativa no utiliza herramientas de ejecución.")
-        from shared_ai import generate
+        from shared_ai import generate, generate_action
         prompt = "\n\n".join(
             f"{message.role.value.upper()}: {message.text_content()}"
             for message in conversation if message.text_content().strip()
-        )
-        reply, usage = generate(self.model_name, prompt)
+        )[-28500:]
+        available = {spec.name for spec in (tool_specs or [])}
+        if available:
+            actions = ", ".join(sorted(available))
+            instruction = (
+                "Eres un agente de ChatDev con herramientas REALES sobre un proyecto Flutter aislado. "
+                "Puedes utilizarlas libremente y después observar su resultado. "
+                "Selecciona tool='none' cuando prefieras simplemente conversar. "
+                "Herramientas disponibles: " + actions + ". "
+                "room_write requiere path y content (código Dart completo); "
+                "room_read requiere path; room_list usa path como directorio; "
+                "las demás no requieren argumentos. "
+                "No digas que has creado o abierto algo si no lo has hecho con una herramienta. "
+                "Después de una llamada recibirás el resultado de la herramienta. "
+                "Texto natural en speech; acción en tool, path y content. "
+                "Si debes construir, escribe código con room_write, y puedes ejecutarlo con room_launch. "
+                "Prioriza una creación visual, interactiva y sorprendente. "
+                "No redactes auditorías ni planes de trabajo.\n\n"
+            )
+            answer, usage = generate_action(self.model_name, instruction + prompt)
+            tool = answer["tool"]
+            if tool != "none" and tool not in available:
+                tool = "none"
+            options = {}
+            if tool == "room_write":
+                options = {"path": answer["path"], "content": answer["content"]}
+            elif tool == "room_read":
+                options = {"path": answer["path"]}
+            elif tool == "room_list":
+                options = {"directory": answer["path"] or "lib"}
+            calls = [ToolCallPayload(id=uuid.uuid4().hex,
+                                     function_name=tool,
+                                     arguments=json.dumps(options, ensure_ascii=False))
+                     ] if tool != "none" else []
+            message = Message(content=answer["speech"], role=MessageRole.ASSISTANT,
+                              tool_calls=calls)
+        else:
+            reply, usage = generate(self.model_name, prompt)
+            message = Message(content=reply, role=MessageRole.ASSISTANT)
         tracker = getattr(self.config, "token_tracker", None)
         if tracker and isinstance(usage, dict):
             incoming = usage.get("inputTokens")
@@ -79,10 +117,7 @@ class CreativeShared(ModelProvider):
                     getattr(self.config, "node_id", "voice"), self.model_name,
                     tokens, provider="ai-apps-shared"
                 )
-        return ModelResponse(
-            message=Message(content=reply, role=MessageRole.ASSISTANT),
-            raw_response={"usage": usage},
-        )
+        return ModelResponse(message=message, raw_response={"usage": usage})
 
     def extract_token_usage(self, response):
         usage = response.get("usage", {}) if isinstance(response, dict) else {}

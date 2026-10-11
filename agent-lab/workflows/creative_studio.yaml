@@ -1,0 +1,67 @@
+version: 0.4.0
+graph:
+  id: agent_lab_creative_studio
+  start: [chispa]
+  end: [materia]
+  log_level: ERROR
+  nodes:
+    - id: chispa
+      type: agent
+      config:
+        provider: lab_creative_shared
+        name: ${CREATIVE_MODEL}
+        api_key: ""
+        role: ${CHISPA_ROLE}
+        params: {tool_loop_limit: 5}
+        retry: {enabled: false}
+        tooling:
+          - type: function
+            config:
+              tools:
+                - {name: room_list}
+                - {name: room_read}
+                - {name: room_write}
+                - {name: room_analyze}
+                - {name: room_launch}
+                - {name: room_observe}
+    - id: caos
+      type: agent
+      config:
+        provider: lab_creative_shared
+        name: ${CREATIVE_MODEL}
+        api_key: ""
+        role: ${CAOS_ROLE}
+        params: {tool_loop_limit: 5}
+        retry: {enabled: false}
+        tooling:
+          - type: function
+            config:
+              tools:
+                - {name: room_list}
+                - {name: room_read}
+                - {name: room_write}
+                - {name: room_analyze}
+                - {name: room_launch}
+                - {name: room_observe}
+    - id: materia
+      type: agent
+      config:
+        provider: lab_creative_shared
+        name: ${CREATIVE_MODEL}
+        api_key: ""
+        role: ${MATERIA_ROLE}
+        params: {tool_loop_limit: 5}
+        retry: {enabled: false}
+        tooling:
+          - type: function
+            config:
+              tools:
+                - {name: room_list}
+                - {name: room_read}
+                - {name: room_write}
+                - {name: room_analyze}
+                - {name: room_launch}
+                - {name: room_observe}
+  edges:
+    - {from: chispa, to: caos, trigger: true, condition: 'true', carry_data: true, keep_message: true}
+    - {from: caos, to: materia, trigger: true, condition: 'true', carry_data: true, keep_message: true}
