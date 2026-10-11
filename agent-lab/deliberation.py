@@ -94,7 +94,7 @@ def decide(run_dir, manifest, history, settings, codex, offline):
                "max_iterations": settings["max_iterations"], "completed_iterations": len(history),
                "consecutive_successes": manifest["consecutive_successes"],
                "remaining_iterations": settings["max_iterations"] - len(history),
-               "history": history, "workspace_files": workspace_context(run_dir / "workspace")}
+               "android": manifest.get("android"), "history": history, "workspace_files": workspace_context(run_dir / "workspace")}
     write_json(artifacts / "input.json", payload)
     text = workflow(run_dir, artifacts, "deliberate.yaml", json.dumps(payload, ensure_ascii=False), {
         "PLANNER_PROVIDER": "lab_offline" if offline else settings["provider"],
@@ -113,9 +113,11 @@ def decide(run_dir, manifest, history, settings, codex, offline):
 
 
 def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeout=300,
-                   offline=False, config=None, fake_mode="success"):
+                   offline=False, config=None, fake_mode="success", flutter=False, android=None, android_client=None):
     if not instruction.strip() or not 1 <= timeout <= 3600:
         raise ValueError("Provide a nonempty instruction and a timeout between 1 and 3600")
+    if offline and (flutter or (android is not None and not getattr(android_client, "offline", False))):
+        raise ValueError("Offline mode never starts Flutter or Android; supply an offline test adapter")
     settings = load_settings(config or ROOT / "config/deliberation.json")
     verify_chatdev()
     RUNS.mkdir(exist_ok=True)
@@ -128,10 +130,15 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
                 "chatdev_commit": git(CHATDEV, "rev-parse", "HEAD").decode().strip()}
     write_json(run_dir / "manifest.json", manifest)
     baseline = None
+    android_session = None
     try:
-        _, origin, baseline = prepare_workspace(run_dir, source)
+        _, origin, baseline = prepare_workspace(run_dir, source, flutter=flutter)
         manifest.update({"source": origin, "baseline": baseline})
         write_json(run_dir / "manifest.json", manifest)
+        if android is not None:
+            from lab_android import AndroidExperiment
+            android_session = AndroidExperiment(run_dir, client=android_client, **android)
+            manifest["android"] = android_session.state
         sys.path.insert(0, str(CHATDEV))
         import runtime.sdk
         import planner_provider
@@ -166,7 +173,11 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
             previous_tree = response["changes"]["tree"]
             git(run_dir / "workspace", "archive", "--format=tar", f"--output={cycle / 'workspace.tar'}", previous_tree)
             patch = (cycle / "changes.patch").read_text(encoding="utf-8", errors="replace")
-            evidence = {"iteration": iteration, "decision": decision, "response": response,
+            android_evidence = None
+            if android_session:
+                android_evidence = android_session.after_cycle(cycle, response["changes"])
+                manifest["android"] = android_evidence
+            evidence = {"android": android_evidence, "iteration": iteration, "decision": decision, "response": response,
                         "patch": patch[:64000], "patch_truncated": len(patch) > 64000}
             history.append(evidence)
             manifest["iterations"].append({"iteration": iteration, "status": response["status"],
@@ -181,6 +192,8 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
                 break
         else:
             manifest["status"] = "iteration_limit"
+        if android_session and manifest["status"] == "completed" and manifest["android"]["status"] != "running":
+            manifest["status"] = "android_not_ready"
         write_json(run_dir / "final-decision.json", decision)
     except Exception as exc:
         manifest["status"] = "failed"
@@ -198,6 +211,8 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
                 collect_changes(run_dir, baseline)
             except Exception as exc:
                 manifest.update({"status": "failed", "capture_error_type": type(exc).__name__})
+        if android_session:
+            manifest["android"] = android_session.state.copy()
         manifest["finished_at"] = utc_now()
         write_json(run_dir / "manifest.json", manifest)
     return run_dir, manifest
@@ -211,12 +226,18 @@ def main():
     parser.add_argument("--model")
     parser.add_argument("--config", type=Path)
     parser.add_argument("--timeout", type=int, default=300)
+    parser.add_argument("--flutter", action="store_true", help="Prepare an isolated Flutter Android template")
+    parser.add_argument("--android", action="store_true", help="Start a valid Flutter app between iterations")
+    parser.add_argument("--android-project", default=".")
+    parser.add_argument("--android-serial")
+    parser.add_argument("--android-avd")
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--fake-mode", choices=["success", "fail", "timeout", "no-final", "no-change"], default="success")
     args = parser.parse_args()
+    android = {"project": args.android_project, "serial": args.android_serial, "avd": args.android_avd} if args.android else None
     run_dir, manifest = run_autonomous(args.instruction, source=args.source, codex=args.codex,
                                        model=args.model, config=args.config, timeout=args.timeout,
-                                       offline=args.offline, fake_mode=args.fake_mode)
+                                       offline=args.offline, fake_mode=args.fake_mode, flutter=args.flutter, android=android)
     print(json.dumps({"run_dir": str(run_dir), "status": manifest["status"],
                       "iterations": len(manifest["iterations"])}, ensure_ascii=False))
     return 0 if manifest["status"] == "completed" else 1

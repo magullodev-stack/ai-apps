@@ -10,6 +10,7 @@ async function main(args) {
   else if (action === 'List') result = await service.list();
   else if (action === 'Start') { await service.start(value); result = { requested: 'start', id: value }; }
   else if (action === 'Stop') { await service.stop(value); result = { requested: 'stop', id: value }; }
+  else if (action === 'Unregister') { await service.unregister(value); result = { requested: 'unregister', id: value }; }
   else throw new Error('Unknown Android session action');
   console.log(JSON.stringify(result, null, 2));
 }

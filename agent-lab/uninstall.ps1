@@ -16,6 +16,17 @@ if (Test-Path -LiteralPath $runs) {
         if ($state.status -eq 'started') { throw 'A run is active or unfinished. Finish it before uninstalling.' }
     }
 }
+# Retire only experiment-owned registrations before removing workspaces or dependencies.
+$associations = @(Get-ChildItem -LiteralPath $runs -Filter android.json -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { (Split-Path (Split-Path $_.FullName -Parent) -Parent) -eq $runs })
+if ($associations.Count -gt 0 -and -not $WhatIfPreference) {
+    $python = Join-Path $labRoot '.venv/Scripts/python.exe'
+    if (-not (Test-Path -LiteralPath $python)) { throw 'Reinstall agent-lab before detaching its Android sessions.' }
+    if ($PSCmdlet.ShouldProcess($runs, 'Stop and unregister experiment Android sessions; preserve emulators and shared logs')) {
+        & $python -B (Join-Path $labRoot 'lab_android.py') --action detach-all
+        if ($LASTEXITCODE -ne 0) { throw 'Android detachment failed; no laboratory data has been removed.' }
+    } else { return }
+}
 if ($RemoveLab) {
     if ((Split-Path $labRoot -Leaf) -ne 'agent-lab') { throw 'Complete removal requires a directory named agent-lab.' }
     if ($PSCmdlet.ShouldProcess($labRoot, 'Delete complete agent-lab')) { Remove-Item -LiteralPath $labRoot -Recurse -Force }

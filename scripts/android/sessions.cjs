@@ -72,6 +72,16 @@ class Sessions {
   }
   register(item) {
     const session = this.validate(item);
+    return this.registryTransaction(() => {
+      const all = this.definitions();
+      const previous = all.find(entry => key(entry) === key(session));
+      if (previous && JSON.stringify(previous) === JSON.stringify(session)) return previous;
+      if (all.some(entry => entry.serial === session.serial || sameAvd(entry, session))) throw new Error('Device or AVD already registered');
+      writeJson(this.file, { version: 1, sessions: [...all.slice(1), session] });
+      return session;
+    });
+  }
+  registryTransaction(operation) {
     fs.mkdirSync(this.runtime, { recursive: true });
     const lock = path.join(this.runtime, 'registry.lock');
     // Registration is a short transaction shared by CLI and editor instances.
@@ -85,13 +95,32 @@ class Sessions {
     }
     fs.writeFileSync(handle, JSON.stringify({ pid: process.pid }));
     try {
-      const all = this.definitions();
-      const previous = all.find(entry => key(entry) === key(session));
-      if (previous && JSON.stringify(previous) === JSON.stringify(session)) return previous;
-      if (all.some(entry => entry.serial === session.serial || sameAvd(entry, session))) throw new Error('Device or AVD already registered');
-      writeJson(this.file, { version: 1, sessions: [...all.slice(1), session] });
-      return session;
-    } finally { fs.closeSync(handle); fs.unlinkSync(lock); }
+      const result = operation();
+      if (result && typeof result.then === 'function') return result.finally(() => { fs.closeSync(handle); fs.unlinkSync(lock); });
+      fs.closeSync(handle); fs.unlinkSync(lock);
+      return result;
+    } catch (error) { fs.closeSync(handle); fs.unlinkSync(lock); throw error; }
+  }
+  async unregister(id) {
+    return this.registryTransaction(async () => {
+      const session = this.find(id);
+      if (session.kind === 'development-task') throw new Error('QuizAI registration is reserved');
+      const dir = this.directory(session);
+      fs.mkdirSync(dir, { recursive: true });
+      const leaseFile = this.leaseFile(session);
+      let handle;
+      try { handle = fs.openSync(leaseFile, 'wx'); }
+      catch (error) { if (error.code === 'EEXIST') throw new Error('Stop/recover the session before unregistering'); throw error; }
+      fs.writeFileSync(handle, JSON.stringify({ removing: true, pid: process.pid }));
+      fs.closeSync(handle);
+      try {
+        if (await this.platform.hasFlutter(session) ||
+            (await this.platform.devices()).includes(session.serial) && await this.platform.appPid(session)) {
+          throw new Error('Application is still running; stop it before unregistering');
+        }
+        writeJson(this.file, { version: 1, sessions: this.definitions().slice(1).filter(item => key(item) !== id) });
+      } finally { fs.unlinkSync(leaseFile); }
+    });
   }
   find(id) {
     const session = this.definitions().find(item => key(item) === id);
@@ -136,6 +165,7 @@ class Sessions {
     catch (error) {
       if (error.code !== 'EEXIST') throw error;
       const previous = readJson(leaseFile, {});
+      if (previous.removing) throw new Error('Session unregistration is in progress');
       if (alive(previous.pid) || alive(previous.launcherPid)) return;
       // Never start a second Flutter after an unclean worker exit.
       if (await this.platform.hasFlutter(session)) throw new Error('An existing Flutter runner owns this device; stop/recover it before starting');

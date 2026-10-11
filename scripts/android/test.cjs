@@ -37,6 +37,8 @@ async function run() {
   busy = false;
   await Promise.all([service.start(key(app)), service.start(key(app))]);
   assert.equal(calls.filter(call => Array.isArray(call)).length, 1, 'Concurrent editor/CLI starts share one lease');
+  await assert.rejects(service.unregister(key(app)), /Stop\/recover/);
+  await assert.rejects(service.unregister('quizai@emulator-5554'), /reserved/);
   const list = await service.list();
   assert.equal(list[0].active, true);
   assert.equal(list[1].active, true);
@@ -69,6 +71,13 @@ async function run() {
   for (let i = 0; i < 120; i++) service.register({ appId: `external-${i}`, label: `App ${i}`,
     serial: `test-${i}`, packageName: 'com.example.external', kind: 'external' });
   assert.equal(service.definitions().length, 123, 'No fixed session/tab count');
+  busy = false;
+  platform.devices = async () => ['emulator-5554', 'emulator-5556', 'emulator-5558'];
+  await assert.rejects(service.unregister(key(external)), /still running/);
+  platform.appPid = async session => session.appId === 'quizai' ? '100' : '';
+  await service.unregister(key(external));
+  assert.equal(service.definitions().length, 122);
+  assert.equal(service.definitions()[0].serial, 'emulator-5554');
   process.env.AI_APPS_AI_API_KEY = 'private'; process.env.OPENAI_API_KEY = 'private';
   process.env.CODEX_API_KEY = 'private'; process.env.GIT_DIR = 'private';
   const env = runtimeEnv();

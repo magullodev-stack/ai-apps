@@ -5,6 +5,11 @@ param(
     [string]$Model,
     [string]$Config,
     [ValidateRange(1, 3600)][int]$TimeoutSeconds = 300,
+    [switch]$Flutter,
+    [switch]$Android,
+    [string]$AndroidProject = '.',
+    [string]$AndroidSerial,
+    [string]$AndroidAvd,
     [switch]$Offline
 )
 $ErrorActionPreference = 'Stop'
@@ -14,6 +19,12 @@ $arguments = @('-B', (Join-Path $PSScriptRoot 'deliberation.py'), '--instruction
 if ($SourceRepo) { $arguments += @('--source', (Resolve-Path -LiteralPath $SourceRepo).Path) }
 if ($Model) { $arguments += @('--model', $Model) }
 if ($Config) { $arguments += @('--config', (Resolve-Path -LiteralPath $Config).Path) }
+if ($Flutter) { $arguments += '--flutter' }
+if ($Android) {
+    $arguments += @('--android', '--android-project', $AndroidProject)
+    if ($AndroidSerial) { $arguments += @('--android-serial', $AndroidSerial) }
+    if ($AndroidAvd) { $arguments += @('--android-avd', $AndroidAvd) }
+}
 if ($Offline) { $arguments += '--offline' }
 else {
     if (-not $CodexPath) {

@@ -22,6 +22,8 @@ ai-apps/
 │   ├── tests/                 # Pruebas offline del ciclo con ChatDev real.
 │   ├── install.ps1            # Instala dependencias locales fijadas.
 │   ├── run.ps1                # Ejecuta una instrucción y conserva artefactos.
+│   ├── android.ps1            # Asociación y control Android por experimento.
+│   ├── lab_android.py         # Adaptador al gestor y evidencia por ciclo.
 │   ├── uninstall.ps1          # Retira instalación o laboratorio completo.
 │   └── README.md              # Operación, aislamiento e inspección.
 │
@@ -92,8 +94,9 @@ crea una instantánea de código con Git independiente bajo `runs/`, conserva lo
 mensajes y cambios, y devuelve el resultado al grafo. El agente decide y evalúa
 cada ciclo, formula la siguiente instrucción y reutiliza el mismo workspace;
 las decisiones y los cambios de cada iteración se conservan. Dependencias, credenciales y
-ejecuciones se ignoran en Git. No depende de QuizAI, servicios compartidos ni de
-los scripts de desarrollo. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
+ejecuciones se ignoran en Git. Opcionalmente prepara apps Flutter aisladas y
+delega su arranque/parada al gestor Android compartido, con Hot Reload entre
+iteraciones. No depende de QuizAI ni de los servicios de IA. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
 
 ### apps/
 

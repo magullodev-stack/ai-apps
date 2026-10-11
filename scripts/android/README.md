@@ -77,7 +77,14 @@ y hace `am force-stop` sobre su paquete y dispositivo. El AVD queda encendido.
 Durante el arranque cancela la espera sin detener Android. Tras una salida
 anómala, rechaza matar un PID sin verificar o iniciar otro Flutter en un
 dispositivo ocupado. Consulta los logs para recuperar un lease abandonado.
-Antes de borrar un workspace de agent-lab, detén su sesión.
+**Unregister** retira solo el registro de una sesión detenida, sin borrar AVD,
+proyecto ni logs. Rechaza QuizAI, leases existentes y procesos Flutter o apps
+activas; reserva un lease durante la retirada para evitar arranques concurrentes.
+Usa `-Action Unregister -AppId <id> -Serial <serial>`.
+
+agent-lab usa este contrato mediante su [adaptador por experimento](../../agent-lab/README.md#flutter-y-android-por-experimento):
+registra e inicia Flutter entre iteraciones, conserva la asociación y comprueba
+Hot Reload. Su eliminación detiene y retira solo las sesiones de sus workspaces.
 
 `-Kind external` permite registrar una app cuyo ciclo de vida gobierna otra
 herramienta: solo se visualiza; su propietario controla arranque y parada.

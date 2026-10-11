@@ -3,8 +3,9 @@
 Laboratorio independiente: un agente real de ChatDev recibe una instrucción,
 decide qué construir, delega en Codex y evalúa sus resultados. Formula la siguiente
 instrucción y vuelve a ejecutarla sobre el mismo código aislado, sin intervención
-humana. El laboratorio no forma parte de la infraestructura `ai/` ni arranca
-QuizAI, Flutter, Android o servicios del repositorio.
+humana. La conexión opcional con Android ejecuta aplicaciones experimentales mediante
+el gestor compartido; el laboratorio mantiene independientes sus dependencias,
+credenciales, código y resultados.
 
 El modo directo original conserva el SDK de ChatDev como orquestador determinista:
 `instruction` → `delegate` → `codex` → `result`. No necesita una clave de
@@ -160,7 +161,7 @@ intercambio completo, Unicode, instrucciones tratadas como datos, patch aplicabl
 con archivos nuevos y binarios, protección del origen, fallo, timeout y respuesta
 incompleta. Los archivos de prueba quedan en `runs/` para inspección.
 
-La suite contiene 18 pruebas offline, incluidas dos iteraciones sobre el mismo
+La suite contiene 25 pruebas offline, incluidas dos iteraciones sobre el mismo
 workspace, evaluación final, instrucciones posteriores derivadas del resultado,
 patches aplicables consecutivamente, salidas inválidas, cierre prematuro y límites
 ante fallos, timeout o ausencia de cambios nuevos. También se validó una ejecución
@@ -178,6 +179,71 @@ Los registros pueden contener código e instrucciones del usuario; permanecen
 locales y nunca se añaden al commit del laboratorio. El proceso real de Codex
 puede mantener su caché de autenticación propia fuera de `agent-lab`.
 
+## Flutter y Android por experimento
+
+Flutter y el SDK Android deben estar instalados por separado. La conexión opcional
+reutiliza `scripts/android-session.ps1`, su worker y `flutter-dev-runner.dart`;
+no instala otra infraestructura Android ni inicia los servicios de IA.
+
+```powershell
+# Crear un template Flutter Android aislado; ChatDev decide y Codex construye la app.
+.\agent-lab\deliberate.ps1 -Flutter -Android `
+  -Instruction 'Construye un contador visual Flutter y mejora su interacción en dos iteraciones; conserva el applicationId'
+# Usar una app Flutter de un repositorio Git existente.
+.\agent-lab\deliberate.ps1 -SourceRepo 'C:\ruta\app-flutter' -Android `
+  -AndroidProject '.' -Instruction 'Mejora esta aplicación Flutter en dos iteraciones'
+# Asociar una ejecución existente que contenga una app Flutter Android.
+.\agent-lab\android.ps1 -Action Start -Run '.\agent-lab\runs\<ejecucion>' -Project 'app'
+.\agent-lab\android.ps1 -Action Status -Run '.\agent-lab\runs\<ejecucion>'
+.\agent-lab\android.ps1 -Action Stop -Run '.\agent-lab\runs\<ejecucion>'
+.\agent-lab\android.ps1 -Action Detach -Run '.\agent-lab\runs\<ejecucion>'
+```
+
+`-Flutter` usa `flutter create --no-pub --empty --platforms=android` antes de
+crear el commit inicial del workspace. Es incompatible con `-SourceRepo`.
+`-AndroidProject` es relativo a `workspace` (por defecto `.`). El modo Android
+espera una app con dependencia Flutter SDK, `lib/main.dart`, manifest Android
+y un único `applicationId` literal Groovy o Kotlin. Rechaza flavors/suffixes,
+rutas externas, enlaces y asociaciones ajenas. El runner compila y confirma
+el arranque; esta validación no sustituye las pruebas de la aplicación.
+
+El controlador registra e inicia la app tras la primera iteración válida, antes
+de la siguiente decisión. Cada iteración posterior reutiliza el mismo proyecto
+y runner. Tras cambios Dart comprueba una nueva confirmación de Hot Reload;
+si falta o falla el arranque, conserva el fallo y los registros. ChatDev recibe
+esta evidencia. `completed` con `-Android` exige una app activa, además de las
+dos iteraciones aceptadas. La sesión sigue funcionando al terminar ChatDev
+para inspeccionarla; se detiene explícitamente con `Stop`.
+
+La identidad `lab-<hash>` deriva del experimento. Se elige un puerto par libre
+entre los registros del gestor y un AVD propio `AI_APPS_Lab_<hash>`; puedes
+indicar `-AndroidSerial` y `-AndroidAvd` (o `-Serial`/`-Avd` en `android.ps1`).
+Un AVD o puerto ocupado se rechaza sin terminar el proceso que lo usa. QuizAI,
+`emulator-5554`, `AI_APPS_Dev` y la tarea persistente permanecen reservados.
+
+La integración de VS Code descubre la app activa y abre su pestaña con EmbeDroid.
+Requiere la integración multiemulador instalada y cargada; consulta
+[sus instrucciones](../scripts/android/README.md). Cerrar la pestaña no detiene
+Flutter. `Stop` controla solo la sesión del experimento; `Detach` la detiene y
+retira su registro. Los AVD quedan encendidos y sus archivos pertenecen al SDK
+compartido. No se eliminan otros dispositivos.
+
+`android.json` conserva experimento, workspace, proyecto, registro, estado y
+confirmaciones de reload; `android/events.jsonl` conserva las transiciones.
+`android/operations/` guarda llamadas al gestor y resultados/errores.
+`android/logs/` copia los logs propios del worker y Flutter; cada ciclo guarda
+`cycles/<n>/android.json` y `android/logs/` como evidencia. El gestor conserva
+sus logs privados aunque se retire el registro. Todos los datos de ejecución
+quedan bajo `runs/`, ignorado en Git. Flutter recibe un entorno sin claves de
+ChatDev, Codex o los servicios. Los flags Android no contienen credenciales.
+
+`-Offline` rechaza `-Flutter` y `-Android`: nunca arranca SDK, Android ni modelos.
+Las siete pruebas nuevas usan un gestor simulado y el ciclo nativo de ChatDev;
+cubren asociación persistente, delegación, propiedad, validación, fallos,
+logs por ciclo y confirmación o ausencia de Hot Reload.
+
+## Eliminación
+
 Para retirar la instalación, termina primero sus ejecuciones:
 
 ```powershell
@@ -189,6 +255,10 @@ Para retirar la instalación, termina primero sus ejecuciones:
 .\agent-lab\uninstall.ps1 -RemoveLab -PurgeRuns -PurgeSecrets
 ```
 
+Antes de borrar dependencias o workspaces, detiene y retira únicamente las sesiones
+Android asociadas a sus experimentos. Si la propiedad cambió, la parada falla o
+falta el intérprete, conserva los datos y requiere resolverlo con `android.ps1`
+o reinstalar el laboratorio. `-WhatIf` no ejecuta estas operaciones.
 Admite `-WhatIf`. Comprueba las rutas absolutas antes de borrar, rechaza raíces
 enlazadas y ejecuciones con estado `started`. No desinstala Codex, modifica refs
 Git ni elimina la autenticación del CLI externo. La eliminación de archivos

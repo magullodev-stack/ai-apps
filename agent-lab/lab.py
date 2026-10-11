@@ -41,10 +41,16 @@ def git(workspace, *args):
     ).stdout
 
 
-def prepare_workspace(run_dir, source=None):
+def prepare_workspace(run_dir, source=None, *, flutter=False):
     workspace = run_dir / "workspace"
     workspace.mkdir()
-    if source is None:
+    if flutter:
+        if source is not None:
+            raise ValueError("Choose a Flutter template or a source repository")
+        from lab_android import prepare_flutter
+        prepare_flutter(workspace, run_dir)
+        origin = {"kind": "flutter-template"}
+    elif source is None:
         shutil.copytree(ROOT / "examples" / "counter", workspace, dirs_exist_ok=True,
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         origin = {"kind": "example", "path": "examples/counter"}
