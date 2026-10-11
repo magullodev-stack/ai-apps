@@ -16,7 +16,11 @@ Future<void> main() async {
   }
   try {
     final service = AiService(apiKey: key, token: token);
-    final server = await service.start();
+    final requestedPort = int.tryParse(env['AI_APPS_SERVICE_PORT'] ?? '') ?? 0;
+    if (requestedPort < 0 || requestedPort > 65535) {
+      throw const FormatException('Invalid service port');
+    }
+    final server = await service.start(port: requestedPort);
     final file = File(readyPath);
     await file.parent.create(recursive: true);
     await file.writeAsString(

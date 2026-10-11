@@ -29,6 +29,7 @@ param(
     [ValidateRange(1, 200)]
     [int]$Usuarios = 1,
     [switch]$StopService,
+    [switch]$RefreshServiceOnly,
     [switch]$SaveKeyFromClipboard
 )
 $ErrorActionPreference = 'Stop'
@@ -141,6 +142,37 @@ if ($SaveKeyFromClipboard) {
 }
 
 $session = Get-ServiceSession
+$refreshToken = $null
+$refreshPort = 0
+$refreshKey = $null
+if ($RefreshServiceOnly -and $session) {
+    $health = Invoke-RestMethod -Uri "$($session.endpoint)/health" `
+        -Headers @{ Authorization = "Bearer $($session.token)" } -TimeoutSec 3
+    if ($health.capabilities.imageInput -eq $true) {
+        Write-Host 'Servicio Dart actualizado y disponible.'
+        return
+    }
+    # Validate the replacement and retrieve the existing secret BEFORE stopping anything.
+    if (-not (Test-Path -LiteralPath $dart)) { throw 'Dart no está disponible.' }
+    $serverScript = Join-Path $repo 'ai\dart_service\bin\server.dart'
+    $library = Join-Path $repo 'ai\dart_service\lib\ai_service.dart'
+    & $dart analyze $serverScript $library
+    if ($LASTEXITCODE -ne 0) { throw 'El servicio nuevo no supera dart analyze; se conserva el actual.' }
+    $refreshKey = Get-OpenAiKey
+    $process = Get-Process -Id $session.pid -ErrorAction Stop
+    $dartExecutables = @($dart, (Join-Path (Split-Path $dart) 'dartvm.exe'))
+    if ($process.Path -notin $dartExecutables) {
+        throw 'Identidad del proceso Dart no verificada; no se detiene.'
+    }
+    $refreshToken = $session.token
+    $refreshPort = ([Uri]$session.endpoint).Port
+    Stop-Process -Id $process.Id -ErrorAction Stop
+    Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
+    if (Get-Process -Id $process.Id -ErrorAction SilentlyContinue) {
+        throw 'El proceso antiguo no se detuvo; no se inicia un segundo servicio.'
+    }
+    $session = $null
+}
 if ($StopService) {
     if ($session) {
         $process = Get-Process -Id $session.pid -ErrorAction SilentlyContinue
@@ -159,14 +191,14 @@ if (-not (Test-Path -LiteralPath $flutter) -or -not (Test-Path -LiteralPath $dar
 New-Item -ItemType Directory -Force -Path $runtime | Out-Null
 
 if (-not $session) {
-    $key = Get-OpenAiKey
+    $key = if ($refreshKey) { $refreshKey } else { Get-OpenAiKey }
     if ([string]::IsNullOrWhiteSpace($key)) { throw 'No se ha proporcionado una clave OpenAI.' }
     $bytes = New-Object byte[] 32
     $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
     try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
-    $token = [Convert]::ToBase64String($bytes)
+    $token = if ($refreshToken) { $refreshToken } else { [Convert]::ToBase64String($bytes) }
     $previous = @{}
-    foreach ($name in @('AI_APPS_AI_API_KEY','OPENAI_API_KEY','AI_APPS_GAME_TOKEN','AI_APPS_READY_FILE')) {
+    foreach ($name in @('AI_APPS_AI_API_KEY','OPENAI_API_KEY','AI_APPS_GAME_TOKEN','AI_APPS_READY_FILE','AI_APPS_SERVICE_PORT')) {
         $previous[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
     }
     try {
@@ -174,6 +206,7 @@ if (-not $session) {
         Remove-Item Env:OPENAI_API_KEY -ErrorAction SilentlyContinue
         $env:AI_APPS_GAME_TOKEN = $token
         $env:AI_APPS_READY_FILE = $sessionFile
+        $env:AI_APPS_SERVICE_PORT = "$refreshPort"
         if (Test-Path -LiteralPath $sessionFile) { Remove-Item -LiteralPath $sessionFile }
         $serverScript = Join-Path $repo 'ai\dart_service\bin\server.dart'
         $serviceProcess = Start-Process -FilePath $dart -ArgumentList @('"' + $serverScript + '"') `
@@ -199,6 +232,7 @@ if (-not $session) {
     }
 }
 if (-not $ProbarLuna -and -not $ProbarQuiz10) { Write-Host "Servicio Dart preparado: $($session.endpoint)" }
+if ($RefreshServiceOnly) { return }
 
 if ($Pivots) {
     Push-Location (Join-Path $repo 'apps\\quizai')
