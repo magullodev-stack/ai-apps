@@ -11,10 +11,10 @@ import subprocess
 
 
 def _room():
-    from lab import RUNS
+    from lab import RUNS, CREATIVE_RUNS
     raw = os.environ.get("AGENTLAB_ROOM", "")
     room = Path(raw).resolve(strict=True)
-    if room.parent != RUNS.resolve() or not (room / "room.json").is_file():
+    if room.parent not in {RUNS.resolve(), CREATIVE_RUNS.resolve()} or not (room / "room.json").is_file():
         raise ValueError("Sala de agentes inexistente o fuera de agent-lab/runs")
     if (room / "workspace").is_symlink():
         raise ValueError("El workspace no puede ser un enlace")

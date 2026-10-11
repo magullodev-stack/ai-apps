@@ -18,6 +18,9 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parent
 CHATDEV = ROOT / ".deps" / "chatdev"
 RUNS = ROOT / "runs"
+# Existing labs stay where they are. New creative Flutter projects live outside Git.
+CREATIVE_RUNS = (Path(os.environ["LOCALAPPDATA"]) / "AI-APPS" / "experiences"
+                 if os.name == "nt" and os.environ.get("LOCALAPPDATA") else RUNS)
 
 
 def utc_now():

@@ -13,7 +13,7 @@ import uuid
 
 import yaml
 
-from lab import ROOT, RUNS, utc_now, write_json
+from lab import ROOT, RUNS, CREATIVE_RUNS, utc_now, write_json
 
 
 def runtime_env():
@@ -153,8 +153,12 @@ class Manager:
 
 class AndroidExperiment:
     def __init__(self, run_dir, *, project=".", serial=None, avd=None, client=None, timeout=240):
-        self.run_dir = contained(run_dir, RUNS)
-        if self.run_dir.parent != RUNS or not (self.run_dir / "manifest.json").is_file():
+        target = Path(run_dir).resolve(strict=True)
+        allowed = {RUNS.resolve(), CREATIVE_RUNS.resolve()}
+        if target.parent not in allowed:
+            raise ValueError("Select an isolated laboratory run directory")
+        self.run_dir = contained(target, target.parent)
+        if not (self.run_dir / "manifest.json").is_file():
             raise ValueError("Select a direct experiment directory under agent-lab/runs")
         self.file = self.run_dir / "android.json"
         self.folder = self.run_dir / "android"
@@ -314,7 +318,10 @@ def main():
     parser.add_argument("--serial")
     parser.add_argument("--avd")
     args = parser.parse_args()
-    runs = list(RUNS.glob("*/android.json")) if args.action == "detach-all" else [args.run / "android.json"] if args.run else []
+    roots = {RUNS, CREATIVE_RUNS}
+    runs = ([file for root in roots for file in root.glob("*/android.json")]
+            if args.action == "detach-all" else
+            [args.run / "android.json"] if args.run else [])
     if not runs and args.action != "detach-all":
         parser.error("Specify --run")
     for file in runs:
