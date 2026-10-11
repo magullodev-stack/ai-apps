@@ -215,7 +215,7 @@ def probe_openai(model):
         def safe(value):
             string = str(value).replace(api_key, "[CLAVE_OCULTA]")
             string = re.sub(r"sk-[A-Za-z0-9_-]{12,}", "[CLAVE_OCULTA]", string)
-            string = re.sub(r"(?i)Bearer\\s+[^\\s,;]+", "Bearer [CLAVE_OCULTA]", string)
+            string = re.sub(r"(?i)Bearer\s+[^\s,;]+", "Bearer [CLAVE_OCULTA]", string)
             return string[:900]
 
         print(f"Solicitud rechazada: HTTP {exc.status_code}", file=sys.stderr)
