@@ -60,6 +60,12 @@ if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($keyName,
 
 $ErrorActionPreference = 'Stop'
 if ($Build -and -not $PSBoundParameters.ContainsKey('Rounds')) { $Rounds = 1 }
+# QuizAI already knows this Flutter installation; keep PATH change local to this invocation.
+$flutterBin = Join-Path $env:USERPROFILE 'development\flutter\bin'
+if (-not (Get-Command flutter.bat -ErrorAction SilentlyContinue) -and
+    (Test-Path -LiteralPath (Join-Path $flutterBin 'flutter.bat'))) {
+    $env:PATH = "$flutterBin;$env:PATH"
+}
 $python = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) { throw 'Instala primero agent-lab con install.ps1.' }
 $arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--rounds', "$Rounds", '--provider', $Provider)

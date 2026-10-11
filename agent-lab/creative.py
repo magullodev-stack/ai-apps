@@ -560,7 +560,7 @@ def main():
             file = room / "workspace" / "lib" / "main.dart"
             if not file.is_file():
                 raise RuntimeError("Los agentes no han creado ningún archivo Flutter.")
-            changes = git(room / "workspace", "status", "--porcelain", "--untracked-files=all")
+            changes = git(room / "workspace", "status", "--porcelain", "--untracked-files=all", "--", "lib")
             if not changes.strip():
                 raise RuntimeError(
                     "Los agentes conversaron pero no editaron Flutter. "
