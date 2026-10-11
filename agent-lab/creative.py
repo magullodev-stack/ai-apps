@@ -148,13 +148,18 @@ def main():
     args = parser.parse_args()
     if args.android and not args.build:
         parser.error("--android necesita --build")
+    # Never prepare Flutter or create a room if there is no model connection.
+    if not args.room:
+        requested_key = "OPENAI_API_KEY" if args.provider == "openai" else "GEMINI_API_KEY"
+        if not os.environ.get(requested_key):
+            print("Falta " + requested_key +
+                  ". Esta conexión usa una API independiente de Codex; puede tener coste.", file=sys.stderr)
+            return 2
     verify_chatdev()
     room, state = open_room(args)
     key = "OPENAI_API_KEY" if state["provider"] == "openai" else "GEMINI_API_KEY"
     if not os.environ.get(key):
-        print("La sala está preparada, pero falta " + key +
-              ". Es una credencial API independiente de la cuota de Codex.", file=sys.stderr)
-        print("Sala: " + str(room))
+        print("Falta " + key + " para continuar esta sala.", file=sys.stderr)
         return 2
     sys.path.insert(0, str(ROOT / ".deps" / "chatdev"))
     import creative_provider
