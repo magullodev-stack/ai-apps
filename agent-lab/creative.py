@@ -67,7 +67,7 @@ def open_room(args):
         git(workspace, "commit", "-m", "Empty creative space")
     (workspace / "AGENTS.md").write_text(WORKSPACE_RULES, encoding="utf-8")
     state = {"idea": args.idea.strip(), "provider": args.provider,
-             "model": args.model or ("gemini-2.5-flash" if args.provider == "gemini" else "gpt-4o-mini"),
+             "model": args.model or ("gemini-2.5-flash" if args.provider == "gemini" else "gpt-5-nano"),
              "conversation": []}
     save(room, state)
     return room, state
