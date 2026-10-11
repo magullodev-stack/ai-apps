@@ -1,9 +1,15 @@
-param()
+param(
+    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$AvdName = 'AI_APPS_Dev',
+    [ValidatePattern('^emulator-[0-9]+$')][string]$Serial = 'emulator-5554'
+)
 
 $ErrorActionPreference = 'Stop'
 
-$AvdName = 'AI_APPS_Dev'
-$Serial = 'emulator-5554'
+$port = [int]($Serial -replace '^emulator-', '')
+if ($port -lt 5554 -or $port -gt 5682 -or $port % 2) { throw 'Puerto de emulador no valido.' }
+if (($Serial -eq 'emulator-5554') -ne ($AvdName -eq 'AI_APPS_Dev')) {
+    throw 'AI_APPS_Dev y emulator-5554 estan reservados para la sesion persistente.'
+}
 $SystemImage = 'system-images;android-36;google_apis_playstore;x86_64'
 
 $sdk = $env:ANDROID_HOME
@@ -32,6 +38,11 @@ function Test-EmulatorReady {
         } | Select-Object -First 1
 
         if (-not $deviceLine) { return $false }
+
+        $actualAvd = (& $adb -s $Serial shell getprop ro.boot.qemu.avd_name 2>$null | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0 -or $actualAvd -ne $AvdName) {
+            throw 'El dispositivo pertenece a otro AVD.'
+        }
 
         $boot = (& $adb -s $Serial shell getprop sys.boot_completed 2>$null | Out-String).Trim()
         return ($LASTEXITCODE -eq 0 -and $boot -eq '1')
@@ -69,7 +80,7 @@ if (-not (Test-EmulatorReady)) {
         Write-Host "Arrancando $AvdName..."
         Start-Process -FilePath $emulator -ArgumentList @(
             '-avd', $AvdName,
-            '-port', '5554',
+            '-port', "$port",
             '-no-window',
             '-no-boot-anim'
         ) -WindowStyle Hidden | Out-Null

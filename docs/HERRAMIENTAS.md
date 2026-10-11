@@ -10,7 +10,7 @@
 | Sincronización continua de `dev` | Mantener `dev` local y `origin/dev` sincronizados en segundo plano mientras QuizAI está en desarrollo. Aplica cambios remotos automáticamente y, tras unos segundos sin cambios locales, crea un commit de sincronización y lo publica. | [`scripts/auto-sync-dev.ps1`](../scripts/auto-sync-dev.ps1) | Se inicia automáticamente desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
 | Sincronizar `dev` manualmente | Herramienta de recuperación/fallback para forzar una sincronización bidireccional cuando la sincronización continua no está activa. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Solo para recuperación o diagnóstico. |
 | Flutter Dev Runner | Ejecutar `flutter run --machine`, vigilar código y assets de QuizAI y de sus dependencias locales y solicitar Hot Reload al proceso Flutter después de cambios en disco. | [`scripts/flutter-dev-runner.dart`](../scripts/flutter-dev-runner.dart) | Se inicia desde `apps/quizai/run.ps1`; no se ejecuta manualmente. |
-| EmbeDroid en VS Code | Mostrar y controlar el AVD existente dentro de VS Code, con scid de 31 bits. | Distribución `magullodev.ai-apps-embedroid` + [`scripts/vscode-android/`](../scripts/vscode-android/) | [Corrección, instalación y validación](../scripts/vscode-android/README.md). |
+| AI-APPS Android multiemulador | Seleccionar y recuperar visores por aplicación/dispositivo, sin duplicados; iniciar y detener cada sesión independientemente. Conserva QuizAI en emulator-5554. | EmbeDroid mantenido + [`scripts/vscode-android/`](../scripts/vscode-android/) y [`scripts/android-session.ps1`](../scripts/android-session.ps1) | [Registro, selector, ciclo de vida y pruebas](../scripts/android/README.md). |
 | Construir y validar EmbeDroid | Mantener y reinstalar la distribución corregida sin parches locales en la extensión instalada. | [`scripts/embedroid/`](../scripts/embedroid/) y [`scripts/install-embedroid.ps1`](../scripts/install-embedroid.ps1) | [Procedencia, pruebas y actualizaciones](../scripts/embedroid/README.md). |
 
 ---
@@ -43,7 +43,11 @@ un fallo detallado, detén la tarea y ejecuta el lanzador en PowerShell.
 El lanzador necesita la clave previamente guardada con DPAPI para este usuario
 o una variable de entorno válida; el arranque oculto no solicita credenciales.
 
-VS Code únicamente abre el Android existente con `embedroid.openEmbedded`.
+Al abrir VS Code, AI-APPS Android recupera los visores de las aplicaciones activas.
+El selector múltiple identifica cada aplicación y dispositivo, conserva las otras
+pestañas y restaura cada transporte sin duplicarlo. Los comandos explícitos de
+arranque y parada controlan sesiones independientes; abrir o cerrar una pestaña
+no inicia ni detiene Flutter ni Android. Consulta [la operación multiemulador](../scripts/android/README.md).
 Cerrar o reabrir el editor no inicia Flutter, Dart ni Gradle. Un fallo del visor
 no afecta a la sesión persistente. Los errores de solicitud se registran en
 Output → `AI-APPS Android`; los errores de transmisión, en `Android Emulator`
@@ -160,7 +164,7 @@ de pasar temporalmente al Pixel físico.
 El rechazo intermitente de identificadores `scid` de 32 bits en EmbeDroid
 1.0.2 se confirmó de nuevo a las 14:47 del 10 de octubre de 2026 y se corrigió
 en el transporte. `scripts/install-embedroid.ps1` instala la distribución
-`magullodev.ai-apps-embedroid` 1.0.3, mantenida en el repositorio con hashes,
+`magullodev.ai-apps-embedroid` 1.1.0, mantenida en el repositorio con hashes,
 constructor de VSIX y pruebas. Su identidad propia evita que una actualización
 de la extensión original sobrescriba el arreglo. Recarga VS Code después de
 instalarla; Android y Flutter siguen activos.

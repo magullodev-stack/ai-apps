@@ -10,6 +10,7 @@ Future<void> main(List<String> args) async {
     [
       'run',
       '--machine',
+      if (options.noDds) '--no-dds',
       '-d',
       options.device,
       '--dart-define-from-file=' + options.definesFile,
@@ -440,6 +441,7 @@ final class _Options {
     required this.definesFile,
     required this.workingDirectory,
     required this.watchRoots,
+    this.noDds = false,
   });
 
   final String flutter;
@@ -447,13 +449,19 @@ final class _Options {
   final String definesFile;
   final String workingDirectory;
   final List<String> watchRoots;
+  final bool noDds;
 
   static _Options parse(List<String> args) {
     final values = <String, String>{};
     final watchRoots = <String>[];
+    var noDds = false;
 
     for (var i = 0; i < args.length; i++) {
       final name = args[i];
+      if (name == '--no-dds') {
+        noDds = true;
+        continue;
+      }
       if (name == '--watch') {
         if (i + 1 >= args.length) {
           throw const FormatException('Falta una ruta despues de --watch.');
@@ -482,6 +490,7 @@ final class _Options {
       definesFile: requiredValue('--defines-file'),
       workingDirectory: requiredValue('--working-directory'),
       watchRoots: List.unmodifiable(watchRoots),
+      noDds: noDds,
     );
   }
 }

@@ -1,8 +1,10 @@
 # Visualización de Android en VS Code
 
-AI-APPS Android solicita `embedroid.openEmbedded` sobre `emulator-5554`.
+AI-APPS Android gestiona un visor por aplicación y dispositivo mediante
+EmbeDroid mantenido 1.1.0. Incluye selección múltiple y recuperación automática
+de las aplicaciones activas. Consulta [sesiones, configuración y pruebas](../android/README.md).
 La tarea **AI-APPS Development** mantiene Android, Dart y Flutter fuera del
-editor; el visor no compila ni arranca QuizAI.
+editor; abrir o cerrar un visor no compila, arranca ni detiene QuizAI.
 
 ## Corrección del transporte
 
@@ -30,9 +32,9 @@ EmbeDroid, sin añadir esperas ni reintentos.
 La distribución mantenida `magullodev.ai-apps-embedroid` 1.0.3 deriva de
 1.0.2 y está versionada en [scripts/embedroid/](../embedroid/README.md).
 El generador limita a 31 bits y conserva ocho dígitos hexadecimales para
-que coincidan el socket ADB y el nombre generado por scrcpy. AI-APPS Android
-solo cambia la dependencia y el identificador de la extensión; conserva
-su gestión de pestañas.
+que coincidan el socket ADB y el nombre generado por scrcpy. La versión 1.1.0
+conserva esta corrección y amplía las pestañas con identidad y serialización,
+sin modificar el transporte scrcpy ni los archivos upstream.
 
 ## Instalación y actualizaciones
 

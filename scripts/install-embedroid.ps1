@@ -3,6 +3,8 @@
 $vsix = & (Join-Path $PSScriptRoot 'embedroid/build.ps1')
 & (Join-Path $PSScriptRoot 'embedroid/test.ps1')
 if ($LASTEXITCODE -ne 0) { throw 'Las pruebas de EmbeDroid han fallado.' }
+& (Join-Path $PSScriptRoot 'android/test.ps1')
+if ($LASTEXITCODE -ne 0) { throw 'Las pruebas multiemulador han fallado.' }
 
 & code --install-extension $vsix --force
 if ($LASTEXITCODE -ne 0) { throw 'No se pudo instalar EmbeDroid corregido.' }

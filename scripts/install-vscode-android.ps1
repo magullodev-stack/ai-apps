@@ -14,12 +14,26 @@ $target = Join-Path $extensionsRoot $targetName
 
 New-Item -ItemType Directory -Force -Path $extensionsRoot | Out-Null
 
+function Remove-AndroidExtensionDirectory([string]$Directory) {
+    $absolute = [IO.Path]::GetFullPath($Directory)
+    $root = [IO.Path]::GetFullPath($extensionsRoot).TrimEnd('\')
+    if ((Split-Path $absolute -Parent) -ine $root -or
+        (Split-Path $absolute -Leaf) -notlike "$($manifest.publisher).$($manifest.name)-*") {
+        throw 'Ruta de extension fuera del directorio esperado.'
+    }
+    $item = Get-Item -LiteralPath $absolute -Force
+    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+        # Remove the junction itself, never the repository behind it.
+        [IO.Directory]::Delete($absolute)
+    } else { Remove-Item -LiteralPath $absolute -Recurse -Force }
+}
+
 Get-ChildItem -LiteralPath $extensionsRoot -Directory -ErrorAction SilentlyContinue |
     Where-Object {
         $_.Name -like "$($manifest.publisher).$($manifest.name)-*" -and
         $_.FullName -ne $target
     } |
-    Remove-Item -Recurse -Force
+    ForEach-Object { Remove-AndroidExtensionDirectory $_.FullName }
 
 $alreadyLinked = $false
 
@@ -49,7 +63,7 @@ if (Test-Path -LiteralPath $target) {
     }
 
     if (-not $alreadyLinked) {
-        Remove-Item -LiteralPath $target -Recurse -Force
+        Remove-AndroidExtensionDirectory $target
     }
 }
 

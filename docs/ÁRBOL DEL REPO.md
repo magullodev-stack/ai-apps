@@ -59,7 +59,9 @@ ai-apps/
 ├── scripts/                   # Herramientas operativas compartidas.
 │   ├── install-dev-session.ps1 # Instala la tarea de Windows por usuario.
 │   ├── start-dev-session.ps1   # Entrada mínima de la sesión persistente.
-│   ├── start-ai-apps-android.ps1 # Prepara emulator-5554.
+│   ├── start-ai-apps-android.ps1 # Prepara el AVD de cada sesión; por defecto emulator-5554.
+│   ├── android-session.ps1      # Registro, consulta y control independiente de sesiones.
+│   ├── android/                # Workers, registro y pruebas multiemulador.
 │   ├── flutter-dev-runner.dart # Vigila archivos y aplica Hot Reload.
 │   ├── start-android.ps1
 │   ├── sync-dev.ps1
@@ -113,7 +115,7 @@ Contiene componentes compartidos por las aplicaciones cuando existe una necesida
 
 ### scripts/
 
-Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de QuizAI. `vscode-android/` solo abre EmbeDroid sobre el dispositivo existente. `embedroid/` conserva y construye la distribución corregida del visor, con pruebas del transporte; `install-embedroid.ps1` la instala con identidad propia.
+Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de QuizAI. `android/` registra y controla sesiones independientes mediante workers fuera del editor y reutiliza el preparador y el runner existentes. `vscode-android/` selecciona y recupera sus visores; abrir o cerrar pestañas no controla los procesos de las apps. `embedroid/` construye la distribución mantenida con transporte corregido y restauración de sesiones; `install-embedroid.ps1` instala ambos componentes. El registro y los logs quedan en `.ai-apps/android/`, fuera de Git.
 
 ### docs/
 

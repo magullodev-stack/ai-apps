@@ -1,8 +1,8 @@
 {
   "name": "ai-apps-android",
   "displayName": "AI-APPS Android",
-  "description": "Visualiza el Android existente dentro de VS Code con EmbeDroid.",
-  "version": "0.1.0",
+  "description": "Gestiona sesiones Android independientes y sus visores EmbeDroid.",
+  "version": "0.2.0",
   "publisher": "magullodev",
   "private": true,
   "engines": {
@@ -20,5 +20,31 @@
   "extensionDependencies": [
     "magullodev.ai-apps-embedroid"
   ],
-  "main": "./extension.js"
+  "main": "./extension.js",
+  "capabilities": { "untrustedWorkspaces": { "supported": false } },
+  "contributes": {
+    "commands": [
+      { "command": "aiAppsAndroid.select", "title": "Seleccionar visores", "category": "AI-APPS Android", "icon": "$(device-mobile)" },
+      { "command": "aiAppsAndroid.open", "title": "Visualizar sesión", "category": "AI-APPS Android", "icon": "$(open-preview)" },
+      { "command": "aiAppsAndroid.reconnect", "title": "Reconectar visor", "category": "AI-APPS Android", "icon": "$(debug-restart)" },
+      { "command": "aiAppsAndroid.start", "title": "Iniciar sesión", "category": "AI-APPS Android", "icon": "$(play)" },
+      { "command": "aiAppsAndroid.stop", "title": "Detener aplicación", "category": "AI-APPS Android", "icon": "$(debug-stop)" },
+      { "command": "aiAppsAndroid.register", "title": "Registrar aplicación Flutter", "category": "AI-APPS Android", "icon": "$(add)" },
+      { "command": "aiAppsAndroid.refresh", "title": "Actualizar sesiones", "category": "AI-APPS Android", "icon": "$(refresh)" }
+    ],
+    "views": { "explorer": [{ "id": "aiAppsAndroid.sessions", "name": "AI-APPS Android" }] },
+    "menus": {
+      "view/title": [
+        { "command": "aiAppsAndroid.select", "when": "view == aiAppsAndroid.sessions", "group": "navigation" },
+        { "command": "aiAppsAndroid.register", "when": "view == aiAppsAndroid.sessions", "group": "navigation" },
+        { "command": "aiAppsAndroid.refresh", "when": "view == aiAppsAndroid.sessions", "group": "navigation" }
+      ],
+      "view/item/context": [
+        { "command": "aiAppsAndroid.open", "when": "view == aiAppsAndroid.sessions", "group": "inline" },
+        { "command": "aiAppsAndroid.reconnect", "when": "view == aiAppsAndroid.sessions", "group": "session" },
+        { "command": "aiAppsAndroid.start", "when": "view == aiAppsAndroid.sessions && viewItem == androidStopped", "group": "session" },
+        { "command": "aiAppsAndroid.stop", "when": "view == aiAppsAndroid.sessions && viewItem == androidRunning", "group": "session" }
+      ]
+    }
+  }
 }

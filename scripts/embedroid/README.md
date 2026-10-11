@@ -1,11 +1,15 @@
 # EmbeDroid mantenido por AI-APPS
 
-Distribución `magullodev.ai-apps-embedroid` 1.0.3, basada en
+Distribución `magullodev.ai-apps-embedroid` 1.1.0, basada en
 `utpalbarman.embedroid` 1.0.2. Conserva sus comandos, ajustes, interfaz y
-servidor scrcpy 3.2. Corrige exclusivamente los dos generadores de `scid`
+servidor scrcpy 3.2. Corrige los dos generadores de `scid`
 del transporte: `scid.cjs` elimina el bit de signo y mantiene ocho dígitos
 hexadecimales. Tanto `adb forward` como `scrcpy.Server` reciben el mismo valor.
-No añade reintentos ni cambia la gestión de pestañas.
+`sessions.cjs` amplía el manager original con identidad por app/dispositivo,
+deduplicación concurrente, cierre y reconexión independientes y serialización
+de webviews. Reutiliza su HTML y transporte. Las vistas nuevas se abren en
+grupos contiguos; las existentes conservan su posición. No añade reintentos
+al transporte. Consulta [la operación multiemulador](../android/README.md).
 
 ## Procedencia y mantenimiento
 
@@ -23,7 +27,11 @@ consulta del 10 de octubre de 2026. No se ha enviado una incidencia ni un PR
 al autor. Esta distribución es el mecanismo de mantenimiento disponible.
 
 `build.ps1` verifica los hashes y exige encontrar exactamente los dos
-generadores conocidos antes de sustituirlos por `generateScid()`. Produce
+generadores conocidos antes de sustituirlos por `generateScid()`. Verifica
+también cada punto de integración del manager, API de sesiones y webview antes
+de aplicar cambios. El webview conserva únicamente la identidad con `setState`,
+renueva socket/decodificador al reconectar y reporta frames renderizados para
+verificar el vídeo. El token de transporte no se persiste. Produce
 una extensión y un VSIX en `.ai-apps/embedroid/`. No necesita npm ni modifica
 la extensión instalada. El empaquetado usa las bibliotecas .NET de Windows.
 
