@@ -34,7 +34,7 @@ def codex_command(request, workspace, final_path, *, sandbox="workspace-write", 
     command = prefix + [
         "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
         "--sandbox", sandbox, "-c", 'approval_policy="never"',
-        "-c", 'sandbox_workspace_write.network_access=false',
+        "-c", ('sandbox_workspace_write.network_access=true' if request.get('network') is True else 'sandbox_workspace_write.network_access=false'),
         "--cd", str(workspace), "--json", "--color", "never",
         "--output-last-message", str(final_path),
     ]
