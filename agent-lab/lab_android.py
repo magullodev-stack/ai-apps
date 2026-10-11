@@ -109,7 +109,10 @@ class Manager:
                 raise RuntimeError(f"Android manager {action} failed: {stderr.strip()}")
             return json.loads(stdout.lstrip("\ufeff"))
         finally:
-            write_json(self.logs / f"{number}-{action}.json", record)
+            # Discard removes this run (including android/operations) while
+            # the CLI is running. Never recreate the deleted experiment to log it.
+            if action != "Discard" and self.logs.is_dir():
+                write_json(self.logs / f"{number}-{action}.json", record)
 
     def logs_snapshot(self, definition, destination):
         directory = ROOT.parent / ".ai-apps/android/sessions" / (definition["appId"] + "@" + definition["serial"])
