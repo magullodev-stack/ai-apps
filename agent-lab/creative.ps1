@@ -1,6 +1,8 @@
 param(
     [string]$Idea,
     [string]$Room,
+    [switch]$Latest,
+    [switch]$Lista,
     [ValidateSet('shared', 'openai', 'gemini')][string]$Provider = 'shared',
     [string]$Model,
     [ValidateRange(1, 50)][int]$Rounds = 10,
@@ -72,6 +74,8 @@ $arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--rounds', "$Roun
 if ($Idea) { $arguments += @('--idea', $Idea) }
 if ($Feedback) { $arguments += @('--feedback', $Feedback) }
 if ($Room) { $arguments += @('--room', (Resolve-Path -LiteralPath $Room).Path) }
+if ($Latest) { $arguments += '--latest' }
+if ($Lista) { $arguments += '--list-rooms' }
 if ($Model) { $arguments += @('--model', $Model) }
 if ($Flutter) { $arguments += '--flutter' }
 if ($Build) { $arguments += '--build' }

@@ -11,7 +11,7 @@ import shutil
 import sys
 import uuid
 
-from lab import ROOT, RUNS, git, prepare_workspace, verify_chatdev
+from lab import ROOT, RUNS, CREATIVE_RUNS, git, prepare_workspace, verify_chatdev
 
 VOICES = (
     ("Chispa", "Imagina experiencias interactivas inesperadas, sensoriales y juguetonas. "
@@ -51,12 +51,51 @@ MODEL_RATES = {
 }
 
 
+def creative_rooms():
+    """Only room summaries, never generated Flutter/Android internals."""
+    rooms = []
+    for root in {RUNS, CREATIVE_RUNS}:
+        if root.is_dir():
+            rooms.extend(path for path in root.glob("creative_*")
+                         if path.is_dir() and (path / "room.json").is_file())
+    return sorted(rooms, key=lambda room: room.name, reverse=True)
+
+
+def latest_room():
+    rooms = creative_rooms()
+    if not rooms:
+        raise ValueError("Aún no hay experiencias creativas. Empieza con -Idea.")
+    return rooms[0]
+
+
+def list_rooms():
+    rooms = creative_rooms()
+    if not rooms:
+        print("Todavía no hay experiencias creativas.")
+        return
+    print("EXPERIENCIAS RECIENTES")
+    for room in rooms[:12]:
+        try:
+            state = json.loads((room / "room.json").read_text(encoding="utf-8"))
+            idea = str(state.get("idea") or "Sin título").replace("\n", " ")[:75]
+            mode = "Flutter" if (room / "workspace" / "pubspec.yaml").is_file() else "Ideas"
+            meter = room_meter(state, room=room)
+            spent = (" · aprox. US$" + format(
+                meter["cost_input"] + meter["cost_output"], ".6f")
+                if meter["priced"] else "")
+            print(f"  {room.name} · {mode}{spent}")
+            print("    " + idea)
+        except (OSError, ValueError, KeyError):
+            print("  " + room.name)
+    print("\n-Lista para ver experiencias, -Latest -CostOnly para el precio más reciente.")
+
+
 def open_room(args):
-    RUNS.mkdir(exist_ok=True)
+    CREATIVE_RUNS.mkdir(parents=True, exist_ok=True)
     if args.room:
         room = Path(args.room).resolve(strict=True)
-        if room.parent != RUNS.resolve() or not (room / "room.json").is_file():
-            raise ValueError("Selecciona una sala existente dentro de agent-lab/runs")
+        if room.parent not in {RUNS.resolve(), CREATIVE_RUNS.resolve()} or not (room / "room.json").is_file():
+            raise ValueError("Selecciona una experiencia creativa existente")
         state = json.loads((room / "room.json").read_text(encoding="utf-8"))
         if any(str(item.get("text", "")).casefold().startswith("error calling model ")
                for item in state.get("conversation", [])):
@@ -69,7 +108,7 @@ def open_room(args):
         return room, state
     if not args.idea or not args.idea.strip():
         raise ValueError("Indica -Idea para comenzar o -Room para continuar")
-    room = RUNS / ("creative_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "_" + uuid.uuid4().hex[:6])
+    room = CREATIVE_RUNS / ("creative_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "_" + uuid.uuid4().hex[:6])
     room.mkdir()
     (room / "manifest.json").write_text(
         json.dumps({"run_id": room.name, "kind": "creative", "workspace": "workspace"}),
@@ -478,6 +517,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--idea")
     parser.add_argument("--room")
+    parser.add_argument("--latest", action="store_true", help="Última experiencia, sin buscar su carpeta")
+    parser.add_argument("--list-rooms", action="store_true", help="Mostrar experiencias sin archivos internos")
     parser.add_argument("--provider", choices=("shared", "openai", "gemini"), default="shared")
     parser.add_argument("--model")
     parser.add_argument("--rounds", type=int, default=10, help="Rondas completas de Chispa, Caos y Materia")
@@ -489,6 +530,13 @@ def main():
     parser.add_argument("--probe", action="store_true", help="Una llamada directa para diagnosticar la API sin ChatDev")
     parser.add_argument("--cost-only", action="store_true", help="Mostrar el precio de una sala sin hacer llamadas")
     args = parser.parse_args()
+    if args.list_rooms:
+        list_rooms()
+        return 0
+    if args.latest:
+        if args.room or args.idea or args.flutter:
+            parser.error("--latest no combina con --room, --idea ni --flutter")
+        args.room = str(latest_room())
     if args.cost_only:
         if not args.room or args.idea or args.model or args.build or args.flutter or args.android or args.probe:
             parser.error("--cost-only necesita únicamente --room")
@@ -596,7 +644,9 @@ def main():
         return 1
     finally:
         show_spending(room_meter(state, room=room), state["provider"], state["model"], completed=completed)
-    print("Para seguir: .\\agent-lab\\creative.ps1 -Room '" + str(room) + "'")
+    print("Para continuar: .\\agent-lab\\creative.ps1 -Latest -Build -Android -Rounds 1")
+    print("Experiencia: " + str(room))
+    print("Conversación: " + str(room / "conversacion.md"))
     return 0
 
 
