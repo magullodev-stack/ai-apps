@@ -47,8 +47,8 @@ class CreativeInterfacesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "seed.zip"
             with ZipFile(path, "w") as z:
-                z.writestr("spinai/imagen.png", b"\x89PNG\r\n\x1a\nDATA")
-                z.writestr("spinai/manifiesto.md", "# Texto propio")
+                z.writestr("imagen.png", b"\x89PNG\r\n\x1a\nDATA")
+                z.writestr("texto.md", "# Texto propio")
             image, text = creative.read_seed_zip(path)
         self.assertEqual(image, b"\x89PNG\r\n\x1a\nDATA")
         self.assertEqual(text, "# Texto propio")

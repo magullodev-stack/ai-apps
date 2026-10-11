@@ -91,16 +91,16 @@ def read_seed_zip(path):
     source = Path(path).expanduser().resolve(strict=True)
     if not source.is_file() or source.stat().st_size > 5 * 1024 * 1024:
         raise ValueError("El paquete de entrada no es válido (máximo 5 MiB)")
-    names = {"spinai/imagen.png", "spinai/manifiesto.md"}
+    names = {"imagen.png", "texto.md"}
     with ZipFile(source) as bundle:
         infos = bundle.infolist()
         if len(infos) != 2 or {item.filename for item in infos} != names:
             raise ValueError("El paquete debe contener únicamente imagen.png y manifiesto.md")
-        limits = {"spinai/imagen.png": 3 * 1024 * 1024, "spinai/manifiesto.md": 30000}
+        limits = {"imagen.png": 3 * 1024 * 1024, "texto.md": 30000}
         if any(item.file_size > limits[item.filename] for item in infos):
             raise ValueError("El paquete contiene un archivo demasiado grande")
-        image = bundle.read("spinai/imagen.png")
-        description = bundle.read("spinai/manifiesto.md").decode("utf-8")
+        image = bundle.read("imagen.png")
+        description = bundle.read("texto.md").decode("utf-8")
     return image, description
 
 
