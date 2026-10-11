@@ -16,8 +16,11 @@ async function main() {
     calls.push(args);
     assert.equal(args[1], app.serial, 'Every ADB operation targets only the experiment');
     if (args.includes('pidof')) return '321';
-    if (args.includes('window')) return `mCurrentFocus=Window{abc u0 ${focused}/.MainActivity}`;
-    if (args.includes('activity')) return `topResumedActivity=ActivityRecord{abc u0 ${resumed}/.MainActivity t3}`;
+    if (args.includes('window')) {
+      assert.equal(args.at(-1), 'displays', 'Android 36 exposes focus in displays, not windows');
+      return `Display: mDisplayId=2\n mCurrentFocus=Window{other u0 com.other.display/.Activity}\nDisplay: mDisplayId=0 (organized)\n mCurrentFocus=Window{abc u0 ${focused}/.MainActivity}`;
+    }
+    if (args.includes('activity')) return `Display #2 (activities):\n topResumedActivity=ActivityRecord{abc u0 com.other.display/.Activity}\nDisplay #0 (activities):\n topResumedActivity=ActivityRecord{abc u0 ${resumed}/.MainActivity t3}`;
     if (args.includes('getprop')) return avd;
     if (args.includes('cat')) return boot;
     if (args.includes('screencap')) {

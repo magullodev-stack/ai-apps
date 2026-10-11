@@ -31,18 +31,20 @@ class Windows {
   async screenOwner(session) {
     const [appPid, focus, activity, avdName, bootId] = await Promise.all([
       this.appPid(session),
-      this.run(this.adb, ['-s', session.serial, 'shell', 'dumpsys', 'window', 'windows']),
+      this.run(this.adb, ['-s', session.serial, 'shell', 'dumpsys', 'window', 'displays']),
       this.run(this.adb, ['-s', session.serial, 'shell', 'dumpsys', 'activity', 'activities']),
       this.run(this.adb, ['-s', session.serial, 'shell', 'getprop', 'ro.boot.qemu.avd_name']),
       this.run(this.adb, ['-s', session.serial, 'shell', 'cat', '/proc/sys/kernel/random/boot_id'])
     ]);
-    const focusedPackage = /mCurrentFocus=Window\{[^\r\n]*?\s([A-Za-z][\w.]*)\//.exec(focus)?.[1];
-    const resumedPackage = /(?:topResumedActivity|mResumedActivity)[^\r\n]*?\s([A-Za-z][\w.]*)\//.exec(activity)?.[1];
+    const defaultDisplay = /Display:\s*mDisplayId=0\b[\s\S]*?(?=\r?\n\s*Display:\s*mDisplayId=|$)/.exec(focus)?.[0] || '';
+    const defaultActivities = /Display #0\b[\s\S]*?(?=\r?\n\s*Display #|$)/.exec(activity)?.[0] || '';
+    const focusedPackage = /mCurrentFocus=Window\{[^\r\n]*?\s([A-Za-z][\w.]*)\//.exec(defaultDisplay)?.[1];
+    const resumedPackage = /(?:topResumedActivity|mResumedActivity)[^\r\n]*?\s([A-Za-z][\w.]*)\//.exec(defaultActivities)?.[1];
     if (!appPid || focusedPackage !== session.packageName || resumedPackage !== session.packageName ||
         avdName.toLowerCase() !== session.avdName.toLowerCase() || !bootId) {
       throw new Error('Experiment application is not the focused/resumed owner of its AVD');
     }
-    return { appPid, focusedPackage, resumedPackage, avdName, bootId };
+    return { appPid, focusedPackage, resumedPackage, avdName, bootId, displayId: 0 };
   }
   async capture(session) {
     const before = await this.screenOwner(session);
