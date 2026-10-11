@@ -1,6 +1,0 @@
-{
-  "provider": "lab_codex",
-  "model": "default",
-  "timeout_seconds": 180,
-  "max_iterations": 2
-}
