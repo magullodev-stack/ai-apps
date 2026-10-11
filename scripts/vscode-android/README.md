@@ -1,8 +1,9 @@
 # Visualización de Android en VS Code
 
 AI-APPS Android gestiona un visor por aplicación y dispositivo mediante
-EmbeDroid mantenido 1.1.0. Incluye selección múltiple y recuperación automática
-de las aplicaciones activas. Consulta [sesiones, configuración y pruebas](../android/README.md).
+EmbeDroid mantenido 1.1.0. Incluye selección múltiple; la vista de QuizAI se
+recupera al abrir VS Code, mientras que las vistas de experimentos del laboratorio
+son temporales y se abren bajo demanda. Consulta [sesiones, configuración y pruebas](../android/README.md).
 La tarea **AI-APPS Development** mantiene Android, Dart y Flutter fuera del
 editor; abrir o cerrar un visor no compila, arranca ni detiene QuizAI.
 

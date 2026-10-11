@@ -41,7 +41,7 @@ const { createViews } = moduleSandbox.module.exports;
 const context = { subscriptions: [], extensionUri: 'extension', extensionPath: 'extension' };
 const log = { debug() {}, warn() {} };
 const a = { appId: 'quizai', label: 'QuizAI', serial: 'emulator-5554' };
-const b = { appId: 'lab', label: 'Lab', serial: 'emulator-5556' };
+const b = { appId: 'lab-abcdef012345', label: 'Lab', serial: 'emulator-5556' };
 async function run() {
   const views = createViews(Base, context, {}, { find() {} }, log);
   await Promise.all([views.openSession(a), views.openSession(a), views.openSession(b)]);
@@ -66,10 +66,11 @@ async function run() {
   const restoredA = panel('Restored A'), restoredB = panel('Restored B');
   await serializers[1].deserializeWebviewPanel(restoredA, { session: a });
   await serializers[1].deserializeWebviewPanel(restoredB, { session: b });
+  assert.equal(restoredB.disposed, true, 'Discarded lab preview is not restored at editor startup');
   await reopened.openSession(a); await reopened.openSession(b);
-  assert.equal(reopened.views.size, 2);
+  assert.equal(reopened.views.size, 2, 'Explicit lab selection still works');
   assert.equal(restoredA.title, 'QuizAI · emulator-5554');
-  assert.equal(restoredB.title, 'Lab · emulator-5556');
+  assert.equal(reopened.listSessions().find(item => item.serial === b.serial)?.label, b.label);
   const migrated = createViews(Base, context, {}, { find() {} }, log);
   const legacy = panel('AI_APPS_Dev');
   await serializers[2].deserializeWebviewPanel(legacy, undefined);

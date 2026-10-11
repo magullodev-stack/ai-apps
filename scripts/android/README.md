@@ -27,7 +27,9 @@ El sondeo cada cinco segundos detecta sesiones iniciadas desde PowerShell y
 reconecta un visor existente tras perder su dispositivo.
 
 Cerrar una pestaña manualmente la mantiene cerrada durante esa sesión; puedes
-reabrirla desde el selector. Al reabrir VS Code se recuperan las apps aún activas.
+reabrirla desde el selector. Al reabrir VS Code se recupera QuizAI. Las vistas experimentales del
+laboratorio no se reabren automáticamente: siguen disponibles desde el selector
+y pueden aparecer cuando se inician explícitamente después de abrir VS Code.
 **Reconectar visor** afecta solo al elegido. El arranque del editor no inicia
 Flutter, servicios, tareas ni emuladores. Se requiere un workspace de confianza.
 

@@ -15,7 +15,7 @@ async function activate(context) {
   const changed = new vscode.EventEmitter();
   const shown = new Map();
   const disconnected = new Set();
-  let sessions = [], refreshing, disposed = false;
+  let sessions = [], refreshing, disposed = false, firstRefresh = true;
   const extension = vscode.extensions.getExtension(EMBEDROID_ID);
   if (!extension) throw new Error('Instala EmbeDroid con scripts/install-embedroid.ps1.');
   const viewer = await extension.activate();
@@ -40,12 +40,20 @@ async function activate(context) {
     refreshing = (async () => {
       sessions = await service.list();
       if (disposed) return sessions;
+      const initial = firstRefresh;
+      firstRefresh = false;
       changed.fire();
       const views = viewer.listSessions?.() || [];
       for (const session of sessions) {
         if (!session.deviceReady && views.some(view => view.serial === session.serial)) disconnected.add(session.id);
       }
       for (const session of sessions.filter(item => item.active)) {
+        // When VS Code starts, do not revive old experimental views.
+        // New app launches after activation can still appear automatically.
+        if (initial && session.kind !== 'development-task') {
+          shown.set(session.id, session.epoch);
+          continue;
+        }
         if (shown.get(session.id) === session.epoch && !disconnected.has(session.id)) continue;
         const reconnect = (shown.has(session.id) || disconnected.has(session.id)) &&
           views.some(view => view.serial === session.serial);

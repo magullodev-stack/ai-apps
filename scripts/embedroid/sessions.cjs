@@ -107,6 +107,12 @@ function createViews(Base, context, sdk, devices, log) {
         panel.webview.html = '<p>Esta vista antigua no conserva su dispositivo. Abre la sesión desde AI-APPS Android.</p>';
         return;
       }
+      // Creative lab windows are disposable: reopening VS Code must not restore
+      // yesterday's prototypes. Their actual Flutter process is separate.
+      if (/^lab-[a-f0-9]{12}$/.test(session.appId)) {
+        panel.dispose();
+        return;
+      }
       // Startup and deserialization can race. Dispose only this duplicate of the
       // same device, preserving every other panel and the existing live bridge.
       if (this.views.has(session.serial)) { panel.dispose(); return; }
