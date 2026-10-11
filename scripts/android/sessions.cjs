@@ -101,6 +101,42 @@ class Sessions {
       return result;
     } catch (error) { fs.closeSync(handle); fs.unlinkSync(lock); throw error; }
   }
+  async discard(id) {
+    const session = this.find(id);
+    // Only throwaway projects created by agent-lab. Never QuizAI, personal
+    // Flutter projects or another user's registration.
+    const match = /^lab-([a-f0-9]{12})$/.exec(session.appId);
+    if (!match || session.kind !== 'flutter' ||
+        session.avdName !== 'AI_APPS_Lab_' + match[1] ||
+        path.basename(session.projectPath).toLowerCase() !== 'workspace') {
+      throw new Error('Only owned agent-lab previews can be discarded');
+    }
+    const run = path.dirname(session.projectPath);
+    const roots = [
+      path.resolve(this.root, 'agent-lab/runs'),
+      ...(process.env.LOCALAPPDATA
+        ? [path.resolve(process.env.LOCALAPPDATA, 'AI-APPS/experiences')] : [])
+    ];
+    if (!roots.some(root => path.dirname(run).toLowerCase() === root.toLowerCase()) ||
+        !fs.existsSync(path.join(run, 'manifest.json')) ||
+        !fs.statSync(run).isDirectory() ||
+        fs.lstatSync(run).isSymbolicLink() ||
+        fs.realpathSync.native(run).toLowerCase() !== path.resolve(run).toLowerCase() ||
+        (fs.existsSync(session.projectPath) && fs.lstatSync(session.projectPath).isSymbolicLink())) {
+      throw new Error('Unsafe or unrecognized agent-lab preview location');
+    }
+    const manifest = readJson(path.join(run, 'manifest.json'), {});
+    if (manifest.run_id !== path.basename(run) ||
+        crypto.createHash('sha256').update(path.basename(run)).digest('hex').slice(0, 12) !== match[1]) {
+      throw new Error('Experiment identity mismatch: refusing to delete files');
+    }
+    await this.stop(id);
+    if (this.platform.retireAvd) await this.platform.retireAvd(session);
+    await this.unregister(id);
+    fs.rmSync(this.directory(session), { recursive: true, force: true });
+    fs.rmSync(run, { recursive: true, force: true });
+    return { discarded: id, workspace: run, avd: session.avdName };
+  }
   async unregister(id) {
     return this.registryTransaction(async () => {
       const session = this.find(id);

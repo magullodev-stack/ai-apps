@@ -100,6 +100,31 @@ class Windows {
       if (child.exitCode === null) throw error;
     });
   }
+  async retireAvd(session) {
+    // Lab AVDs are uniquely named from the immutable experiment SHA.
+    if (!/^AI_APPS_Lab_[a-f0-9]{12}$/.test(session.avdName) ||
+        session.serial === 'emulator-5554') throw new Error('Protected Android device');
+    const root = process.env.ANDROID_AVD_HOME ||
+      path.join(process.env.USERPROFILE, '.android', 'avd');
+    const folder = path.join(root, session.avdName + '.avd');
+    const ini = path.join(root, session.avdName + '.ini');
+    // Shut down only this lab emulator, never the AI-APPS_Dev device.
+    const devices = await this.devices();
+    if (devices.includes(session.serial)) {
+      await this.run(this.adb, ['-s', session.serial, 'emu', 'kill']).catch(() => {});
+      for (let i = 0; i < 30 && (await this.devices()).includes(session.serial); i++) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      if ((await this.devices()).includes(session.serial)) {
+        throw new Error('Lab emulator is still running; AVD and experiment preserved');
+      }
+    }
+    for (const file of [folder, ini]) {
+      if (!fs.existsSync(file)) continue;
+      if (fs.lstatSync(file).isSymbolicLink()) throw new Error('AVD is a link; refusing to delete');
+      fs.rmSync(file, { recursive: true, force: true });
+    }
+  }
   async stopApp(session) {
     await this.run(this.adb, ['-s', session.serial, 'shell', 'am', 'force-stop', session.packageName]);
   }

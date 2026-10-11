@@ -83,6 +83,12 @@ y hace `am force-stop` sobre su paquete y dispositivo. El AVD queda encendido.
 Durante el arranque cancela la espera sin detener Android. Tras una salida
 anómala, rechaza matar un PID sin verificar o iniciar otro Flutter en un
 dispositivo ocupado. Consulta los logs para recuperar un lease abandonado.
+**Descartar experimento y archivos**, disponible en el menú contextual de
+las sesiones de laboratorio, detiene la app, apaga exclusivamente su emulador,
+retira su registro y elimina el AVD, su carpeta generada y los registros propios.
+Exige confirmar la eliminación; verifica la identidad y la ubicación del proyecto
+antes de actuar. No sirve para QuizAI ni para aplicaciones ajenas al laboratorio.
+
 **Unregister** retira solo el registro de una sesión detenida, sin borrar AVD,
 proyecto ni logs. Rechaza QuizAI, leases existentes y procesos Flutter o apps
 activas; reserva un lease durante la retirada para evitar arranques concurrentes.

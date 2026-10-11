@@ -29,6 +29,7 @@
       { "command": "aiAppsAndroid.reconnect", "title": "Reconectar visor", "category": "AI-APPS Android", "icon": "$(debug-restart)" },
       { "command": "aiAppsAndroid.start", "title": "Iniciar sesión", "category": "AI-APPS Android", "icon": "$(play)" },
       { "command": "aiAppsAndroid.stop", "title": "Detener aplicación", "category": "AI-APPS Android", "icon": "$(debug-stop)" },
+      { "command": "aiAppsAndroid.discard", "title": "Descartar experimento y archivos", "category": "AI-APPS Android", "icon": "$(trash)" },
       { "command": "aiAppsAndroid.register", "title": "Registrar aplicación Flutter", "category": "AI-APPS Android", "icon": "$(add)" },
       { "command": "aiAppsAndroid.refresh", "title": "Actualizar sesiones", "category": "AI-APPS Android", "icon": "$(refresh)" }
     ],
@@ -43,7 +44,8 @@
         { "command": "aiAppsAndroid.open", "when": "view == aiAppsAndroid.sessions", "group": "inline" },
         { "command": "aiAppsAndroid.reconnect", "when": "view == aiAppsAndroid.sessions", "group": "session" },
         { "command": "aiAppsAndroid.start", "when": "view == aiAppsAndroid.sessions && viewItem == androidStopped", "group": "session" },
-        { "command": "aiAppsAndroid.stop", "when": "view == aiAppsAndroid.sessions && viewItem == androidRunning", "group": "session" }
+        { "command": "aiAppsAndroid.stop", "when": "view == aiAppsAndroid.sessions && (viewItem == androidRunning || viewItem == androidLab)", "group": "session" },
+        { "command": "aiAppsAndroid.discard", "when": "view == aiAppsAndroid.sessions && viewItem == androidLab", "group": "session" }
       ]
     }
   }
