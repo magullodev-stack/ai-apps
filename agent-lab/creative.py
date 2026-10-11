@@ -182,6 +182,61 @@ def build(room, idea, executable):
     return True
 
 
+def probe_openai(model):
+    """One minimal request that bypasses ChatDev and the custom provider."""
+    from openai import OpenAI, APIStatusError
+
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("Falta OPENAI_API_KEY.", file=sys.stderr)
+        return 2
+
+    print("Probando una única solicitud directa a OpenAI con " + model + "...", flush=True)
+    client = OpenAI(api_key=api_key, base_url="https://api.openai.com/v1",
+                    max_retries=0, timeout=30)
+    try:
+        reply = client.responses.create(
+            model=model, input="Responde únicamente con HOLA.",
+            max_output_tokens=256,
+        )
+    except APIStatusError as exc:
+        error = getattr(exc, "body", None)
+        if not isinstance(error, dict):
+            try:
+                error = exc.response.json()
+            except (ValueError, AttributeError):
+                error = {}
+        if isinstance(error, dict):
+            details = error.get("error", error)
+            if not isinstance(details, dict):
+                details = error
+        else:
+            details = {}
+        print(f"OpenAI rechazó la solicitud: HTTP {exc.status_code}", file=sys.stderr)
+        for field in ("message", "type", "code", "param"):
+            value = details.get(field)
+            if value:
+                print(f"  {field}: {str(value)[:650]}", file=sys.stderr)
+        if not details:
+            print("  Sin cuerpo de error JSON. Respuesta del servidor vacía o no estándar.",
+                  file=sys.stderr)
+        print("  request_id: " + str(getattr(exc, "request_id", None) or "no disponible"),
+              file=sys.stderr)
+        return 1
+    except Exception as exc:
+        print(f"No se pudo conectar: {type(exc).__name__}: {str(exc)[:500]}", file=sys.stderr)
+        return 1
+    usage = getattr(reply, "usage", None)
+    tokens_in = getattr(usage, "input_tokens", None) if usage else None
+    tokens_out = getattr(usage, "output_tokens", None) if usage else None
+    print("OpenAI responde correctamente. Modelo: " + str(reply.model), flush=True)
+    print("Texto: " + repr((reply.output_text or "")[:180]), flush=True)
+    if tokens_in is not None and tokens_out is not None:
+        print(f"Tokens de esta única prueba: {tokens_in} entrada, {tokens_out} salida.",
+              flush=True)
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--idea")
@@ -193,7 +248,12 @@ def main():
     parser.add_argument("--build", action="store_true")
     parser.add_argument("--android", action="store_true")
     parser.add_argument("--codex", default="codex")
+    parser.add_argument("--probe", action="store_true", help="Una llamada directa para diagnosticar la API sin ChatDev")
     args = parser.parse_args()
+    if args.probe:
+        if args.provider != "openai":
+            parser.error("--probe está disponible para OpenAI")
+        return probe_openai(args.model or "gpt-5-nano")
     if not 1 <= args.rounds <= 50:
         parser.error("--rounds debe estar entre 1 y 50")
     if args.android and not args.build:

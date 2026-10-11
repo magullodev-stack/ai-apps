@@ -25,13 +25,19 @@ class CreativeOpenAI(OpenAIProvider):
             return super().call_model(client, conversation, timeline, tool_specs, **kwargs)
         except BadRequestError as exc:
             body = getattr(exc, "body", None)
-            if isinstance(body, dict):
-                message = body.get("message") or (body.get("error") or {}).get("message")
-            else:
-                message = None
-            if not message:
-                message = str(exc)
-            raise RuntimeError("OpenAI rechazó la solicitud (HTTP 400): " + str(message)[:550]) from None
+            if not isinstance(body, dict):
+                try:
+                    body = exc.response.json()
+                except (ValueError, AttributeError):
+                    body = {}
+            details = body.get("error", body) if isinstance(body, dict) else {}
+            if not isinstance(details, dict):
+                details = {}
+            info = "; ".join(str(details[k])[:450] for k in ("message", "type", "code", "param")
+                             if details.get(k))
+            if not info:
+                info = str(exc)
+            raise RuntimeError("OpenAI rechazó la solicitud (HTTP 400): " + info[:550]) from None
 
     def create_client(self):
         self.api_key = os.environ.get("OPENAI_API_KEY", "")
