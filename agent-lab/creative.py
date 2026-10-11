@@ -356,6 +356,7 @@ def main():
     parser.add_argument("--latest", action="store_true", help="Última experiencia, sin buscar su carpeta")
     parser.add_argument("--list-rooms", action="store_true", help="Mostrar experiencias sin archivos internos")
     parser.add_argument("--transcript", action="store_true", help="Leer la conversación sin gastar tokens")
+    parser.add_argument("--discard", action="store_true", help="Eliminar completamente una experiencia propia")
     parser.add_argument("--model")
     parser.add_argument("--rounds", type=int, default=10, help="Rondas completas de Chispa, Caos y Materia")
     parser.add_argument("--feedback", help="Observación sobre lo que aparece en el emulador")
@@ -372,6 +373,26 @@ def main():
         if args.room or args.idea or args.flutter:
             parser.error("--latest no combina con --room, --idea ni --flutter")
         args.room = str(latest_room())
+    if args.discard:
+        if not args.room or args.idea or args.build or args.flutter or args.android or args.probe or args.cost_only or args.transcript or args.model:
+            parser.error("--discard necesita únicamente --room o --latest")
+        room, _ = open_room(args)
+        from lab_android import AndroidExperiment
+        import shutil
+        if room.is_symlink() or (hasattr(room, "is_junction") and room.is_junction()):
+            raise ValueError("No se pueden eliminar salas enlazadas")
+        android = AndroidExperiment(room)
+        if android.state["session"]:
+            # The shared Android manager verifies app identity and removes this run.
+            android.owned(android.client.call("List"))
+            android.client.call("Discard", android.state["session"])
+        else:
+            matches = [item for item in android.client.call("List") if item.get("appId") == android.app_id]
+            if matches:
+                raise RuntimeError("Existe una sesión Android que debe retirarse antes de borrar archivos")
+            shutil.rmtree(room)
+        print("Experiencia y sus archivos descartados: " + room.name)
+        return 0
     if args.transcript:
         if not args.room or args.idea or args.build or args.flutter or args.android or args.probe:
             parser.error("--transcript necesita una experiencia con --room o --latest")

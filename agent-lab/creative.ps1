@@ -11,7 +11,8 @@ param(
     [switch]$Android,
     [switch]$Probe,
     [switch]$CostOnly,
-    [switch]$Transcript
+    [switch]$Transcript,
+    [switch]$Discard
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,6 +39,7 @@ if ($Android) { $arguments += '--android' }
 if ($Probe) { $arguments += '--probe' }
 if ($CostOnly) { $arguments += '--cost-only' }
 if ($Transcript) { $arguments += '--transcript' }
+if ($Discard) { $arguments += '--discard' }
 
 & $python @arguments
 exit $LASTEXITCODE
