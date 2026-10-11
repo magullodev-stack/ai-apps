@@ -1,17 +1,37 @@
 """ChatDev model providers that read credentials from the process, not YAML."""
 import os
 
+from openai import BadRequestError
 from runtime.node.agent.providers.base import ProviderRegistry
 from runtime.node.agent.providers.openai_provider import OpenAIProvider
 
 
 class CreativeOpenAI(OpenAIProvider):
     def _build_request_payload(self, timeline, tool_specs, raw_params):
-        payload = super()._build_request_payload(timeline, tool_specs, raw_params)
-        # GPT-5 Nano does not accept the ChatDev default temperature=0.7.
-        if self.model_name.startswith("gpt-5"):
-            payload.pop("temperature", None)
-        return payload
+        if not self.model_name.startswith("gpt-5"):
+            return super()._build_request_payload(timeline, tool_specs, raw_params)
+
+        # ChatDev's generic defaults were written for non-reasoning models.
+        # Send the minimal valid Responses request to GPT-5 Nano.
+        messages = [self._serialize_timeline_item(message) for message in timeline]
+        messages = [message for message in messages if message is not None]
+        if not messages:
+            raise ValueError("ChatDev no ha proporcionado mensajes al modelo")
+        return {"model": self.model_name, "input": messages,
+                "max_output_tokens": 1536}
+
+    def call_model(self, client, conversation, timeline, tool_specs=None, **kwargs):
+        try:
+            return super().call_model(client, conversation, timeline, tool_specs, **kwargs)
+        except BadRequestError as exc:
+            body = getattr(exc, "body", None)
+            if isinstance(body, dict):
+                message = body.get("message") or body.get("error", {}).get("message")
+            else:
+                message = None
+            if not message:
+                message = str(exc)
+            raise RuntimeError("OpenAI rechazó la solicitud (HTTP 400): " + str(message)[:550]) from None
 
     def create_client(self):
         self.api_key = os.environ.get("OPENAI_API_KEY", "")

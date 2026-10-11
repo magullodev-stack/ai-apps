@@ -90,24 +90,29 @@ def actual_tokens(result):
     return None
 
 
-def show_spending(meter, provider, model):
+def show_spending(meter, provider, model, *, completed):
     print("\n" + "=" * 46, flush=True)
-    print(f"CICLO FINALIZADO · {meter['calls']} intervenciones", flush=True)
+    status = "FINALIZADO" if completed else "INTERRUMPIDO"
+    print(f"CICLO {status} · {meter['calls']} respuestas válidas", flush=True)
     print(f"Tokens de entrada: {meter['input']:,}", flush=True)
     print(f"Tokens de salida:  {meter['output']:,}", flush=True)
     print(f"Tokens totales:    {meter['input'] + meter['output']:,}", flush=True)
-    if provider == "openai" and model == "gpt-5-nano":
-        # Tarifas de referencia, no consulta a la facturación de OpenAI.
+    if meter["calls"] == 0:
+        print("Coste: desconocido (no hubo respuestas válidas ni datos de consumo).", flush=True)
+    elif provider == "openai" and model == "gpt-5-nano":
+        # Tarifas orientativas, no consulta a la facturación de OpenAI.
         incoming_rate, outgoing_rate = 0.05, 0.40  # USD por millón
         estimate = (meter["input"] * incoming_rate + meter["output"] * outgoing_rate) / 1_000_000
-        qualifier = "parcial " if meter["missing"] else ""
+        qualifier = "parcial " if (meter["missing"] or not completed) else ""
         print(f"Coste {qualifier}estimado: US${estimate:.6f}", flush=True)
         print("Referencia: US$0.05/M entrada + US$0.40/M salida.", flush=True)
         print("Estimación sin descuento por caché; consulta la factura para el coste real.", flush=True)
     else:
         print("Coste USD: tarifa no configurada para este modelo.", flush=True)
     if meter["missing"]:
-        print(f"Sin datos de tokens: {meter['missing']} intervenciones (no se contabilizan).", flush=True)
+        print(f"Sin datos de tokens: {meter['missing']} respuestas.", flush=True)
+    if not completed:
+        print("El coste de solicitudes fallidas no se puede deducir de este contador.", flush=True)
     print("=" * 46, flush=True)
 
 
@@ -137,6 +142,11 @@ def speak(room, state, name, character):
     answer = result.final_message.text_content().strip() if result.final_message else ""
     if not answer:
         raise RuntimeError(name + " no ha podido responder")
+    if re.match(r"(?i)^\\s*(?:\\[Node:[^\\]]+\\]\\s*)?Error calling model\\b", answer):
+        # Upstream ChatDev converts model exceptions to ordinary assistant text.
+        # Never propagate these messages to other agents or attempt another round.
+        reason = answer.split("Original input:", 1)[0].strip()
+        raise RuntimeError(name + ": " + reason[:650])
     usage = actual_tokens(result)
     state["conversation"].append({"name": name, "text": answer, "usage": usage})
     save(room, state)
@@ -206,6 +216,7 @@ def main():
     print("Las respuestas aparecen al completarse; no se transmiten palabra por palabra.", flush=True)
     suggestion = None
     meter = {"input": 0, "output": 0, "missing": 0, "calls": 0}
+    completed = False
     try:
         for round_number in range(1, args.rounds + 1):
             print(f"\n{'─' * 14} RONDA {round_number}/{args.rounds} {'─' * 14}", flush=True)
@@ -221,8 +232,12 @@ def main():
                     meter["missing"] += 1
                 if proposal:
                     suggestion = proposal
+        completed = True
+    except RuntimeError as exc:
+        print(f"\nConexión interrumpida: {exc}", file=sys.stderr, flush=True)
+        return 1
     finally:
-        show_spending(meter, state["provider"], state["model"])
+        show_spending(meter, state["provider"], state["model"], completed=completed)
     if args.build and suggestion:
         if build(room, suggestion, args.codex) and args.android:
             from lab_android import AndroidExperiment
