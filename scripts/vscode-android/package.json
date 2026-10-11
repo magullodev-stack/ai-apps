@@ -43,7 +43,7 @@
       "view/item/context": [
         { "command": "aiAppsAndroid.open", "when": "view == aiAppsAndroid.sessions", "group": "inline" },
         { "command": "aiAppsAndroid.reconnect", "when": "view == aiAppsAndroid.sessions", "group": "session" },
-        { "command": "aiAppsAndroid.start", "when": "view == aiAppsAndroid.sessions && viewItem == androidStopped", "group": "session" },
+        { "command": "aiAppsAndroid.start", "when": "view == aiAppsAndroid.sessions && (viewItem == androidStopped || viewItem == androidLab)", "group": "session" },
         { "command": "aiAppsAndroid.stop", "when": "view == aiAppsAndroid.sessions && (viewItem == androidRunning || viewItem == androidLab)", "group": "session" },
         { "command": "aiAppsAndroid.discard", "when": "view == aiAppsAndroid.sessions && viewItem == androidLab", "group": "session" }
       ]
