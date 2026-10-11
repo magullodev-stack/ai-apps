@@ -39,6 +39,18 @@ WORKSPACE_RULES = (
 )
 
 
+# USD per million tokens. AI-APPS already uses these project-supplied
+# rates in apps/quizai/tool/generar_pivotes.dart.
+MODEL_RATES = {
+    "gpt-5.6-luna": (0.20, 1.20),
+    "gpt-5.6-terra": (2.0, 12.0),
+    "gpt-5.6-sol": (4.0, 20.0),
+    "gpt-5.4-mini": (0.75, 4.50),
+    # Existing Nano reference rate (not a live billing lookup).
+    "gpt-5-nano": (0.05, 0.40),
+}
+
+
 def open_room(args):
     RUNS.mkdir(exist_ok=True)
     if args.room:
@@ -93,6 +105,38 @@ def actual_tokens(result):
     return None
 
 
+def room_meter(state):
+    """Recalculate the entire room from saved turns, including older sessions."""
+    meter = {
+        "input": 0, "output": 0, "missing": 0, "calls": 0,
+        "priced": 0, "unpriced": 0, "cost_input": 0.0, "cost_output": 0.0,
+        "priced_models": set(),
+    }
+    for turn in state["conversation"]:
+        meter["calls"] += 1
+        usage = turn.get("usage")
+        if not isinstance(usage, dict):
+            meter["missing"] += 1
+            continue
+        incoming, outgoing = usage.get("input"), usage.get("output")
+        if (not isinstance(incoming, int) or not isinstance(outgoing, int)
+                or incoming < 0 or outgoing < 0):
+            meter["missing"] += 1
+            continue
+        meter["input"] += incoming
+        meter["output"] += outgoing
+        model = turn.get("model", state["model"]).lower()
+        rates = MODEL_RATES.get(model)
+        if rates is None:
+            meter["unpriced"] += 1
+            continue
+        meter["priced"] += 1
+        meter["priced_models"].add(model)
+        meter["cost_input"] += incoming * rates[0] / 1_000_000
+        meter["cost_output"] += outgoing * rates[1] / 1_000_000
+    return meter
+
+
 def show_spending(meter, provider, model, *, completed):
     print("\n" + "=" * 46, flush=True)
     status = "FINALIZADO" if completed else "INTERRUMPIDO"
@@ -100,22 +144,27 @@ def show_spending(meter, provider, model, *, completed):
     print(f"Tokens de entrada: {meter['input']:,}", flush=True)
     print(f"Tokens de salida:  {meter['output']:,}", flush=True)
     print(f"Tokens totales:    {meter['input'] + meter['output']:,}", flush=True)
-    if meter["calls"] == 0:
-        print("Coste: desconocido (no hubo respuestas válidas ni datos de consumo).", flush=True)
-    elif provider == "openai" and model == "gpt-5-nano":
-        # Tarifas orientativas, no consulta a la facturación de OpenAI.
-        incoming_rate, outgoing_rate = 0.05, 0.40  # USD por millón
-        estimate = (meter["input"] * incoming_rate + meter["output"] * outgoing_rate) / 1_000_000
-        qualifier = "parcial " if (meter["missing"] or not completed) else ""
-        print(f"Coste {qualifier}estimado: US${estimate:.6f}", flush=True)
-        print("Referencia: US$0.05/M entrada + US$0.40/M salida.", flush=True)
-        print("Estimación sin descuento por caché; consulta la factura para el coste real.", flush=True)
+    if meter["priced"]:
+        amount = meter["cost_input"] + meter["cost_output"]
+        partial = meter["missing"] or meter["unpriced"] or not completed
+        print(f"Coste {'parcial ' if partial else ''}estimado: US${amount:.6f}", flush=True)
+        print(f"  Entrada: US${meter['cost_input']:.6f} · Salida: US${meter['cost_output']:.6f}",
+              flush=True)
+        if len(meter["priced_models"]) == 1:
+            priced_model = next(iter(meter["priced_models"]))
+            rates = MODEL_RATES[priced_model]
+            print(f"  Tarifa {priced_model}: US${rates[0]:g}/M entrada, "
+                  f"US${rates[1]:g}/M salida", flush=True)
+        print("Estimación con tarifas de referencia de AI-APPS; "
+              "sin descuentos de caché.", flush=True)
     else:
-        print("Coste USD: tarifa no configurada para este modelo.", flush=True)
+        print("Coste: no disponible (no hay tokens con una tarifa conocida).", flush=True)
+    if meter["unpriced"]:
+        print(f"Sin tarifa: {meter['unpriced']} intervenciones.", flush=True)
     if meter["missing"]:
-        print(f"Sin datos de tokens: {meter['missing']} respuestas.", flush=True)
+        print(f"Sin datos de tokens: {meter['missing']} intervenciones.", flush=True)
     if not completed:
-        print("El coste de solicitudes fallidas no se puede deducir de este contador.", flush=True)
+        print("El coste de las solicitudes fallidas no puede calcularse aquí.", flush=True)
     print("=" * 46, flush=True)
 
 
@@ -151,7 +200,7 @@ def speak(room, state, name, character):
         reason = answer.split("Original input:", 1)[0].strip()
         raise RuntimeError(name + ": " + reason[:650])
     usage = actual_tokens(result)
-    state["conversation"].append({"name": name, "text": answer, "usage": usage})
+    state["conversation"].append({"name": name, "model": state["model"], "text": answer, "usage": usage})
     save(room, state)
     print("\n" + name + ":\n" + answer + "\n", flush=True)
     match = re.search(r"(?im)^CREAR:\s*(.+)$", answer)
@@ -265,7 +314,14 @@ def main():
     parser.add_argument("--android", action="store_true")
     parser.add_argument("--codex", default="codex")
     parser.add_argument("--probe", action="store_true", help="Una llamada directa para diagnosticar la API sin ChatDev")
+    parser.add_argument("--cost-only", action="store_true", help="Mostrar el precio de una sala sin hacer llamadas")
     args = parser.parse_args()
+    if args.cost_only:
+        if not args.room or args.idea or args.model or args.build or args.flutter or args.android or args.probe:
+            parser.error("--cost-only necesita únicamente --room")
+        _, state = open_room(args)
+        show_spending(room_meter(state), state["provider"], state["model"], completed=True)
+        return 0
     if args.probe:
         if args.provider == "shared":
             from shared_ai import probe
@@ -306,16 +362,6 @@ def main():
         print("Conectado al servicio Dart de IA compartida de AI-APPS.", flush=True)
     print("Las respuestas aparecen al completarse; no se transmiten palabra por palabra.", flush=True)
     suggestion = None
-    # Include earlier successful turns if this is a continuation of the same room.
-    meter = {"input": 0, "output": 0, "missing": 0, "calls": 0}
-    for turn in state["conversation"]:
-        meter["calls"] += 1
-        usage = turn.get("usage")
-        if isinstance(usage, dict):
-            meter["input"] += usage["input"]
-            meter["output"] += usage["output"]
-        else:
-            meter["missing"] += 1
     completed = False
     try:
         for round_number in range(1, args.rounds + 1):
@@ -323,13 +369,7 @@ def main():
             for _ in VOICES:
                 name, character = VOICES[len(state["conversation"]) % len(VOICES)]
                 print(f"\n{name} está pensando...", flush=True)
-                proposal, usage = speak(room, state, name, character)
-                meter["calls"] += 1
-                if usage:
-                    meter["input"] += usage["input"]
-                    meter["output"] += usage["output"]
-                else:
-                    meter["missing"] += 1
+                proposal, _usage = speak(room, state, name, character)
                 if proposal:
                     suggestion = proposal
         completed = True
@@ -337,7 +377,7 @@ def main():
         print(f"\nConexión interrumpida: {exc}", file=sys.stderr, flush=True)
         return 1
     finally:
-        show_spending(meter, state["provider"], state["model"], completed=completed)
+        show_spending(room_meter(state), state["provider"], state["model"], completed=completed)
     if args.build and suggestion:
         if build(room, suggestion, args.codex) and args.android:
             from lab_android import AndroidExperiment

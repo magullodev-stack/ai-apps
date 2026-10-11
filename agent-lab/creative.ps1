@@ -8,6 +8,7 @@ param(
     [switch]$Build,
     [switch]$Android,
     [switch]$Probe,
+    [switch]$CostOnly,
     [string]$CodexPath
 )
 # Remember the API credential encrypted for this Windows account.
@@ -67,6 +68,7 @@ if ($Flutter) { $arguments += '--flutter' }
 if ($Build) { $arguments += '--build' }
 if ($Android) { $arguments += '--android' }
 if ($Probe) { $arguments += '--probe' }
+if ($CostOnly) { $arguments += '--cost-only' }
 if ($CodexPath) { $arguments += @('--codex', $CodexPath) }
 try {
     & $python @arguments
