@@ -161,7 +161,7 @@ intercambio completo, Unicode, instrucciones tratadas como datos, patch aplicabl
 con archivos nuevos y binarios, protección del origen, fallo, timeout y respuesta
 incompleta. Los archivos de prueba quedan en `runs/` para inspección.
 
-La suite contiene 25 pruebas offline, incluidas dos iteraciones sobre el mismo
+La suite contiene 26 pruebas offline, incluidas dos iteraciones sobre el mismo
 workspace, evaluación final, instrucciones posteriores derivadas del resultado,
 patches aplicables consecutivamente, salidas inválidas, cierre prematuro y límites
 ante fallos, timeout o ausencia de cambios nuevos. También se validó una ejecución
@@ -209,7 +209,12 @@ el arranque; esta validación no sustituye las pruebas de la aplicación.
 
 El controlador registra e inicia la app tras la primera iteración válida, antes
 de la siguiente decisión. Cada iteración posterior reutiliza el mismo proyecto
-y runner. Tras cambios Dart comprueba una nueva confirmación de Hot Reload;
+y runner. Antes de arrancar, el anfitrión ejecuta `flutter pub get --offline`,
+`flutter analyze --no-pub` y `flutter test --no-pub`, conservando resultados y
+logs por ciclo. Un fallo de análisis/pruebas vuelve a ChatDev para reparación
+sin iniciar una app inválida. Codex escribe código y pruebas en su sandbox;
+los wrappers del SDK externo pueden requerir permisos de caché y no se invocan
+allí. Tras cambios Dart comprueba una nueva confirmación de Hot Reload;
 si falta o falla el arranque, conserva el fallo y los registros. ChatDev recibe
 esta evidencia. `completed` con `-Android` exige una app activa, además de las
 dos iteraciones aceptadas. La sesión sigue funcionando al terminar ChatDev
@@ -238,7 +243,7 @@ quedan bajo `runs/`, ignorado en Git. Flutter recibe un entorno sin claves de
 ChatDev, Codex o los servicios. Los flags Android no contienen credenciales.
 
 `-Offline` rechaza `-Flutter` y `-Android`: nunca arranca SDK, Android ni modelos.
-Las siete pruebas nuevas usan un gestor simulado y el ciclo nativo de ChatDev;
+Las ocho pruebas nuevas usan un gestor simulado y el ciclo nativo de ChatDev;
 cubren asociación persistente, delegación, propiedad, validación, fallos,
 logs por ciclo y confirmación o ausencia de Hot Reload.
 

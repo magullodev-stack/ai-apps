@@ -45,6 +45,10 @@ class OfflineManager:
         (destination / "flutter.stdout.log").write_text("Hot reload automatico completado.\n" * self.reloads)
         return self.reloads
 
+    def validate(self, project, destination):
+        destination.mkdir(parents=True, exist_ok=True)
+        return {"passed": True, "checks": [{"name": "offline", "exit_code": 0}]}
+
 
 def add_flutter(workspace):
     for name, text in {
@@ -120,6 +124,18 @@ class AndroidTest(unittest.TestCase):
         self.assertEqual(state["status"], "failed")
         self.assertTrue((run / "android/logs/flutter.stdout.log").exists())
         self.assertTrue(client.sessions[0]["active"])
+
+    def test_flutter_validation_failure_returns_evidence_without_starting_android(self):
+        run, client = self.experiment()
+        experiment = AndroidExperiment(run, client=client)
+        cycle = run / "cycles/001"
+        cycle.mkdir(parents=True)
+        client.validate = lambda *args: {"passed": False, "checks": [{"name": "test", "exit_code": 1, "output_tail": "Widget assertion failed"}]}
+        result = experiment.after_cycle(cycle, {"name_status": ["M\tlib/main.dart"]})
+        self.assertEqual(result["status"], "validation_failed")
+        self.assertIn("Widget assertion", result["validation"]["checks"][0]["output_tail"])
+        self.assertFalse(any(action == "Start" for action, _ in client.calls))
+        self.assertTrue((cycle / "android.json").exists())
 
     def test_reload_evidence_and_missing_confirmation(self):
         run, client = self.experiment()

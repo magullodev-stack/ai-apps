@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import time
+import uuid
 
 import yaml
 
@@ -91,13 +92,13 @@ class Manager:
         if definition:
             for flag, name in fields.items():
                 command.extend(["-" + flag, definition[name]])
-        number = len(list(self.logs.glob("*.json"))) + 1
+        number = uuid.uuid4().hex
         record = {"at": utc_now(), "action": action, "command": command}
         try:
             # Detached native Windows descendants can retain inherited pipe handles.
             # Files let us wait for the CLI process without waiting for pipe EOF.
-            stdout_path = self.logs / f"{number:04d}-{action}.stdout.log"
-            stderr_path = self.logs / f"{number:04d}-{action}.stderr.log"
+            stdout_path = self.logs / f"{number}-{action}.stdout.log"
+            stderr_path = self.logs / f"{number}-{action}.stderr.log"
             with stdout_path.open("wb") as out, stderr_path.open("wb") as err:
                 result = subprocess.run(command, cwd=self.run_dir, env=runtime_env(),
                                         stdout=out, stderr=err, timeout=240)
@@ -108,7 +109,7 @@ class Manager:
                 raise RuntimeError(f"Android manager {action} failed: {stderr.strip()}")
             return json.loads(stdout.lstrip("\ufeff"))
         finally:
-            write_json(self.logs / f"{number:04d}-{action}.json", record)
+            write_json(self.logs / f"{number}-{action}.json", record)
 
     def logs_snapshot(self, definition, destination):
         directory = ROOT.parent / ".ai-apps/android/sessions" / (definition["appId"] + "@" + definition["serial"])
@@ -118,6 +119,30 @@ class Manager:
                 shutil.copyfile(directory / name, destination / name)
         text = (destination / "flutter.stdout.log").read_text(encoding="utf-8", errors="replace") if (destination / "flutter.stdout.log").exists() else ""
         return text.count("Hot reload automatico completado.")
+
+    def validate(self, project, destination):
+        """Host-side checks keep SDK cache writes out of the Codex sandbox."""
+        flutter = shutil.which("flutter")
+        if not flutter:
+            raise FileNotFoundError("Flutter executable missing")
+        destination.mkdir(parents=True, exist_ok=True)
+        checks = []
+        for name, arguments in (("pub", ["pub", "get", "--offline"]),
+                                ("analyze", ["analyze", "--no-pub"]), ("test", ["test", "--no-pub"])):
+            command = [flutter, "--no-version-check", "--suppress-analytics", *arguments]
+            out_file, err_file = destination / f"{name}.stdout.log", destination / f"{name}.stderr.log"
+            env = runtime_env()
+            env["FLUTTER_SUPPRESS_ANALYTICS"] = "true"
+            with out_file.open("wb") as out, err_file.open("wb") as err:
+                result = subprocess.run(command, cwd=project, env=env, stdout=out, stderr=err, timeout=180)
+            checks.append({"name": name, "command": command, "exit_code": result.returncode,
+                           "output_tail": (out_file.read_text(encoding="utf-8", errors="replace") +
+                                           err_file.read_text(encoding="utf-8", errors="replace"))[-6000:]})
+            if result.returncode:
+                break
+        result = {"passed": len(checks) == 3 and all(check["exit_code"] == 0 for check in checks), "checks": checks}
+        write_json(destination / "result.json", result)
+        return result
 
 
 class AndroidExperiment:
@@ -226,6 +251,14 @@ class AndroidExperiment:
     def _after_cycle(self, cycle, changes):
         was_running = self.state["status"] == "running"
         before = self.state["hot_reloads"]
+        project = project_path(self.run_dir, self.project)
+        if flutter_package(project):
+            validation = self.client.validate(project, cycle / "android/validation")
+            self.save("validation", validation=validation)
+            if not validation["passed"]:
+                self.save("validation_failed", status="validation_failed")
+                write_json(cycle / "android.json", self.state)
+                return self.state.copy()
         self.start()
         result = self.status(destination=cycle / "android" / "logs") if self.state["session"] else self.state.copy()
         dart_changed = any(name.split("\t")[-1].endswith(".dart") for name in changes["name_status"])

@@ -105,13 +105,23 @@ def execute(run_dir, *, artifacts_dir=None):
         raise ValueError("Run identity mismatch")
     workspace = run_dir / "workspace"
     manifest = json.loads((artifacts_dir / "manifest.json").read_text(encoding="utf-8"))
+    flutter_note = ""
+    if (workspace / "pubspec.yaml").is_file() or list(workspace.glob("*/pubspec.yaml")):
+        flutter_note = (
+            "This is a Flutter experiment. Flutter and Dart .bat wrappers require writes to the external SDK cache "
+            "and can hang in this sandbox. Do not invoke them or bypass SDK locks. "
+            "For the autonomous Android mode the host controller runs offline pub get, flutter analyze and flutter test "
+            "after your code changes and sends those results back to ChatDev. Write meaningful widget tests, "
+            "review the code, and clearly report checks you could not run locally. "
+            "Do not start Flutter run, adb or Android.\n\n"
+        )
     prompt = (
         "Work only in the isolated Git workspace selected by --cd. "
         "Implement the instruction and run the relevant local tests. "
         "Do not access parent directories, change external files, start services, "
         "use Android, commit or push. Leave all code changes for inspection.\n\n"
         + "Python interpreter for local tests: " + sys.executable + "\n\n"
-        + request["instruction"]
+        + flutter_note + request["instruction"]
     )
     response = {"run_id": run_dir.name, "status": "failed", "exit_code": None,
                 "message": "", "executor": request["executor"], "artifacts": {
