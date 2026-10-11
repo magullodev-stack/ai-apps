@@ -27,10 +27,10 @@ exports.run = async (options = {}) => {
     assert.ok(session?.active, 'Second Flutter app is running');
     await until(() => viewer.listSessions().some(item => item.appId === 'quizai' && item.videoFrames > 0),
       'The primary QuizAI view must render H.264 video');
-    if (phase === 2) {
+    if (phase === 2 && /^lab-[a-f0-9]{12}$/.test(target.appId)) {
       await delay(800);
       assert.equal(viewer.listSessions().some(item => item.appId === target.appId), false,
-        'Experimental preview should not reopen on editor restart');
+        'Disposable agent-lab previews must not reopen on editor restart');
     }
     await vscode.commands.executeCommand('aiAppsAndroid.open', session);
     await until(() => viewer.listSessions().length === 2 && viewer.listSessions().every(item => item.videoFrames > 0),
