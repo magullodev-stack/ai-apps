@@ -30,6 +30,7 @@ Todas las rutas requieren `Authorization: Bearer <token local>`.
 
 - `GET /health`: identifica el servicio, la versión del protocolo y su proceso.
 - `POST /v1/generate`: recibe `application`, `model`, `input`, `schemaName` y `schema` (objeto JSON). Devuelve `text` y, si está disponible, `usage` con `inputTokens`, `outputTokens` y `totalTokens`.
+- Para `application: agentlab` admite opcionalmente `image: {mimeType: "image/png", data: "<base64 PNG>"}` (máximo 3 MiB originales). Se transmite al proveedor mediante `input_image`, junto a `input_text`, sin interpretar ni convertir la imagen en una descripción. El servicio no persiste ni registra sus píxeles. `GET /health` anuncia `capabilities.imageInput` cuando esta versión está activa.
 
 El servicio envía el prompt y el esquema a `https://api.openai.com/v1/responses` usando `text.format` de tipo `json_schema`, `strict: true` y `store: false`. El contrato sigue la [documentación oficial de salidas estructuradas](https://developers.openai.com/api/docs/guides/structured-outputs); [gpt-4.1-mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini) admite este mecanismo. La selección del modelo corresponde al consumidor.
 

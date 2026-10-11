@@ -53,6 +53,17 @@ class CreativeInterfacesTest(unittest.TestCase):
         self.assertEqual(image, b"\x89PNG\r\n\x1a\nDATA")
         self.assertEqual(text, "# Texto propio")
 
+    def test_service_receives_original_image_field(self):
+        action = {"speech": "Veo la referencia", "tool": "none", "path": "", "content": ""}
+        reference = {"mimeType": "image/png", "data": "AAECAw=="}
+        with patch.object(shared_ai, "_request",
+                          return_value={"text": json.dumps(action), "usage": {}}) as request:
+            result, _ = shared_ai.generate_action("gpt-5.6-luna", "mi texto", image=reference)
+        self.assertEqual(result, action)
+        transmitted = json.loads(request.call_args.kwargs["data"])
+        self.assertEqual(transmitted["input"], "mi texto")
+        self.assertEqual(transmitted["image"], reference)
+
     def test_valid_model_action_is_not_changed(self):
         action = {"speech": "Voy a explorar", "tool": "room_list", "path": ".", "content": ""}
         with patch.object(shared_ai, "_request", return_value={"text": json.dumps(action), "usage": {}}):
