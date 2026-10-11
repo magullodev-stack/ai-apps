@@ -15,7 +15,9 @@ ai-apps/
 ├── AGENTS.md                  # Instrucciones de trabajo para agentes.
 │
 ├── agent-lab/                 # Laboratorio independiente ChatDev 2.0 → Codex.
-│   ├── workflows/             # Grafo de delegación y retorno.
+│   ├── workflows/             # Agente deliberador y grafo de delegación y retorno.
+│   ├── config/                # Configuración del planificador sin credenciales.
+│   ├── prompts/               # Esquema validado de decisiones del agente.
 │   ├── examples/              # Código de ejemplo para ejecuciones aisladas.
 │   ├── tests/                 # Pruebas offline del ciclo con ChatDev real.
 │   ├── install.ps1            # Instala dependencias locales fijadas.
@@ -82,10 +84,12 @@ ai-apps/
 ### agent-lab/
 
 Contiene un laboratorio autocontenido que conecta ChatDev 2.0 con Codex mediante
-el SDK de ChatDev y un nodo Python. ChatDev se descarga como dependencia externa
+el SDK de ChatDev, un agente deliberador nativo y un nodo Python. ChatDev se descarga como dependencia externa
 en `.deps/`; sus fuentes no se incorporan al repositorio principal. Cada ejecución
 crea una instantánea de código con Git independiente bajo `runs/`, conserva los
-mensajes y cambios, y devuelve el resultado al grafo. Dependencias, credenciales y
+mensajes y cambios, y devuelve el resultado al grafo. El agente decide y evalúa
+cada ciclo, formula la siguiente instrucción y reutiliza el mismo workspace;
+las decisiones y los cambios de cada iteración se conservan. Dependencias, credenciales y
 ejecuciones se ignoran en Git. No depende de QuizAI, servicios compartidos ni de
 los scripts de desarrollo. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
 

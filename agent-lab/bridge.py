@@ -21,7 +21,7 @@ def executor_env(workspace):
     return env
 
 
-def codex_command(request, workspace, final_path):
+def codex_command(request, workspace, final_path, *, sandbox="workspace-write", schema=None):
     if request["executor"] == "fake":
         prefix = [sys.executable, str(ROOT / "tests" / "fake_codex.py"), request["fake_mode"]]
     else:
@@ -33,13 +33,15 @@ def codex_command(request, workspace, final_path):
         prefix = [executable]
     command = prefix + [
         "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
-        "--sandbox", "workspace-write", "-c", 'approval_policy="never"',
+        "--sandbox", sandbox, "-c", 'approval_policy="never"',
         "-c", 'sandbox_workspace_write.network_access=false',
         "--cd", str(workspace), "--json", "--color", "never",
         "--output-last-message", str(final_path),
     ]
     if request.get("model"):
         command += ["--model", request["model"]]
+    if schema:
+        command += ["--output-schema", str(schema)]
     if os.name == "nt":
         # CLI-only setting; avoids global sandbox setup or changes to user config.
         command += ["-c", 'windows.sandbox="unelevated"']
@@ -58,13 +60,51 @@ def stop_process_tree(process):
     process.wait(timeout=15)
 
 
-def execute(run_dir):
-    request = json.loads((run_dir / "request.json").read_text(encoding="utf-8"))
+def invoke_codex(request, workspace, artifacts_dir, prompt, *, sandbox="workspace-write", schema=None, auth_env=None):
+    final_path = artifacts_dir / "codex-final.txt"
+    (artifacts_dir / "codex-prompt.txt").write_text(prompt, encoding="utf-8")
+    response = {"status": "failed", "exit_code": None, "message": ""}
+    try:
+        command = codex_command(request, workspace, final_path, sandbox=sandbox, schema=schema)
+        write_json(artifacts_dir / "command.json", command)
+        with (artifacts_dir / "codex-events.jsonl").open("wb") as stdout:
+            with (artifacts_dir / "codex-stderr.txt").open("wb") as stderr:
+                options = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
+                env = executor_env(workspace)
+                if auth_env:
+                    if set(auth_env) - {"CODEX_HOME", "CODEX_API_KEY"}:
+                        raise ValueError("Only Codex authentication overrides are allowed")
+                    env.update(auth_env)
+                process = subprocess.Popen(command, cwd=workspace, env=env,
+                                           stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, **options)
+                try:
+                    process.communicate(prompt.encode("utf-8"), timeout=request["timeout"])
+                except subprocess.TimeoutExpired:
+                    stop_process_tree(process)
+                    response["status"] = "timed_out"
+                response["exit_code"] = process.returncode
+        events = [json.loads(line) for line in (artifacts_dir / "codex-events.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+        response["message"] = final_path.read_text(encoding="utf-8") if final_path.exists() else ""
+        response["thread_id"] = next((e.get("thread_id") for e in events if e.get("type") == "thread.started"), None)
+        response["usage"] = next((e.get("usage", {}) for e in reversed(events) if e.get("type") == "turn.completed"), {})
+        complete = any(e.get("type") == "turn.completed" for e in events)
+        failed = any(e.get("type") in ("turn.failed", "error") for e in events)
+        if response["status"] != "timed_out" and process.returncode == 0 and complete and not failed and response["message"].strip():
+            response["status"] = "completed"
+    except Exception as exc:
+        response["error_type"] = type(exc).__name__
+        (artifacts_dir / "bridge-error.txt").write_text(str(exc), encoding="utf-8")
+    write_json(artifacts_dir / "executor-result.json", response)
+    return response
+
+
+def execute(run_dir, *, artifacts_dir=None):
+    artifacts_dir = artifacts_dir or run_dir
+    request = json.loads((artifacts_dir / "request.json").read_text(encoding="utf-8"))
     if request["run_id"] != run_dir.name:
         raise ValueError("Run identity mismatch")
     workspace = run_dir / "workspace"
-    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
-    final_path = run_dir / "codex-final.txt"
+    manifest = json.loads((artifacts_dir / "manifest.json").read_text(encoding="utf-8"))
     prompt = (
         "Work only in the isolated Git workspace selected by --cd. "
         "Implement the instruction and run the relevant local tests. "
@@ -73,49 +113,24 @@ def execute(run_dir):
         + "Python interpreter for local tests: " + sys.executable + "\n\n"
         + request["instruction"]
     )
-    (run_dir / "codex-prompt.txt").write_text(prompt, encoding="utf-8")
     response = {"run_id": run_dir.name, "status": "failed", "exit_code": None,
                 "message": "", "executor": request["executor"], "artifacts": {
-                    "workspace": "workspace", "events": "codex-events.jsonl",
+                    "workspace": os.path.relpath(workspace, artifacts_dir).replace(os.sep, "/"),
+                    "events": "codex-events.jsonl",
                     "stderr": "codex-stderr.txt", "patch": "changes.patch"}}
-    exchange_path = run_dir / "exchange.jsonl"
+    exchange_path = artifacts_dir / "exchange.jsonl"
     with exchange_path.open("w", encoding="utf-8") as exchange:
         exchange.write(json.dumps({"at": utc_now(), "from": "chatdev", "to": "codex",
                                    "instruction": request["instruction"]}, ensure_ascii=False) + "\n")
+    response.update(invoke_codex(request, workspace, artifacts_dir, prompt))
     try:
-        command = codex_command(request, workspace, final_path)
-        write_json(run_dir / "command.json", command)
-        with (run_dir / "codex-events.jsonl").open("wb") as stdout:
-            with (run_dir / "codex-stderr.txt").open("wb") as stderr:
-                options = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
-                process = subprocess.Popen(command, cwd=workspace, env=executor_env(workspace),
-                                           stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, **options)
-                try:
-                    process.communicate(prompt.encode("utf-8"), timeout=request["timeout"])
-                except subprocess.TimeoutExpired:
-                    stop_process_tree(process)
-                    response["status"] = "timed_out"
-                response["exit_code"] = process.returncode
-        events = [json.loads(line) for line in (run_dir / "codex-events.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-        response["message"] = final_path.read_text(encoding="utf-8") if final_path.exists() else ""
-        response["thread_id"] = next((e.get("thread_id") for e in events if e.get("type") == "thread.started"), None)
-        complete = any(e.get("type") == "turn.completed" for e in events)
-        failed = any(e.get("type") in ("turn.failed", "error") for e in events)
-        if response["status"] != "timed_out" and process.returncode == 0 and complete and not failed and response["message"].strip():
-            response["status"] = "completed"
-    except Exception as exc:
-        response["error_type"] = type(exc).__name__
-        # Detailed errors remain private run artifacts; don't dump environment or auth.
-        (run_dir / "bridge-error.txt").write_text(str(exc), encoding="utf-8")
-    try:
-        collect_changes(run_dir, manifest["baseline"])
-        response["changes"] = json.loads((run_dir / "changes.json").read_text(encoding="utf-8"))
+        response["changes"] = collect_changes(run_dir, manifest["baseline"], artifacts_dir=artifacts_dir)
         if response["status"] == "completed" and not response["changes"]["has_changes"]:
             response["status"] = "no_changes"
     except Exception as exc:
         response["status"] = "failed"
         response["capture_error_type"] = type(exc).__name__
-    write_json(run_dir / "response.json", response)
+    write_json(artifacts_dir / "response.json", response)
     with exchange_path.open("a", encoding="utf-8") as exchange:
         exchange.write(json.dumps({"at": utc_now(), "from": "codex", "to": "chatdev",
                                    "response": response}, ensure_ascii=False) + "\n")
@@ -126,7 +141,13 @@ def main():
     run_dir = Path(os.environ["AGENT_LAB_RUN"]).resolve(strict=True)
     if run_dir.parent != RUNS.resolve() or run_dir.is_symlink():
         raise ValueError("Bridge requires a direct run directory inside agent-lab/runs")
-    print(json.dumps(execute(run_dir), ensure_ascii=False))
+    cycle = os.environ.get("AGENT_LAB_CYCLE", "")
+    artifacts_dir = run_dir
+    if cycle:
+        artifacts_dir = (run_dir / "cycles" / cycle).resolve(strict=True)
+        if artifacts_dir.parent != (run_dir / "cycles").resolve() or artifacts_dir.is_symlink():
+            raise ValueError("Invalid cycle directory")
+    print(json.dumps(execute(run_dir, artifacts_dir=artifacts_dir), ensure_ascii=False))
 
 
 if __name__ == "__main__":

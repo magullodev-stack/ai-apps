@@ -84,27 +84,32 @@ def prepare_workspace(run_dir, source=None):
     return workspace, origin, git(workspace, "rev-parse", "HEAD").decode().strip()
 
 
-def collect_changes(run_dir, baseline):
+def collect_changes(run_dir, baseline, *, artifacts_dir=None):
     workspace = run_dir / "workspace"
+    artifacts_dir = artifacts_dir or run_dir
     # An auxiliary index captures added/deleted/binary files and even accidental commits,
     # without staging the executor's working tree or changing its repository refs.
     env = clean_env()
-    env["GIT_INDEX_FILE"] = str(run_dir / "snapshot.index")
+    env["GIT_INDEX_FILE"] = str(artifacts_dir / "snapshot.index")
     command = ["git", "-c", "core.hooksPath=NUL" if os.name == "nt" else "core.hooksPath=/dev/null",
                "-c", "core.autocrlf=false", "-C", str(workspace)]
     subprocess.run(command + ["read-tree", baseline], env=env, capture_output=True, check=True)
     subprocess.run(command + ["add", "-A"], env=env, capture_output=True, check=True)
     patch = subprocess.run(command + ["diff", "--cached", "--binary", baseline],
                            env=env, capture_output=True, check=True).stdout
-    (run_dir / "changes.patch").write_bytes(patch)
+    (artifacts_dir / "changes.patch").write_bytes(patch)
     names = subprocess.run(command + ["diff", "--cached", "--name-status", baseline],
                            env=env, capture_output=True, check=True).stdout.decode("utf-8", "replace")
-    (run_dir / "changes.txt").write_text(names, encoding="utf-8")
-    (run_dir / "git-status.txt").write_bytes(git(workspace, "status", "--short"))
-    write_json(run_dir / "changes.json", {
+    (artifacts_dir / "changes.txt").write_text(names, encoding="utf-8")
+    (artifacts_dir / "git-status.txt").write_bytes(git(workspace, "status", "--short"))
+    tree = subprocess.run(command + ["write-tree"], env=env, capture_output=True, check=True).stdout.decode().strip()
+    changes = {
         "baseline": baseline, "patch_sha256": hashlib.sha256(patch).hexdigest(),
         "has_changes": bool(patch), "name_status": names.splitlines(),
-    })
+        "tree": tree,
+    }
+    write_json(artifacts_dir / "changes.json", changes)
+    return changes
 
 
 def verify_chatdev():
@@ -152,6 +157,7 @@ def run_cycle(instruction, *, source=None, executor="codex", codex="codex", mode
                             "LAB_ROOT_LITERAL": json.dumps(str(ROOT)),
                             "LAB_RUN_LITERAL": json.dumps(str(run_dir)),
                             "LAB_PYTHON": sys.executable,
+                            "LAB_CYCLE_LITERAL": '""',
                             "NODE_TIMEOUT": timeout + 60,
                         },
                     )
