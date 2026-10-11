@@ -2,8 +2,6 @@ const vscode = require('vscode');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const runtime = path.resolve(__dirname, '../../.ai-apps/android-host');
-const phase = Number(fs.readFileSync(path.join(runtime, 'phase.txt'), 'utf8'));
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(check, message, timeout = 45000) {
   const end = Date.now() + timeout;
@@ -14,7 +12,11 @@ function tabs() {
   return vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab =>
     tab.input instanceof vscode.TabInputWebview && tab.input.viewType.endsWith('embedroid.embedded'));
 }
-exports.run = async () => {
+exports.run = async (options = {}) => {
+  const runtime = options.runtime || path.resolve(__dirname, '../../.ai-apps/android-host');
+  const phase = Number(fs.readFileSync(path.join(runtime, 'phase.txt'), 'utf8'));
+  const target = JSON.parse(fs.readFileSync(path.join(runtime, 'target.json'), 'utf8'));
+
   const report = { passed: false, phase };
   try {
     const api = await vscode.extensions.getExtension('magullodev.ai-apps-android').activate();
@@ -27,25 +29,25 @@ exports.run = async () => {
     report.initial = viewer.listSessions();
     await api.refresh(); await api.refresh();
     assert.equal(tabs().length, 2, 'Automatic recovery and polling do not duplicate tabs');
-    const session = api.list().find(item => item.appId === 'lab-validation');
+    const session = api.list().find(item => item.appId === target.appId);
     assert.ok(session?.active, 'Second Flutter app is running');
     const primary = tabs().find(tab => tab.label === 'QuizAI · emulator-5554');
     assert.ok(primary);
     await vscode.commands.executeCommand('aiAppsAndroid.reconnect', session);
-    await until(() => viewer.listSessions().find(item => item.appId === 'lab-validation')?.lastFrameAt > Date.now() - 1500,
+    await until(() => viewer.listSessions().find(item => item.appId === target.appId)?.lastFrameAt > Date.now() - 1500,
       'Target reconnection renders video');
     assert.ok(tabs().includes(primary), 'Reconnect preserves the other panel instance');
-    const labTab = tabs().find(tab => tab.label === 'Lab validation · emulator-5556');
+    const labTab = tabs().find(tab => tab.label === `${target.label} · ${target.serial}`);
     await vscode.window.tabGroups.close(labTab, true);
     await delay(1000); await api.refresh();
     assert.equal(tabs().length, 1, 'User tab close does not restart/reopen the active app');
-    assert.ok(api.list().find(item => item.appId === 'lab-validation').active, 'Flutter remains alive after tab close');
+    assert.ok(api.list().find(item => item.appId === target.appId).active, 'Flutter remains alive after tab close');
     await vscode.commands.executeCommand('aiAppsAndroid.open', session);
     await until(() => viewer.listSessions().length === 2 && viewer.listSessions().every(item => item.videoFrames > 0),
       'Reopening the target preserves both videos');
-    const first = viewer.listSessions().find(item => item.appId === 'lab-validation').videoFrames;
+    const first = viewer.listSessions().find(item => item.appId === target.appId).videoFrames;
     await delay(6000);
-    assert.ok(viewer.listSessions().find(item => item.appId === 'lab-validation').videoFrames > first,
+    assert.ok(viewer.listSessions().find(item => item.appId === target.appId).videoFrames > first,
       'Real rendered frames continue after reopening');
     assert.equal(tabs().length, 2);
     report.restoredPanels = viewer.restoredCount();

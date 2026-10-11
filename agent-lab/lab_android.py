@@ -241,6 +241,10 @@ class AndroidExperiment:
         current = self.owned(self.client.call("List"))
         if current:
             self.client.call("Stop", self.state["session"])
+            remaining = self.owned(self.client.call("List"))
+            if remaining and (remaining.get("active") or remaining.get("appPid") or remaining.get("status") in ("starting", "stopping")):
+                self.save("stop_failed", status="failed", error="Android application is still running after Stop")
+                raise RuntimeError(self.state["error"])
             if detach:
                 self.client.call("Unregister", self.state["session"])
         if self.state["session"]:

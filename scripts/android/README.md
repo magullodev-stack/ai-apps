@@ -108,7 +108,9 @@ concurrentes, parada independiente, leases obsoletos, restauración, reconexión
 cierre manual, selección múltiple y compatibilidad de QuizAI. Ejercitan 123
 registros y 150 vistas sin máximo fijo.
 
-`host-test.ps1` requiere QuizAI activa y un registro `lab-validation`, etiqueta
+`host-test.ps1` admite `-AppId`, `-Serial`, `-Label` y `-RuntimeName` para
+validar cualquier sesión Flutter experimental en un perfil propio. Por defecto
+requiere QuizAI activa y un registro `lab-validation`, etiqueta
 `Lab validation`, en `emulator-5556`. La app secundaria debe repintar periódicamente.
 Usa dos reaperturas normales de un perfil aislado de VS Code y un controlador
 temporal para comprobar vídeo realmente renderizado y persistencia. No recarga

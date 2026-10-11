@@ -177,6 +177,7 @@ class Sessions {
     fs.closeSync(handle);
     writeJson(path.join(dir, 'state.json'), { status: 'starting', token, startedAt: new Date().toISOString() });
     try {
+      this.find(id); // Registration may have been removed before the exclusive lease was acquired.
       if (await this.platform.hasFlutter(session)) throw new Error('Another Flutter runner is using this device');
       const pid = this.platform.spawnWorker(id, token, dir);
       writeJson(leaseFile, { token, pid, launcherPid: null });

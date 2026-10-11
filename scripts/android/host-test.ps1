@@ -1,8 +1,14 @@
-param([string]$Workspace = (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent))
+param(
+    [string]$Workspace = (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent),
+    [string]$AppId = 'lab-validation',
+    [string]$Serial = 'emulator-5556',
+    [string]$Label = 'Lab validation',
+    [ValidatePattern('^[a-z0-9-]+$')][string]$RuntimeName = 'android-host'
+)
 $ErrorActionPreference = 'Stop'
 & (Join-Path $PSScriptRoot '../embedroid/build.ps1') | Out-Null
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$runtime = Join-Path $repo '.ai-apps/android-host'
+$runtime = Join-Path $repo ('.ai-apps/' + $RuntimeName)
 New-Item -ItemType Directory -Force -Path $runtime, "$runtime/profile", "$runtime/extensions" | Out-Null
 New-Item -ItemType Directory -Force -Path "$runtime/controller" | Out-Null
 $controllerManifest = @{ name='android-session-test-controller'; publisher='magullodev'; version='0.0.1';
@@ -10,8 +16,10 @@ $controllerManifest = @{ name='android-session-test-controller'; publisher='magu
     extensionDependencies=@('magullodev.ai-apps-android') }
 $utf8 = New-Object Text.UTF8Encoding($false)
 [IO.File]::WriteAllText("$runtime/controller/package.json", ($controllerManifest | ConvertTo-Json -Depth 5), $utf8)
+[IO.File]::WriteAllText("$runtime/target.json", (@{appId=$AppId; serial=$Serial; label=$Label} | ConvertTo-Json), $utf8)
+$options = @{runtime=$runtime} | ConvertTo-Json -Compress
 $testModule = (Join-Path $PSScriptRoot 'host-test.cjs') | ConvertTo-Json -Compress
-[IO.File]::WriteAllText("$runtime/controller/extension.js", ('exports.activate=()=>require(' + $testModule + ').run().catch(()=>require("vscode").commands.executeCommand("workbench.action.closeWindow"));'), $utf8)
+[IO.File]::WriteAllText("$runtime/controller/extension.js", ('exports.activate=()=>require(' + $testModule + ').run(' + $options + ').catch(()=>require("vscode").commands.executeCommand("workbench.action.closeWindow"));'), $utf8)
 $code = Get-Command code -ErrorAction Stop
 $codeExe = [IO.Path]::GetFullPath((Join-Path (Split-Path $code.Source -Parent) '../Code.exe'))
 $previous = $env:ELECTRON_RUN_AS_NODE
