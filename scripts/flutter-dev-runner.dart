@@ -157,7 +157,9 @@ bool _requiresRelaunch(String path) {
 
   if (normalized.contains('/build/') ||
       normalized.contains('/.dart_tool/') ||
-      normalized.contains('/.git/')) {
+      normalized.contains('/.git/') ||
+      normalized.contains('/android/.gradle/') ||
+      normalized.endsWith('/android/local.properties')) {
     return false;
   }
 
@@ -284,12 +286,27 @@ final class _FlutterMachineController {
 
   void requestRelaunch() {
     _relaunchRequested = true;
-    process.kill();
+    unawaited(_terminateProcessTree());
   }
 
   void stop() {
     _stopRequested = true;
-    process.kill();
+    unawaited(_terminateProcessTree());
+  }
+
+  Future<void> _terminateProcessTree() async {
+    if (!Platform.isWindows) {
+      process.kill();
+      return;
+    }
+    // Flutter's .bat wrapper owns descendants and inherited output handles.
+    // Kill that exact owned tree so streams close and the worker can relaunch.
+    final result = await Process.run(
+      'taskkill.exe', ['/PID', '${process.pid}', '/T', '/F'],
+    );
+    if (result.exitCode != 0) {
+      stderr.writeln('No se pudo terminar el proceso Flutter de esta sesion.');
+    }
   }
 
   void _send({
