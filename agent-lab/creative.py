@@ -25,9 +25,8 @@ COMMON = (
     "No eres un supervisor ni un gestor de tareas. Puedes discrepar, sorprender y cambiar de dirección. "
     "Habla en español, con naturalidad y brevedad. Nada de listas de verificación, auditorías, "
     "documentación, pruebas obligatorias ni relatos técnicos. "
-    "Cuando de verdad queráis materializar o transformar una idea, puedes terminar tu intervención "
-    "con una sola línea 'CREAR: <lo que debería experimentar la persona en pantalla>'. "
-    "Es una posibilidad, no una obligación. No menciones herramientas ni otros proyectos."
+    "Puedes proponer cambios concretos a la experiencia y responder libremente. "
+    "No menciones otros proyectos."
 )
 
 WORKSPACE_RULES = (
@@ -192,7 +191,7 @@ def room_meter(state, *, room=None):
     return meter
 
 
-def show_spending(meter, provider, model, *, completed):
+def show_spending(meter, *, completed):
     print("\n" + "=" * 46, flush=True)
     status = "FINALIZADO" if completed else "INTERRUMPIDO"
     print(f"SALA · {status} · {meter['calls']} llamadas acumuladas (agentes y creaciones)", flush=True)
@@ -240,8 +239,7 @@ def speak(room, state, name, character):
             result = sdk.run_workflow(
                 ROOT / "workflows" / "creative_turn.yaml",
                 task_prompt=prompt,
-                variables={"CREATIVE_PROVIDER": "lab_creative_shared",
-                           "CREATIVE_MODEL": state["model"],
+                variables={"CREATIVE_MODEL": state["model"],
                            "CREATIVE_ROLE": COMMON + "\n\nTu personalidad: " + character},
                 session_name="creative_" + str(len(state["conversation"]) + 1),
                 log_level="ERROR",
@@ -391,7 +389,7 @@ def main():
         if not args.room or args.idea or args.model or args.build or args.flutter or args.android or args.probe:
             parser.error("--cost-only necesita únicamente --room")
         _, state = open_room(args)
-        show_spending(room_meter(state, room=Path(args.room)), state["provider"], state["model"], completed=True)
+        show_spending(room_meter(state, room=Path(args.room)), completed=True)
         return 0
     if args.probe:
         from shared_ai import probe
@@ -470,7 +468,7 @@ def main():
         print(f"\nExperimento interrumpido: {exc}", file=sys.stderr, flush=True)
         return 1
     finally:
-        show_spending(room_meter(state, room=room), state["provider"], state["model"], completed=completed)
+        show_spending(room_meter(state, room=room), completed=completed)
     print("Para continuar: .\\agent-lab\\creative.ps1 -Latest -Build -Android -Rounds 1")
     print("Experiencia: " + str(room))
     print("Conversación: " + str(room / "conversacion.md"))

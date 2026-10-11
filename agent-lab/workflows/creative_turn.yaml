@@ -8,7 +8,7 @@ graph:
     - id: voice
       type: agent
       config:
-        provider: ${CREATIVE_PROVIDER}
+        provider: lab_creative_shared
         name: ${CREATIVE_MODEL}
         api_key: ""
         role: ${CREATIVE_ROLE}
