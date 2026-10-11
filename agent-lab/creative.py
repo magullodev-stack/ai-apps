@@ -200,28 +200,44 @@ def probe_openai(model):
             max_output_tokens=256,
         )
     except APIStatusError as exc:
-        error = getattr(exc, "body", None)
-        if not isinstance(error, dict):
-            try:
-                error = exc.response.json()
-            except (ValueError, AttributeError):
-                error = {}
-        if isinstance(error, dict):
-            details = error.get("error", error)
-            if not isinstance(details, dict):
-                details = error
-        else:
-            details = {}
-        print(f"OpenAI rechazó la solicitud: HTTP {exc.status_code}", file=sys.stderr)
-        for field in ("message", "type", "code", "param"):
-            value = details.get(field)
-            if value:
-                print(f"  {field}: {str(value)[:650]}", file=sys.stderr)
-        if not details:
-            print("  Sin cuerpo de error JSON. Respuesta del servidor vacía o no estándar.",
-                  file=sys.stderr)
-        print("  request_id: " + str(getattr(exc, "request_id", None) or "no disponible"),
+        response = exc.response
+        try:
+            payload = response.json()
+        except (ValueError, AttributeError):
+            payload = None
+
+        details = payload.get("error", payload) if isinstance(payload, dict) else {}
+        if not isinstance(details, dict):
+            details = {"message": str(details)}
+
+        # Unlike the old probe, show the actual response if it is not JSON.
+        # Redact credentials before displaying any text returned by a gateway.
+        def safe(value):
+            string = str(value).replace(api_key, "[CLAVE_OCULTA]")
+            string = re.sub(r"sk-[A-Za-z0-9_-]{12,}", "[CLAVE_OCULTA]", string)
+            string = re.sub(r"(?i)Bearer\\s+[^\\s,;]+", "Bearer [CLAVE_OCULTA]", string)
+            return string[:900]
+
+        print(f"Solicitud rechazada: HTTP {exc.status_code}", file=sys.stderr)
+        print("  Content-Type: " + safe(response.headers.get("content-type", "ausente")),
               file=sys.stderr)
+        print("  Request-ID: " + safe(
+            response.headers.get("x-request-id") or
+            getattr(exc, "request_id", None) or "ausente"),
+            file=sys.stderr)
+        for field in ("message", "type", "code", "param"):
+            if details.get(field):
+                print(f"  {field}: {safe(details[field])}", file=sys.stderr)
+
+        if not any(details.get(field) for field in ("message", "type", "code", "param")):
+            body = response.text or getattr(exc, "body", None)
+            if body:
+                print("  Respuesta original: " + safe(body), file=sys.stderr)
+            else:
+                print("  Respuesta original: vacía", file=sys.stderr)
+
+        if response.headers.get("via"):
+            print("  La respuesta pasó por un intermediario HTTP.", file=sys.stderr)
         return 1
     except Exception as exc:
         print(f"No se pudo conectar: {type(exc).__name__}: {str(exc)[:500]}", file=sys.stderr)
