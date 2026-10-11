@@ -34,27 +34,10 @@ if ($Idea) { $arguments += @('--idea', $Idea) }
 if ($TextFile) { $arguments += @('--text-file', (Resolve-Path -LiteralPath $TextFile).Path) }
 if ($Image) { $arguments += @('--image', (Resolve-Path -LiteralPath $Image).Path) }
 if ($SeedZip) {
-    # Persist user-supplied reference material in Git; the existing autosync
-    # publishes this binary just like any other versioned project input.
+    # A user-provided seed is a versioned project reference, not temporary output.
     $source = (Resolve-Path -LiteralPath $SeedZip -ErrorAction Stop).Path
     $name = [IO.Path]::GetFileName($source)
-    if ($name -cnotmatch '^[a-zA-Z0-9_.-]{1,80}\\.zip
-if ($Feedback) { $arguments += @('--feedback', $Feedback) }
-if ($Room) { $arguments += @('--room', (Resolve-Path -LiteralPath $Room).Path) }
-if ($Latest) { $arguments += '--latest' }
-if ($Lista) { $arguments += '--list-rooms' }
-if ($Model) { $arguments += @('--model', $Model) }
-if ($Flutter) { $arguments += '--flutter' }
-if ($Build) { $arguments += '--build' }
-if ($Android) { $arguments += '--android' }
-if ($Probe) { $arguments += '--probe' }
-if ($CostOnly) { $arguments += '--cost-only' }
-if ($Transcript) { $arguments += '--transcript' }
-if ($Discard) { $arguments += '--discard' }
-
-& $python @arguments
-exit $LASTEXITCODE
-) {
+    if ($name -cnotmatch '^[a-zA-Z0-9_.-]{1,80}\.zip$') {
         throw 'El nombre del paquete debe ser seguro y terminar en .zip.'
     }
     if ((Get-Item -LiteralPath $source).Length -gt 5MB) {
@@ -77,8 +60,7 @@ exit $LASTEXITCODE
     $arguments += @('--seed-zip', $target)
 }
 if ($Build -and ($SeedZip -or $Image -or $Latest -or $Room)) {
-    # Upgrade only on demand. The shared server retains its original port
-    # and bearer token, so QuizAI's adb reverse and credentials remain valid.
+    # Update on demand while preserving QuizAI's service port and bearer token.
     $sessionFile = Join-Path (Split-Path $PSScriptRoot -Parent) '.ai-apps\dart-service.json'
     if (Test-Path -LiteralPath $sessionFile) {
         try {
@@ -89,9 +71,6 @@ if ($Build -and ($SeedZip -or $Image -or $Latest -or $Room)) {
                 $health.capabilities.imageInput -ne $true) {
                 Write-Host 'Actualizando automáticamente el servicio Dart compartido...'
                 & (Join-Path (Split-Path $PSScriptRoot -Parent) 'apps\quizai\run.ps1') -RefreshServiceOnly
-                if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-                    throw 'No se pudo actualizar el servicio Dart.'
-                }
             }
         } catch {
             throw "No se pudo verificar o actualizar el servicio Dart: $($_.Exception.Message)"
