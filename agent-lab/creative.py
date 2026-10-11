@@ -71,6 +71,10 @@ def open_room(args):
         raise ValueError("Indica -Idea para comenzar o -Room para continuar")
     room = RUNS / ("creative_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "_" + uuid.uuid4().hex[:6])
     room.mkdir()
+    (room / "manifest.json").write_text(
+        json.dumps({"run_id": room.name, "kind": "creative", "workspace": "workspace"}),
+        encoding="utf-8",
+    )
     if args.flutter:
         workspace, _, _ = prepare_workspace(room, flutter=True)
     else:
@@ -112,7 +116,7 @@ def room_meter(state):
         "priced": 0, "unpriced": 0, "cost_input": 0.0, "cost_output": 0.0,
         "priced_models": set(),
     }
-    for turn in state["conversation"]:
+    for turn in [*state["conversation"], *state.get("creations", [])]:
         meter["calls"] += 1
         usage = turn.get("usage")
         if not isinstance(usage, dict):
@@ -140,7 +144,7 @@ def room_meter(state):
 def show_spending(meter, provider, model, *, completed):
     print("\n" + "=" * 46, flush=True)
     status = "FINALIZADO" if completed else "INTERRUMPIDO"
-    print(f"SALA · {status} · {meter['calls']} respuestas válidas acumuladas", flush=True)
+    print(f"SALA · {status} · {meter['calls']} llamadas acumuladas (agentes y creaciones)", flush=True)
     print(f"Tokens de entrada: {meter['input']:,}", flush=True)
     print(f"Tokens de salida:  {meter['output']:,}", flush=True)
     print(f"Tokens totales:    {meter['input'] + meter['output']:,}", flush=True)
@@ -172,8 +176,10 @@ def speak(room, state, name, character):
     import runtime.sdk as sdk
     recent = state["conversation"][-10:]
     conversation = "\n\n".join(item["name"] + ": " + item["text"] for item in recent)
+    observation = (state.get("observations") or [""])[-1]
     prompt = ("Semilla inicial: " + state["idea"] + "\n\n" +
               ("Lo que habéis imaginado hasta ahora:\n" + conversation[-9000:] + "\n\n" if conversation else "") +
+              ("Última impresión del observador que probó la experiencia: " + observation + "\n\n" if observation else "") +
               "Ahora habla tú, " + name + ", dirigiéndote a los demás.")
     before = Path.cwd()
     try:
@@ -205,6 +211,68 @@ def speak(room, state, name, character):
     print("\n" + name + ":\n" + answer + "\n", flush=True)
     match = re.search(r"(?im)^CREAR:\s*(.+)$", answer)
     return (match.group(1).strip() if match else None), usage
+
+
+def materialize(room, state, idea):
+    """One creative Luna call writes only lib/main.dart in the isolated Flutter app."""
+    from shared_ai import generate_flutter
+    from lab_android import flutter_package
+    project = room / "workspace"
+    if flutter_package(project) is None:
+        raise RuntimeError(
+            "La sala no contiene Flutter. Crea una nueva con -Flutter para verla en Android."
+        )
+    file = project / "lib" / "main.dart"
+    previous = file.read_text(encoding="utf-8") if file.exists() else ""
+    history = "\n\n".join(
+        item["name"] + ": " + item["text"]
+        for item in state["conversation"][-9:]
+    )
+    prompt = (
+        "Eres Luna, una herramienta creativa que convierte el diálogo de tres "
+        "artistas-agentes en una experiencia móvil Flutter REAL, no un boceto.\n"
+        "Su idea actual es: " + (idea or " / ".join(state["idea"].splitlines())) +
+        "\nSu conversación:\n" + history[-10_000:] +
+        "\n\nDevuelve SOLO el archivo completo lib/main.dart. "
+        "Construye una escena expresiva, cinematográfica, con animación continua "
+        "e interacción táctil. Prioriza la idea estética y el movimiento, "
+        "no pantallas de texto, menús, contadores ni botones genéricos. "
+        "Usa CustomPainter, AnimationController o similares cuando aporten vida. "
+        "Admite varios gestos y varios elementos móviles. "
+        "Utiliza exclusivamente Flutter SDK y dart:math / dart:ui / dart:async. "
+        "No importes paquetes externos ni uses archivos, red, procesos, assets, "
+        "plugins o dispositivos. Debe arrancar con void main() y runApp(), "
+        "compilar en Flutter estable y tener MaterialApp o WidgetsApp. "
+        "No escribas documentación ni pruebas."
+    )
+    if previous:
+        prompt += (
+            "\n\nEsta es la experiencia actual. EVOLUCIÓNALA, no empieces de cero "
+            "salvo que los agentes cambien radicalmente de dirección:\n" + previous[-16_000:]
+        )
+    print("\nLuna está materializando la experiencia en Flutter...", flush=True)
+    code, usage = generate_flutter(state["model"], prompt)
+    import re as _re
+    imports = _re.findall(r"^\\s*(?:import|export|part)\\s+['\"]([^'\"]+)['\"]", code, flags=_re.M)
+    allowed = {"package:flutter/material.dart", "package:flutter/widgets.dart",
+               "package:flutter/painting.dart", "package:flutter/animation.dart",
+               "package:flutter/gestures.dart", "package:flutter/scheduler.dart",
+               "dart:math", "dart:ui", "dart:async"}
+    if any(uri not in allowed for uri in imports) or _re.search(
+        r"\\b(?:Process|HttpClient|Socket|File\\s*\\(|Directory\\s*\\(|Isolate)\\b", code
+    ):
+        raise RuntimeError("Luna intentó incluir dependencias o capacidades ajenas al experimento.")
+    if "void main(" not in code or "runApp(" not in code:
+        raise RuntimeError("Luna no devolvió una aplicación Flutter ejecutable.")
+    file.write_text(code, encoding="utf-8")
+    state.setdefault("creations", []).append({
+        "model": state["model"],
+        "usage": {"input": usage.get("inputTokens"), "output": usage.get("outputTokens")},
+        "idea": idea,
+    })
+    save(room, state)
+    print("Experiencia creada en " + str(file), flush=True)
+    return True
 
 
 def build(room, idea, executable):
@@ -309,6 +377,7 @@ def main():
     parser.add_argument("--provider", choices=("shared", "openai", "gemini"), default="shared")
     parser.add_argument("--model")
     parser.add_argument("--rounds", type=int, default=10, help="Rondas completas de Chispa, Caos y Materia")
+    parser.add_argument("--feedback", help="Observación sobre lo que aparece en el emulador")
     parser.add_argument("--flutter", action="store_true")
     parser.add_argument("--build", action="store_true")
     parser.add_argument("--android", action="store_true")
@@ -333,6 +402,8 @@ def main():
         parser.error("--rounds debe estar entre 1 y 50")
     if args.android and not args.build:
         parser.error("--android necesita --build")
+    if args.android and not (args.flutter or args.room):
+        parser.error("--android necesita --flutter en una sala nueva")
     # Check connection before creating a room or spending any model tokens.
     if args.provider == "shared":
         from shared_ai import ensure_running
@@ -353,6 +424,9 @@ def main():
         if not os.environ.get(key):
             print("Falta " + key + " para continuar esta sala.", file=sys.stderr)
             return 2
+    if args.feedback:
+        state.setdefault("observations", []).append(args.feedback[:1800])
+        save(room, state)
     sys.path.insert(0, str(ROOT / ".deps" / "chatdev"))
     import creative_provider
     creative_provider.register()
@@ -372,22 +446,22 @@ def main():
                 proposal, _usage = speak(room, state, name, character)
                 if proposal:
                     suggestion = proposal
+        if args.build:
+            if state["provider"] == "shared":
+                materialize(room, state, suggestion)
+            elif not build(room, suggestion or state["idea"], args.codex):
+                raise RuntimeError("No se pudo crear la experiencia.")
+            if args.android:
+                from lab_android import AndroidExperiment
+                print("Abriendo la experiencia en el emulador Android...", flush=True)
+                result = AndroidExperiment(room).start()
+                print("Emulador: " + result.get("status", "desconocido"), flush=True)
         completed = True
-    except RuntimeError as exc:
-        print(f"\nConexión interrumpida: {exc}", file=sys.stderr, flush=True)
+    except (RuntimeError, FileNotFoundError, ValueError) as exc:
+        print(f"\nExperimento interrumpido: {exc}", file=sys.stderr, flush=True)
         return 1
     finally:
         show_spending(room_meter(state), state["provider"], state["model"], completed=completed)
-    if args.build and suggestion:
-        if build(room, suggestion, args.codex) and args.android:
-            from lab_android import AndroidExperiment
-            try:
-                status = AndroidExperiment(room).start()
-                print("Pantalla: " + status["status"])
-            except Exception as exc:
-                print("No se pudo mostrar todavía la app: " + str(exc), file=sys.stderr)
-    elif args.build:
-        print("Los agentes prefirieron seguir imaginando. No se ha invocado Codex.")
     print("Para seguir: .\\agent-lab\\creative.ps1 -Room '" + str(room) + "'")
     return 0
 

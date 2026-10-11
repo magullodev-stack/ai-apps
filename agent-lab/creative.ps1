@@ -4,6 +4,7 @@ param(
     [ValidateSet('shared', 'openai', 'gemini')][string]$Provider = 'shared',
     [string]$Model,
     [ValidateRange(1, 50)][int]$Rounds = 10,
+    [string]$Feedback,
     [switch]$Flutter,
     [switch]$Build,
     [switch]$Android,
@@ -62,6 +63,7 @@ $python = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) { throw 'Instala primero agent-lab con install.ps1.' }
 $arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--rounds', "$Rounds", '--provider', $Provider)
 if ($Idea) { $arguments += @('--idea', $Idea) }
+if ($Feedback) { $arguments += @('--feedback', $Feedback) }
 if ($Room) { $arguments += @('--room', (Resolve-Path -LiteralPath $Room).Path) }
 if ($Model) { $arguments += @('--model', $Model) }
 if ($Flutter) { $arguments += '--flutter' }
