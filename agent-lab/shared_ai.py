@@ -133,8 +133,15 @@ def generate_action(model, prompt):
         for field in ("speech", "path", "content"):
             if not isinstance(action[field], str):
                 raise ValueError("Invalid action text")
-    except (KeyError, TypeError, ValueError) as exc:
-        raise RuntimeError("Luna no devolvió una acción válida para ChatDev.") from exc
+    except (KeyError, TypeError, ValueError):
+        # The call may already have consumed tokens. Preserve provider usage,
+        # report the malformed output, and let the next agent/ronda proceed.
+        # Never pretend an invalid tool request ran.
+        return {
+            "speech": "[Error de formato de Luna: no se pudo interpretar esta "
+                      "intervención. No se ha ejecutado ninguna herramienta.]",
+            "tool": "none", "path": "", "content": "",
+        }, response.get("usage") or {}
     return action, response.get("usage") or {}
 
 

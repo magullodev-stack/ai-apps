@@ -26,6 +26,13 @@ def _path(relative: str, *, writable=False):
     if not isinstance(relative, str) or not relative or len(relative) > 220:
         raise ValueError("Indica una ruta relativa al proyecto Flutter")
     normalized = relative.replace("\\", "/")
+    if normalized in (".", "./") and not writable:
+        return root
+    if normalized.startswith("./"):
+        normalized = normalized[2:]
+    # Models often use the filename shown by room_list without its lib/ prefix.
+    if "/" not in normalized and normalized.endswith(".dart"):
+        normalized = "lib/" + normalized
     parts = Path(normalized).parts
     if (not parts or Path(normalized).is_absolute() or
             any(p in ("", ".", "..") or ":" in p for p in parts)):
@@ -55,10 +62,12 @@ def room_list(directory: str = "lib") -> str:
     if not target.is_dir():
         return "Directorio inexistente."
     items = []
+    root = _room() / "workspace"
     for f in sorted(target.iterdir()):
         if f.is_symlink() or (hasattr(f, "is_junction") and f.is_junction()):
             continue
-        items.append(f.name + ("/" if f.is_dir() else ""))
+        # Always return a path the agent can paste into room_read or room_list.
+        items.append(f.relative_to(root).as_posix() + ("/" if f.is_dir() else ""))
     return _announce("room_list", "\n".join(items[:70]) or "(vacío)")
 
 
@@ -66,7 +75,7 @@ def room_read(path: str) -> str:
     """Lee un archivo Dart existente, con un máximo de 16000 caracteres."""
     target = _path(path)
     if target.suffix != ".dart" or not target.is_file():
-        return "No existe ese archivo Dart."
+        return "Archivo Dart no encontrado; utiliza la ruta lib/main.dart o consulta room_list."
     contents = target.read_text(encoding="utf-8")[:16000]
     _announce("room_read", path + f" ({len(contents)} caracteres)")
     return contents

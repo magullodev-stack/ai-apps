@@ -12,7 +12,7 @@ graph:
         name: ${CREATIVE_MODEL}
         api_key: ""
         role: ${CHISPA_ROLE}
-        params: {tool_loop_limit: 5}
+        params: {tool_loop_limit: 12}
         retry: {enabled: false}
         tooling:
           - type: function
@@ -31,7 +31,7 @@ graph:
         name: ${CREATIVE_MODEL}
         api_key: ""
         role: ${CAOS_ROLE}
-        params: {tool_loop_limit: 5}
+        params: {tool_loop_limit: 12}
         retry: {enabled: false}
         tooling:
           - type: function
@@ -50,7 +50,7 @@ graph:
         name: ${CREATIVE_MODEL}
         api_key: ""
         role: ${MATERIA_ROLE}
-        params: {tool_loop_limit: 5}
+        params: {tool_loop_limit: 12}
         retry: {enabled: false}
         tooling:
           - type: function
