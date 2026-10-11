@@ -237,7 +237,11 @@ compartido. No se eliminan otros dispositivos.
 confirmaciones de reload; `android/events.jsonl` conserva las transiciones.
 `android/operations/` guarda llamadas al gestor y resultados/errores.
 `android/logs/` copia los logs propios del worker y Flutter; cada ciclo guarda
-`cycles/<n>/android.json` y `android/logs/` como evidencia. El gestor conserva
+`cycles/<n>/android.json`, `android/validation/` y `android/logs/` como evidencia.
+`cycles/<n>/android/changes.patch` conserva cambios del anfitrión, como
+`pubspec.lock`, por separado del patch de Codex. La siguiente iteración parte
+del árbol después de ambas capturas para no contar archivos generados como
+cambios nuevos del ejecutor. `workspace.tar` incluye ese árbol final. El gestor conserva
 sus logs privados aunque se retire el registro. Todos los datos de ejecución
 quedan bajo `runs/`, ignorado en Git. Flutter recibe un entorno sin claves de
 ChatDev, Codex o los servicios. Los flags Android no contienen credenciales.

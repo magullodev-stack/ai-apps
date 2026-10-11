@@ -155,6 +155,10 @@ class AndroidTest(unittest.TestCase):
 
     def test_native_autonomous_cycles_keep_android_association_and_evidence(self):
         run, client = self.experiment()
+        def validation(project, destination):
+            (project / "generated-by-host.txt").write_text("Host dependency preparation\n")
+            return {"passed": True, "checks": [{"name": "offline", "exit_code": 0}]}
+        client.validate = validation
         git(run / "workspace", "add", "-A")
         git(run / "workspace", "commit", "-m", "Offline Flutter fixture")
         result, manifest = run_autonomous("Build the counter", source=run / "workspace", offline=True,
@@ -167,6 +171,12 @@ class AndroidTest(unittest.TestCase):
         payload = json.loads((result / "decisions/001/input.json").read_text())
         self.assertEqual(payload["history"][0]["android"]["status"], "running")
         self.assertEqual(payload["android"]["session"], manifest["android"]["session"])
+        host_changes = json.loads((result / "cycles/001/android/changes.json").read_text())
+        self.assertIn("A\tgenerated-by-host.txt", host_changes["name_status"])
+        second_baseline = json.loads((result / "cycles/002/manifest.json").read_text())["baseline"]
+        self.assertEqual(second_baseline, host_changes["tree"])
+        second_changes = json.loads((result / "cycles/002/changes.json").read_text())
+        self.assertFalse(any("generated-by-host" in name for name in second_changes["name_status"]))
         self.assertTrue(client.sessions[0]["active"])
 
     def test_offline_never_calls_android_or_flutter_and_runtime_excludes_credentials(self):

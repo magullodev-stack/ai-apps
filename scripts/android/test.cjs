@@ -78,6 +78,14 @@ async function run() {
   await service.unregister(key(external));
   assert.equal(service.definitions().length, 122);
   assert.equal(service.definitions()[0].serial, 'emulator-5554');
+  fs.unlinkSync(service.leaseFile(app)); // Remove the deliberately stale offline fixture lease.
+  let releaseRemoval;
+  platform.hasFlutter = async () => new Promise(resolve => { releaseRemoval = resolve; });
+  const removal = service.unregister(key(app));
+  await assert.rejects(service.start(key(app)), /unregistration is in progress/);
+  releaseRemoval(false);
+  await removal;
+  assert.equal(service.definitions().length, 121);
   process.env.AI_APPS_AI_API_KEY = 'private'; process.env.OPENAI_API_KEY = 'private';
   process.env.CODEX_API_KEY = 'private'; process.env.GIT_DIR = 'private';
   const env = runtimeEnv();

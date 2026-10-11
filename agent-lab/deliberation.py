@@ -176,6 +176,13 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
             android_evidence = None
             if android_session:
                 android_evidence = android_session.after_cycle(cycle, response["changes"])
+                host_artifacts = cycle / "android"
+                host_artifacts.mkdir(exist_ok=True)
+                host_changes = collect_changes(run_dir, previous_tree, artifacts_dir=host_artifacts)
+                previous_tree = host_changes["tree"]
+                android_evidence["host_changes"] = host_changes
+                write_json(cycle / "android.json", android_evidence)
+                git(run_dir / "workspace", "archive", "--format=tar", f"--output={cycle / 'workspace.tar'}", previous_tree)
                 manifest["android"] = android_evidence
             evidence = {"android": android_evidence, "iteration": iteration, "decision": decision, "response": response,
                         "patch": patch[:64000], "patch_truncated": len(patch) > 64000}
