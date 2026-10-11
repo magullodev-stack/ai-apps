@@ -119,7 +119,8 @@ async function activate(context) {
   });
   command('open', async supplied => {
     await refresh();
-    const session = sessions.find(item => item.id === supplied?.id);
+    const session = supplied?.id ? sessions.find(item => item.id === supplied.id) :
+      (await pick(sessions.filter(item => item.deviceReady), 'Visualizar una sesión Android'))?.session;
     if (session) await open(session);
   });
   command('reconnect', async supplied => {

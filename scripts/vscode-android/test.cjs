@@ -58,6 +58,8 @@ async function run() {
   assert.equal(panels.size, 1, 'Closing a tab stays closed during the same session epoch');
   await commands.get('aiAppsAndroid.select')();
   assert.equal(panels.size, 2, 'Multi-selection reopens without closing the other app');
+  await commands.get('aiAppsAndroid.open')();
+  assert.deepEqual(calls.at(-1), ['open', 'quizai@emulator-5554', false], 'Command palette opens a single picked session');
   await commands.get('aiAppsAndroid.reconnect')(entries[1]);
   assert.deepEqual(calls.at(-1), ['open', 'lab@emulator-5556', true]);
   entries[1].deviceReady = false; entries[1].active = false;
