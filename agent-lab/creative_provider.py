@@ -104,6 +104,15 @@ class CreativeShared(ModelProvider):
         else:
             reply, usage = generate(self.model_name, prompt)
             message = Message(content=reply, role=MessageRole.ASSISTANT)
+        from creative_live import publish
+        publish("model",
+                agent=getattr(self.config, "node_id", "voice"),
+                model=self.model_name,
+                speech=(answer["speech"] if available else reply)[:2400],
+                action=(answer["tool"] if available else "none"),
+                path=(answer["path"][:180] if available and answer["tool"] in
+                      ("room_write", "room_read", "room_list") else ""),
+                usage={"input": usage.get("inputTokens"), "output": usage.get("outputTokens")})
         tracker = getattr(self.config, "token_tracker", None)
         if tracker and isinstance(usage, dict):
             incoming = usage.get("inputTokens")
