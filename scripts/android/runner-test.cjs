@@ -27,8 +27,9 @@ async function run() {
   assert.deepEqual(managed, ['run', '--machine', '--no-dds', '-d', 'test-device', `--dart-define-from-file=${defines}`]);
   const machine = path.join(dir, 'fake-machine.cjs');
   const machineBatch = path.join(dir, 'fake-machine.bat');
-  const messages = path.join(dir, 'messages.json');
-  const descendants = path.join(dir, 'descendants.json');
+  fs.mkdirSync(path.join(dir, 'build'), { recursive: true });
+  const messages = path.join(dir, 'build/messages.json');
+  const descendants = path.join(dir, 'build/descendants.json');
   const sleeper = path.join(dir, 'sleeper.cjs');
   fs.writeFileSync(sleeper, 'setInterval(()=>{},1000);');
   fs.writeFileSync(machineBatch, `@echo off\r\n"${process.execPath}" "${machine}" %*\r\n`);

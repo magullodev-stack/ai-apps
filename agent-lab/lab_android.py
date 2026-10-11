@@ -219,6 +219,7 @@ class AndroidExperiment:
             while True:
                 current = self.owned(self.client.call("List"))
                 if current and current["active"] and current["status"] == "running":
+                    self.state.pop("error", None)
                     self.save("running", status="running", shared_state=current)
                     return self.state.copy()
                 if current and current["status"] == "failed":
@@ -285,13 +286,16 @@ class AndroidExperiment:
             if remaining and (remaining.get("active") or remaining.get("appPid") or remaining.get("status") in ("starting", "stopping")):
                 self.save("stop_failed", status="failed", error="Android application is still running after Stop")
                 raise RuntimeError(self.state["error"])
+            self.state["shared_state"] = remaining
             if detach:
                 self.client.call("Unregister", self.state["session"])
+                self.state["shared_state"] = None
         if self.state["session"]:
             self.client.logs_snapshot(self.state["session"], self.folder / "logs")
         if detach:
             self.state["last_session"] = self.state["session"] or self.state.get("last_session")
             self.state["session"] = None
+        self.state.pop("error", None)
         self.save("detached" if detach else "stopped", status="detached" if detach else "stopped")
         return self.state.copy()
 

@@ -159,6 +159,7 @@ bool _requiresRelaunch(String path) {
       normalized.contains('/.dart_tool/') ||
       normalized.contains('/.git/') ||
       normalized.contains('/android/.gradle/') ||
+      normalized.endsWith('/android/.gradle') ||
       normalized.endsWith('/android/local.properties')) {
     return false;
   }
