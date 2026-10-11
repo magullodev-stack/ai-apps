@@ -48,6 +48,7 @@ if(process.env.FAKE_NATIVE==='1') {
  setTimeout(()=>{
   fs.writeFileSync(path.join(root,'android/local.properties'),'sdk.dir=fixture');
   fs.writeFileSync(path.join(root,'android/.gradle/cache/generated.properties'),'fixture=true');
+  fs.writeFileSync(path.join(root,'android/.gradle/cache/generated.json'),'{}');
   fs.writeFileSync(path.join(root,'main.dart'),'void main() {} // '+Date.now());
  },200);
  const received=[];

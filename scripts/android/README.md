@@ -66,6 +66,10 @@ no descarga SDK ni inicia IA. Sin parámetros conserva `AI_APPS_Dev` y
 
 El worker oculto de cada app mantiene un lease exclusivo, fuera del editor.
 Reutiliza `flutter-dev-runner.dart`, `flutter run --machine` y Hot Reload.
+Los archivos generados `android/local.properties` y `android/.gradle/` no
+cancelan la vigilancia ni solicitan reinicios. Cuando hay cambios nativos reales,
+el runner termina su árbol Flutter completo en Windows (wrapper e hijos),
+permitiendo que el worker reinicie y recupere la vigilancia sin procesos huérfanos.
 Las sesiones nuevas usan `--no-dds` para conectar directamente al VM Service:
 DDS rechazaba su conexión local durante la validación. Esta opción es optativa
 en el runner; los argumentos originales de QuizAI permanecen iguales. El modo

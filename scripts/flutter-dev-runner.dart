@@ -194,7 +194,8 @@ bool _shouldReload(String path) {
 
   if (normalized.contains('/build/') ||
       normalized.contains('/.dart_tool/') ||
-      normalized.contains('/.git/')) {
+      normalized.contains('/.git/') ||
+      normalized.contains('/android/.gradle/')) {
     return false;
   }
 
