@@ -59,6 +59,7 @@ if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($keyName,
 }
 
 $ErrorActionPreference = 'Stop'
+if ($Build -and -not $PSBoundParameters.ContainsKey('Rounds')) { $Rounds = 1 }
 $python = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) { throw 'Instala primero agent-lab con install.ps1.' }
 $arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--rounds', "$Rounds", '--provider', $Provider)

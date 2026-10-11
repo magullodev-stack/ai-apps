@@ -276,6 +276,84 @@ def materialize(room, state, idea):
     return True
 
 
+
+def studio_round(room, state, *, android):
+    """One ChatDev graph: three linked agents, native function tool loops."""
+    import runtime.sdk as sdk
+    history = "\n\n".join(
+        item["name"] + ": " + item["text"] for item in state["conversation"][-9:]
+    )
+    feedback = (state.get("observations") or [""])[-1]
+    prompt = (
+        "Idea inicial: " + state["idea"] +
+        "\n\nConversación anterior:\n" + history[-8500:] +
+        ("\n\nOpinión de quien acaba de usar el prototipo: " + feedback if feedback else "") +
+        "\n\nEstá disponible un proyecto Flutter real en workspace. "
+        "Tenéis herramientas de ChatDev para leer y escribir Dart, analizar errores, "
+        "ejecutar el proyecto y observar el estado de Android. "
+        "Hablad y colaborad como artistas, no como gestores. "
+        "Conseguid una experiencia visible y táctil, no una descripción. "
+        "Si lib/main.dart todavía es la plantilla vacía, transformadla con room_write. "
+        "Cada participante puede intervenir en el código y mejorar lo que han creado los demás. "
+        + ("Podéis abrir vuestro emulador con room_launch y revisar su estado con room_observe."
+           if android else "Por ahora no abras Android; escribe y analiza el código.")
+    )
+    before = Path.cwd()
+    try:
+        os.chdir(room)
+        sdk.OUTPUT_ROOT = room / "internal"
+        print("ChatDev: Chispa → Caos → Materia (herramientas Flutter disponibles)...", flush=True)
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            result = sdk.run_workflow(
+                ROOT / "workflows" / "creative_studio.yaml",
+                task_prompt=prompt,
+                variables={
+                    "CREATIVE_MODEL": state["model"],
+                    "CHISPA_ROLE": COMMON + "\n\n" + VOICES[0][1],
+                    "CAOS_ROLE": COMMON + "\n\n" + VOICES[1][1],
+                    "MATERIA_ROLE": COMMON + "\n\n" + VOICES[2][1],
+                },
+                session_name="studio_" + str(len(state["conversation"]) + 1),
+                log_level="ERROR",
+            )
+    finally:
+        os.chdir(before)
+    outputs = result.meta_info.outputs or {}
+    all_tokens = (result.meta_info.token_usage or {}).get("node_usages") or {}
+    for node_id, name in (("chispa", "Chispa"), ("caos", "Caos"), ("materia", "Materia")):
+        block = outputs.get("node_" + node_id) or {}
+        results = block.get("results") or []
+        if not results:
+            raise RuntimeError("ChatDev no devolvió la intervención de " + name)
+        payload = results[-1].get("payload")
+        if isinstance(payload, dict):
+            content = payload.get("content", "")
+            if isinstance(content, list):
+                speech = "\n".join(
+                    str(element.get("text", "")) for element in content
+                    if isinstance(element, dict)
+                ).strip()
+            else:
+                speech = str(content).strip()
+        else:
+            speech = str(payload).strip()
+        if not speech or "error calling model" in speech.casefold():
+            raise RuntimeError(name + " no completó la intervención: " + speech[:280])
+        usage = all_tokens.get(node_id) or {}
+        tokens_in, tokens_out = usage.get("input_tokens"), usage.get("output_tokens")
+        measured = (
+            {"input": tokens_in, "output": tokens_out}
+            if isinstance(tokens_in, int) and isinstance(tokens_out, int)
+            and tokens_in + tokens_out > 0 else None
+        )
+        state["conversation"].append({
+            "name": name, "model": state["model"], "text": speech, "usage": measured
+        })
+        save(room, state)
+        print("\n" + name + ":\n" + speech + "\n", flush=True)
+    return result
+
+
 def build(room, idea, executable):
     from bridge import invoke_codex
     if not shutil.which(executable):
@@ -405,6 +483,8 @@ def main():
         parser.error("--android necesita --build")
     if args.android and not (args.flutter or args.room):
         parser.error("--android necesita --flutter en una sala nueva")
+    if args.build and args.provider == "shared" and not (args.flutter or args.room):
+        parser.error("Para crear con ChatDev debes indicar -Flutter o continuar una sala Flutter")
     # Check connection before creating a room or spending any model tokens.
     if args.provider == "shared":
         from shared_ai import ensure_running
@@ -428,6 +508,15 @@ def main():
     if args.feedback:
         state.setdefault("observations", []).append(args.feedback[:1800])
         save(room, state)
+    studio = args.build and state["provider"] == "shared"
+    if studio:
+        if not args.flutter and not (room / "workspace" / "pubspec.yaml").is_file():
+            print("La sala existente no es Flutter. Empieza con -Idea ... -Flutter -Build.",
+                  file=sys.stderr)
+            return 2
+        os.environ["MAC_FUNCTIONS_DIR"] = str(ROOT / "creative_tools")
+        os.environ["AGENTLAB_ROOM"] = str(room)
+        os.environ["AGENTLAB_ANDROID_ENABLED"] = "1" if args.android else "0"
     sys.path.insert(0, str(ROOT / ".deps" / "chatdev"))
     import creative_provider
     creative_provider.register()
@@ -441,22 +530,35 @@ def main():
     try:
         for round_number in range(1, args.rounds + 1):
             print(f"\n{'─' * 14} RONDA {round_number}/{args.rounds} {'─' * 14}", flush=True)
-            for _ in VOICES:
-                name, character = VOICES[len(state["conversation"]) % len(VOICES)]
-                print(f"\n{name} está pensando...", flush=True)
-                proposal, _usage = speak(room, state, name, character)
-                if proposal:
-                    suggestion = proposal
-        if args.build:
-            if state["provider"] == "shared":
-                materialize(room, state, suggestion)
-            elif not build(room, suggestion or state["idea"], args.codex):
+            if studio:
+                studio_round(room, state, android=args.android)
+            else:
+                for _ in VOICES:
+                    name, character = VOICES[len(state["conversation"]) % len(VOICES)]
+                    print(f"\n{name} está pensando...", flush=True)
+                    proposal, _usage = speak(room, state, name, character)
+                    if proposal:
+                        suggestion = proposal
+        if args.build and not studio:
+            if not build(room, suggestion or state["idea"], args.codex):
                 raise RuntimeError("No se pudo crear la experiencia.")
             if args.android:
                 from lab_android import AndroidExperiment
                 print("Abriendo la experiencia en el emulador Android...", flush=True)
-                result = AndroidExperiment(room).start()
-                print("Emulador: " + result.get("status", "desconocido"), flush=True)
+                output = AndroidExperiment(room).start()
+                print("Emulador: " + output.get("status", "desconocido"), flush=True)
+        elif studio:
+            file = room / "workspace" / "lib" / "main.dart"
+            if not file.is_file():
+                raise RuntimeError("Los agentes no han creado ningún archivo Flutter.")
+            print("Flutter: " + str(file), flush=True)
+            from lab_android import AndroidExperiment
+            if args.android:
+                controller = AndroidExperiment(room)
+                status = controller.state.get("status")
+                print("Estado del emulador propio: " + str(status or "sin iniciar"), flush=True)
+                if status != "running":
+                    print("Los agentes pueden abrirlo con room_launch en otra ronda.", flush=True)
         completed = True
     except (RuntimeError, FileNotFoundError, ValueError) as exc:
         print(f"\nExperimento interrumpido: {exc}", file=sys.stderr, flush=True)
