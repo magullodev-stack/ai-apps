@@ -86,6 +86,33 @@ async function run() {
   releaseRemoval(false);
   await removal;
   assert.equal(service.definitions().length, 121);
+  // The disposal contract removes only experiment-owned lab previews,
+  // including their private runner logs and emulator resource.
+  const runName = 'creative_20261011T150000_trial';
+  const run = path.join(root, 'agent-lab', 'runs', runName);
+  const workspace = path.join(run, 'workspace');
+  fs.mkdirSync(workspace, { recursive: true });
+  writeJson(path.join(run, 'manifest.json'), { run_id: runName, kind: 'creative' });
+  fs.writeFileSync(path.join(workspace, 'pubspec.yaml'), 'name: temporary_preview\n');
+  const fingerprint = crypto.createHash('sha256').update(runName).digest('hex').slice(0, 12);
+  const disposable = {
+    appId: 'lab-' + fingerprint, label: 'Lab temporary', serial: 'emulator-5560',
+    avdName: 'AI_APPS_Lab_' + fingerprint,
+    projectPath: workspace, packageName: 'com.example.temporary', kind: 'flutter'
+  };
+  platform.hasFlutter = async () => false;
+  platform.devices = async () => ['emulator-5554'];
+  platform.retireAvd = async session => calls.push(['retire-avd', session.avdName]);
+  service.register(disposable);
+  await assert.rejects(service.discard('quizai@emulator-5554'), /Only owned/);
+  const done = await service.discard(key(disposable));
+  assert.equal(done.discarded, key(disposable));
+  assert.equal(fs.existsSync(run), false, 'Discard removes the generated workspace and logs');
+  assert.equal(fs.existsSync(service.directory(disposable)), false, 'Discard removes private Android records');
+  assert.equal(service.definitions().length, 121, 'Discard unregisters only the disposable preview');
+  assert.equal(service.definitions()[0].appId, 'quizai', 'QuizAI remains registered');
+  assert.ok(calls.some(item => Array.isArray(item) && item[0] === 'retire-avd'));
+
   process.env.AI_APPS_AI_API_KEY = 'private'; process.env.OPENAI_API_KEY = 'private';
   process.env.CODEX_API_KEY = 'private'; process.env.GIT_DIR = 'private';
   const env = runtimeEnv();
