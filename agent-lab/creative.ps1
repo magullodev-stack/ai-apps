@@ -3,7 +3,7 @@ param(
     [string]$Room,
     [ValidateSet('openai', 'gemini')][string]$Provider = 'openai',
     [string]$Model,
-    [ValidateRange(1, 3)][int]$Voices = 3,
+    [ValidateRange(1, 50)][int]$Rounds = 10,
     [switch]$Flutter,
     [switch]$Build,
     [switch]$Android,
@@ -12,7 +12,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $python = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) { throw 'Instala primero agent-lab con install.ps1.' }
-$arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--voices', "$Voices", '--provider', $Provider)
+$arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--rounds', "$Rounds", '--provider', $Provider)
 if ($Idea) { $arguments += @('--idea', $Idea) }
 if ($Room) { $arguments += @('--room', (Resolve-Path -LiteralPath $Room).Path) }
 if ($Model) { $arguments += @('--model', $Model) }

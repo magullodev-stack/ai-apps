@@ -48,6 +48,9 @@ def open_room(args):
         state = json.loads((room / "room.json").read_text(encoding="utf-8"))
         if args.idea or args.flutter:
             raise ValueError("Al continuar una sala no repitas -Idea ni -Flutter")
+        if args.model:
+            state["model"] = args.model
+            save(room, state)
         return room, state
     if not args.idea or not args.idea.strip():
         raise ValueError("Indica -Idea para comenzar o -Room para continuar")
@@ -77,6 +80,37 @@ def save(room, state):
     (room / "room.json").write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def actual_tokens(result):
+    """Read provider-reported usage from ChatDev, never estimate token counts."""
+    totals = (result.meta_info.token_usage or {}).get("total_usage") or {}
+    incoming, outgoing = totals.get("input_tokens"), totals.get("output_tokens")
+    if (type(incoming) is int and type(outgoing) is int and
+            incoming >= 0 and outgoing >= 0 and incoming + outgoing > 0):
+        return {"input": incoming, "output": outgoing}
+    return None
+
+
+def show_spending(meter, provider, model):
+    print("\n" + "=" * 46, flush=True)
+    print(f"CICLO FINALIZADO · {meter['calls']} intervenciones", flush=True)
+    print(f"Tokens de entrada: {meter['input']:,}", flush=True)
+    print(f"Tokens de salida:  {meter['output']:,}", flush=True)
+    print(f"Tokens totales:    {meter['input'] + meter['output']:,}", flush=True)
+    if provider == "openai" and model == "gpt-5-nano":
+        # Tarifas de referencia, no consulta a la facturación de OpenAI.
+        incoming_rate, outgoing_rate = 0.05, 0.40  # USD por millón
+        estimate = (meter["input"] * incoming_rate + meter["output"] * outgoing_rate) / 1_000_000
+        qualifier = "parcial " if meter["missing"] else ""
+        print(f"Coste {qualifier}estimado: US${estimate:.6f}", flush=True)
+        print("Referencia: US$0.05/M entrada + US$0.40/M salida.", flush=True)
+        print("Estimación sin descuento por caché; consulta la factura para el coste real.", flush=True)
+    else:
+        print("Coste USD: tarifa no configurada para este modelo.", flush=True)
+    if meter["missing"]:
+        print(f"Sin datos de tokens: {meter['missing']} intervenciones (no se contabilizan).", flush=True)
+    print("=" * 46, flush=True)
+
+
 def speak(room, state, name, character):
     import runtime.sdk as sdk
     recent = state["conversation"][-10:]
@@ -103,11 +137,12 @@ def speak(room, state, name, character):
     answer = result.final_message.text_content().strip() if result.final_message else ""
     if not answer:
         raise RuntimeError(name + " no ha podido responder")
-    state["conversation"].append({"name": name, "text": answer})
+    usage = actual_tokens(result)
+    state["conversation"].append({"name": name, "text": answer, "usage": usage})
     save(room, state)
     print("\n" + name + ":\n" + answer + "\n", flush=True)
     match = re.search(r"(?im)^CREAR:\s*(.+)$", answer)
-    return match.group(1).strip() if match else None
+    return (match.group(1).strip() if match else None), usage
 
 
 def build(room, idea, executable):
@@ -140,12 +175,14 @@ def main():
     parser.add_argument("--room")
     parser.add_argument("--provider", choices=("openai", "gemini"), default="openai")
     parser.add_argument("--model")
-    parser.add_argument("--voices", type=int, choices=range(1, 4), metavar="{1,2,3}", default=3)
+    parser.add_argument("--rounds", type=int, default=10, help="Rondas completas de Chispa, Caos y Materia")
     parser.add_argument("--flutter", action="store_true")
     parser.add_argument("--build", action="store_true")
     parser.add_argument("--android", action="store_true")
     parser.add_argument("--codex", default="codex")
     args = parser.parse_args()
+    if not 1 <= args.rounds <= 50:
+        parser.error("--rounds debe estar entre 1 y 50")
     if args.android and not args.build:
         parser.error("--android necesita --build")
     # Never prepare Flutter or create a room if there is no model connection.
@@ -164,14 +201,28 @@ def main():
     sys.path.insert(0, str(ROOT / ".deps" / "chatdev"))
     import creative_provider
     creative_provider.register()
-    print("Sala: " + str(room) + "\n")
+    print(f"Sala: {room}", flush=True)
+    print(f"Modelo: {state['model']} · {args.rounds} rondas · {args.rounds * 3} intervenciones", flush=True)
+    print("Las respuestas aparecen al completarse; no se transmiten palabra por palabra.", flush=True)
     suggestion = None
-    offset = len(state["conversation"]) % len(VOICES)
-    for step in range(args.voices):
-        name, character = VOICES[(offset + step) % len(VOICES)]
-        proposal = speak(room, state, name, character)
-        if proposal:
-            suggestion = proposal
+    meter = {"input": 0, "output": 0, "missing": 0, "calls": 0}
+    try:
+        for round_number in range(1, args.rounds + 1):
+            print(f"\n{'─' * 14} RONDA {round_number}/{args.rounds} {'─' * 14}", flush=True)
+            for _ in VOICES:
+                name, character = VOICES[len(state["conversation"]) % len(VOICES)]
+                print(f"\n{name} está pensando...", flush=True)
+                proposal, usage = speak(room, state, name, character)
+                meter["calls"] += 1
+                if usage:
+                    meter["input"] += usage["input"]
+                    meter["output"] += usage["output"]
+                else:
+                    meter["missing"] += 1
+                if proposal:
+                    suggestion = proposal
+    finally:
+        show_spending(meter, state["provider"], state["model"])
     if args.build and suggestion:
         if build(room, suggestion, args.codex) and args.android:
             from lab_android import AndroidExperiment

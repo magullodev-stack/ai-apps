@@ -6,6 +6,13 @@ from runtime.node.agent.providers.openai_provider import OpenAIProvider
 
 
 class CreativeOpenAI(OpenAIProvider):
+    def _build_request_payload(self, timeline, tool_specs, raw_params):
+        payload = super()._build_request_payload(timeline, tool_specs, raw_params)
+        # GPT-5 Nano does not accept the ChatDev default temperature=0.7.
+        if self.model_name.startswith("gpt-5"):
+            payload.pop("temperature", None)
+        return payload
+
     def create_client(self):
         self.api_key = os.environ.get("OPENAI_API_KEY", "")
         if not self.api_key:
