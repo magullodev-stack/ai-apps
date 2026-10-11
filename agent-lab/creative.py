@@ -109,14 +109,28 @@ def actual_tokens(result):
     return None
 
 
-def room_meter(state):
-    """Recalculate the entire room from saved turns, including older sessions."""
+def room_meter(state, *, room=None):
+    """Read past turns and every model call made inside the ChatDev tool loop."""
     meter = {
         "input": 0, "output": 0, "missing": 0, "calls": 0,
         "priced": 0, "unpriced": 0, "cost_input": 0.0, "cost_output": 0.0,
         "priced_models": set(),
     }
-    for turn in [*state["conversation"], *state.get("creations", [])]:
+    offset = state.get("studio_ledger_start")
+    if isinstance(offset, int) and room is not None:
+        turns = [*state["conversation"][:offset], *state.get("creations", [])]
+        events_file = room / "studio-events.jsonl"
+        if events_file.is_file():
+            try:
+                with events_file.open(encoding="utf-8") as source:
+                    turns.extend(event for line in source if line.strip()
+                                 for event in [json.loads(line)]
+                                 if event.get("kind") == "model")
+            except (OSError, ValueError):
+                print("Aviso: el registro de consumo está incompleto.", file=sys.stderr)
+    else:
+        turns = [*state["conversation"], *state.get("creations", [])]
+    for turn in turns:
         meter["calls"] += 1
         usage = turn.get("usage")
         if not isinstance(usage, dict):
@@ -298,6 +312,9 @@ def studio_round(room, state, *, android):
         + ("Podéis abrir vuestro emulador con room_launch y revisar su estado con room_observe."
            if android else "Por ahora no abras Android; escribe y analiza el código.")
     )
+    if "studio_ledger_start" not in state:
+        state["studio_ledger_start"] = len(state["conversation"])
+        save(room, state)
     before = Path.cwd()
     try:
         os.chdir(room)
@@ -359,7 +376,6 @@ def studio_round(room, state, *, android):
             "name": name, "model": state["model"], "text": speech, "usage": measured
         })
         save(room, state)
-        print("\n" + name + ":\n" + speech + "\n", flush=True)
     return result
 
 
@@ -477,7 +493,7 @@ def main():
         if not args.room or args.idea or args.model or args.build or args.flutter or args.android or args.probe:
             parser.error("--cost-only necesita únicamente --room")
         _, state = open_room(args)
-        show_spending(room_meter(state), state["provider"], state["model"], completed=True)
+        show_spending(room_meter(state, room=Path(args.room)), state["provider"], state["model"], completed=True)
         return 0
     if args.probe:
         if args.provider == "shared":
@@ -579,7 +595,7 @@ def main():
         print(f"\nExperimento interrumpido: {exc}", file=sys.stderr, flush=True)
         return 1
     finally:
-        show_spending(room_meter(state), state["provider"], state["model"], completed=completed)
+        show_spending(room_meter(state, room=room), state["provider"], state["model"], completed=completed)
     print("Para seguir: .\\agent-lab\\creative.ps1 -Room '" + str(room) + "'")
     return 0
 
