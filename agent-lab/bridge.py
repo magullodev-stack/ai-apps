@@ -21,7 +21,7 @@ def executor_env(workspace):
     return env
 
 
-def codex_command(request, workspace, final_path, *, sandbox="workspace-write", schema=None):
+def codex_command(request, workspace, final_path, *, sandbox="workspace-write", schema=None, images=()):
     if request["executor"] == "fake":
         prefix = [sys.executable, str(ROOT / "tests" / "fake_codex.py"), request["fake_mode"]]
     else:
@@ -42,6 +42,8 @@ def codex_command(request, workspace, final_path, *, sandbox="workspace-write", 
         command += ["--model", request["model"]]
     if schema:
         command += ["--output-schema", str(schema)]
+    for image in images:
+        command += ["--image", str(image)]
     if os.name == "nt":
         # CLI-only setting; avoids global sandbox setup or changes to user config.
         command += ["-c", 'windows.sandbox="unelevated"']
@@ -60,12 +62,12 @@ def stop_process_tree(process):
     process.wait(timeout=15)
 
 
-def invoke_codex(request, workspace, artifacts_dir, prompt, *, sandbox="workspace-write", schema=None, auth_env=None):
+def invoke_codex(request, workspace, artifacts_dir, prompt, *, sandbox="workspace-write", schema=None, auth_env=None, images=()):
     final_path = artifacts_dir / "codex-final.txt"
     (artifacts_dir / "codex-prompt.txt").write_text(prompt, encoding="utf-8")
     response = {"status": "failed", "exit_code": None, "message": ""}
     try:
-        command = codex_command(request, workspace, final_path, sandbox=sandbox, schema=schema)
+        command = codex_command(request, workspace, final_path, sandbox=sandbox, schema=schema, images=images)
         write_json(artifacts_dir / "command.json", command)
         with (artifacts_dir / "codex-events.jsonl").open("wb") as stdout:
             with (artifacts_dir / "codex-stderr.txt").open("wb") as stderr:

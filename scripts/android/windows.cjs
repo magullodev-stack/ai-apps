@@ -15,8 +15,9 @@ class Windows {
     this.adb = path.join(this.sdk, 'platform-tools/adb.exe');
   }
   async run(file, args, options = {}) {
-    return (await execute(file, args, { windowsHide: true, encoding: 'utf8', timeout: 15000,
-      maxBuffer: 4 * 1024 * 1024, ...options })).stdout.trim();
+    const { stdout } = await execute(file, args, { windowsHide: true, encoding: 'utf8', timeout: 15000,
+      maxBuffer: 4 * 1024 * 1024, ...options });
+    return Buffer.isBuffer(stdout) ? stdout : stdout.trim();
   }
   ps(command, args = []) { return this.run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command, ...args]); }
   async devices() {
@@ -26,6 +27,31 @@ class Windows {
   async appPid(session) {
     try { return await this.run(this.adb, ['-s', session.serial, 'shell', 'pidof', session.packageName]); }
     catch { return ''; }
+  }
+  async screenOwner(session) {
+    const [appPid, focus, activity, avdName, bootId] = await Promise.all([
+      this.appPid(session),
+      this.run(this.adb, ['-s', session.serial, 'shell', 'dumpsys', 'window', 'windows']),
+      this.run(this.adb, ['-s', session.serial, 'shell', 'dumpsys', 'activity', 'activities']),
+      this.run(this.adb, ['-s', session.serial, 'shell', 'getprop', 'ro.boot.qemu.avd_name']),
+      this.run(this.adb, ['-s', session.serial, 'shell', 'cat', '/proc/sys/kernel/random/boot_id'])
+    ]);
+    const focusedPackage = /mCurrentFocus=Window\{[^\r\n]*?\s([A-Za-z][\w.]*)\//.exec(focus)?.[1];
+    const resumedPackage = /(?:topResumedActivity|mResumedActivity)[^\r\n]*?\s([A-Za-z][\w.]*)\//.exec(activity)?.[1];
+    if (!appPid || focusedPackage !== session.packageName || resumedPackage !== session.packageName ||
+        avdName.toLowerCase() !== session.avdName.toLowerCase() || !bootId) {
+      throw new Error('Experiment application is not the focused/resumed owner of its AVD');
+    }
+    return { appPid, focusedPackage, resumedPackage, avdName, bootId };
+  }
+  async capture(session) {
+    const before = await this.screenOwner(session);
+    const bytes = await this.run(this.adb, ['-s', session.serial, 'exec-out', 'screencap', '-p'], {
+      windowsHide: true, encoding: 'buffer', timeout: 15000, maxBuffer: 16 * 1024 * 1024, env: runtimeEnv()
+    });
+    const after = await this.screenOwner(session);
+    if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error('Screen owner changed during capture');
+    return { bytes, before, after };
   }
   async taskRunning() {
     try { return (await this.ps("(Get-ScheduledTask -TaskName 'AI-APPS Development' -ErrorAction Stop).State")) === 'Running'; }

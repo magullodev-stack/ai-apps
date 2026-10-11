@@ -148,6 +148,36 @@ class Sessions {
         epoch: `${state.token || ''}:${pid}` };
     }));
   }
+  async capture(id) {
+    const session = this.find(id);
+    if (session.kind !== 'flutter') throw new Error('Capture requires an independently managed Flutter session');
+    const check = () => {
+      const current = this.find(id), state = this.state(current), lease = readJson(this.leaseFile(current), {});
+      if (JSON.stringify(current) !== JSON.stringify(session) || !alive(lease.pid) ||
+          lease.removing || state.status !== 'running' || state.token !== lease.token ||
+          fs.existsSync(path.join(this.directory(current), `${lease.token}.stop.json`))) {
+        throw new Error('Capture requires the same running Flutter owner');
+      }
+      return state.token;
+    };
+    const token = check();
+    const image = await this.platform.capture(session);
+    if (check() !== token) throw new Error('Flutter owner changed during capture');
+    const data = image.bytes;
+    if (!Buffer.isBuffer(data) || data.length < 45 || data.length > 16 * 1024 * 1024 ||
+        data.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a' ||
+        data.subarray(12, 16).toString('ascii') !== 'IHDR' ||
+        data.subarray(-8, -4).toString('ascii') !== 'IEND') throw new Error('Invalid Android PNG capture');
+    const directory = path.join(this.directory(session), 'captures');
+    fs.mkdirSync(directory, { recursive: true });
+    const file = path.join(directory, `${crypto.randomUUID()}.png`);
+    fs.writeFileSync(file, data, { flag: 'wx', mode: 0o600 });
+    return { file, sha256: crypto.createHash('sha256').update(data).digest('hex'),
+      width: data.readUInt32BE(16), height: data.readUInt32BE(20),
+      appId: session.appId, serial: session.serial, packageName: session.packageName,
+      avdName: session.avdName, appPid: image.before.appPid, epoch: `${token}:${image.before.appPid}`,
+      before: image.before, after: image.after, capturedAt: new Date().toISOString() };
+  }
   async start(id) {
     const session = this.find(id);
     if (session.kind === 'development-task') {

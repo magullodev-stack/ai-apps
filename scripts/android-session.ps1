@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('List','Register','Start','Stop','Unregister')][string]$Action,
+    [Parameter(Mandatory = $true)][ValidateSet('List','Register','Start','Stop','Unregister','Capture')][string]$Action,
     [string]$AppId, [string]$Label, [string]$Serial, [string]$AvdName,
     [string]$ProjectPath, [string]$PackageName,
     [ValidateSet('flutter','external')][string]$Kind = 'flutter'
@@ -13,7 +13,7 @@ if ($Action -eq 'Register') {
     if ($AvdName) { $definition.avdName = $AvdName }
     if ($ProjectPath) { $definition.projectPath = (Resolve-Path -LiteralPath $ProjectPath).Path }
     $registrationJson = (ConvertTo-Json -Compress -InputObject $definition)
-} elseif ($Action -in @('Start','Stop','Unregister')) {
+} elseif ($Action -in @('Start','Stop','Unregister','Capture')) {
     if (-not $AppId -or -not $Serial) { throw 'Specify -AppId and -Serial.' }
     $arguments += "$AppId@$Serial"
 }

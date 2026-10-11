@@ -1,0 +1,73 @@
+{
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "execute",
+        "finish"
+      ]
+    },
+    "assessment": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "needs_revision"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "instruction": {
+      "type": "string",
+      "maxLength": 16000
+    },
+    "visual": {
+      "type": "object",
+      "properties": {
+        "image_id": {
+          "type": "string"
+        },
+        "observed": {
+          "type": "boolean"
+        },
+        "observations": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 6000
+        },
+        "visible_text": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30
+        },
+        "next_change_reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        }
+      },
+      "required": [
+        "image_id",
+        "observed",
+        "observations",
+        "visible_text",
+        "next_change_reason"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "action",
+    "assessment",
+    "summary",
+    "instruction",
+    "visual"
+  ],
+  "additionalProperties": false
+}

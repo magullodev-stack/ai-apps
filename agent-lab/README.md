@@ -273,6 +273,54 @@ a estas verificaciones adicionales; el 003 conserva el fallo anterior del
 runner y el 004 la recarga confirmada. La eliminación se comprobó con `-WhatIf`,
 sin retirar la instalación que permite inspeccionar estos resultados.
 
+## Percepción visual de Android
+
+En modo autónomo con `-Android`, cada ciclo válido captura automáticamente la
+pantalla después de confirmar el arranque o Hot Reload y las comprobaciones
+Flutter. Se reutiliza `android-session.ps1 -Action Capture`: exige el lease
+Flutter activo y comprueba paquete enfocado y reanudado, PID, AVD y boot ID
+antes y después de `adb exec-out screencap -p`. No cambia la aplicación visible.
+Si otra app, un diálogo del sistema o un reinicio impiden confirmar la propiedad,
+rechaza la captura; nunca captura QuizAI ni `emulator-5554`.
+
+El SDK nativo de ChatDev recibe el PNG mediante `run_workflow(attachments=...)`.
+El proveedor conserva sus bloques `IMAGE`, comprueba los bytes y SHA-256 del
+adjunto copiado por ChatDev y lo envía al mismo proveedor Codex con `--image`.
+Una ruta escrita en el prompt no sustituye al adjunto binario. Solo se adjunta
+la captura del ciclo que se evalúa; las observaciones anteriores permanecen
+como historial textual. La configuración y autenticación del planificador no cambian.
+La referencia oficial del [CLI Codex](https://learn.chatgpt.com/docs/developer-commands?surface=cli)
+documenta este argumento.
+
+El agente evalúa imagen, código, patch, pruebas y estado de Android conjuntamente.
+Su respuesta multimodal exige `visual`: identidad de imagen, declaración de
+recepción, observaciones concretas, texto legible y motivo visual de la siguiente
+instrucción o aceptación. El controlador valida esta respuesta y conserva:
+
+- `cycles/<n>/visual/screen.png`: pantalla real, sin reconstrucción ni edición.
+- `visual/capture.json`: identidad del ciclo, SHA-256, dimensiones y comprobaciones
+  de propietario; `capture_failed` o `unavailable` con el motivo cuando falta.
+- `visual/evaluation.json`: evaluación y decisión, o fallo identificado.
+- `decisions/<n>/visual-input.json`, `provider-input.json`, `visual-reception.json`
+  y `command.json`: evidencia del bloque nativo, envío y respuesta del modelo.
+
+`model_reported_observed` exige envío del adjunto y respuesta visual válida;
+es una declaración del modelo, no una confirmación independiente del servidor.
+Un modelo que rechaza imágenes, dice no verlas, omite la evaluación o devuelve
+una identidad distinta produce `reception_failed` y detiene la ejecución sin
+reintento textual que aparente percepción. Los fallos de captura se comunican
+al agente como ausencia de imagen, para permitir una siguiente reparación;
+la ejecución no termina como `completed` si su evaluación Android final carece
+de imagen observada: registra `vision_unavailable`. Las evaluaciones intermedias
+fallidas permanecen visibles aunque un ciclo posterior se recupere.
+
+Todo se conserva dentro del historial ignorado del experimento. Las capturas
+originales del gestor quedan en su directorio privado de sesión, junto a sus
+logs. Las pruebas offline usan PNG y modelos simulados explícitos:
+`offline_not_evaluated` acredita el recorrido del adjunto, nunca una percepción
+real. Cubren capturas corruptas, identidad ajena, cambios de propietario,
+adjuntos ausentes/externos/obsoletos y rechazos multimodales.
+
 ## Eliminación
 
 Para retirar la instalación, termina primero sus ejecuciones:

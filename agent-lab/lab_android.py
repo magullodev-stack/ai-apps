@@ -120,6 +120,12 @@ class Manager:
         text = (destination / "flutter.stdout.log").read_text(encoding="utf-8", errors="replace") if (destination / "flutter.stdout.log").exists() else ""
         return text.count("Hot reload automatico completado.")
 
+    def capture(self, definition):
+        receipt = self.call("Capture", definition)
+        directory = ROOT.parent / ".ai-apps/android/sessions" / (definition["appId"] + "@" + definition["serial"]) / "captures"
+        path = contained(Path(receipt["file"]), directory)
+        return receipt, path.read_bytes()
+
     def validate(self, project, destination):
         """Host-side checks keep SDK cache writes out of the Codex sandbox."""
         flutter = shutil.which("flutter")

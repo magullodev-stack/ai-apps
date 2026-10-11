@@ -45,6 +45,12 @@ class OfflineManager:
         (destination / "flutter.stdout.log").write_text("Hot reload automatico completado.\n" * self.reloads)
         return self.reloads
 
+    def capture(self, definition):
+        from tests.test_vision import png
+        from vision import png_metadata
+        data = png()
+        return {**definition, **png_metadata(data), "offline": True}, data
+
     def validate(self, project, destination):
         destination.mkdir(parents=True, exist_ok=True)
         return {"passed": True, "checks": [{"name": "offline", "exit_code": 0}]}
@@ -178,6 +184,12 @@ class AndroidTest(unittest.TestCase):
         second_changes = json.loads((result / "cycles/002/changes.json").read_text())
         self.assertFalse(any("generated-by-host" in name for name in second_changes["name_status"]))
         self.assertTrue(client.sessions[0]["active"])
+        for number in ("001", "002"):
+            self.assertTrue((result / "cycles" / number / "visual/screen.png").exists())
+            visual = json.loads((result / "cycles" / number / "visual/evaluation.json").read_text())
+            self.assertEqual(visual["status"], "offline_not_evaluated")
+        messages = json.loads((result / "decisions/001/provider-input.json").read_text())
+        self.assertTrue(any(block["type"] == "image" for msg in messages if isinstance(msg["content"], list) for block in msg["content"]))
 
     def test_offline_never_calls_android_or_flutter_and_runtime_excludes_credentials(self):
         with self.assertRaisesRegex(ValueError, "Offline mode"):

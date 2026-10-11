@@ -24,6 +24,7 @@ ai-apps/
 │   ├── run.ps1                # Ejecuta una instrucción y conserva artefactos.
 │   ├── android.ps1            # Asociación y control Android por experimento.
 │   ├── lab_android.py         # Adaptador al gestor y evidencia por ciclo.
+│   ├── vision.py              # Capturas, adjuntos y evaluación multimodal por ciclo.
 │   ├── uninstall.ps1          # Retira instalación o laboratorio completo.
 │   └── README.md              # Operación, aislamiento e inspección.
 │
@@ -96,7 +97,7 @@ cada ciclo, formula la siguiente instrucción y reutiliza el mismo workspace;
 las decisiones y los cambios de cada iteración se conservan. Dependencias, credenciales y
 ejecuciones se ignoran en Git. Opcionalmente prepara apps Flutter aisladas y
 delega su arranque/parada al gestor Android compartido, con Hot Reload entre
-iteraciones. No depende de QuizAI ni de los servicios de IA. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
+iteraciones, capturas del emulador propio y evaluación visual del agente. No depende de QuizAI ni de los servicios de IA. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
 
 ### apps/
 

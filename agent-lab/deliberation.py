@@ -53,11 +53,15 @@ def workspace_context(workspace):
     return files
 
 
-def decision_from_text(text, *, reviewing):
+def decision_from_text(text, *, reviewing, visual=None):
     import jsonschema
     decision = json.loads(text)
     schema = json.loads((ROOT / "prompts/decision.schema.json").read_text(encoding="utf-8"))
-    jsonschema.validate(decision, schema)
+    if visual:
+        from vision import validate_observation
+        validate_observation(decision, visual)
+    else:
+        jsonschema.validate(decision, schema)
     if not decision["summary"].strip():
         raise ValueError("Decision summary must contain design or evaluation evidence")
     if decision["action"] == "execute" and not decision["instruction"].strip():
@@ -69,7 +73,7 @@ def decision_from_text(text, *, reviewing):
     return decision
 
 
-def workflow(run_dir, artifacts, yaml_name, prompt, variables, session_name):
+def workflow(run_dir, artifacts, yaml_name, prompt, variables, session_name, *, attachments=()):
     previous_cwd = Path.cwd()
     try:
         os.chdir(run_dir)
@@ -78,7 +82,7 @@ def workflow(run_dir, artifacts, yaml_name, prompt, variables, session_name):
                 import runtime.sdk as sdk
                 sdk.OUTPUT_ROOT = artifacts / "chatdev"
                 result = sdk.run_workflow(ROOT / "workflows" / yaml_name, task_prompt=prompt,
-                                          variables=variables, session_name=session_name)
+                                          variables=variables, session_name=session_name, attachments=attachments)
         text = result.final_message.text_content() if result.final_message else ""
         (artifacts / "chatdev-result.txt").write_text(text, encoding="utf-8")
         return text
@@ -95,18 +99,37 @@ def decide(run_dir, manifest, history, settings, codex, offline):
                "consecutive_successes": manifest["consecutive_successes"],
                "remaining_iterations": settings["max_iterations"] - len(history),
                "android": manifest.get("android"), "history": history, "workspace_files": workspace_context(run_dir / "workspace")}
+    visual = history[-1].get("visual") if history else None
+    payload["visual"] = visual
     write_json(artifacts / "input.json", payload)
-    text = workflow(run_dir, artifacts, "deliberate.yaml", json.dumps(payload, ensure_ascii=False), {
-        "PLANNER_PROVIDER": "lab_offline" if offline else settings["provider"],
-        "PLANNER_MODEL": settings["model"], "PLANNER_EXECUTABLE": codex,
-        "PLANNER_WORKSPACE": str(run_dir / "workspace"), "PLANNER_ARTIFACTS": str(artifacts),
-        "PLANNER_TIMEOUT": settings["timeout_seconds"],
-    }, manifest["run_id"] + f"_decision_{len(history):03d}")
-    after = collect_changes(run_dir, manifest["baseline"], artifacts_dir=artifacts)["tree"]
-    if before != after:
-        raise RuntimeError("Deliberating agent changed the workspace")
-    decision = decision_from_text(text, reviewing=bool(history))
-    write_json(artifacts / "decision.json", decision)
+    attachments = []
+    evaluation_file = run_dir / "cycles" / f"{len(history):03d}" / "visual/evaluation.json" if visual else None
+    try:
+        if visual and visual["status"] == "captured":
+            from vision import attachment_path
+            attachments = [attachment_path(run_dir, visual)]
+            write_json(artifacts / "visual-input.json", visual)
+        text = workflow(run_dir, artifacts, "deliberate.yaml", json.dumps(payload, ensure_ascii=False), {
+            "PLANNER_PROVIDER": "lab_offline" if offline else settings["provider"],
+            "PLANNER_MODEL": settings["model"], "PLANNER_EXECUTABLE": codex,
+            "PLANNER_WORKSPACE": str(run_dir / "workspace"), "PLANNER_ARTIFACTS": str(artifacts),
+            "PLANNER_TIMEOUT": settings["timeout_seconds"],
+        }, manifest["run_id"] + f"_decision_{len(history):03d}", attachments=attachments)
+        after = collect_changes(run_dir, manifest["baseline"], artifacts_dir=artifacts)["tree"]
+        if before != after:
+            raise RuntimeError("Deliberating agent changed the workspace")
+        decision = decision_from_text(text, reviewing=bool(history), visual=visual if attachments and not offline else None)
+        write_json(artifacts / "decision.json", decision)
+        if evaluation_file:
+            receipt = json.loads((artifacts / "visual-reception.json").read_text(encoding="utf-8"))
+            write_json(evaluation_file, {**receipt, "capture": visual, "decision": decision,
+                                         "status": receipt["status"] if attachments else "not_observed"})
+    except Exception as exc:
+        if evaluation_file:
+            write_json(evaluation_file, {"status": "reception_failed", "capture": visual,
+                                         "error_type": type(exc).__name__, "error": str(exc),
+                                         "artifacts": str(artifacts.relative_to(run_dir))})
+        raise
     with (run_dir / "decisions.jsonl").open("a", encoding="utf-8") as log:
         log.write(json.dumps({"at": utc_now(), "after_iteration": len(history), **decision}, ensure_ascii=False) + "\n")
     return decision
@@ -174,6 +197,7 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
             git(run_dir / "workspace", "archive", "--format=tar", f"--output={cycle / 'workspace.tar'}", previous_tree)
             patch = (cycle / "changes.patch").read_text(encoding="utf-8", errors="replace")
             android_evidence = None
+            visual = None
             if android_session:
                 android_evidence = android_session.after_cycle(cycle, response["changes"])
                 host_artifacts = cycle / "android"
@@ -184,7 +208,9 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
                 write_json(cycle / "android.json", android_evidence)
                 git(run_dir / "workspace", "archive", "--format=tar", f"--output={cycle / 'workspace.tar'}", previous_tree)
                 manifest["android"] = android_evidence
-            evidence = {"android": android_evidence, "iteration": iteration, "decision": decision, "response": response,
+                from vision import capture
+                visual = capture(android_session, cycle, android_evidence)
+            evidence = {"visual": visual, "android": android_evidence, "iteration": iteration, "decision": decision, "response": response,
                         "patch": patch[:64000], "patch_truncated": len(patch) > 64000}
             history.append(evidence)
             manifest["iterations"].append({"iteration": iteration, "status": response["status"],
@@ -194,6 +220,7 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
             # The native ChatDev agent evaluates every result, including the final cycle.
             decision = decide(run_dir, manifest, history, settings, codex, offline)
             write_json(cycle / "evaluation.json", decision)
+            history[-1]["evaluation"] = decision
             if decision["action"] == "finish":
                 manifest["status"] = "completed" if manifest["consecutive_successes"] >= 2 else "stopped_early"
                 break
@@ -201,6 +228,10 @@ def run_autonomous(instruction, *, source=None, codex="codex", model=None, timeo
             manifest["status"] = "iteration_limit"
         if android_session and manifest["status"] == "completed" and manifest["android"]["status"] != "running":
             manifest["status"] = "android_not_ready"
+        if android_session and manifest["status"] == "completed" and not offline:
+            last_evaluation = json.loads((cycle / "visual/evaluation.json").read_text(encoding="utf-8"))
+            if last_evaluation["status"] != "model_reported_observed":
+                manifest["status"] = "vision_unavailable"
         write_json(run_dir / "final-decision.json", decision)
     except Exception as exc:
         manifest["status"] = "failed"

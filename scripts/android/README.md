@@ -94,6 +94,25 @@ Hot Reload. Su eliminación detiene y retira solo las sesiones de sus workspaces
 herramienta: solo se visualiza; su propietario controla arranque y parada.
 Usa el tipo `flutter` para el control integrado.
 
+## Captura de una aplicación experimental
+
+```powershell
+.\scripts\android-session.ps1 -Action Capture -AppId lab-counter -Serial emulator-5556
+```
+
+Devuelve JSON con archivo PNG privado, SHA-256, dimensiones e identidad del
+propietario. Es una operación de lectura: no inicia Flutter, enfoca ventanas ni
+interactúa con Android. Exige una sesión `flutter` independiente activa, lease
+y token estables; rechaza la sesión de desarrollo y dispositivos reservados.
+Comprueba paquete enfocado/reanudado, PID, AVD y boot ID antes y después de
+la captura binaria. Ante un cambio o una aplicación ajena, falla sin conservar
+sus píxeles. Los PNG confirmados se guardan en `sessions/<id>/captures/`.
+
+agent-lab copia y valida la captura dentro del ciclo y la entrega como adjunto
+multimodal al agente nativo de ChatDev; conserva observación o fallo explícito.
+Consulta su [historial visual](../../agent-lab/README.md#percepción-visual-de-android).
+Las regresiones de `capture-test.cjs` forman parte de `test.ps1` y no usan ADB real.
+
 ## Estado y verificaciones
 
 El registro `.ai-apps/android/sessions.json` y `sessions/<appId>@<serial>/`
