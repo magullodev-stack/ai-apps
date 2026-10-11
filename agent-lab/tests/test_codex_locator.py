@@ -31,6 +31,15 @@ class CodexLocatorTests(unittest.TestCase):
             file.write_bytes(b"dummy binary")
             self.assertEqual(codex_locator.find_codex(str(file)), str(file.resolve()))
 
+    def test_preflight_does_not_create_room_without_codex(self):
+        import creative
+        from unittest.mock import patch
+        with patch.object(sys, "argv", ["creative.py", "--seed-zip", "missing.zip",
+                                         "--flutter", "--build"]), \
+             patch.object(creative, "find_codex", return_value=None), \
+             patch.object(creative, "create_room", side_effect=AssertionError("created")):
+            self.assertEqual(creative.main(), 2)
+
     def test_does_not_resolve_arbitrary_names_into_vscode_binary(self):
         with tempfile.TemporaryDirectory() as temp:
             with patch.object(codex_locator.shutil, "which", return_value=None):

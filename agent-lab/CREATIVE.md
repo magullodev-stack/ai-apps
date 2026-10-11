@@ -27,3 +27,17 @@ nueva ejecución.
 El sandbox protege el repositorio AI-APPS, QuizAI y las credenciales externas.
 Se utiliza el ejecutor Codex ya instalado; este modo no requiere el servicio
 Dart de IA ni la cadena ChatDev anterior.
+
+## Codex en Windows
+
+No es necesario añadir Codex manualmente a PATH si la extensión de VS Code
+incluye un `codex.exe` nativo. El laboratorio busca primero en PATH y después en
+las instalaciones habituales de la extensión OpenAI de VS Code, Insiders o Cursor.
+Ejecutar `.\agent-lab\creative.ps1 -Probe` comprueba el ejecutable local sin
+consumir tokens ni crear una sala.
+
+El mensaje «Codex could not start / The extension could not start its user
+interface» se refiere a la interfaz de VS Code, que se diagnostica por separado.
+La presencia del CLI puede permitir utilizar el laboratorio incluso cuando
+la vista de VS Code falla. Si el ejecutable está ausente o no arranca, el
+laboratorio lo explica y se detiene sin crear un experimento.
