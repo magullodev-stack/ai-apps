@@ -1,5 +1,7 @@
 # agent-lab — ChatDev 2.0 → Codex
 
+El laboratorio creativo continuo se documenta en [CREATIVE.md](CREATIVE.md).
+
 Laboratorio independiente: un agente real de ChatDev recibe una instrucción,
 decide qué construir, delega en Codex y evalúa sus resultados. Formula la siguiente
 instrucción y vuelve a ejecutarla sobre el mismo código aislado, sin intervención

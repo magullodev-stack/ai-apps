@@ -241,6 +241,9 @@ def main():
     args = parser.parse_args()
     if not (1 <= args.rounds <= 100 and 60 <= args.timeout <= 3600):
         parser.error("Máximo de 1 a 100 ciclos; tiempo por ciclo de 60 a 3600 segundos")
+    if not (args.probe or args.list_rooms or args.discard or args.transcript or args.cost_only):
+        if not shutil.which(args.codex):
+            raise FileNotFoundError("No se encuentra Codex en PATH; indica -CodexPath")
     if args.list_rooms:
         for p in rooms():
             state = json.loads((p / "room.json").read_text(encoding="utf-8"))

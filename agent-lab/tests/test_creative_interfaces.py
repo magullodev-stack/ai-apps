@@ -1,74 +1,70 @@
-"""Offline contracts for creative agents' native tool paths and model format."""
-import json
+"""Offline regression tests for the single creative coding agent."""
 import sys
-from zipfile import ZipFile
 import tempfile
 import unittest
+from hashlib import sha256
 from pathlib import Path
 from unittest.mock import patch
+from zipfile import ZipFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import shared_ai
 import creative
-from creative_tools import studio_tools
 
 
-class CreativeInterfacesTest(unittest.TestCase):
-    def test_readable_paths_match_listed_paths(self):
+class CreativeLoopTest(unittest.TestCase):
+    def test_zip_preserves_original_image_and_full_text(self):
         with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            (root / "workspace" / "lib").mkdir(parents=True)
-            (root / "workspace" / "lib" / "main.dart").write_text("void main() {}")
-            with patch.object(studio_tools, "_room", return_value=root), \
-                 patch.object(studio_tools, "_announce", side_effect=lambda _, value: value):
-                self.assertEqual(studio_tools._path("."), root / "workspace")
-                self.assertEqual(studio_tools._path("main.dart"),
-                                 root / "workspace" / "lib" / "main.dart")
-                self.assertEqual(studio_tools._path("lib/main.dart"),
-                                 root / "workspace" / "lib" / "main.dart")
-                self.assertEqual(studio_tools._path("main.dart", writable=True),
-                                 root / "workspace" / "lib" / "main.dart")
-                self.assertIn("lib/main.dart", studio_tools.room_list("lib"))
-                self.assertIn("lib/", studio_tools.room_list("."))
-                self.assertEqual(studio_tools.room_read("main.dart"), "void main() {}")
-                for name in ("../secret.dart", "/etc/passwd", "C:/secret.dart"):
-                    with self.subTest(name=name), self.assertRaises(ValueError):
-                        studio_tools._path(name, writable=True)
+            archive = Path(folder) / "seed.zip"
+            image = b"\x89PNG\r\n\x1a\nCONTENTS"
+            text = "# Manifest\nUn texto sin transformaciones."
+            with ZipFile(archive, "w") as file:
+                file.writestr("imagen.png", image)
+                file.writestr("texto.md", text)
+            result = creative.read_zip(archive)
+            self.assertEqual(result, (image, text))
 
-    def test_bad_model_format_does_not_fake_a_tool_or_abort_round(self):
-        usage = {"inputTokens": 51, "outputTokens": 7}
-        with patch.object(shared_ai, "_request", return_value={"text": "{invalid", "usage": usage}):
-            result, returned_usage = shared_ai.generate_action("gpt-5.6-luna", "explora")
-        self.assertEqual(result["tool"], "none")
-        self.assertIn("Error de formato", result["speech"])
-        self.assertEqual(returned_usage, usage)
-
-    def test_seed_archive_keeps_binary_and_text_distinct(self):
+    def test_source_detection_ignores_flutter_generated_files(self):
         with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / "seed.zip"
-            with ZipFile(path, "w") as z:
-                z.writestr("imagen.png", b"\x89PNG\r\n\x1a\nDATA")
-                z.writestr("texto.md", "# Texto propio")
-            image, text = creative.read_seed_zip(path)
-        self.assertEqual(image, b"\x89PNG\r\n\x1a\nDATA")
-        self.assertEqual(text, "# Texto propio")
+            workspace = Path(folder)
+            (workspace / "lib").mkdir()
+            (workspace / ".dart_tool").mkdir()
+            (workspace / "lib/main.dart").write_text("void main() {}")
+            before = creative.snapshot(workspace)
+            (workspace / ".dart_tool/build").write_text("cache")
+            (workspace / "lib/engine.dart").write_text("class Engine {}")
+            after = creative.snapshot(workspace)
+            self.assertEqual(creative.changed(before, after), ["lib/engine.dart"])
 
-    def test_service_receives_original_image_field(self):
-        action = {"speech": "Veo la referencia", "tool": "none", "path": "", "content": ""}
-        reference = {"mimeType": "image/png", "data": "AAECAw=="}
-        with patch.object(shared_ai, "_request",
-                          return_value={"text": json.dumps(action), "usage": {}}) as request:
-            result, _ = shared_ai.generate_action("gpt-5.6-luna", "mi texto", image=reference)
-        self.assertEqual(result, action)
-        transmitted = json.loads(request.call_args.kwargs["data"])
-        self.assertEqual(transmitted["input"], "mi texto")
-        self.assertEqual(transmitted["image"], reference)
+    def test_iterations_keep_original_brief_and_real_work_context(self):
+        state = {"idea": "# SpinAI\nEl usuario crea.", "feedback": "",
+                 "cycles": [{"number": 1, "message": "Motor físico iniciado",
+                             "changed": ["lib/engine.dart"], "diagnostic": "Flutter ok"}]}
+        prompt = creative.build_prompt(state)
+        self.assertIn("# SpinAI", prompt)
+        self.assertIn("Motor físico iniciado", prompt)
+        self.assertIn("Flutter ok", prompt)
+        self.assertIn("Escribe y modifica código", prompt)
 
-    def test_valid_model_action_is_not_changed(self):
-        action = {"speech": "Voy a explorar", "tool": "room_list", "path": ".", "content": ""}
-        with patch.object(shared_ai, "_request", return_value={"text": json.dumps(action), "usage": {}}):
-            actual, _ = shared_ai.generate_action("gpt-5.6-luna", "explora")
-        self.assertEqual(actual, action)
+    def test_agent_receives_original_image_and_can_modify_multiple_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            room = Path(folder)
+            workspace = room / "workspace"
+            (workspace / "lib").mkdir(parents=True)
+            data = b"original binary image"
+            (room / "seed.png").write_bytes(data)
+            state = {"idea": "Motor de giro", "cycles": [], "model": None,
+                     "feedback": "", "seed_image": {"file": "seed.png", "sha256": sha256(data).hexdigest()}}
+            def code_change(request, workspace, artifacts, prompt, **kwargs):
+                self.assertEqual(request["network"], True)
+                self.assertEqual(kwargs["images"], [room / "seed.png"])
+                (workspace / "lib" / "engine.dart").write_text("class Engine {}")
+                (workspace / "pubspec.yaml").write_text("dependencies: {}")
+                return {"status": "completed", "message": "Dos archivos escritos"}
+            with patch.object(creative, "invoke_codex", side_effect=code_change), \
+                 patch.object(creative, "validate", return_value="pub get ok"):
+                result = creative.cycle(room, state, 1, "codex", 900)
+            self.assertEqual(result["changed"], ["lib/engine.dart", "pubspec.yaml"])
+            self.assertEqual(len(state["cycles"]), 1)
 
 
 if __name__ == "__main__":
