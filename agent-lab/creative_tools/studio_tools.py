@@ -43,6 +43,12 @@ def _path(relative: str, *, writable=False):
     return target
 
 
+def _announce(name: str, result: str):
+    from creative_live import publish
+    publish("tool", name=name, result=result[:260])
+    return result
+
+
 def room_list(directory: str = "lib") -> str:
     """Explora los archivos de Flutter dentro del experimento, sin salir del workspace."""
     target = _path(directory)
@@ -53,7 +59,7 @@ def room_list(directory: str = "lib") -> str:
         if f.is_symlink() or (hasattr(f, "is_junction") and f.is_junction()):
             continue
         items.append(f.name + ("/" if f.is_dir() else ""))
-    return "\n".join(items[:70]) or "(vacío)"
+    return _announce("room_list", "\n".join(items[:70]) or "(vacío)")
 
 
 def room_read(path: str) -> str:
@@ -61,7 +67,9 @@ def room_read(path: str) -> str:
     target = _path(path)
     if target.suffix != ".dart" or not target.is_file():
         return "No existe ese archivo Dart."
-    return target.read_text(encoding="utf-8")[:16000]
+    contents = target.read_text(encoding="utf-8")[:16000]
+    _announce("room_read", path + f" ({len(contents)} caracteres)")
+    return contents
 
 
 def room_write(path: str, content: str) -> str:
@@ -76,7 +84,7 @@ def room_write(path: str, content: str) -> str:
         return "Imports no permitidos. Solo Flutter SDK y dart:math/ui/async."
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
-    return "Escrito " + str(target.relative_to(_room() / "workspace")) + " (" + str(len(content)) + " caracteres)."
+    return _announce("room_write", "Escrito " + str(target.relative_to(_room() / "workspace")) + " (" + str(len(content)) + " caracteres).")
 
 
 def room_analyze() -> str:
@@ -104,7 +112,10 @@ def room_analyze() -> str:
             cwd=_room() / "workspace", env=env, capture_output=True,
             text=True, encoding="utf-8", errors="replace", timeout=100,
         )
-        return "flutter analyze (exit " + str(p.returncode) + "):\n" + (p.stdout + p.stderr)[-3500:]
+        output = "flutter analyze (exit " + str(p.returncode) + "):\n" + (p.stdout + p.stderr)[-3500:]
+        _announce("room_analyze", "salida " + str(p.returncode) +
+                  (": " + (p.stdout + p.stderr)[-160:] if p.returncode else ""))
+        return output
     except (OSError, subprocess.TimeoutExpired) as exc:
         return "flutter analyze no se ha podido completar: " + type(exc).__name__
 
@@ -115,7 +126,7 @@ def room_launch() -> str:
         return "Android no está autorizado para esta sesión; continúa editando código."
     from lab_android import AndroidExperiment
     state = AndroidExperiment(_room()).start()
-    return "Android: " + str(state.get("status", "desconocido"))
+    return _announce("room_launch", "Android: " + str(state.get("status", "desconocido")))
 
 
 def room_observe() -> str:
@@ -142,4 +153,5 @@ def room_observe() -> str:
             result += "\nNo puedo interpretar los píxeles con esta conexión de IA."
         except (OSError, RuntimeError, ValueError):
             result += "\nNo se ha podido obtener la captura."
+    _announce("room_observe", "Android " + str(status.get("status", "desconocido")))
     return result[-3800:]
