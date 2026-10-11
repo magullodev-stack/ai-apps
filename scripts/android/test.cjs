@@ -46,6 +46,11 @@ async function run() {
   assert.ok(fs.existsSync(path.join(dir, `${lease.token}.stop.json`)), 'Stop is an ownership-token request, not a PID kill');
   fs.unlinkSync(service.leaseFile(app));
   await stop;
+  writeJson(service.leaseFile(app), lease);
+  const failedStop = service.stop(key(app));
+  writeJson(path.join(dir, 'state.json'), { status: 'failed', token: lease.token });
+  fs.unlinkSync(service.leaseFile(app));
+  await assert.rejects(failedStop, /stop failed/, 'A failed process/app stop is never reported as success');
   assert.equal(calls.includes('stop-task'), false, 'Stopping another app does not touch AI-APPS Development');
   await service.start('quizai@emulator-5554');
   assert.equal(calls.includes('start-task'), false, 'Starting active legacy task is a no-op');

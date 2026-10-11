@@ -66,12 +66,17 @@ async function run(root, id, token) {
     } while (!stopRequested());
     state.status = 'stopped';
   } catch (error) {
-    state.status = stopRequested() ? 'stopped' : 'failed';
-    if (!stopRequested()) state.error = String(error.message || error);
+    state.status = stopRequested() && error.name === 'AbortError' ? 'stopped' : 'failed';
+    if (state.status === 'failed') state.error = String(error.message || error);
     if (runner && runner.exitCode === null) await platform.killTree(runner).catch(() => {});
   } finally {
     clearInterval(bootWatcher);
     if (state.status === 'starting' && stopRequested()) state.status = 'stopped';
+    if (stopRequested() && !runner) {
+      try {
+        if ((await platform.devices()).includes(session.serial)) await platform.stopApp(session);
+      } catch (error) { state.status = 'failed'; state.error = String(error.message || error); }
+    }
     state.finishedAt = new Date().toISOString();
     save();
     if (ownsLease()) fs.unlinkSync(leaseFile);

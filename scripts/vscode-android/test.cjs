@@ -7,6 +7,7 @@ fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
 fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Test');
 fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
+let treeProvider;
 let entries = [
   { appId: 'quizai', label: 'QuizAI', serial: 'emulator-5554', id: 'quizai@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' },
   { appId: 'lab', label: 'Lab', serial: 'emulator-5556', id: 'lab@emulator-5556', kind: 'flutter', active: true, deviceReady: true, status: 'running', epoch: '2:200' }
@@ -25,12 +26,13 @@ const vscode = {
   workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: root } }],
     getConfiguration: () => ({ update: async () => {} }) },
   ConfigurationTarget: { Workspace: 2 }, StatusBarAlignment: { Left: 1 },
+  TreeItem: class { constructor(label) { this.label = label; } }, ThemeIcon: class {},
   EventEmitter: class { constructor() { this.event = () => {}; } fire() {} dispose() {} },
   extensions: { getExtension: () => ({ activate: async () => viewer }) },
   commands: { registerCommand: (name, callback) => { commands.set(name, callback); return disposable(); } },
   window: { createOutputChannel: () => ({ ...disposable(), appendLine() {} }),
     showErrorMessage: message => { throw new Error(message); },
-    createTreeView: () => disposable(),
+    createTreeView: (_, options) => { treeProvider = options.treeDataProvider; return disposable(); },
     createStatusBarItem: () => ({ ...disposable(), show() {} }),
     showQuickPick: async (choices, options) => options.canPickMany ? choices : choices[0] }
 };
@@ -46,6 +48,8 @@ async function run() {
   const context = { subscriptions: [] };
   const api = await sandbox.module.exports.activate(context);
   assert.equal(panels.size, 2, 'All active applications recovered at activation');
+  assert.equal(treeProvider.getTreeItem({ ...entries[1], active: false, status: 'starting' }).contextValue,
+    'androidRunning', 'A starting session exposes Stop instead of a second Start');
   assert.equal(calls.some(call => call[0] !== 'open'), false, 'Editor startup never starts Flutter or task');
   await api.refresh();
   assert.equal(calls.length, 2, 'Polling does not duplicate views');

@@ -101,7 +101,8 @@ async function activate(context) {
       const item = new vscode.TreeItem(`${session.label} · ${session.serial}`);
       item.description = session.status;
       item.tooltip = `${session.appId} · ${session.serial}\n${session.projectPath || 'Sesión externa'}`;
-      item.contextValue = session.kind === 'external' ? 'androidExternal' : session.active ? 'androidRunning' : 'androidStopped';
+      item.contextValue = session.kind === 'external' ? 'androidExternal' :
+        session.active || ['starting', 'stopping'].includes(session.status) ? 'androidRunning' : 'androidStopped';
       item.iconPath = new vscode.ThemeIcon(session.active ? 'device-mobile' : 'circle-outline');
       item.command = { command: 'aiAppsAndroid.open', title: 'Visualizar sesión', arguments: [session] };
       return item;

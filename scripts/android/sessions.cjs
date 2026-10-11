@@ -166,7 +166,10 @@ class Sessions {
     const dir = this.directory(session);
     writeJson(path.join(dir, `${lease.token}.stop.json`), { token: lease.token });
     for (let attempt = 0; attempt < 840; attempt++) {
-      if (readJson(this.leaseFile(session), null)?.token !== lease.token) return;
+      if (readJson(this.leaseFile(session), null)?.token !== lease.token) {
+        if (this.state(session).status === 'failed') throw new Error('Session stop failed; inspect its private logs');
+        return;
+      }
       await delay(250);
     }
     throw new Error('Session did not acknowledge stop; inspect its private logs');
