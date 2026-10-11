@@ -14,8 +14,33 @@ function Write-SessionLog([string]$Message) {
     )
 }
 
-$stage = 'Android'
+$stage = 'Sincronizacion'
 try {
+    # Repository-wide background service, independent of any individual app.
+    # auto-sync-dev.ps1 already holds an exclusive lock; duplicate launchers exit.
+    $autoSyncScript = Join-Path $PSScriptRoot 'auto-sync-dev.ps1'
+    if (Test-Path -LiteralPath $autoSyncScript) {
+        try {
+            $powershellCommand = Get-Command powershell.exe -ErrorAction Stop
+            Start-Process -FilePath $powershellCommand.Source `
+                -ArgumentList @(
+                    '-NoProfile',
+                    '-NonInteractive',
+                    '-ExecutionPolicy', 'Bypass',
+                    '-File', ('"' + $autoSyncScript + '"')
+                ) `
+                -WorkingDirectory $repo `
+                -WindowStyle Hidden | Out-Null
+            Write-SessionLog 'Sincronizacion continua de dev solicitada.'
+        } catch {
+            # Sync is independent: do not prevent Android or QuizAI from starting.
+            Write-SessionLog ('Sincronizacion no iniciada: {0}.' -f $_.Exception.GetType().Name)
+        }
+    } else {
+        Write-SessionLog 'Sincronizacion no iniciada: script ausente.'
+    }
+
+    $stage = 'Android'
     Write-SessionLog 'Preparando Android.'
     & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
     Write-SessionLog 'Android preparado: emulator-5554.'
