@@ -252,25 +252,26 @@ def materialize(room, state, idea):
         )
     print("\nLuna está materializando la experiencia en Flutter...", flush=True)
     code, usage = generate_flutter(state["model"], prompt)
-    import re as _re
-    imports = _re.findall(r"^\\s*(?:import|export|part)\\s+['\"]([^'\"]+)['\"]", code, flags=_re.M)
-    allowed = {"package:flutter/material.dart", "package:flutter/widgets.dart",
-               "package:flutter/painting.dart", "package:flutter/animation.dart",
-               "package:flutter/gestures.dart", "package:flutter/scheduler.dart",
-               "dart:math", "dart:ui", "dart:async"}
-    if any(uri not in allowed for uri in imports) or _re.search(
-        r"\\b(?:Process|HttpClient|Socket|File\\s*\\(|Directory\\s*\\(|Isolate)\\b", code
-    ):
-        raise RuntimeError("Luna intentó incluir dependencias o capacidades ajenas al experimento.")
-    if "void main(" not in code or "runApp(" not in code:
-        raise RuntimeError("Luna no devolvió una aplicación Flutter ejecutable.")
-    file.write_text(code, encoding="utf-8")
+    # The provider has already charged for generation, even if we reject its code.
     state.setdefault("creations", []).append({
         "model": state["model"],
         "usage": {"input": usage.get("inputTokens"), "output": usage.get("outputTokens")},
         "idea": idea,
     })
     save(room, state)
+    import re as _re
+    imports = _re.findall(r"^\s*(?:import|export|part)\s+['\"]([^'\"]+)['\"]", code, flags=_re.M)
+    allowed = {"package:flutter/material.dart", "package:flutter/widgets.dart",
+               "package:flutter/painting.dart", "package:flutter/animation.dart",
+               "package:flutter/gestures.dart", "package:flutter/scheduler.dart",
+               "dart:math", "dart:ui", "dart:async"}
+    if any(uri not in allowed for uri in imports) or _re.search(
+        r"\b(?:Process|HttpClient|Socket|File\s*\(|Directory\s*\(|Isolate)\b", code
+    ):
+        raise RuntimeError("Luna intentó incluir dependencias o capacidades ajenas al experimento.")
+    if "void main(" not in code or "runApp(" not in code:
+        raise RuntimeError("Luna no devolvió una aplicación Flutter ejecutable.")
+    file.write_text(code, encoding="utf-8")
     print("Experiencia creada en " + str(file), flush=True)
     return True
 
