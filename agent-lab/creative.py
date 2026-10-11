@@ -12,6 +12,7 @@ import uuid
 from zipfile import ZipFile
 
 from bridge import invoke_codex
+from codex_locator import find_codex, check_codex
 from lab import CREATIVE_RUNS, RUNS, prepare_workspace
 
 
@@ -241,9 +242,18 @@ def main():
     args = parser.parse_args()
     if not (1 <= args.rounds <= 100 and 60 <= args.timeout <= 3600):
         parser.error("Máximo de 1 a 100 ciclos; tiempo por ciclo de 60 a 3600 segundos")
-    if not (args.probe or args.list_rooms or args.discard or args.transcript or args.cost_only):
-        if not shutil.which(args.codex):
-            raise FileNotFoundError("No se encuentra Codex en PATH; indica -CodexPath")
+    if not (args.list_rooms or args.discard or args.transcript or args.cost_only):
+        executable = find_codex(args.codex)
+        if not executable:
+            print("Codex no está disponible: no aparece ni en PATH ni dentro de la "
+                  "extensión instalada de VS Code. El ejecutable debe estar instalado; "
+                  "no se ha creado ninguna sala.", file=sys.stderr)
+            return 2
+        error = check_codex(executable)
+        if error:
+            print(error + " No se ha creado ninguna sala.", file=sys.stderr)
+            return 2
+        args.codex = executable
     if args.list_rooms:
         for p in rooms():
             state = json.loads((p / "room.json").read_text(encoding="utf-8"))
@@ -251,8 +261,9 @@ def main():
                   len(state.get("cycles", [])), "ciclos")
         return 0
     if args.probe:
-        print("Codex:", shutil.which(args.codex) or "No encontrado")
-        return 0 if shutil.which(args.codex) else 2
+        print("Codex CLI encontrado y ejecutable:", args.codex)
+        print("La interfaz de la extensión de VS Code se diagnostica por separado.")
+        return 0
     continuing = bool(args.latest or args.room)
     if args.latest and args.room:
         parser.error("Escoge -Latest o -Room")
@@ -281,8 +292,7 @@ def main():
         raise ValueError("Esta sala pertenece al laboratorio anterior de tres agentes")
     if not args.build:
         parser.error("Utiliza -Build para continuar")
-    if not shutil.which(args.codex):
-        raise FileNotFoundError("No se encuentra codex.exe en PATH; indica -CodexPath")
+    # The binary was located and checked before creating or reopening a room.
     if args.model:
         state["model"] = args.model
     if args.feedback:

@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 from lab import ROOT, RUNS, collect_changes, utc_now, write_json
+from codex_locator import find_codex
 
 
 def executor_env(workspace):
@@ -25,9 +26,9 @@ def codex_command(request, workspace, final_path, *, sandbox="workspace-write", 
     if request["executor"] == "fake":
         prefix = [sys.executable, str(ROOT / "tests" / "fake_codex.py"), request["fake_mode"]]
     else:
-        executable = shutil.which(request["codex"])
+        executable = find_codex(request["codex"])
         if not executable:
-            raise FileNotFoundError("Codex executable missing; pass -CodexPath or add codex to PATH")
+            raise FileNotFoundError("Codex CLI unavailable (PATH and VS Code extension checked)")
         if os.name == "nt" and Path(executable).suffix.lower() != ".exe":
             raise ValueError("Use the native codex.exe; shell wrappers are not supported")
         prefix = [executable]
