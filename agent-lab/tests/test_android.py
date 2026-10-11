@@ -161,7 +161,10 @@ class AndroidTest(unittest.TestCase):
         with patch.dict(os.environ, {"CODEX_API_KEY": "secret", "API_KEY": "secret", "GIT_DIR": "secret", "AI_APPS_AI_API_KEY": "secret"}):
             self.assertFalse(set(runtime_env()) & {"CODEX_API_KEY", "API_KEY", "GIT_DIR", "AI_APPS_AI_API_KEY"})
         run, _ = self.experiment()
-        with patch("lab_android.subprocess.run", return_value=subprocess.CompletedProcess([], 0, '[{"appId":"test"}]', "")) as call:
+        def manager_output(*args, **kwargs):
+            kwargs["stdout"].write(b'[{"appId":"test"}]')
+            return subprocess.CompletedProcess([], 0)
+        with patch("lab_android.subprocess.run", side_effect=manager_output) as call:
             result = Manager(run).call("List")
             self.assertEqual(result[0]["appId"], "test")
             self.assertIn(str(ROOT.parent / "scripts/android-session.ps1"), call.call_args.args[0])

@@ -94,12 +94,19 @@ class Manager:
         number = len(list(self.logs.glob("*.json"))) + 1
         record = {"at": utc_now(), "action": action, "command": command}
         try:
-            result = subprocess.run(command, cwd=self.run_dir, env=runtime_env(), capture_output=True,
-                                    timeout=240, encoding="utf-8", errors="replace")
-            record.update({"exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr})
+            # Detached native Windows descendants can retain inherited pipe handles.
+            # Files let us wait for the CLI process without waiting for pipe EOF.
+            stdout_path = self.logs / f"{number:04d}-{action}.stdout.log"
+            stderr_path = self.logs / f"{number:04d}-{action}.stderr.log"
+            with stdout_path.open("wb") as out, stderr_path.open("wb") as err:
+                result = subprocess.run(command, cwd=self.run_dir, env=runtime_env(),
+                                        stdout=out, stderr=err, timeout=240)
+            stdout = stdout_path.read_text(encoding="utf-8", errors="replace")
+            stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
+            record.update({"exit_code": result.returncode, "stdout": stdout, "stderr": stderr})
             if result.returncode:
-                raise RuntimeError(f"Android manager {action} failed: {result.stderr.strip()}")
-            return json.loads(result.stdout.lstrip("\ufeff"))
+                raise RuntimeError(f"Android manager {action} failed: {stderr.strip()}")
+            return json.loads(stdout.lstrip("\ufeff"))
         finally:
             write_json(self.logs / f"{number:04d}-{action}.json", record)
 
