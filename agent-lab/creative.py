@@ -22,7 +22,8 @@ VOICES = (
 
 COMMON = (
     "Compartes con otros agentes un espacio de exploración. "
-    "No hay encargo artístico, tema ni resultado predeterminado. "
+    "Si la persona ha aportado una imagen y un texto, ambos son referencias originales "
+    "que debes interpretar directamente y respetar. "
     "Puedes conversar, disentir, experimentar y utilizar las herramientas "
     "disponibles cuando lo consideres interesante. Tampoco hay obligación de programar. "
     "Habla en español con naturalidad."
