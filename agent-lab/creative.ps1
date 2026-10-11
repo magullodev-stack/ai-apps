@@ -2,6 +2,7 @@ param(
     [string]$Idea,
     [string]$TextFile,
     [string]$Image,
+    [string]$SeedZip,
     [string]$Room,
     [switch]$Latest,
     [switch]$Lista,
@@ -32,6 +33,7 @@ $arguments = @('-B', (Join-Path $PSScriptRoot 'creative.py'), '--rounds', "$Roun
 if ($Idea) { $arguments += @('--idea', $Idea) }
 if ($TextFile) { $arguments += @('--text-file', (Resolve-Path -LiteralPath $TextFile).Path) }
 if ($Image) { $arguments += @('--image', (Resolve-Path -LiteralPath $Image).Path) }
+if ($SeedZip) { $arguments += @('--seed-zip', (Resolve-Path -LiteralPath $SeedZip).Path) }
 if ($Feedback) { $arguments += @('--feedback', $Feedback) }
 if ($Room) { $arguments += @('--room', (Resolve-Path -LiteralPath $Room).Path) }
 if ($Latest) { $arguments += '--latest' }

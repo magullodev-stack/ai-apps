@@ -197,7 +197,7 @@ void main() {
     ]) {
       expect((await call(payload: {...body, field: null})).status, 400);
     }
-    expect((await call(raw: 'x' * 65537)).status, 413);
+    expect((await call(raw: 'x' * (5 * 1024 * 1024 + 1))).status, 413);
     expect((await call(payload: {...body, 'input': 'x' * 32001})).status, 400);
   });
 

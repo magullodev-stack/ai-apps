@@ -1,6 +1,7 @@
 """Offline contracts for creative agents' native tool paths and model format."""
 import json
 import sys
+from zipfile import ZipFile
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,6 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import shared_ai
+import creative
 from creative_tools import studio_tools
 
 
@@ -40,6 +42,16 @@ class CreativeInterfacesTest(unittest.TestCase):
         self.assertEqual(result["tool"], "none")
         self.assertIn("Error de formato", result["speech"])
         self.assertEqual(returned_usage, usage)
+
+    def test_seed_archive_keeps_binary_and_text_distinct(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "seed.zip"
+            with ZipFile(path, "w") as z:
+                z.writestr("spinai/imagen.png", b"\x89PNG\r\n\x1a\nDATA")
+                z.writestr("spinai/manifiesto.md", "# Texto propio")
+            image, text = creative.read_seed_zip(path)
+        self.assertEqual(image, b"\x89PNG\r\n\x1a\nDATA")
+        self.assertEqual(text, "# Texto propio")
 
     def test_valid_model_action_is_not_changed(self):
         action = {"speech": "Voy a explorar", "tool": "room_list", "path": ".", "content": ""}

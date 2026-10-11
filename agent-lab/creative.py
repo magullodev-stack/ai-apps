@@ -10,6 +10,7 @@ import shutil
 from pathlib import Path
 import sys
 import uuid
+from zipfile import ZipFile, BadZipFile
 
 from lab import ROOT, RUNS, CREATIVE_RUNS, git, prepare_workspace, verify_chatdev
 
@@ -85,6 +86,24 @@ def list_rooms():
     print("\n-Lista para ver experiencias, -Latest -CostOnly para el precio más reciente.")
 
 
+def read_seed_zip(path):
+    """Read only the original image and manifesto from a bounded user bundle."""
+    source = Path(path).expanduser().resolve(strict=True)
+    if not source.is_file() or source.stat().st_size > 5 * 1024 * 1024:
+        raise ValueError("El paquete de entrada no es válido (máximo 5 MiB)")
+    names = {"spinai/imagen.png", "spinai/manifiesto.md"}
+    with ZipFile(source) as bundle:
+        infos = bundle.infolist()
+        if len(infos) != 2 or {item.filename for item in infos} != names:
+            raise ValueError("El paquete debe contener únicamente imagen.png y manifiesto.md")
+        limits = {"spinai/imagen.png": 3 * 1024 * 1024, "spinai/manifiesto.md": 30000}
+        if any(item.file_size > limits[item.filename] for item in infos):
+            raise ValueError("El paquete contiene un archivo demasiado grande")
+        image = bundle.read("spinai/imagen.png")
+        description = bundle.read("spinai/manifiesto.md").decode("utf-8")
+    return image, description
+
+
 def open_room(args):
     CREATIVE_RUNS.mkdir(parents=True, exist_ok=True)
     if args.room:
@@ -103,7 +122,7 @@ def open_room(args):
         return room, state
     if not (args.idea and args.idea.strip()) and not (args.flutter and args.build):
         raise ValueError("Indica -Idea o inicia una exploración libre con -Flutter -Build")
-    seed_data = None
+    seed_data = getattr(args, "seed_bytes", None)
     seed_metadata = None
     if args.image:
         from vision import png_metadata
@@ -113,6 +132,8 @@ def open_room(args):
         if source.stat().st_size > 3 * 1024 * 1024:
             raise ValueError("La referencia supera el límite de 3 MiB")
         seed_data = source.read_bytes()
+    if seed_data is not None:
+        from vision import png_metadata
         seed_metadata = png_metadata(seed_data)
     room = CREATIVE_RUNS / ("creative_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "_" + uuid.uuid4().hex[:6])
     room.mkdir()
@@ -376,6 +397,7 @@ def main():
     parser.add_argument("--idea")
     parser.add_argument("--text-file", help="Texto original de la persona en UTF-8")
     parser.add_argument("--image", help="PNG original aportado por la persona")
+    parser.add_argument("--seed-zip", help="Paquete con PNG original y manifiesto UTF-8")
     parser.add_argument("--room")
     parser.add_argument("--latest", action="store_true", help="Última experiencia, sin buscar su carpeta")
     parser.add_argument("--list-rooms", action="store_true", help="Mostrar experiencias sin archivos internos")
@@ -390,6 +412,13 @@ def main():
     parser.add_argument("--probe", action="store_true", help="Comprobar el servicio de IA compartido")
     parser.add_argument("--cost-only", action="store_true", help="Mostrar el precio de una sala sin hacer llamadas")
     args = parser.parse_args()
+    if args.seed_zip:
+        if args.idea or args.text_file or args.image or args.room or args.latest:
+            parser.error("--seed-zip inicia una sala nueva y no admite otras semillas")
+        try:
+            args.seed_bytes, args.idea = read_seed_zip(args.seed_zip)
+        except (OSError, ValueError, BadZipFile, UnicodeDecodeError) as exc:
+            parser.error("Semilla ZIP no válida: " + str(exc))
     if args.text_file:
         if args.idea or args.room or args.latest:
             parser.error("--text-file inicia una sala nueva y no combina con --idea")
@@ -460,7 +489,7 @@ def main():
     from shared_ai import ensure_running
     try:
         health = ensure_running()
-        if args.image and not health.get("capabilities", {}).get("imageInput"):
+        if (args.image or args.seed_zip) and not health.get("capabilities", {}).get("imageInput"):
             raise RuntimeError("El servicio Dart sigue ejecutando una versión sin imágenes. "
                                "Reinicia la sesión de AI-APPS para cargar el servicio actualizado.")
     except RuntimeError as exc:
