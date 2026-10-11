@@ -97,13 +97,21 @@ class Manager:
         try:
             # Detached native Windows descendants can retain inherited pipe handles.
             # Files let us wait for the CLI process without waiting for pipe EOF.
-            stdout_path = self.logs / f"{number}-{action}.stdout.log"
-            stderr_path = self.logs / f"{number}-{action}.stderr.log"
-            with stdout_path.open("wb") as out, stderr_path.open("wb") as err:
-                result = subprocess.run(command, cwd=self.run_dir, env=runtime_env(),
-                                        stdout=out, stderr=err, timeout=240)
-            stdout = stdout_path.read_text(encoding="utf-8", errors="replace")
-            stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
+            if action == "Discard":
+                # Windows refuses deletion while parent/child hold open files
+                # or cwd inside the run being removed.
+                result = subprocess.run(command, cwd=ROOT.parent, env=runtime_env(),
+                                        capture_output=True, timeout=240)
+                stdout = result.stdout.decode("utf-8", errors="replace")
+                stderr = result.stderr.decode("utf-8", errors="replace")
+            else:
+                stdout_path = self.logs / f"{number}-{action}.stdout.log"
+                stderr_path = self.logs / f"{number}-{action}.stderr.log"
+                with stdout_path.open("wb") as out, stderr_path.open("wb") as err:
+                    result = subprocess.run(command, cwd=self.run_dir, env=runtime_env(),
+                                            stdout=out, stderr=err, timeout=240)
+                stdout = stdout_path.read_text(encoding="utf-8", errors="replace")
+                stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
             record.update({"exit_code": result.returncode, "stdout": stdout, "stderr": stderr})
             if result.returncode:
                 raise RuntimeError(f"Android manager {action} failed: {stderr.strip()}")
