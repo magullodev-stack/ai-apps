@@ -46,6 +46,9 @@ def open_room(args):
         if room.parent != RUNS.resolve() or not (room / "room.json").is_file():
             raise ValueError("Selecciona una sala existente dentro de agent-lab/runs")
         state = json.loads((room / "room.json").read_text(encoding="utf-8"))
+        if any(str(item.get("text", "")).casefold().startswith("error calling model ")
+               for item in state.get("conversation", [])):
+            raise ValueError("Esta sala contiene solo respuestas fallidas; comienza una sala nueva con -Idea")
         if args.idea or args.flutter:
             raise ValueError("Al continuar una sala no repitas -Idea ni -Flutter")
         if args.model:
@@ -93,7 +96,7 @@ def actual_tokens(result):
 def show_spending(meter, provider, model, *, completed):
     print("\n" + "=" * 46, flush=True)
     status = "FINALIZADO" if completed else "INTERRUMPIDO"
-    print(f"CICLO {status} · {meter['calls']} respuestas válidas", flush=True)
+    print(f"SALA · {status} · {meter['calls']} respuestas válidas acumuladas", flush=True)
     print(f"Tokens de entrada: {meter['input']:,}", flush=True)
     print(f"Tokens de salida:  {meter['output']:,}", flush=True)
     print(f"Tokens totales:    {meter['input'] + meter['output']:,}", flush=True)
@@ -215,7 +218,16 @@ def main():
     print(f"Modelo: {state['model']} · {args.rounds} rondas · {args.rounds * 3} intervenciones", flush=True)
     print("Las respuestas aparecen al completarse; no se transmiten palabra por palabra.", flush=True)
     suggestion = None
+    # Include earlier successful turns if this is a continuation of the same room.
     meter = {"input": 0, "output": 0, "missing": 0, "calls": 0}
+    for turn in state["conversation"]:
+        meter["calls"] += 1
+        usage = turn.get("usage")
+        if isinstance(usage, dict):
+            meter["input"] += usage["input"]
+            meter["output"] += usage["output"]
+        else:
+            meter["missing"] += 1
     completed = False
     try:
         for round_number in range(1, args.rounds + 1):
