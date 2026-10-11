@@ -519,6 +519,7 @@ def main():
     parser.add_argument("--room")
     parser.add_argument("--latest", action="store_true", help="Última experiencia, sin buscar su carpeta")
     parser.add_argument("--list-rooms", action="store_true", help="Mostrar experiencias sin archivos internos")
+    parser.add_argument("--transcript", action="store_true", help="Leer la conversación sin gastar tokens")
     parser.add_argument("--provider", choices=("shared", "openai", "gemini"), default="shared")
     parser.add_argument("--model")
     parser.add_argument("--rounds", type=int, default=10, help="Rondas completas de Chispa, Caos y Materia")
@@ -537,6 +538,19 @@ def main():
         if args.room or args.idea or args.flutter:
             parser.error("--latest no combina con --room, --idea ni --flutter")
         args.room = str(latest_room())
+    if args.transcript:
+        if not args.room or args.idea or args.build or args.flutter or args.android or args.probe:
+            parser.error("--transcript necesita una experiencia con --room o --latest")
+        room, state = open_room(args)
+        transcript = room / "conversacion.md"
+        if transcript.is_file():
+            print(transcript.read_text(encoding="utf-8")[-90000:])
+        else:
+            print("Conversación conservada de esta experiencia (las acciones antiguas no tienen vista simplificada):")
+            for turn in state.get("conversation", []):
+                print("\n" + str(turn.get("name", "Agente")) + ":\n" +
+                      str(turn.get("text", "")))
+        return 0
     if args.cost_only:
         if not args.room or args.idea or args.model or args.build or args.flutter or args.android or args.probe:
             parser.error("--cost-only necesita únicamente --room")
