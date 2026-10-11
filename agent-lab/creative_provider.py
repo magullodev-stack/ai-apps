@@ -26,7 +26,7 @@ class CreativeOpenAI(OpenAIProvider):
         except BadRequestError as exc:
             body = getattr(exc, "body", None)
             if isinstance(body, dict):
-                message = body.get("message") or body.get("error", {}).get("message")
+                message = body.get("message") or (body.get("error") or {}).get("message")
             else:
                 message = None
             if not message:

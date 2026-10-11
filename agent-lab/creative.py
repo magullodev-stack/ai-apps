@@ -142,7 +142,7 @@ def speak(room, state, name, character):
     answer = result.final_message.text_content().strip() if result.final_message else ""
     if not answer:
         raise RuntimeError(name + " no ha podido responder")
-    if re.match(r"(?i)^\\s*(?:\\[Node:[^\\]]+\\]\\s*)?Error calling model\\b", answer):
+    if answer.casefold().startswith("error calling model "):
         # Upstream ChatDev converts model exceptions to ordinary assistant text.
         # Never propagate these messages to other agents or attempt another round.
         reason = answer.split("Original input:", 1)[0].strip()
