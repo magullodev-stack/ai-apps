@@ -1,0 +1,16 @@
+.deps/
+.tools/
+.python/
+.venv/
+.cache/
+.secrets/
+.env
+.env.*
+!.env.example
+.codex/
+runs/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.log
+uv.zip

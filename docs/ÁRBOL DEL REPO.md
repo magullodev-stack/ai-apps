@@ -14,6 +14,15 @@ ai-apps/
 ├── .vscode/                   # Configuración local de VS Code.
 ├── AGENTS.md                  # Instrucciones de trabajo para agentes.
 │
+├── agent-lab/                 # Laboratorio independiente ChatDev 2.0 → Codex.
+│   ├── workflows/             # Grafo de delegación y retorno.
+│   ├── examples/              # Código de ejemplo para ejecuciones aisladas.
+│   ├── tests/                 # Pruebas offline del ciclo con ChatDev real.
+│   ├── install.ps1            # Instala dependencias locales fijadas.
+│   ├── run.ps1                # Ejecuta una instrucción y conserva artefactos.
+│   ├── uninstall.ps1          # Retira instalación o laboratorio completo.
+│   └── README.md              # Operación, aislamiento e inspección.
+│
 ├── apps/                      # Aplicaciones construidas sobre AI-APPS.
 │   └── quizai/
 │       ├── lib/
@@ -69,6 +78,16 @@ ai-apps/
 ---
 
 ## Zonas
+
+### agent-lab/
+
+Contiene un laboratorio autocontenido que conecta ChatDev 2.0 con Codex mediante
+el SDK de ChatDev y un nodo Python. ChatDev se descarga como dependencia externa
+en `.deps/`; sus fuentes no se incorporan al repositorio principal. Cada ejecución
+crea una instantánea de código con Git independiente bajo `runs/`, conserva los
+mensajes y cambios, y devuelve el resultado al grafo. Dependencias, credenciales y
+ejecuciones se ignoran en Git. No depende de QuizAI, servicios compartidos ni de
+los scripts de desarrollo. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
 
 ### apps/
 

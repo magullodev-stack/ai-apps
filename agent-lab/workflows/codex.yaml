@@ -1,0 +1,41 @@
+version: 0.4.0
+graph:
+  id: agent_lab_codex
+  description: Instrucción → delegación Python → Codex aislado → resultado ChatDev.
+  log_level: INFO
+  start: [instruction]
+  end: [result]
+  nodes:
+    - id: instruction
+      type: passthrough
+      config:
+        only_last_message: true
+    - id: delegate
+      type: literal
+      config:
+        role: user
+        content: |
+          import os
+          import runpy
+          import sys
+          from pathlib import Path
+          sys.stdout.reconfigure(encoding="utf-8")
+          sys.path.insert(0, ${LAB_ROOT_LITERAL})
+          os.environ["AGENT_LAB_RUN"] = ${LAB_RUN_LITERAL}
+          runpy.run_path(str(Path(${LAB_ROOT_LITERAL}) / "bridge.py"), run_name="__main__")
+    - id: codex
+      type: python
+      config:
+        timeout_seconds: ${NODE_TIMEOUT}
+        interpreter: ${LAB_PYTHON}
+    - id: result
+      type: passthrough
+      config:
+        only_last_message: true
+  edges:
+    - from: instruction
+      to: delegate
+    - from: delegate
+      to: codex
+    - from: codex
+      to: result
