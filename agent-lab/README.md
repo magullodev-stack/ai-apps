@@ -251,6 +251,28 @@ Las ocho pruebas nuevas usan un gestor simulado y el ciclo nativo de ChatDev;
 cubren asociación persistente, delegación, propiedad, validación, fallos,
 logs por ciclo y confirmación o ausencia de Hot Reload.
 
+Validación real del 11 de octubre de 2026: dos ciclos autónomos construyeron
+la app y corrigieron una prueba de pantalla estrecha, añadiendo Deshacer.
+Las verificaciones adicionales reutilizaron el agente nativo, el puente y el
+mismo workspace activo; ChatDev eligió indicadores de pasos adicionales y
+vista previa de Deshacer. La versión final pasa analyze y quince pruebas widget.
+La última modificación de Codex produjo dos Hot Reload confirmados sin cambiar
+el PID Android ni el runner. Dos aperturas de VS Code con perfil aislado
+recuperaron ambos vídeos y dos paneles, sin duplicados ni cierre del otro visor.
+La parada afectó solo a la aplicación experimental en `emulator-5558`; el AVD
+permanece encendido. QuizAI conservó boot ID, PID, tarea y registro; los diecisiete
+procesos Dart/emulador previos permanecieron activos.
+
+Las pruebas iniciales también conservan los fallos encontrados: captura de
+salida heredada en Windows y vigilancia cancelada por archivos Android
+construidos automáticamente. Ambos se corrigieron y tienen regresiones offline.
+Los resultados locales están en `runs/session_auto_20261011T113459_73024b78/`:
+`android-verification.json`, `verification/result-1.json`, `result-2.json`,
+`independence-result.json`, decisiones y ciclos. Los ciclos 003/004 corresponden
+a estas verificaciones adicionales; el 003 conserva el fallo anterior del
+runner y el 004 la recarga confirmada. La eliminación se comprobó con `-WhatIf`,
+sin retirar la instalación que permite inspeccionar estos resultados.
+
 ## Eliminación
 
 Para retirar la instalación, termina primero sus ejecuciones:
