@@ -37,7 +37,7 @@ async function main() {
   writeJson(service.leaseFile(app), lease);
   const stateFile = path.join(service.directory(app), 'state.json');
   writeJson(stateFile, { status: 'running', token: lease.token });
-  await assert.rejects(service.capture('quizai@emulator-5554'), /independently/);
+  await assert.rejects(service.capture('muondia@emulator-5554'), /independently/);
   assert.equal(calls.length, 0, 'Primary capture is rejected before ADB');
   const captured = await service.capture(key(app));
   assert.equal(captured.appPid, '321');

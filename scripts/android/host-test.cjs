@@ -25,8 +25,8 @@ exports.run = async (options = {}) => {
     await api.refresh();
     const session = api.list().find(item => item.appId === target.appId);
     assert.ok(session?.active, 'Second Flutter app is running');
-    await until(() => viewer.listSessions().some(item => item.appId === 'quizai' && item.videoFrames > 0),
-      'The primary QuizAI view must render H.264 video');
+    await until(() => viewer.listSessions().some(item => item.appId === 'muondia' && item.videoFrames > 0),
+      'The primary Muondia view must render H.264 video');
     if (phase === 2 && /^lab-[a-f0-9]{12}$/.test(target.appId)) {
       await delay(800);
       assert.equal(viewer.listSessions().some(item => item.appId === target.appId), false,
@@ -39,7 +39,7 @@ exports.run = async (options = {}) => {
     report.initial = viewer.listSessions();
     await api.refresh(); await api.refresh();
     assert.equal(tabs().length, 2, 'Polling does not duplicate tabs');
-    const primary = tabs().find(tab => tab.label === 'QuizAI · emulator-5554');
+    const primary = tabs().find(tab => tab.label === 'Muondia · emulator-5554');
     assert.ok(primary);
     await vscode.commands.executeCommand('aiAppsAndroid.reconnect', session);
     await until(() => viewer.listSessions().find(item => item.appId === target.appId)?.lastFrameAt > Date.now() - 1500,

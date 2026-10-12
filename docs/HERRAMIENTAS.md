@@ -5,12 +5,12 @@
 | Herramienta | Finalidad | Ubicación | Instrucciones |
 | --- | --- | --- | --- |
 | agent-lab: ChatDev → Codex | Un agente de ChatDev decide qué construir, delega en Codex, evalúa resultados y formula nuevas instrucciones autónomas sobre el mismo repositorio aislado. Conserva decisiones, intercambios y cambios por ciclo; conecta apps Flutter experimentales al gestor Android con Hot Reload, captura real del emulador, deliberación multimodal y parada propia. Incluye pruebas offline e instalación y eliminación independientes. | [`agent-lab/`](../agent-lab/) | [`agent-lab/README.md`](../agent-lab/README.md). |
-| Desarrollo persistente | Preparar Android, Dart y QuizAI al iniciar sesión, con una única sesión Flutter y Hot Reload automático fuera de VS Code. | [`scripts/start-dev-session.ps1`](../scripts/start-dev-session.ps1) y [`scripts/install-dev-session.ps1`](../scripts/install-dev-session.ps1) | Apartado de arranque persistente de este documento. |
-| QuizAI con IA | Iniciar o reutilizar el servicio Dart, ejecutar QuizAI en el dispositivo Android seleccionado y mantener Hot Reload automático durante el desarrollo; auditar Luna con `-ProbarLuna -Muestras N`, auditar el pipeline Luna→revisor→Dart con `-ProbarQuiz10 -Muestras N` y detener el servicio con `-StopService`. | [`apps/quizai/run.ps1`](../apps/quizai/run.ps1) | [`apps/quizai/README.md`](../apps/quizai/README.md) y [`ai/README.md`](../ai/README.md). |
-| Sincronización continua de `dev` | Mantener `dev` local y `origin/dev` sincronizados en segundo plano durante la sesión general de desarrollo de AI-APPS. Aplica cambios remotos automáticamente y, tras unos segundos sin cambios locales, crea un commit de sincronización y lo publica. | [`scripts/auto-sync-dev.ps1`](../scripts/auto-sync-dev.ps1) | Se inicia automáticamente desde `scripts/start-dev-session.ps1`; no depende del lanzador de QuizAI. |
+| Desarrollo persistente | Preparar Android, Dart y Muondia al iniciar sesión, con una única sesión Flutter y Hot Reload automático fuera de VS Code. | [`scripts/start-dev-session.ps1`](../scripts/start-dev-session.ps1) y [`scripts/install-dev-session.ps1`](../scripts/install-dev-session.ps1) | Apartado de arranque persistente de este documento. |
+| Muondia con IA | Iniciar o reutilizar el servicio Dart, ejecutar Muondia en el dispositivo Android seleccionado y mantener Hot Reload automático durante el desarrollo; auditar Luna con `-ProbarLuna -Muestras N`, auditar el pipeline Luna→revisor→Dart con `-ProbarOnboardingQuiz -Muestras N` y detener el servicio con `-StopService`. | [`apps/muondia/run.ps1`](../apps/muondia/run.ps1) | [`apps/muondia/README.md`](../apps/muondia/README.md) y [`ai/README.md`](../ai/README.md). |
+| Sincronización continua de `dev` | Mantener `dev` local y `origin/dev` sincronizados en segundo plano durante la sesión general de desarrollo de AI-APPS. Aplica cambios remotos automáticamente y, tras unos segundos sin cambios locales, crea un commit de sincronización y lo publica. | [`scripts/auto-sync-dev.ps1`](../scripts/auto-sync-dev.ps1) | Se inicia automáticamente desde `scripts/start-dev-session.ps1`; no depende del lanzador de Muondia. |
 | Sincronizar `dev` manualmente | Herramienta de recuperación/fallback para forzar una sincronización bidireccional cuando la sincronización continua no está activa. | [`scripts/sync-dev.ps1`](../scripts/sync-dev.ps1) | Solo para recuperación o diagnóstico. |
-| Flutter Dev Runner | Ejecutar `flutter run --machine` por aplicación, vigilar sus raíces de código y assets y solicitar Hot Reload a su propio proceso. QuizAI conserva su invocación; las sesiones nuevas usan `--no-dds`. Ignora archivos Android generados y recupera su vigilancia tras reinicios nativos. | [`scripts/flutter-dev-runner.dart`](../scripts/flutter-dev-runner.dart) | Se inicia desde QuizAI o los workers de [`Android independiente`](../scripts/android/README.md); no se ejecuta manualmente. |
-| AI-APPS Android multiemulador | Seleccionar y recuperar visores por aplicación/dispositivo, sin duplicados; registrar, iniciar, detener, capturar la app enfocada y retirar cada sesión independientemente. Conserva QuizAI en emulator-5554. | EmbeDroid mantenido + [`scripts/vscode-android/`](../scripts/vscode-android/) y [`scripts/android-session.ps1`](../scripts/android-session.ps1) | [Registro, selector, ciclo de vida y pruebas](../scripts/android/README.md). |
+| Flutter Dev Runner | Ejecutar `flutter run --machine` por aplicación, vigilar sus raíces de código y assets y solicitar Hot Reload a su propio proceso. Muondia conserva su invocación; las sesiones nuevas usan `--no-dds`. Ignora archivos Android generados y recupera su vigilancia tras reinicios nativos. | [`scripts/flutter-dev-runner.dart`](../scripts/flutter-dev-runner.dart) | Se inicia desde Muondia o los workers de [`Android independiente`](../scripts/android/README.md); no se ejecuta manualmente. |
+| AI-APPS Android multiemulador | Seleccionar y recuperar visores por aplicación/dispositivo, sin duplicados; registrar, iniciar, detener, capturar la app enfocada y retirar cada sesión independientemente. Conserva Muondia en emulator-5554. | EmbeDroid mantenido + [`scripts/vscode-android/`](../scripts/vscode-android/) y [`scripts/android-session.ps1`](../scripts/android-session.ps1) | [Registro, selector, ciclo de vida y pruebas](../scripts/android/README.md). |
 | Construir y validar EmbeDroid | Mantener y reinstalar la distribución corregida sin parches locales en la extensión instalada. | [`scripts/embedroid/`](../scripts/embedroid/) y [`scripts/install-embedroid.ps1`](../scripts/install-embedroid.ps1) | [Procedencia, pruebas y actualizaciones](../scripts/embedroid/README.md). |
 
 ---
@@ -33,8 +33,8 @@ La configuración corresponde a las opciones del
 [Programador de tareas de Windows](https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/new-scheduledtasksettingsset).
 Su entrada mínima, `scripts/start-dev-session.ps1`, inicia en segundo plano
 `scripts/auto-sync-dev.ps1` y después ejecuta en orden
-`scripts/start-ai-apps-android.ps1` y `apps/quizai/run.ps1 -Device emulator-5554`.
-La sincronización es transversal al repositorio e independiente de que QuizAI
+`scripts/start-ai-apps-android.ps1` y `apps/muondia/run.ps1 -Device emulator-5554`.
+La sincronización es transversal al repositorio e independiente de que Muondia
 arranque correctamente. El primer lanzador reutiliza el emulador o prepara
 el AVD `AI_APPS_Dev` sin ventana; el segundo prepara/reutiliza Dart y
 mantiene el Flutter Dev Runner existente.
@@ -86,9 +86,9 @@ al siguiente inicio de sesión vuelve a prepararse.
 las comprobaciones que lo requieran.
 
 Verificación completada el 10 de octubre de 2026: el usuario confirmó dos
-cierres y reaperturas completos de VS Code con QuizAI visible y funcional,
+cierres y reaperturas completos de VS Code con Muondia visible y funcional,
 sin ejecutar Flutter ni detener la tarea. La comprobación posterior confirmó
-los mismos procesos de Android, QuizAI, Dart y Flutter, sin una nueva
+los mismos procesos de Android, Muondia, Dart y Flutter, sin una nueva
 compilación en `dev-session.log`, y Hot Reload automático después de un cambio
 Dart temporal restaurado. La ejecución manual independiente de
 `flutter run -d emulator-5554` y la restauración de la tarea se habían
@@ -104,21 +104,21 @@ conserva como incidencia intermitente; no invalida los dos ciclos confirmados.
 
 ## USUARIO H
 .\scripts\sync-dev.ps1
-.\apps\quizai\run.ps1 -ProbarQuiz10 -Muestras 20
+.\apps\muondia\run.ps1 -ProbarOnboardingQuiz -Muestras 20
 
 ---
 
 ## COLA USUARIOS
 .\scripts\sync-dev.ps1
-.\apps\quizai\run.ps1 -ProbarQuiz10 -Usuarios 20
+.\apps\muondia\run.ps1 -ProbarOnboardingQuiz -Usuarios 20
 
 ---
 
 ## HOT RELOAD FLUTTER
 
-`apps/quizai/run.ps1` inicia Flutter mediante
+`apps/muondia/run.ps1` inicia Flutter mediante
 `scripts/flutter-dev-runner.dart`. El runner vigila los archivos Dart,
-assets de QuizAI y las dependencias locales compartidas usadas por la app.
+assets de Muondia y las dependencias locales compartidas usadas por la app.
 
 Cuando `git pull` o `scripts/sync-dev.ps1` modifica esos archivos, el
 runner agrupa los eventos y solicita automáticamente un Hot Reload incremental
@@ -135,7 +135,7 @@ nativa o `pubspec.yaml` pueden requerir reiniciar la sesión de desarrollo.
 
 La sesión general `scripts/start-dev-session.ps1`, lanzada por la tarea
 `AI-APPS Development`, inicia `scripts/auto-sync-dev.ps1` en segundo plano
-antes de Android y QuizAI. El sincronizador no depende del lanzador de ninguna
+antes de Android y Muondia. El sincronizador no depende del lanzador de ninguna
 aplicación. Un bloqueo local evita lanzar más de una instancia.
 
 Mientras el repositorio está en `dev`, el proceso comprueba periódicamente
@@ -160,7 +160,7 @@ y assets no requieren sincronización manual ni reinicio.
 
 ## Flujo visual con EmbeDroid
 
-Para el desarrollo cotidiano, QuizAI se ejecuta en el AVD local preparado por
+Para el desarrollo cotidiano, Muondia se ejecuta en el AVD local preparado por
 AI-APPS. EmbeDroid abre ese emulador dentro del editor mediante
 `embedroid.openEmbedded`, el mismo flujo que ya utilizaba el repositorio antes
 de pasar temporalmente al Pixel físico.

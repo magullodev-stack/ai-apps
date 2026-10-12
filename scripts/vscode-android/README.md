@@ -1,7 +1,7 @@
 # Visualización de Android en VS Code
 
 AI-APPS Android gestiona un visor por aplicación y dispositivo mediante
-EmbeDroid mantenido 1.1.0. Incluye selección múltiple; la vista de QuizAI se
+EmbeDroid mantenido 1.1.0. Incluye selección múltiple; la vista de Muondia se
 recupera al abrir VS Code, mientras que las vistas de experimentos del laboratorio
 son temporales y se abren bajo demanda. Consulta [sesiones, configuración y pruebas](../android/README.md).
 La tarea **AI-APPS Development** mantiene Android, Dart y Flutter fuera del
@@ -74,7 +74,7 @@ no se ha presentado un PR al autor.
 - Webviews reales en un perfil aislado de VS Code: vídeo H.264, sin excepciones
   ni fallos de arranque. La prueba reproducible `host-test.ps1` abre dos
   procesos independientes sobre el mismo perfil y dos vistas en cada uno.
-- Android conserva su identificador de arranque y QuizAI su PID. La tarea
+- Android conserva su identificador de arranque y Muondia su PID. La tarea
   persistente y los procesos Dart/Flutter siguen activos, sin nueva compilación.
 
 Los informes y registros de estas pruebas están en `.ai-apps/embedroid/`,
@@ -91,7 +91,7 @@ debe confirmar `streaming h264` y `streaming established on attempt 1`.
 
 1. Recargar o reabrir VS Code, manteniendo **AI-APPS Development** activa.
 2. Comprobar vídeo e interacción y el canal **Android Emulator**.
-3. Repetir una reapertura y comprobar que Android, QuizAI, Dart y Flutter
+3. Repetir una reapertura y comprobar que Android, Muondia, Dart y Flutter
    conservan sus procesos y que `dev-session.log` no registra otra compilación.
 
 No uses **Stop Device**, **Boot** ni **Cold Boot** para reparar el visor.

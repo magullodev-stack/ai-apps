@@ -9,7 +9,7 @@ fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
 let treeProvider, taskRunning = true;
 let entries = [
-  { appId: 'quizai', label: 'QuizAI', serial: 'emulator-5554', id: 'quizai@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' },
+  { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' },
   { appId: 'lab', label: 'Lab', serial: 'emulator-5556', id: 'lab@emulator-5556', kind: 'flutter', active: true, deviceReady: true, status: 'running', epoch: '2:200' }
 ];
 class Sessions {
@@ -62,7 +62,7 @@ async function run() {
   await commands.get('aiAppsAndroid.select')();
   assert.equal(panels.size, 2, 'Multi-selection reopens without closing the other app');
   await commands.get('aiAppsAndroid.open')();
-  assert.deepEqual(calls.at(-1), ['open', 'quizai@emulator-5554', false], 'Command palette opens a single picked session');
+  assert.deepEqual(calls.at(-1), ['open', 'muondia@emulator-5554', false], 'Command palette opens a single picked session');
   await commands.get('aiAppsAndroid.reconnect')(entries[1]);
   assert.deepEqual(calls.at(-1), ['open', 'lab@emulator-5556', true]);
   entries[1].deviceReady = false; entries[1].active = false;
@@ -78,7 +78,7 @@ async function run() {
   taskRunning = false;
   await sandbox.module.exports.activate({ subscriptions: [] });
   assert.deepEqual(calls.filter(call => call[0] === 'start'),
-    [['start', 'quizai@emulator-5554']],
+    [['start', 'muondia@emulator-5554']],
     'VS Code reopens the stopped Flutter development task even with a stale Android PID');
   assert.equal(panels.size, 2, 'Reactivation recovers active sessions without tab growth');
   entries = Array.from({ length: 150 }, (_, i) => ({ ...entries[1], id: `app-${i}@device-${i}`, appId: `app-${i}`,

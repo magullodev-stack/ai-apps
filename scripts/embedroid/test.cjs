@@ -83,7 +83,7 @@ async function deviceTests(serial) {
   const runAdb = args => execFileSync(adb, ['-s', serial, ...args], { encoding: 'utf8', windowsHide: true }).trim();
   const before = {
     boot: runAdb(['shell', 'cat', '/proc/sys/kernel/random/boot_id']),
-    quizai: runAdb(['shell', 'pidof', 'com.aiapps.quizai'])
+    muondia: runAdb(['shell', 'pidof', 'com.aiapps.muondia'])
   };
   assert.equal(runAdb(['get-state']), 'device');
   // Demonstrate rejection by the exact server we ship, without opening any
@@ -134,12 +134,12 @@ async function deviceTests(serial) {
   }
   const after = {
     boot: runAdb(['shell', 'cat', '/proc/sys/kernel/random/boot_id']),
-    quizai: runAdb(['shell', 'pidof', 'com.aiapps.quizai'])
+    muondia: runAdb(['shell', 'pidof', 'com.aiapps.muondia'])
   };
-  assert.deepEqual(after, before, 'Android and QuizAI remain running');
+  assert.deepEqual(after, before, 'Android and Muondia remain running');
   const report = { passed: true, before, after, cycles };
   fs.writeFileSync(path.join(extensionPath, '../device-test-result.json'), JSON.stringify(report, null, 2));
-  console.log('PASS: Android boot ID and QuizAI PID unchanged.');
+  console.log('PASS: Android boot ID and Muondia PID unchanged.');
 }
 
 (async () => {

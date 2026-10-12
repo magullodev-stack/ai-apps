@@ -34,12 +34,12 @@ producto se registra como una aplicación distinta dentro de ese mismo proyecto,
 de modo que comparten el mismo directorio de usuarios sin mezclar progreso,
 partidas ni estado específico de cada producto.
 
-QuizAI Android usa el application ID definitivo `com.aiapps.quizai`.
+Muondia Android usa el application ID `com.aiapps.muondia`. Al cambiar el identificador es imprescindible registrar esa aplicación Android en Firebase y obtener un `google-services.json` nuevo para Muondia.
 
 Para Android, el archivo de configuración se coloca en
-`apps/quizai/android/app/google-services.json`. El plugin de Google Services se
+`apps/muondia/android/app/google-services.json`. El plugin de Google Services se
 aplica automáticamente solo cuando ese archivo existe, para que el desarrollo de
-QuizAI no quede bloqueado antes de provisionar Firebase.
+Muondia no quede bloqueado antes de provisionar Firebase.
 
 La API compartida ya implementa:
 

@@ -23,11 +23,11 @@ foreach ($runner in $runners) {
     $current = Get-CimInstance Win32_Process -Filter "ProcessId=$($runner.ProcessId)"
     if ($current -and $current.CreationDate -eq $runner.CreationDate -and $current.CommandLine -eq $runner.CommandLine) {
         & taskkill.exe /PID $runner.ProcessId /T /F | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw 'Could not stop the identified QuizAI Flutter runner.' }
+        if ($LASTEXITCODE -ne 0) { throw 'Could not stop the identified Muondia Flutter runner.' }
     }
 }
 $sdk = $env:ANDROID_HOME
 if (-not $sdk) { $sdk = $env:ANDROID_SDK_ROOT }
 if (-not $sdk) { $sdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
-& (Join-Path $sdk 'platform-tools\adb.exe') -s emulator-5554 shell am force-stop com.aiapps.quizai | Out-Null
-if ($LASTEXITCODE -ne 0) { throw 'Could not stop QuizAI application.' }
+& (Join-Path $sdk 'platform-tools\adb.exe') -s emulator-5554 shell am force-stop com.aiapps.muondia | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Could not stop Muondia application.' }

@@ -21,7 +21,7 @@ async function run() {
   execFileSync(dart, base, options);
   const original = JSON.parse(fs.readFileSync(capture));
   assert.deepEqual(original, ['run', '--machine', '-d', 'test-device', `--dart-define-from-file=${defines}`],
-    'Default invocation stays byte-for-byte compatible with QuizAI');
+    'Default invocation stays byte-for-byte compatible with Muondia');
   execFileSync(dart, [...base, '--no-dds'], options);
   const managed = JSON.parse(fs.readFileSync(capture));
   assert.deepEqual(managed, ['run', '--machine', '--no-dds', '-d', 'test-device', `--dart-define-from-file=${defines}`]);

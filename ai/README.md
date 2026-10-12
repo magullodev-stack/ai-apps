@@ -2,7 +2,7 @@
 
 `ai/dart_service` implementa el servicio local de desarrollo de AI-APPS con las bibliotecas estándar de Dart (`dart:io` y `dart:convert`). Utiliza el Dart incluido en Flutter y no necesita dependencias de ejecución adicionales.
 
-`ai/flutter_client` conserva el cliente móvil `AiAppsClient`. Las aplicaciones son responsables de sus prompts, esquemas, modelos y validación; el servicio no conoce las reglas de Quiz10.
+`ai/flutter_client` conserva el cliente móvil `AiAppsClient`. Las aplicaciones son responsables de sus prompts, esquemas, modelos y validación; el servicio no conoce las reglas de recorrido inicial.
 
 ## Ejecución
 
@@ -12,7 +12,7 @@ Desde PowerShell, en la raíz del repositorio:
 .\scripts\run-android.ps1
 ```
 
-Este único procedimiento inicia o reutiliza el servicio Dart, configura `adb reverse` y ejecuta Quiz10 en `emulator-5554` con `gpt-4.1-mini`. El emulador debe estar iniciado. Consulta [`apps/quizai/README.md`](../apps/quizai/README.md) para las instrucciones completas.
+Este único procedimiento inicia o reutiliza el servicio Dart, configura `adb reverse` y ejecuta recorrido inicial en `emulator-5554` con `gpt-4.1-mini`. El emulador debe estar iniciado. Consulta [`apps/muondia/README.md`](../apps/muondia/README.md) para las instrucciones completas.
 
 El script busca `AI_APPS_AI_API_KEY` y `OPENAI_API_KEY` en el entorno del proceso, usuario y máquina, en ese orden. Si faltan, solicita la clave mediante `Read-Host -AsSecureString`. No la muestra ni la guarda en archivos; solo el proceso Dart la recibe. El script elimina esas variables del entorno heredado por Flutter y nunca las incluye en los parámetros del APK.
 
@@ -48,7 +48,7 @@ Set-Location 'C:\Users\Miquelet\repos\ai-apps\ai\dart_service'
 & $flutter test
 ```
 
-Las pruebas del servicio utilizan un proveedor HTTP simulado: comprueban el contrato Responses, autenticación, límites, respuestas incompletas, errores del proveedor, timeout y ausencia de credenciales en diagnósticos. Las pruebas de Quiz10 comprueban además el recorrido completo cliente → servicio Dart → proveedor simulado → validador y partida.
+Las pruebas del servicio utilizan un proveedor HTTP simulado: comprueban el contrato Responses, autenticación, límites, respuestas incompletas, errores del proveedor, timeout y ausencia de credenciales en diagnósticos. Las pruebas de recorrido inicial comprueban además el recorrido completo cliente → servicio Dart → proveedor simulado → validador y partida.
 
 La prueba real es explícita y no forma parte de `flutter test`:
 
@@ -57,4 +57,4 @@ Set-Location 'C:\Users\Miquelet\repos\ai-apps'
 .\scripts\run-android.ps1 -VerifyOnly
 ```
 
-Genera preguntas con `gpt-4.1-mini` mediante el servicio activo y utiliza el generador, validador y constructor de partida reales de Quiz10. Solo devuelve éxito si acepta diez preguntas. Guarda un comprobante sin contenido ni credenciales en `.ai-apps/quizai-verification.json`. Si falla, consulta el diagnóstico del proveedor en el registro. Esta comprobación no inicia ni modifica una sesión Android.
+Genera preguntas con `gpt-4.1-mini` mediante el servicio activo y utiliza el generador, validador y constructor de partida reales de recorrido inicial. Solo devuelve éxito si acepta diez preguntas. Guarda un comprobante sin contenido ni credenciales en `.ai-apps/muondia-verification.json`. Si falla, consulta el diagnóstico del proveedor en el registro. Esta comprobación no inicia ni modifica una sesión Android.

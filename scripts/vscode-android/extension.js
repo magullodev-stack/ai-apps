@@ -53,7 +53,7 @@ async function activate(context) {
               await service.start(quiz.id);
             }
           } catch (error) {
-            output.appendLine('Arranque de desarrollo QuizAI: ' + error.message);
+            output.appendLine('Arranque de desarrollo Muondia: ' + error.message);
           }
         }
       }
@@ -163,7 +163,7 @@ async function activate(context) {
     if (!entry || !/^lab-[a-f0-9]{12}$/.test(entry.appId)) return;
     const confirm = await vscode.window.showWarningMessage(
       '¿Eliminar definitivamente "' + entry.label + '"? Se detendrán Flutter y su emulador ' +
-      'y se borrarán el AVD, los registros y la carpeta del experimento. QuizAI no se modifica.',
+      'y se borrarán el AVD, los registros y la carpeta del experimento. Muondia no se modifica.',
       { modal: true }, 'Descartar experimento');
     if (confirm !== 'Descartar experimento') return;
     await service.discard(entry.id);

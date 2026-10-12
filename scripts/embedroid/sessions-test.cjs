@@ -40,14 +40,14 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'sessions.cjs'), 'utf8')
 const { createViews } = moduleSandbox.module.exports;
 const context = { subscriptions: [], extensionUri: 'extension', extensionPath: 'extension' };
 const log = { debug() {}, warn() {} };
-const a = { appId: 'quizai', label: 'QuizAI', serial: 'emulator-5554' };
+const a = { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554' };
 const b = { appId: 'lab-abcdef012345', label: 'Lab', serial: 'emulator-5556' };
 async function run() {
   const views = createViews(Base, context, {}, { find() {} }, log);
   await Promise.all([views.openSession(a), views.openSession(a), views.openSession(b)]);
   assert.equal(views.views.size, 2); assert.equal(panels.length, 2);
   for (const item of panels) item.ready();
-  assert.ok(panels[0].messages.some(item => item.type === 'session' && item.session.appId === 'quizai'));
+  assert.ok(panels[0].messages.some(item => item.type === 'session' && item.session.appId === 'muondia'));
   assert.equal(panels[1].title, 'Lab · emulator-5556');
   await views.openSession(a);
   assert.equal(panels.length, 2, 'Repeated selector only reveals');
@@ -69,7 +69,7 @@ async function run() {
   assert.equal(restoredB.disposed, true, 'Discarded lab preview is not restored at editor startup');
   await reopened.openSession(a); await reopened.openSession(b);
   assert.equal(reopened.views.size, 2, 'Explicit lab selection still works');
-  assert.equal(restoredA.title, 'QuizAI · emulator-5554');
+  assert.equal(restoredA.title, 'Muondia · emulator-5554');
   assert.equal(reopened.listSessions().find(item => item.serial === b.serial)?.label, b.label);
   const migrated = createViews(Base, context, {}, { find() {} }, log);
   const legacy = panel('AI_APPS_Dev');
@@ -77,7 +77,7 @@ async function run() {
   const countBeforeMigration = panels.length;
   await migrated.openSession({ ...a, avdName: 'AI_APPS_Dev' });
   assert.equal(panels.length, countBeforeMigration, 'Known legacy AVD panel is adopted, not duplicated');
-  assert.equal(legacy.title, 'QuizAI · emulator-5554');
+  assert.equal(legacy.title, 'Muondia · emulator-5554');
   assert.ok(bundle.includes('onWebviewPanel') === false); // Activation belongs in manifest.
   const builtWebview = fs.readFileSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/media/webview.js'), 'utf8');
   assert.ok(builtWebview.includes('x.setState({session:t.session})'));

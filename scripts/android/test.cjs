@@ -13,7 +13,7 @@ async function run() {
   let busy = false, taskActive = true;
   const platform = {
     devices: async () => ['emulator-5554', 'emulator-5556'],
-    appPid: async session => session.appId === 'quizai' ? '100' : '200',
+    appPid: async session => session.appId === 'muondia' ? '100' : '200',
     taskRunning: async () => taskActive, startTask: async () => calls.push('start-task'),
     stopTask: async () => calls.push('stop-task'), hasFlutter: async () => busy,
     spawnWorker(id, token, dir) { calls.push(['worker', id, token]); return process.pid; }
@@ -26,7 +26,7 @@ async function run() {
   service.register(app);
   service.register(app); // Idempotent exact registration.
   assert.equal(new Sessions(root, platform).definitions().length, 2, 'Registration survives editor/CLI restart');
-  for (const change of [{ serial: 'emulator-5554' }, { appId: 'quizai' }, { avdName: 'AI_APPS_Dev' },
+  for (const change of [{ serial: 'emulator-5554' }, { appId: 'muondia' }, { avdName: 'AI_APPS_Dev' },
     { appId: 'other' }, { serial: 'emulator-5557' }, { avdName: 'ai_apps_dev' },
     { appId: 'other', serial: 'emulator-5558', avdName: 'ai_apps_lab' }, { secret: 'private' }]) {
     assert.throws(() => service.register({ ...app, ...change }));
@@ -38,7 +38,7 @@ async function run() {
   await Promise.all([service.start(key(app)), service.start(key(app))]);
   assert.equal(calls.filter(call => Array.isArray(call)).length, 1, 'Concurrent editor/CLI starts share one lease');
   await assert.rejects(service.unregister(key(app)), /Stop\/recover/);
-  await assert.rejects(service.unregister('quizai@emulator-5554'), /reserved/);
+  await assert.rejects(service.unregister('muondia@emulator-5554'), /reserved/);
   const list = await service.list();
   assert.equal(list[0].active, true);
   assert.equal(list[1].active, true);
@@ -54,11 +54,11 @@ async function run() {
   fs.unlinkSync(service.leaseFile(app));
   await assert.rejects(failedStop, /stop failed/, 'A failed process/app stop is never reported as success');
   assert.equal(calls.includes('stop-task'), false, 'Stopping another app does not touch AI-APPS Development');
-  await service.start('quizai@emulator-5554');
+  await service.start('muondia@emulator-5554');
   assert.equal(calls.includes('start-task'), false, 'Starting active legacy task is a no-op');
   taskActive = false;
-  await service.start('quizai@emulator-5554');
-  await service.stop('quizai@emulator-5554');
+  await service.start('muondia@emulator-5554');
+  await service.stop('muondia@emulator-5554');
   assert.deepEqual(calls.filter(call => typeof call === 'string'), ['start-task', 'stop-task']);
   const external = { appId: 'external', label: 'External', serial: 'emulator-5558', packageName: 'com.example.external', kind: 'external' };
   service.register(external);
@@ -74,7 +74,7 @@ async function run() {
   busy = false;
   platform.devices = async () => ['emulator-5554', 'emulator-5556', 'emulator-5558'];
   await assert.rejects(service.unregister(key(external)), /still running/);
-  platform.appPid = async session => session.appId === 'quizai' ? '100' : '';
+  platform.appPid = async session => session.appId === 'muondia' ? '100' : '';
   await service.unregister(key(external));
   assert.equal(service.definitions().length, 122);
   assert.equal(service.definitions()[0].serial, 'emulator-5554');
@@ -104,19 +104,19 @@ async function run() {
   platform.devices = async () => ['emulator-5554'];
   platform.retireAvd = async session => calls.push(['retire-avd', session.avdName]);
   service.register(disposable);
-  await assert.rejects(service.discard('quizai@emulator-5554'), /Only owned/);
+  await assert.rejects(service.discard('muondia@emulator-5554'), /Only owned/);
   const done = await service.discard(key(disposable));
   assert.equal(done.discarded, key(disposable));
   assert.equal(fs.existsSync(run), false, 'Discard removes the generated workspace and logs');
   assert.equal(fs.existsSync(service.directory(disposable)), false, 'Discard removes private Android records');
   assert.equal(service.definitions().length, 121, 'Discard unregisters only the disposable preview');
-  assert.equal(service.definitions()[0].appId, 'quizai', 'QuizAI remains registered');
+  assert.equal(service.definitions()[0].appId, 'muondia', 'Muondia remains registered');
   assert.ok(calls.some(item => Array.isArray(item) && item[0] === 'retire-avd'));
 
   process.env.AI_APPS_AI_API_KEY = 'private'; process.env.OPENAI_API_KEY = 'private';
   process.env.CODEX_API_KEY = 'private'; process.env.GIT_DIR = 'private';
   const env = runtimeEnv();
   for (const name of ['AI_APPS_AI_API_KEY', 'OPENAI_API_KEY', 'CODEX_API_KEY', 'GIT_DIR']) assert.equal(env[name], undefined);
-  console.log('PASS: persistent registry, reserved QuizAI, exclusive devices/AVDs, concurrent starts, independent stop, stale lease protection, 123 sessions and sanitized environment.');
+  console.log('PASS: persistent registry, reserved Muondia, exclusive devices/AVDs, concurrent starts, independent stop, stale lease protection, 123 sessions and sanitized environment.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

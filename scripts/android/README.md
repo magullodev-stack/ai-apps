@@ -27,7 +27,7 @@ El sondeo cada cinco segundos detecta sesiones iniciadas desde PowerShell y
 reconecta un visor existente tras perder su dispositivo.
 
 Cerrar una pestaña manualmente la mantiene cerrada durante esa sesión; puedes
-reabrirla desde el selector. Al reabrir VS Code se recupera QuizAI. Las vistas experimentales del
+reabrirla desde el selector. Al reabrir VS Code se recupera Muondia. Las vistas experimentales del
 laboratorio no se reabren automáticamente: siguen disponibles desde el selector
 y pueden aparecer cuando se inician explícitamente después de abrir VS Code.
 **Reconectar visor** afecta solo al elegido. Al abrir o recargar VS Code,
@@ -36,12 +36,12 @@ si la tarea persistente de desarrollo está detenida, se solicita su arranque
 directamente una APK instalada ni se duplica Flutter; con la tarea activa,
 el editor solo recupera la vista. Se requiere un workspace de confianza.
 
-## QuizAI y sesiones nuevas
+## Muondia y sesiones nuevas
 
-`quizai@emulator-5554`, su AVD `AI_APPS_Dev` y su identificador quedan reservados.
+`muondia@emulator-5554`, su AVD `AI_APPS_Dev` y su identificador quedan reservados.
 La tarea **AI-APPS Development** conserva configuración, arranque automático,
 servicio Dart, Hot Reload y sincronización. **Iniciar sesión** y **Detener
-aplicación** son acciones explícitas, independientes del visor. Para QuizAI
+aplicación** son acciones explícitas, independientes del visor. Para Muondia
 usan la tarea existente y su runner identificado; la parada no mata el servicio
 Dart, la sincronización ni Android. Si quedan runners fuera de la tarea, el
 arranque exige recuperar la sesión antes de crear otro Flutter.
@@ -77,7 +77,7 @@ el runner termina su árbol Flutter completo en Windows (wrapper e hijos),
 permitiendo que el worker reinicie y recupere la vigilancia sin procesos huérfanos.
 Las sesiones nuevas usan `--no-dds` para conectar directamente al VM Service:
 DDS rechazaba su conexión local durante la validación. Esta opción es optativa
-en el runner; los argumentos originales de QuizAI permanecen iguales. El modo
+en el runner; los argumentos originales de Muondia permanecen iguales. El modo
 directo no ofrece las funciones DevTools dependientes de DDS. Credenciales de
 IA/Codex no se heredan y los defines de las sesiones nuevas son vacíos.
 
@@ -90,10 +90,10 @@ dispositivo ocupado. Consulta los logs para recuperar un lease abandonado.
 las sesiones de laboratorio, detiene la app, apaga exclusivamente su emulador,
 retira su registro y elimina el AVD, su carpeta generada y los registros propios.
 Exige confirmar la eliminación; verifica la identidad y la ubicación del proyecto
-antes de actuar. No sirve para QuizAI ni para aplicaciones ajenas al laboratorio.
+antes de actuar. No sirve para Muondia ni para aplicaciones ajenas al laboratorio.
 
 **Unregister** retira solo el registro de una sesión detenida, sin borrar AVD,
-proyecto ni logs. Rechaza QuizAI, leases existentes y procesos Flutter o apps
+proyecto ni logs. Rechaza Muondia, leases existentes y procesos Flutter o apps
 activas; reserva un lease durante la retirada para evitar arranques concurrentes.
 Usa `-Action Unregister -AppId <id> -Serial <serial>`.
 
@@ -139,12 +139,12 @@ almacenan credenciales. Un registro inválido se notifica sin cerrar los visores
 Las pruebas offline ejercitan el manager del bundle, el controlador del editor
 y el runner Dart con Flutter simulado. Cubren registro, exclusión, arranques
 concurrentes, parada independiente, leases obsoletos, restauración, reconexión,
-cierre manual, selección múltiple y compatibilidad de QuizAI. Ejercitan 123
+cierre manual, selección múltiple y compatibilidad de Muondia. Ejercitan 123
 registros y 150 vistas sin máximo fijo.
 
 `host-test.ps1` admite `-AppId`, `-Serial`, `-Label` y `-RuntimeName` para
 validar cualquier sesión Flutter experimental en un perfil propio. Por defecto
-requiere QuizAI activa y un registro `lab-validation`, etiqueta
+requiere Muondia activa y un registro `lab-validation`, etiqueta
 `Lab validation`, en `emulator-5556`. La app secundaria debe repintar periódicamente.
 Usa dos reaperturas normales de un perfil aislado de VS Code y un controlador
 temporal para comprobar vídeo realmente renderizado y persistencia. No recarga
@@ -158,7 +158,7 @@ Validación real del 11 de octubre de 2026: dos AVD y aplicaciones simultáneos,
 dos pestañas con frames renderizados, reconexión y cierre solo del visor
 secundario, y segunda reapertura con dos paneles deserializados sin duplicados.
 Se comprobaron Hot Reload, parada y reinicio independientes de la app secundaria.
-Android conservó su boot ID, QuizAI su PID y trece procesos persistentes previos
+Android conservó su boot ID, Muondia su PID y trece procesos persistentes previos
 siguieron activos. La tarea continuó `Running` y `dev-session.log` no añadió
-compilaciones de QuizAI. Su parada se verificó offline; no se interrumpió la
+compilaciones de Muondia. Su parada se verificó offline; no se interrumpió la
 aplicación principal para probar ese comando.

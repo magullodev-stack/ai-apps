@@ -76,7 +76,7 @@ La prueba con dispositivo usa la clase real del transporte y el servidor
 incluido. Fuerza entropía `80000000` y `ffffffff`, abre transmisiones separadas,
 exige recibir frames H.264 durante diez segundos en cada ciclo y las cierra
 liberando solo sus sockets, forwards y servidores. No inicia Flutter, no
-reinicia Android y no modifica QuizAI. Usa `power_on=false` en una prueba
+reinicia Android y no modifica Muondia. Usa `power_on=false` en una prueba
 negativa aislada para no despertar un dispositivo apagado.
 
 `host-test.ps1` ejecuta dos procesos independientes de VS Code sobre el mismo

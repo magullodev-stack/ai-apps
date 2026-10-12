@@ -37,8 +37,8 @@ class Sessions {
     this.file = path.join(this.runtime, 'sessions.json');
   }
   defaults() {
-    return { appId: 'quizai', label: 'QuizAI', serial: 'emulator-5554', avdName: 'AI_APPS_Dev',
-      kind: 'development-task', projectPath: path.join(this.root, 'apps/quizai'), packageName: 'com.aiapps.quizai' };
+    return { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', avdName: 'AI_APPS_Dev',
+      kind: 'development-task', projectPath: path.join(this.root, 'apps/muondia'), packageName: 'com.aiapps.muondia' };
   }
   definitions() {
     const stored = readJson(this.file, { version: 1, sessions: [] });
@@ -55,12 +55,12 @@ class Sessions {
   validate(item) {
     const allowed = ['appId', 'label', 'serial', 'avdName', 'kind', 'projectPath', 'packageName'];
     if (!item || Object.keys(item).some(name => !allowed.includes(name)) ||
-        typeof item.appId !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(item.appId) || item.appId === 'quizai' ||
+        typeof item.appId !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(item.appId) || item.appId === 'muondia' ||
         typeof item.label !== 'string' || !item.label.trim() || item.label.length > 100 ||
         /[\r\n\x00]/.test(item.label) || typeof item.serial !== 'string' || !/^[A-Za-z0-9_.:-]+$/.test(item.serial) ||
         item.serial.toLowerCase() === 'emulator-5554' || !['flutter', 'external'].includes(item.kind) ||
         !/^[a-zA-Z][\w]*(?:\.[a-zA-Z][\w]*)+$/.test(item.packageName || '')) {
-      throw new Error('Invalid session; QuizAI and emulator-5554 are reserved for AI-APPS Development');
+      throw new Error('Invalid session; Muondia and emulator-5554 are reserved for AI-APPS Development');
     }
     if (item.avdName && (typeof item.avdName !== 'string' || !/^[A-Za-z0-9_-]+$/.test(item.avdName) || item.avdName.toLowerCase() === 'ai_apps_dev')) throw new Error('Invalid or reserved AVD');
     if (item.kind === 'flutter') {
@@ -103,7 +103,7 @@ class Sessions {
   }
   async discard(id) {
     const session = this.find(id);
-    // Only throwaway projects created by agent-lab. Never QuizAI, personal
+    // Only throwaway projects created by agent-lab. Never Muondia, personal
     // Flutter projects or another user's registration.
     const match = /^lab-([a-f0-9]{12})$/.exec(session.appId);
     if (!match || session.kind !== 'flutter' ||
@@ -140,7 +140,7 @@ class Sessions {
   async unregister(id) {
     return this.registryTransaction(async () => {
       const session = this.find(id);
-      if (session.kind === 'development-task') throw new Error('QuizAI registration is reserved');
+      if (session.kind === 'development-task') throw new Error('Muondia registration is reserved');
       const dir = this.directory(session);
       fs.mkdirSync(dir, { recursive: true });
       const leaseFile = this.leaseFile(session);
@@ -218,7 +218,7 @@ class Sessions {
     const session = this.find(id);
     if (session.kind === 'development-task') {
       if (await this.platform.taskRunning()) return;
-      if (await this.platform.hasFlutter(session)) throw new Error('QuizAI already has a Flutter runner outside the task; recover it before starting');
+      if (await this.platform.hasFlutter(session)) throw new Error('Muondia already has a Flutter runner outside the task; recover it before starting');
       await this.platform.startTask(); return;
     }
     if (session.kind === 'external') throw new Error('External sessions are controlled by their owner; only visualization is managed here');

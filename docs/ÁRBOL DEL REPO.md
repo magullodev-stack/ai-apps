@@ -29,26 +29,25 @@ ai-apps/
 │   └── README.md              # Operación, aislamiento e inspección.
 │
 ├── apps/                      # Aplicaciones construidas sobre AI-APPS.
-│   └── quizai/
+│   └── muondia/
 │       ├── lib/
 │       │   ├── main.dart
-│       │   ├── app/           # Estructura general de QuizAI.
-│       │   │   ├── auth/        # Entrada y UI de autenticación propia de QuizAI.
-│       │   │   ├── interaction/ # Presentación de intervenciones de QuizAI.
-│       │   │   └── onboarding/  # Secuencias iniciales de la aplicación.
-│       │   ├── modes/         # Modalidades de QuizAI.
-│       │   │   ├── estudio/
-│       │   │   └── quiz10/
-│       │   │       ├── interaction/ # Experiencia e interacción de Quiz10.
-│       │   │       └── production/  # Producción y validación de sus tests.
+│       │   ├── app/           # Estructura general de Muondia.
+│       │   │   ├── auth/        # Entrada y UI de autenticación propia de Muondia.
+│       │   │   ├── interaction/ # Presentación de intervenciones de Muondia.
+│       │   │   └── onboarding/  # Recorrido inicial obligatorio tras el registro.
+│       │   │       ├── interaction/ # Pantallas y animaciones de bienvenida.
+│       │   │       └── production/  # Generación y validación de diez preguntas.
+│       │   ├── modes/         # Experiencias accesibles desde Home.
+│       │   │   └── estudio/
 │       │   ├── coverage/      # Estructuras de cobertura factual.
 │       │   └── semantic_catalog/ # Catálogo semántico.
 │       │
 │       ├── assets/
-│       ├── tool/              # Herramientas y verificadores de QuizAI.
+│       ├── tool/              # Herramientas y verificadores de Muondia.
 │       ├── android/
 │       ├── README.md
-│       └── run.ps1            # Lanzador de QuizAI.
+│       └── run.ps1            # Lanzador de Muondia.
 │
 ├── ai/                        # Infraestructura técnica compartida de IA.
 │   ├── dart_service/
@@ -97,7 +96,7 @@ cada ciclo, formula la siguiente instrucción y reutiliza el mismo workspace;
 las decisiones y los cambios de cada iteración se conservan. Dependencias, credenciales y
 ejecuciones se ignoran en Git. Opcionalmente prepara apps Flutter aisladas y
 delega su arranque/parada al gestor Android compartido, con Hot Reload entre
-iteraciones, capturas del emulador propio y evaluación visual del agente. No depende de QuizAI ni de los servicios de IA. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
+iteraciones, capturas del emulador propio y evaluación visual del agente. No depende de Muondia ni de los servicios de IA. Consulta [`agent-lab/README.md`](../agent-lab/README.md).
 
 ### apps/
 
@@ -119,7 +118,7 @@ Contiene componentes compartidos por las aplicaciones cuando existe una necesida
 
 ### scripts/
 
-Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de QuizAI. `android/` registra y controla sesiones independientes mediante workers fuera del editor y reutiliza el preparador y el runner existentes. `vscode-android/` selecciona y recupera sus visores; abrir o cerrar pestañas no controla los procesos de las apps. `embedroid/` construye la distribución mantenida con transporte corregido y restauración de sesiones; `install-embedroid.ps1` instala ambos componentes. El registro y los logs quedan en `.ai-apps/android/`, fuera de Git.
+Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de Muondia. `android/` registra y controla sesiones independientes mediante workers fuera del editor y reutiliza el preparador y el runner existentes. `vscode-android/` selecciona y recupera sus visores; abrir o cerrar pestañas no controla los procesos de las apps. `embedroid/` construye la distribución mantenida con transporte corregido y restauración de sesiones; `install-embedroid.ps1` instala ambos componentes. El registro y los logs quedan en `.ai-apps/android/`, fuera de Git.
 
 ### docs/
 

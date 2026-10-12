@@ -16,7 +16,7 @@ $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
 
 Register-ScheduledTask -TaskName 'AI-APPS Development' -Action $action `
     -Trigger $trigger -Principal $principal -Settings $settings `
-    -Description 'Sincronizacion continua de dev, Android y QuizAI con hot reload.' `
+    -Description 'Sincronizacion continua de dev, Android y Muondia con hot reload.' `
     -Force | Out-Null
 Write-Host 'Tarea AI-APPS Development instalada para el usuario actual.'
 Write-Host "Iniciar ahora: Start-ScheduledTask -TaskName 'AI-APPS Development'"

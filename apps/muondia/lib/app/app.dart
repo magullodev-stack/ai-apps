@@ -1,0 +1,179 @@
+import 'package:ai_apps_identity/ai_apps_identity.dart';
+import 'package:flutter/material.dart';
+
+import 'app_shell.dart';
+import 'app_theme.dart';
+import 'auth/auth_entry_page.dart';
+import 'generation_dependencies.dart';
+import 'onboarding/completion_store.dart';
+import 'onboarding/interaction/onboarding_quiz_page.dart';
+
+class MuondiaApp extends StatefulWidget {
+  const MuondiaApp({
+    super.key,
+    this.identityService,
+    this.onboardingStore,
+  });
+
+  final IdentityService? identityService;
+  final OnboardingCompletionStore? onboardingStore;
+
+  @override
+  State<MuondiaApp> createState() => _MuondiaAppState();
+}
+
+class _MuondiaAppState extends State<MuondiaApp> {
+  late final IdentityService _identity =
+      widget.identityService ?? FirebaseIdentityService();
+  late final Future<void> _identityInitialization = _identity.initialize();
+  late final OnboardingCompletionStore _onboardingStore =
+      widget.onboardingStore ?? LocalOnboardingCompletionStore();
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    title: 'Muondia',
+    debugShowCheckedModeBanner: false,
+    theme: muondiaTheme,
+    home: _IdentityGate(
+      identity: _identity,
+      initialization: _identityInitialization,
+      onboardingStore: _onboardingStore,
+    ),
+  );
+}
+
+class _IdentityGate extends StatelessWidget {
+  const _IdentityGate({
+    required this.identity,
+    required this.initialization,
+    required this.onboardingStore,
+  });
+
+  final IdentityService identity;
+  final Future<void> initialization;
+  final OnboardingCompletionStore onboardingStore;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: initialization,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done ||
+            snapshot.hasError) {
+          return AuthEntryPage(
+            identity: identity,
+            identityReady: false,
+            initializationError: snapshot.error,
+          );
+        }
+
+        return StreamBuilder<IdentityUser?>(
+          stream: identity.authStateChanges(),
+          initialData: identity.currentUser,
+          builder: (context, authSnapshot) {
+            final user = authSnapshot.data;
+            if (user == null) {
+              return AuthEntryPage(
+                identity: identity,
+                identityReady: true,
+              );
+            }
+            return _OnboardingGate(
+              key: ValueKey('muondia-onboarding-' + user.id),
+              userId: user.id,
+              store: onboardingStore,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Se muestra solamente hasta completar el recorrido inicial del usuario.
+class _OnboardingGate extends StatefulWidget {
+  const _OnboardingGate({
+    super.key,
+    required this.userId,
+    required this.store,
+  });
+
+  final String userId;
+  final OnboardingCompletionStore store;
+
+  @override
+  State<_OnboardingGate> createState() => _OnboardingGateState();
+}
+
+class _OnboardingGateState extends State<_OnboardingGate> {
+  late Future<bool> _completed = widget.store.hasCompleted(widget.userId);
+
+  Future<void> _finish() async {
+    try {
+      await widget.store.markCompleted(widget.userId);
+      if (mounted) setState(() => _completed = Future<bool>.value(true));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo guardar el progreso. Inténtalo de nuevo.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _completed,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () => setState(
+                  () => _completed = widget.store.hasCompleted(widget.userId),
+                ),
+                child: const Text('Reintentar acceso'),
+              ),
+            ),
+          );
+        }
+        if (snapshot.data == true) return const AppShell();
+        return _FirstExperience(onCompleted: _finish);
+      },
+    );
+  }
+}
+
+class _FirstExperience extends StatefulWidget {
+  const _FirstExperience({required this.onCompleted});
+  final Future<void> Function() onCompleted;
+
+  @override
+  State<_FirstExperience> createState() => _FirstExperienceState();
+}
+
+class _FirstExperienceState extends State<_FirstExperience> {
+  final MuondiaGenerationDependencies _dependencies =
+      MuondiaGenerationDependencies();
+
+  @override
+  void dispose() {
+    _dependencies.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OnboardingQuizPage(
+      loadQuestions: _dependencies.onboardingQuizPipeline.generate,
+      onCompleted: widget.onCompleted,
+    );
+  }
+}
