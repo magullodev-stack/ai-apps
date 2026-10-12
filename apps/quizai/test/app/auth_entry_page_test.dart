@@ -86,6 +86,16 @@ void main() {
       find.byKey(const Key('quizai-auth-background-fill')),
     );
     expect(background.transform.getMaxScaleOnAxis(), greaterThan(1.25));
+    // El arte se recorta tambien cuando sus hijos se pintan transformados.
+    final artwork = find.ancestor(
+      of: find.byKey(const Key('quizai-auth-background')),
+      matching: find.byType(ClipRect),
+    );
+    expect(artwork, findsOneWidget);
+    expect(
+      find.ancestor(of: artwork, matching: find.byType(SafeArea)),
+      findsOneWidget,
+    );
 
     final google = find.byKey(const Key('quizai-auth-button-google'));
     final apple = find.byKey(const Key('quizai-auth-button-apple'));

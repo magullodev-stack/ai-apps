@@ -16,6 +16,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final background = find.byKey(const Key('quizai-email-auth-background'));
+    expect(background, findsOneWidget);
+    expect(
+      find.ancestor(of: background, matching: find.byType(ClipRect)),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(of: background, matching: find.byType(SafeArea)),
+      findsOneWidget,
+    );
+
     await tester.enterText(
       find.byKey(const Key('quizai-email-auth-email')),
       'persona@example.com',

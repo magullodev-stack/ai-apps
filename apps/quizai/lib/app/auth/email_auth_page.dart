@@ -173,7 +173,7 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: Colors.black,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.black,
@@ -185,14 +185,22 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // El arte contiene un margen oscuro: cubrirlo sin deformar la imagen.
-            Transform.scale(
-              scale: 1.30,
-              child: Image.asset(
-                'assets/auth/Background.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                filterQuality: FilterQuality.high,
+            // En Android edge-to-edge, el fondo ampliado no debe pintar
+            // sobre la barra de estado ni sobre la barra de navegacion.
+            SafeArea(
+              top: true,
+              bottom: true,
+              child: ClipRect(
+                child: Transform.scale(
+                  scale: 1.30,
+                  child: Image.asset(
+                    'assets/auth/Background.png',
+                    key: const Key('quizai-email-auth-background'),
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
               ),
             ),
             SafeArea(

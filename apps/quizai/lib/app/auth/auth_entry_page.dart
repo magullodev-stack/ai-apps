@@ -162,7 +162,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            const _AuthParallaxArt(),
+            // Recortar tambien las transformaciones ampliadas, no solo el Stack.
+            const ClipRect(
+              child: _AuthParallaxArt(),
+            ),
             LayoutBuilder(
               builder: (context, constraints) {
                 final buttonWidth = math.min(constraints.maxWidth * 0.86, 420.0);
