@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'app_theme.dart';
 import 'home/home_page.dart';
 import 'profile/profile_page.dart';
-import 'settings/quiz_settings.dart';
+import 'settings/muondia_settings.dart';
 import 'settings/settings_page.dart';
 
 class AppShell extends StatefulWidget {
@@ -18,7 +18,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _selectedTab = 0;
-  final _settings = ValueNotifier(const QuizSettings());
+  final _settings = ValueNotifier(const MuondiaSettings());
 
   @override
   void dispose() {
@@ -29,7 +29,7 @@ class _AppShellState extends State<AppShell> {
   void _openSettings() {
     Navigator.of(context).push<void>(
       PageRouteBuilder<void>(
-        pageBuilder: (_, _, _) => ValueListenableBuilder<QuizSettings>(
+        pageBuilder: (_, _, _) => ValueListenableBuilder<MuondiaSettings>(
           valueListenable: _settings,
           builder: (_, settings, _) => SettingsPage(
             settings: settings,
@@ -68,7 +68,7 @@ class _AppShellState extends State<AppShell> {
         else
           const DecoratedBox(
             decoration: BoxDecoration(
-              gradient: QuizPalette.backgroundGradient,
+              gradient: MuondiaPalette.backgroundGradient,
             ),
           ),
         Scaffold(
@@ -82,17 +82,17 @@ class _AppShellState extends State<AppShell> {
                 ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.fromLTRB(
-              QuizLayout.horizontalPadding,
+              MuondiaLayout.horizontalPadding,
               0,
-              QuizLayout.horizontalPadding,
-              QuizSpacing.sm,
+              MuondiaLayout.horizontalPadding,
+              MuondiaSpacing.sm,
             ),
             color: Colors.transparent,
             child: SafeArea(
               top: false,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(QuizRadii.pill),
+                  borderRadius: BorderRadius.circular(MuondiaRadii.pill),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withAlpha(38),
@@ -100,20 +100,20 @@ class _AppShellState extends State<AppShell> {
                       offset: const Offset(0, 10),
                     ),
                     BoxShadow(
-                      color: QuizPalette.primaryLight.withAlpha(26),
+                      color: MuondiaPalette.primaryLight.withAlpha(26),
                       blurRadius: 22,
                       spreadRadius: 1,
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(QuizRadii.pill),
+                  borderRadius: BorderRadius.circular(MuondiaRadii.pill),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
                     child: Container(
                       key: const Key('muondia-bottom-nav'),
                       height: 70,
-                      padding: const EdgeInsets.all(QuizSpacing.xs),
+                      padding: const EdgeInsets.all(MuondiaSpacing.xs),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
@@ -124,7 +124,7 @@ class _AppShellState extends State<AppShell> {
                             Color(0x334B2C9C),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(QuizRadii.pill),
+                        borderRadius: BorderRadius.circular(MuondiaRadii.pill),
                         border: Border.all(
                           color: const Color(0x80FFFFFF),
                           width: 1.1,
@@ -188,8 +188,8 @@ class _ProfileTab extends StatelessWidget {
           child: Theme(
             data: Theme.of(context).copyWith(
               textTheme: Theme.of(context).textTheme.apply(
-                bodyColor: QuizPalette.foreground,
-                displayColor: QuizPalette.foreground,
+                bodyColor: MuondiaPalette.foreground,
+                displayColor: MuondiaPalette.foreground,
               ),
             ),
             child: const ProfilePage(),
@@ -197,19 +197,19 @@ class _ProfileTab extends StatelessWidget {
         ),
         Positioned(
           top: 28,
-          right: QuizLayout.horizontalPadding,
+          right: MuondiaLayout.horizontalPadding,
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: QuizPalette.navSurfaceEnd,
-              border: Border.all(color: QuizPalette.foreground.withAlpha(72)),
+              color: MuondiaPalette.navSurfaceEnd,
+              border: Border.all(color: MuondiaPalette.foreground.withAlpha(72)),
             ),
             child: IconButton(
               tooltip: 'Ajustes',
               onPressed: onOpenSettings,
               icon: const Icon(
                 Icons.settings_rounded,
-                color: QuizPalette.foreground,
+                color: MuondiaPalette.foreground,
                 size: 29,
               ),
             ),
@@ -239,8 +239,8 @@ class _QuizNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foreground = selected
-        ? QuizPalette.navActiveText
-        : QuizPalette.navInactiveText;
+        ? MuondiaPalette.navActiveText
+        : MuondiaPalette.navInactiveText;
 
     return Semantics(
       selected: selected,
@@ -249,21 +249,21 @@ class _QuizNavItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(QuizRadii.pill),
+          borderRadius: BorderRadius.circular(MuondiaRadii.pill),
           child: AnimatedContainer(
             key: selected ? const Key('muondia-nav-active') : null,
-            duration: QuizDurations.fast,
-            curve: QuizDurations.curve,
+            duration: MuondiaDurations.fast,
+            curve: MuondiaDurations.curve,
             decoration: BoxDecoration(
-              gradient: selected ? QuizPalette.navActiveGradient : null,
-              borderRadius: BorderRadius.circular(QuizRadii.pill),
+              gradient: selected ? MuondiaPalette.navActiveGradient : null,
+              borderRadius: BorderRadius.circular(MuondiaRadii.pill),
               border: selected
-                  ? Border.all(color: QuizPalette.foreground, width: 1.5)
+                  ? Border.all(color: MuondiaPalette.foreground, width: 1.5)
                   : null,
               boxShadow: selected
                   ? [
                       BoxShadow(
-                        color: QuizPalette.foreground.withAlpha(70),
+                        color: MuondiaPalette.foreground.withAlpha(70),
                         blurRadius: 12,
                         spreadRadius: 1,
                       ),
@@ -279,14 +279,14 @@ class _QuizNavItem extends StatelessWidget {
                     color: foreground,
                     size: 27,
                   ),
-                  const SizedBox(height: QuizSpacing.xs),
+                  const SizedBox(height: MuondiaSpacing.xs),
                   Text(
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: QuizTypography.label.copyWith(
+                    style: MuondiaTypography.label.copyWith(
                       color: foreground,
-                      fontSize: selected ? QuizTypography.label.fontSize : 15,
+                      fontSize: selected ? MuondiaTypography.label.fontSize : 15,
                       fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
                       height: 1.1,
                     ),

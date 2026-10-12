@@ -72,7 +72,7 @@ class AuthProviderButton extends StatelessWidget {
                           overflow: TextOverflow.visible,
                           textAlign: TextAlign.left,
                           style: TextStyle(
-                            fontFamily: QuizTypography.family,
+                            fontFamily: MuondiaTypography.family,
                             color: Colors.white,
                             fontSize: height * 0.34,
                             height: 1,

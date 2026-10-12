@@ -2,8 +2,8 @@
 
 **Muondia** es la aplicación móvil interactiva de AI-APPS. Vive en
 `apps/muondia/`, con paquete Dart `muondia` e identificador Android
-`com.aiapps.muondia`. La aplicación ya no se llama QuizAI; el antiguo Quiz10
-no es una modalidad accesible desde Home.
+`com.aiapps.muondia`. El test inicial de diez preguntas forma parte del
+recorrido de bienvenida y no es una modalidad independiente.
 
 ## Experiencia
 
@@ -34,6 +34,8 @@ La entrada monta cuatro capas de `assets/auth/`: `Background.png`,
 `Estrellas.png`, `Esferas.png` y `Robot.png`, con parallax suave.
 Las capas respetan las áreas seguras; las barras nativas Android son negras.
 Los botones de acceso y el texto legal forman un bloque inferior adaptable.
+Los tres botones se dibujan mediante Flutter; Google utiliza
+`assets/auth/Muondia_Auth_Google_ICON.png` como icono.
 
 Home usa los recursos de `assets/home/` y un rótulo tipográfico «Muondia».
 El icono de lanzamiento Android utiliza el símbolo gráfico ya presente en
@@ -48,20 +50,17 @@ la rama `dev`. El lanzador es `apps/muondia/run.ps1`; la entrada de la
 sesión sigue siendo `scripts/start-dev-session.ps1`. No inicies otro
 `flutter run` mientras la tarea esté activa.
 
-El cambio de carpeta Flutter, de identificador Android y de actividad
-Kotlin requiere **una recompilación/instalación nativa**, no basta con Hot
-Reload. Tras sincronizar esta migración, reinicia una sola vez la tarea
-de desarrollo para usar la nueva ruta y generar el nuevo paquete. El
-arranque retira la antigua APK del emulador dedicado si sigue instalada.
+Los cambios de Dart y assets se recogen mediante Hot Reload automático.
+Las modificaciones de identificador Android, actividad Kotlin o configuración
+nativa sí requieren **una recompilación/instalación nativa**.
 
 ## Firebase y autenticación
 
-El nuevo `applicationId` es `com.aiapps.muondia`: Android lo trata como
-otra aplicación. Regístrala en el proyecto Firebase compartido de AI-APPS,
-descarga un `google-services.json` correspondiente **a ese ID** y colócalo
-localmente en `apps/muondia/android/app/google-services.json`. No publiques
-ese fichero. Es necesario registrar también las huellas SHA Android para
-el proveedor Google. Un fichero configurado para el antiguo ID no sirve.
+El `applicationId` de Muondia es `com.aiapps.muondia`. Debe estar registrado
+en el proyecto Firebase compartido de AI-APPS. Descarga el
+`google-services.json` correspondiente **a ese ID** y colócalo localmente en
+`apps/muondia/android/app/google-services.json`; no publiques ese fichero.
+Es necesario registrar también las huellas SHA Android para Google.
 
 ## Comprobaciones
 

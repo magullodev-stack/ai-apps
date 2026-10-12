@@ -252,7 +252,7 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
                                       Text(
                                         'Continuar con email',
                                         textAlign: TextAlign.center,
-                                        style: QuizTypography.screenTitle
+                                        style: MuondiaTypography.screenTitle
                                             .copyWith(
                                           color: Colors.white,
                                           fontSize: 26,
@@ -264,7 +264,7 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
                                             ? 'Crea tu cuenta de Muondia.'
                                             : 'Entra en tu cuenta de Muondia.',
                                         textAlign: TextAlign.center,
-                                        style: QuizTypography.bodySecondary
+                                        style: MuondiaTypography.bodySecondary
                                             .copyWith(
                                           color: const Color(0xFFC9C1DD),
                                         ),
@@ -296,7 +296,7 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
                                             (states) => states.contains(
                                               WidgetState.selected,
                                             )
-                                                ? QuizPalette.primary
+                                                ? MuondiaPalette.primary
                                                 : const Color(0x331C1630),
                                           ),
                                         ),
@@ -427,10 +427,10 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
                                               _submitting ? null : _submit,
                                           style: FilledButton.styleFrom(
                                             backgroundColor:
-                                                QuizPalette.primary,
+                                                MuondiaPalette.primary,
                                             foregroundColor: Colors.white,
                                             textStyle:
-                                                QuizTypography.label.copyWith(
+                                                MuondiaTypography.label.copyWith(
                                               fontSize: 17,
                                             ),
                                           ),
@@ -503,12 +503,12 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: QuizPalette.error),
+        borderSide: const BorderSide(color: MuondiaPalette.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(
-          color: QuizPalette.error,
+          color: MuondiaPalette.error,
           width: 1.6,
         ),
       ),

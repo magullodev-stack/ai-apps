@@ -223,14 +223,14 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                             child: Text.rich(
                               TextSpan(
                                 style: legalBase.copyWith(
-                                  fontFamily: QuizTypography.family,
+                                  fontFamily: MuondiaTypography.family,
                                 ),
                                 children: [
                                   const TextSpan(text: 'Al continuar, aceptas los '),
                                   TextSpan(
                                     text: 'Términos de uso',
                                     style: legalLink.copyWith(
-                                      fontFamily: QuizTypography.family,
+                                      fontFamily: MuondiaTypography.family,
                                     ),
                                     recognizer: _termsRecognizer,
                                   ),
@@ -238,7 +238,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                                   TextSpan(
                                     text: 'Política de privacidad',
                                     style: legalLink.copyWith(
-                                      fontFamily: QuizTypography.family,
+                                      fontFamily: MuondiaTypography.family,
                                     ),
                                     recognizer: _privacyRecognizer,
                                   ),

@@ -20,21 +20,21 @@ class SettingsSectionCard extends StatelessWidget {
         header: true,
         child: Text(
           title,
-          style: QuizTypography.sectionTitle.copyWith(
-            color: QuizPalette.foreground,
+          style: MuondiaTypography.sectionTitle.copyWith(
+            color: MuondiaPalette.foreground,
           ),
         ),
       ),
-      const SizedBox(height: QuizSpacing.md),
+      const SizedBox(height: MuondiaSpacing.md),
       Container(
         decoration: BoxDecoration(
-          color: QuizPalette.surface,
-          borderRadius: BorderRadius.circular(QuizRadii.card),
-          boxShadow: QuizShadows.card,
+          color: MuondiaPalette.surface,
+          borderRadius: BorderRadius.circular(MuondiaRadii.card),
+          boxShadow: MuondiaShadows.card,
         ),
         child: Material(
-          color: QuizPalette.surface,
-          borderRadius: BorderRadius.circular(QuizRadii.card),
+          color: MuondiaPalette.surface,
+          borderRadius: BorderRadius.circular(MuondiaRadii.card),
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
@@ -42,9 +42,9 @@ class SettingsSectionCard extends StatelessWidget {
                 if (i > 0)
                   const Divider(
                     height: 1,
-                    indent: QuizSpacing.lg,
-                    endIndent: QuizSpacing.lg,
-                    color: QuizPalette.divider,
+                    indent: MuondiaSpacing.lg,
+                    endIndent: MuondiaSpacing.lg,
+                    color: MuondiaPalette.divider,
                   ),
                 children[i],
               ],
@@ -116,8 +116,8 @@ class SettingsInfoRow extends StatelessWidget {
     accent: accent,
     onTap: onTap,
     trailing: value != null
-        ? Text(value!, style: QuizTypography.bodySecondary)
-        : const Icon(Icons.chevron_right_rounded, color: QuizPalette.inkMuted),
+        ? Text(value!, style: MuondiaTypography.bodySecondary)
+        : const Icon(Icons.chevron_right_rounded, color: MuondiaPalette.inkMuted),
   );
 }
 
@@ -141,27 +141,27 @@ class _SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Padding(
-      padding: const EdgeInsets.all(QuizSpacing.lg),
+      padding: const EdgeInsets.all(MuondiaSpacing.lg),
       child: Row(
         children: [
           _SettingsIcon(icon: icon, accent: accent),
-          const SizedBox(width: QuizSpacing.md),
+          const SizedBox(width: MuondiaSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: QuizTypography.label.copyWith(color: QuizPalette.ink),
+                  style: MuondiaTypography.label.copyWith(color: MuondiaPalette.ink),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: QuizSpacing.xs),
-                  Text(subtitle!, style: QuizTypography.bodySecondary),
+                  const SizedBox(height: MuondiaSpacing.xs),
+                  Text(subtitle!, style: MuondiaTypography.bodySecondary),
                 ],
               ],
             ),
           ),
-          const SizedBox(width: QuizSpacing.md),
+          const SizedBox(width: MuondiaSpacing.md),
           trailing,
         ],
       ),
@@ -179,16 +179,16 @@ class _SettingsIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
     child: Container(
-      width: QuizSpacing.xxl + QuizSpacing.lg,
-      height: QuizSpacing.xxl + QuizSpacing.lg,
+      width: MuondiaSpacing.xxl + MuondiaSpacing.lg,
+      height: MuondiaSpacing.xxl + MuondiaSpacing.lg,
       decoration: BoxDecoration(
         color: accent.withAlpha(32),
-        borderRadius: BorderRadius.circular(QuizRadii.medium),
+        borderRadius: BorderRadius.circular(MuondiaRadii.medium),
       ),
       child: Icon(
         icon,
-        size: QuizSpacing.xl,
-        color: accent == QuizPalette.warning ? QuizPalette.ink : accent,
+        size: MuondiaSpacing.xl,
+        color: accent == MuondiaPalette.warning ? MuondiaPalette.ink : accent,
       ),
     ),
   );
@@ -204,26 +204,26 @@ class _SettingsSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final duration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
-        : QuizDurations.fast;
+        : MuondiaDurations.fast;
     return AnimatedContainer(
       duration: duration,
-      curve: QuizDurations.curve,
-      width: QuizSpacing.xxl + QuizSpacing.xl,
-      height: QuizSpacing.xxl,
-      padding: const EdgeInsets.all(QuizSpacing.xs),
+      curve: MuondiaDurations.curve,
+      width: MuondiaSpacing.xxl + MuondiaSpacing.xl,
+      height: MuondiaSpacing.xxl,
+      padding: const EdgeInsets.all(MuondiaSpacing.xs),
       decoration: BoxDecoration(
-        color: value ? QuizPalette.primary : QuizPalette.divider,
-        borderRadius: BorderRadius.circular(QuizRadii.pill),
+        color: value ? MuondiaPalette.primary : MuondiaPalette.divider,
+        borderRadius: BorderRadius.circular(MuondiaRadii.pill),
       ),
       child: AnimatedAlign(
         duration: duration,
-        curve: QuizDurations.curve,
+        curve: MuondiaDurations.curve,
         alignment: value ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          width: QuizSpacing.xl,
-          height: QuizSpacing.xl,
+          width: MuondiaSpacing.xl,
+          height: MuondiaSpacing.xl,
           decoration: const BoxDecoration(
-            color: QuizPalette.surfaceElevated,
+            color: MuondiaPalette.surfaceElevated,
             shape: BoxShape.circle,
           ),
         ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app_theme.dart';
-import 'quiz_settings.dart';
+import 'muondia_settings.dart';
 import 'settings_components.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -12,45 +12,45 @@ class SettingsPage extends StatelessWidget {
     required this.onChanged,
   });
 
-  final QuizSettings settings;
-  final ValueChanged<QuizSettings> onChanged;
+  final MuondiaSettings settings;
+  final ValueChanged<MuondiaSettings> onChanged;
 
   void _showUnavailable(BuildContext context, String message) {
     showDialog<void>(
       context: context,
       animationStyle: AnimationStyle(
-        duration: QuizDurations.normal,
-        reverseDuration: QuizDurations.fast,
-        curve: QuizDurations.curve,
+        duration: MuondiaDurations.normal,
+        reverseDuration: MuondiaDurations.fast,
+        curve: MuondiaDurations.curve,
       ),
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        insetPadding: const EdgeInsets.all(QuizSpacing.xl),
+        insetPadding: const EdgeInsets.all(MuondiaSpacing.xl),
         child: Container(
           decoration: BoxDecoration(
-            color: QuizPalette.surface,
-            borderRadius: BorderRadius.circular(QuizRadii.card),
-            boxShadow: QuizShadows.card,
+            color: MuondiaPalette.surface,
+            borderRadius: BorderRadius.circular(MuondiaRadii.card),
+            boxShadow: MuondiaShadows.card,
           ),
-          padding: const EdgeInsets.all(QuizSpacing.xl),
+          padding: const EdgeInsets.all(MuondiaSpacing.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 message,
-                style: QuizTypography.body.copyWith(color: QuizPalette.ink),
+                style: MuondiaTypography.body.copyWith(color: MuondiaPalette.ink),
               ),
-              const SizedBox(height: QuizSpacing.xl),
+              const SizedBox(height: MuondiaSpacing.xl),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: QuizPalette.primary,
-                    textStyle: QuizTypography.label,
+                    foregroundColor: MuondiaPalette.primary,
+                    textStyle: MuondiaTypography.label,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(QuizRadii.small),
+                      borderRadius: BorderRadius.circular(MuondiaRadii.small),
                     ),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
@@ -68,22 +68,22 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
     value: SystemUiOverlayStyle.light,
     child: Scaffold(
-      backgroundColor: QuizPalette.background,
+      backgroundColor: MuondiaPalette.background,
       body: DecoratedBox(
         decoration: const BoxDecoration(
-          gradient: QuizPalette.backgroundGradient,
+          gradient: MuondiaPalette.backgroundGradient,
         ),
         child: SafeArea(
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: QuizLayout.maxWidth),
+              constraints: const BoxConstraints(maxWidth: MuondiaLayout.maxWidth),
               child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: QuizLayout.horizontalPadding,
-                      vertical: QuizSpacing.lg,
+                      horizontal: MuondiaLayout.horizontalPadding,
+                      vertical: MuondiaSpacing.lg,
                     ),
                     child: Row(
                       children: [
@@ -91,16 +91,16 @@ class SettingsPage extends StatelessWidget {
                           tooltip: 'Volver',
                           icon: const Icon(
                             Icons.arrow_back_rounded,
-                            color: QuizPalette.foreground,
+                            color: MuondiaPalette.foreground,
                           ),
                           onPressed: () => Navigator.of(context).maybePop(),
                         ),
-                        const SizedBox(width: QuizSpacing.sm),
+                        const SizedBox(width: MuondiaSpacing.sm),
                         Expanded(
                           child: Text(
                             'Ajustes',
-                            style: QuizTypography.screenTitle.copyWith(
-                              color: QuizPalette.foreground,
+                            style: MuondiaTypography.screenTitle.copyWith(
+                              color: MuondiaPalette.foreground,
                             ),
                           ),
                         ),
@@ -110,10 +110,10 @@ class SettingsPage extends StatelessWidget {
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(
-                        QuizLayout.horizontalPadding,
-                        QuizSpacing.sm,
-                        QuizLayout.horizontalPadding,
-                        QuizSpacing.xxl,
+                        MuondiaLayout.horizontalPadding,
+                        MuondiaSpacing.sm,
+                        MuondiaLayout.horizontalPadding,
+                        MuondiaSpacing.xxl,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -126,7 +126,7 @@ class SettingsPage extends StatelessWidget {
                                 subtitle:
                                     'Efectos de sonido durante las partidas.',
                                 icon: Icons.volume_up_rounded,
-                                accent: QuizPalette.primary,
+                                accent: MuondiaPalette.primary,
                                 value: settings.soundsEnabled,
                                 onToggle: () => onChanged(
                                   settings.copyWith(
@@ -138,7 +138,7 @@ class SettingsPage extends StatelessWidget {
                                 title: 'Vibración',
                                 subtitle: 'Respuesta háptica al jugar.',
                                 icon: Icons.vibration_rounded,
-                                accent: QuizPalette.info,
+                                accent: MuondiaPalette.info,
                                 value: settings.vibrationEnabled,
                                 onToggle: () => onChanged(
                                   settings.copyWith(
@@ -152,7 +152,7 @@ class SettingsPage extends StatelessWidget {
                                 subtitle:
                                     'Reduce movimientos y efectos visuales.',
                                 icon: Icons.motion_photos_off_rounded,
-                                accent: QuizPalette.warning,
+                                accent: MuondiaPalette.warning,
                                 value: settings.reduceAnimations,
                                 onToggle: () => onChanged(
                                   settings.copyWith(
@@ -163,14 +163,14 @@ class SettingsPage extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: QuizSpacing.xxl),
+                          const SizedBox(height: MuondiaSpacing.xxl),
                           SettingsSectionCard(
                             title: 'Información',
                             children: [
                               SettingsInfoRow(
                                 title: 'Privacidad',
                                 icon: Icons.privacy_tip_outlined,
-                                accent: QuizPalette.error,
+                                accent: MuondiaPalette.error,
                                 onTap: () => _showUnavailable(
                                   context,
                                   'El contenido de privacidad todavía no está disponible.',
@@ -179,7 +179,7 @@ class SettingsPage extends StatelessWidget {
                               SettingsInfoRow(
                                 title: 'Términos de uso',
                                 icon: Icons.description_outlined,
-                                accent: QuizPalette.primary,
+                                accent: MuondiaPalette.primary,
                                 onTap: () => _showUnavailable(
                                   context,
                                   'Los términos de uso todavía no están disponibles.',
@@ -188,7 +188,7 @@ class SettingsPage extends StatelessWidget {
                               const SettingsInfoRow(
                                 title: 'Versión',
                                 icon: Icons.info_outline_rounded,
-                                accent: QuizPalette.info,
+                                accent: MuondiaPalette.info,
                                 value: '1.0.0',
                               ),
                             ],

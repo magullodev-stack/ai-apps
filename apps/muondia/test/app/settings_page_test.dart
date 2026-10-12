@@ -3,7 +3,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:muondia/app/app_shell.dart';
 import 'package:muondia/app/app_theme.dart';
-import 'package:muondia/app/settings/quiz_settings.dart';
+import 'package:muondia/app/settings/muondia_settings.dart';
 import 'package:muondia/app/settings/settings_components.dart';
 import 'package:muondia/app/settings/settings_page.dart';
 
@@ -33,7 +33,7 @@ void main() {
   test(
     'cambiar una preferencia conserva las otras y los valores iniciales',
     () {
-      const initial = QuizSettings();
+      const initial = MuondiaSettings();
       final updated = initial.copyWith(soundsEnabled: false);
       expect(initial.soundsEnabled, isTrue);
       expect(initial.vibrationEnabled, isTrue);
@@ -186,7 +186,7 @@ void main() {
               textScaler: const TextScaler.linear(2),
             ),
             child: SettingsPage(
-              settings: const QuizSettings(),
+              settings: const MuondiaSettings(),
               onChanged: (_) {},
             ),
           ),

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Design System v1: identidad visual particular de Muondia.
 ///
 /// No pertenece a las capacidades compartidas de AI-APPS.
-abstract final class QuizPalette {
+abstract final class MuondiaPalette {
   static const background = Color(0xFF38149B);
   static const backgroundLight = Color(0xFF7838F2);
   static const backgroundDark = Color(0xFF29116F);
@@ -73,12 +73,12 @@ abstract final class QuizPalette {
 ///
 /// La familia se registra localmente en pubspec.yaml.
 /// Los estilos se comparten entre la aplicación y sus modalidades.
-abstract final class QuizTypography {
+abstract final class MuondiaTypography {
   static const family = 'Nunito';
 
   static const brand = TextStyle(
     fontFamily: family,
-    color: QuizPalette.foreground,
+    color: MuondiaPalette.foreground,
     fontSize: 47,
     fontWeight: FontWeight.w900,
     letterSpacing: -2.2,
@@ -110,7 +110,7 @@ abstract final class QuizTypography {
     fontFamily: family,
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    color: QuizPalette.inkMuted,
+    color: MuondiaPalette.inkMuted,
   );
   static const label = TextStyle(
     fontFamily: family,
@@ -121,11 +121,11 @@ abstract final class QuizTypography {
     fontFamily: family,
     fontSize: 12,
     fontWeight: FontWeight.w600,
-    color: QuizPalette.inkMuted,
+    color: MuondiaPalette.inkMuted,
   );
 }
 
-abstract final class QuizSpacing {
+abstract final class MuondiaSpacing {
   static const xs = 4.0;
   static const sm = 8.0;
   static const md = 12.0;
@@ -134,7 +134,7 @@ abstract final class QuizSpacing {
   static const xxl = 32.0;
 }
 
-abstract final class QuizRadii {
+abstract final class MuondiaRadii {
   static const small = 12.0;
   static const medium = 18.0;
   static const card = 24.0;
@@ -142,7 +142,7 @@ abstract final class QuizRadii {
   static const pill = 1000.0;
 }
 
-abstract final class QuizShadows {
+abstract final class MuondiaShadows {
   static const card = <BoxShadow>[
     BoxShadow(color: Color(0x1C000000), blurRadius: 10, offset: Offset(0, 4)),
   ];
@@ -151,13 +151,13 @@ abstract final class QuizShadows {
   ];
 }
 
-abstract final class QuizDurations {
+abstract final class MuondiaDurations {
   static const fast = Duration(milliseconds: 180);
   static const normal = Duration(milliseconds: 240);
   static const curve = Curves.easeOutCubic;
 }
 
-abstract final class QuizLayout {
+abstract final class MuondiaLayout {
   static const maxWidth = 640.0;
   static const horizontalPadding = 12.0;
 }
@@ -166,25 +166,25 @@ abstract final class QuizLayout {
 // AppShell aplica explícitamente el escenario oscuro de Muondia.
 final ThemeData muondiaTheme = ThemeData(
   useMaterial3: true,
-  fontFamily: QuizTypography.family,
-  colorScheme: ColorScheme.fromSeed(seedColor: QuizPalette.primary).copyWith(
-    primary: QuizPalette.primary,
-    onPrimary: QuizPalette.foreground,
-    surface: QuizPalette.surface,
-    onSurface: QuizPalette.ink,
-    onSurfaceVariant: QuizPalette.inkMuted,
-    outlineVariant: QuizPalette.divider,
+  fontFamily: MuondiaTypography.family,
+  colorScheme: ColorScheme.fromSeed(seedColor: MuondiaPalette.primary).copyWith(
+    primary: MuondiaPalette.primary,
+    onPrimary: MuondiaPalette.foreground,
+    surface: MuondiaPalette.surface,
+    onSurface: MuondiaPalette.ink,
+    onSurfaceVariant: MuondiaPalette.inkMuted,
+    outlineVariant: MuondiaPalette.divider,
     // Material usa un rojo más oscuro para texto de error sobre superficie
-    // clara; el coral canónico sigue disponible en QuizPalette para estado.
+    // clara; el coral canónico sigue disponible en MuondiaPalette para estado.
   ),
-  scaffoldBackgroundColor: QuizPalette.surface,
-  dividerColor: QuizPalette.divider,
+  scaffoldBackgroundColor: MuondiaPalette.surface,
+  dividerColor: MuondiaPalette.divider,
   textTheme: const TextTheme(
-    headlineSmall: QuizTypography.screenTitle,
-    titleLarge: QuizTypography.sectionTitle,
-    bodyLarge: QuizTypography.body,
-    bodyMedium: QuizTypography.bodySecondary,
-    labelLarge: QuizTypography.label,
-    bodySmall: QuizTypography.caption,
+    headlineSmall: MuondiaTypography.screenTitle,
+    titleLarge: MuondiaTypography.sectionTitle,
+    bodyLarge: MuondiaTypography.body,
+    bodyMedium: MuondiaTypography.bodySecondary,
+    labelLarge: MuondiaTypography.label,
+    bodySmall: MuondiaTypography.caption,
   ),
 );

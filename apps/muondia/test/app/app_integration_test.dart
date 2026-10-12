@@ -61,7 +61,7 @@ void main() {
       expect(
         salasWidth,
         lessThanOrEqualTo(
-          QuizLayout.maxWidth - 2 * QuizLayout.horizontalPadding,
+          MuondiaLayout.maxWidth - 2 * MuondiaLayout.horizontalPadding,
         ),
       );
       expect(documentWidth, closeTo(salasWidth, 0.01));
@@ -148,7 +148,7 @@ void main() {
       expect(
         Theme.of(tester.element(find.byType(EstudioPage)))
             .scaffoldBackgroundColor,
-        QuizPalette.surface,
+        MuondiaPalette.surface,
       );
       await tester.pageBack();
       await tester.pumpAndSettle();

@@ -12,7 +12,7 @@ abstract final class _HomeLayout {
   static const heroHeight = 206.0;
   static const documentHeight = heroHeight;
   static const bottomNavHeight = 70.0;
-  static const bottomNavOuterPadding = QuizSpacing.sm;
+  static const bottomNavOuterPadding = MuondiaSpacing.sm;
   static const bottomExtraClearance = 28.0;
 }
 
@@ -114,16 +114,16 @@ class HomePage extends StatelessWidget {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: QuizLayout.maxWidth),
+        constraints: const BoxConstraints(maxWidth: MuondiaLayout.maxWidth),
         child: Stack(
           fit: StackFit.expand,
           children: [
             SingleChildScrollView(
               key: const Key('muondia-home-scroll'),
               padding: EdgeInsets.fromLTRB(
-                QuizLayout.horizontalPadding,
+                MuondiaLayout.horizontalPadding,
                 headerExtent,
-                QuizLayout.horizontalPadding,
+                MuondiaLayout.horizontalPadding,
                 bottomClearance,
               ),
               child: Column(
@@ -188,8 +188,8 @@ class _HomeHeader extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(
               top: topInset,
-              left: QuizLayout.horizontalPadding,
-              right: QuizLayout.horizontalPadding,
+              left: MuondiaLayout.horizontalPadding,
+              right: MuondiaLayout.horizontalPadding,
             ),
             child: SizedBox(
               height: _HomeLayout.headerHeight,
@@ -221,7 +221,7 @@ class _HomeHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: QuizSpacing.sm),
+                  const SizedBox(width: MuondiaSpacing.sm),
                   SizedBox(
                     width: 40,
                     height: 40,
@@ -230,7 +230,7 @@ class _HomeHeader extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: const Color(0x994B2C9C),
                         border: Border.all(
-                          color: QuizPalette.foreground.withAlpha(82),
+                          color: MuondiaPalette.foreground.withAlpha(82),
                         ),
                       ),
                       child: IconButton(
@@ -239,7 +239,7 @@ class _HomeHeader extends StatelessWidget {
                         onPressed: onOpenSettings,
                         icon: const Icon(
                           Icons.settings_rounded,
-                          color: QuizPalette.foreground,
+                          color: MuondiaPalette.foreground,
                           size: 23,
                         ),
                       ),
@@ -297,35 +297,35 @@ class _SalasHeader extends StatelessWidget {
         Expanded(
           child: Text(
             'Salas',
-            style: QuizTypography.screenTitle.copyWith(
-              color: QuizPalette.foreground,
+            style: MuondiaTypography.screenTitle.copyWith(
+              color: MuondiaPalette.foreground,
               fontSize: 33,
             ),
           ),
         ),
-        const SizedBox(width: QuizSpacing.sm),
+        const SizedBox(width: MuondiaSpacing.sm),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(QuizRadii.pill),
-            border: Border.all(color: QuizPalette.foreground.withAlpha(66)),
-            color: QuizPalette.foreground.withAlpha(10),
+            borderRadius: BorderRadius.circular(MuondiaRadii.pill),
+            border: Border.all(color: MuondiaPalette.foreground.withAlpha(66)),
+            color: MuondiaPalette.foreground.withAlpha(10),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Ver todas',
-                style: QuizTypography.label.copyWith(
-                  color: QuizPalette.foreground,
+                style: MuondiaTypography.label.copyWith(
+                  color: MuondiaPalette.foreground,
                   fontSize: 13,
                 ),
               ),
-              const SizedBox(width: QuizSpacing.xs),
+              const SizedBox(width: MuondiaSpacing.xs),
               const Icon(
                 Icons.arrow_forward_rounded,
                 size: 16,
-                color: QuizPalette.foreground,
+                color: MuondiaPalette.foreground,
               ),
             ],
           ),
@@ -536,20 +536,20 @@ class _SalaSlot extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(QuizRadii.card),
+          borderRadius: BorderRadius.circular(MuondiaRadii.card),
           child: Ink(
-            padding: const EdgeInsets.all(QuizSpacing.md),
+            padding: const EdgeInsets.all(MuondiaSpacing.md),
             decoration: BoxDecoration(
-              color: QuizPalette.foreground.withAlpha(selected ? 22 : 12),
-              borderRadius: BorderRadius.circular(QuizRadii.card),
+              color: MuondiaPalette.foreground.withAlpha(selected ? 22 : 12),
+              borderRadius: BorderRadius.circular(MuondiaRadii.card),
               border: Border.all(
-                color: QuizPalette.foreground.withAlpha(selected ? 155 : 72),
+                color: MuondiaPalette.foreground.withAlpha(selected ? 155 : 72),
                 width: selected ? 1.4 : 1.0,
               ),
               boxShadow: selected
                   ? [
                       BoxShadow(
-                        color: QuizPalette.primaryLight.withAlpha(70),
+                        color: MuondiaPalette.primaryLight.withAlpha(70),
                         blurRadius: 14,
                         spreadRadius: 1,
                       ),
@@ -562,8 +562,8 @@ class _SalaSlot extends StatelessWidget {
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: QuizTypography.cardTitle.copyWith(
-                  color: QuizPalette.foreground,
+                style: MuondiaTypography.cardTitle.copyWith(
+                  color: MuondiaPalette.foreground,
                   fontSize: 18,
                 ),
               ),
@@ -627,8 +627,8 @@ class _DocumentSlot extends StatelessWidget {
                         Text(
                           'Estudio',
                           maxLines: 1,
-                          style: QuizTypography.screenTitle.copyWith(
-                            color: QuizPalette.foreground,
+                          style: MuondiaTypography.screenTitle.copyWith(
+                            color: MuondiaPalette.foreground,
                             fontSize: 33,
                           ),
                         ),
@@ -642,7 +642,7 @@ class _DocumentSlot extends StatelessWidget {
                   right: 185,
                   child: Text.rich(
                     TextSpan(
-                      style: QuizTypography.body.copyWith(
+                      style: MuondiaTypography.body.copyWith(
                         fontSize: 18,
                         height: 1.15,
                         fontWeight: FontWeight.w800,
@@ -651,13 +651,13 @@ class _DocumentSlot extends StatelessWidget {
                         TextSpan(
                           text: 'Tus archivos,\n',
                           style: TextStyle(
-                            color: QuizPalette.foreground,
+                            color: MuondiaPalette.foreground,
                           ),
                         ),
                         TextSpan(
                           text: 'tus quizzes',
                           style: TextStyle(
-                            color: QuizPalette.warning,
+                            color: MuondiaPalette.warning,
                           ),
                         ),
                       ],

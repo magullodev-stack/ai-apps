@@ -44,7 +44,7 @@ class MuondiaStage extends StatelessWidget {
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: QuizPalette.backgroundDark,
+        backgroundColor: MuondiaPalette.backgroundDark,
         body: Stack(
           fit: StackFit.expand,
           children: [
@@ -115,8 +115,8 @@ class _StageCopy extends StatelessWidget {
         Text(
           message.lead,
           textAlign: TextAlign.center,
-          style: QuizTypography.screenTitle.copyWith(
-            color: QuizPalette.foreground,
+          style: MuondiaTypography.screenTitle.copyWith(
+            color: MuondiaPalette.foreground,
             fontSize: 26,
             height: 1.12,
             fontWeight: FontWeight.w800,
@@ -127,7 +127,7 @@ class _StageCopy extends StatelessWidget {
         Text(
           message.highlight,
           textAlign: TextAlign.center,
-          style: QuizTypography.screenTitle.copyWith(
+          style: MuondiaTypography.screenTitle.copyWith(
             color: const Color(0xFFD6A7FF),
             fontSize: 35,
             height: 1.02,
@@ -141,8 +141,8 @@ class _StageCopy extends StatelessWidget {
           Text(
             support,
             textAlign: TextAlign.center,
-            style: QuizTypography.body.copyWith(
-              color: QuizPalette.foreground.withAlpha(225),
+            style: MuondiaTypography.body.copyWith(
+              color: MuondiaPalette.foreground.withAlpha(225),
               fontSize: 19,
               height: 1.28,
               fontWeight: FontWeight.w700,

@@ -46,11 +46,11 @@ async function activate(context) {
       // Al abrir VS Code, recuperar la tarea de desarrollo si esta parada;
       // nunca abrir una APK antigua con adb ni lanzar otro Flutter.
       if (initial) {
-        const quiz = sessions.find(item => item.kind === 'development-task');
-        if (quiz) {
+        const developmentSession = sessions.find(item => item.kind === 'development-task');
+        if (developmentSession) {
           try {
             if (!(await service.platform.taskRunning())) {
-              await service.start(quiz.id);
+              await service.start(developmentSession.id);
             }
           } catch (error) {
             output.appendLine('Arranque de desarrollo Muondia: ' + error.message);
