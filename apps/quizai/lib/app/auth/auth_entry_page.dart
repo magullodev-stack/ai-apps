@@ -120,19 +120,28 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
 
   @override
   Widget build(BuildContext context) {
+    const legalShadow = [
+      Shadow(
+        color: Color(0xE6000000),
+        offset: Offset(0, 1),
+        blurRadius: 3,
+      ),
+    ];
     const legalBase = TextStyle(
-      color: Color(0xFF969696),
-      fontSize: 14,
-      height: 1.35,
-      fontWeight: FontWeight.w500,
-    );
-    const legalLink = TextStyle(
-      color: Color(0xFFD6D6D6),
-      decoration: TextDecoration.underline,
-      decorationColor: Color(0xFFD6D6D6),
+      color: Color(0xFFF5F2FF),
       fontSize: 14,
       height: 1.35,
       fontWeight: FontWeight.w700,
+      shadows: legalShadow,
+    );
+    const legalLink = TextStyle(
+      color: Colors.white,
+      decoration: TextDecoration.underline,
+      decorationColor: Colors.white,
+      fontSize: 14,
+      height: 1.35,
+      fontWeight: FontWeight.w800,
+      shadows: legalShadow,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
