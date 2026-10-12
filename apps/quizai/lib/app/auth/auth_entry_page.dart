@@ -337,8 +337,8 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
               _movingLayer(
                 name: 'robot',
                 asset: 'assets/auth/Robot.png',
-                x: math.sin(angle + 1.4) * 11,
-                y: math.cos(angle + 1.4) * 8,
+                x: 0,
+                y: -12 + math.cos(angle + 1.4) * 11,
                 scale: 1.005 + math.sin(angle + 1.4) * 0.004,
               ),
             ],
