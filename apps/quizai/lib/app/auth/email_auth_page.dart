@@ -185,11 +185,15 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              'assets/auth/Background.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-              filterQuality: FilterQuality.high,
+            // El arte contiene un margen oscuro: cubrirlo sin deformar la imagen.
+            Transform.scale(
+              scale: 1.30,
+              child: Image.asset(
+                'assets/auth/Background.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                filterQuality: FilterQuality.high,
+              ),
             ),
             SafeArea(
               child: Column(

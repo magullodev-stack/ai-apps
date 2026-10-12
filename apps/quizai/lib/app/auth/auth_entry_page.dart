@@ -149,7 +149,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
         backgroundColor: Colors.black,
         body: SafeArea(
           top: true,
-          bottom: false,
+          bottom: true,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -313,12 +313,19 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
             fit: StackFit.expand,
             clipBehavior: Clip.hardEdge,
             children: [
-              Image.asset(
-                'assets/auth/Background.png',
-                key: const Key('quizai-auth-background'),
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                filterQuality: FilterQuality.high,
+              // El PNG original tiene márgenes oscuros integrados.
+              // Ampliar solo el fondo elimina las franjas sin alterar
+              // las coordenadas de robot, estrellas, esferas y botones.
+              Transform.scale(
+                key: const Key('quizai-auth-background-fill'),
+                scale: 1.30,
+                child: Image.asset(
+                  'assets/auth/Background.png',
+                  key: const Key('quizai-auth-background'),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  filterQuality: FilterQuality.high,
+                ),
               ),
               _movingLayer(
                 name: 'stars',

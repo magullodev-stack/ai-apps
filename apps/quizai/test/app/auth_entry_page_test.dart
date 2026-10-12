@@ -39,10 +39,17 @@ void main() {
       );
     }
     final robot = find.byKey(const Key('quizai-auth-parallax-robot'));
-    final startX = tester.widget<Transform>(robot).transform.getTranslation().x;
+    final start = tester.widget<Transform>(robot).transform.getTranslation();
     await tester.pump(const Duration(seconds: 2));
-    final movedX = tester.widget<Transform>(robot).transform.getTranslation().x;
-    expect(movedX, isNot(closeTo(startX, 0.01)));
+    final moved = tester.widget<Transform>(robot).transform.getTranslation();
+    expect(start.x, 0);
+    expect(moved.x, 0);
+    expect(moved.y, isNot(closeTo(start.y, 0.01)));
+
+    final background = tester.widget<Transform>(
+      find.byKey(const Key('quizai-auth-background-fill')),
+    );
+    expect(background.transform.getMaxScaleOnAxis(), greaterThan(1.25));
 
     final google = find.byKey(const Key('quizai-auth-button-google'));
     final apple = find.byKey(const Key('quizai-auth-button-apple'));
