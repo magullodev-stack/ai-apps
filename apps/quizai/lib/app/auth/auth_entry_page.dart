@@ -156,22 +156,16 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             const _AuthParallaxArt(),
             LayoutBuilder(
               builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final height = constraints.maxHeight;
-                final buttonWidth = width * 0.86;
+                final buttonWidth = math.min(constraints.maxWidth * 0.86, 420.0);
                 final buttonHeight = buttonWidth / 5.82;
-                final left = (width - buttonWidth) / 2;
 
                 Widget providerButton({
                   required Key key,
                   required AuthProvider provider,
-                  required double topFactor,
                   required VoidCallback onPressed,
                 }) {
-                  return Positioned(
+                  return SizedBox(
                     key: key,
-                    left: left,
-                    top: height * topFactor,
                     width: buttonWidth,
                     height: buttonHeight,
                     child: AuthProviderButton(
@@ -181,73 +175,76 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   );
                 }
 
-                return Stack(
-                  children: [
-                    providerButton(
-                      key: const Key('quizai-auth-button-google'),
-                      provider: AuthProvider.google,
-                      topFactor: 0.5768,
-                      onPressed: () =>
-                          _signInWithProvider(IdentityProvider.google),
-                    ),
-                    providerButton(
-                      key: const Key('quizai-auth-button-apple'),
-                      provider: AuthProvider.apple,
-                      topFactor: 0.6595,
-                      onPressed: () =>
-                          _signInWithProvider(IdentityProvider.apple),
-                    ),
-                    providerButton(
-                      key: const Key('quizai-auth-button-email'),
-                      provider: AuthProvider.email,
-                      topFactor: 0.7415,
-                      onPressed: _openEmail,
-                    ),
-                  ],
-                );
-              },
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text.rich(
-                      TextSpan(
-                        style: legalBase.copyWith(
-                          fontFamily: QuizTypography.family,
+                // Botones y condiciones comparten el mismo bloque inferior.
+                // El espacio entre ambos no depende de la altura del móvil.
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        providerButton(
+                          key: const Key('quizai-auth-button-google'),
+                          provider: AuthProvider.google,
+                          onPressed: () =>
+                              _signInWithProvider(IdentityProvider.google),
                         ),
-                        children: [
-                          const TextSpan(text: 'Al continuar, aceptas los '),
-                          TextSpan(
-                            text: 'Términos de uso',
-                            style: legalLink.copyWith(
-                              fontFamily: QuizTypography.family,
+                        const SizedBox(height: 8),
+                        providerButton(
+                          key: const Key('quizai-auth-button-apple'),
+                          provider: AuthProvider.apple,
+                          onPressed: () =>
+                              _signInWithProvider(IdentityProvider.apple),
+                        ),
+                        const SizedBox(height: 8),
+                        providerButton(
+                          key: const Key('quizai-auth-button-email'),
+                          provider: AuthProvider.email,
+                          onPressed: _openEmail,
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text.rich(
+                              TextSpan(
+                                style: legalBase.copyWith(
+                                  fontFamily: QuizTypography.family,
+                                ),
+                                children: [
+                                  const TextSpan(text: 'Al continuar, aceptas los '),
+                                  TextSpan(
+                                    text: 'Términos de uso',
+                                    style: legalLink.copyWith(
+                                      fontFamily: QuizTypography.family,
+                                    ),
+                                    recognizer: _termsRecognizer,
+                                  ),
+                                  const TextSpan(text: '\ny la '),
+                                  TextSpan(
+                                    text: 'Política de privacidad',
+                                    style: legalLink.copyWith(
+                                      fontFamily: QuizTypography.family,
+                                    ),
+                                    recognizer: _privacyRecognizer,
+                                  ),
+                                  const TextSpan(text: '.'),
+                                ],
+                              ),
+                              key: const Key('quizai-auth-legal'),
+                              maxLines: 2,
+                              softWrap: false,
+                              textAlign: TextAlign.center,
                             ),
-                            recognizer: _termsRecognizer,
                           ),
-                          const TextSpan(text: '\ny la '),
-                          TextSpan(
-                            text: 'Política de privacidad',
-                            style: legalLink.copyWith(
-                              fontFamily: QuizTypography.family,
-                            ),
-                            recognizer: _privacyRecognizer,
-                          ),
-                          const TextSpan(text: '.'),
-                        ],
-                      ),
-                      key: const Key('quizai-auth-legal'),
-                      maxLines: 2,
-                      softWrap: false,
-                      textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
             ],
           ),

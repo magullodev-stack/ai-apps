@@ -8,6 +8,42 @@ import 'package:quizai/app/auth/auth_entry_page.dart';
 import 'package:quizai/app/auth/email_auth_page.dart';
 
 void main() {
+  testWidgets('Botones y texto legal mantienen 16 px de separación', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final identity = _FakeIdentityService();
+    for (final size in [
+      const Size(360, 740),
+      const Size(390, 844),
+      const Size(412, 915),
+    ]) {
+      tester.view.physicalSize = size;
+      await tester.pumpWidget(QuizAIApp(identityService: identity));
+      await tester.pump();
+
+      final google = find.byKey(const Key('quizai-auth-button-google'));
+      final apple = find.byKey(const Key('quizai-auth-button-apple'));
+      final email = find.byKey(const Key('quizai-auth-button-email'));
+      final legal = find.byKey(const Key('quizai-auth-legal'));
+
+      expect(
+        tester.getTopLeft(legal).dy - tester.getBottomLeft(email).dy,
+        closeTo(16, 1),
+      );
+      expect(
+        tester.getTopLeft(apple).dy - tester.getBottomLeft(google).dy,
+        closeTo(8, 1),
+      );
+      expect(
+        tester.getTopLeft(email).dy - tester.getBottomLeft(apple).dy,
+        closeTo(8, 1),
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('QuizAI abre en la pantalla de autenticación', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
