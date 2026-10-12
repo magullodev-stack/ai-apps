@@ -42,6 +42,27 @@ async function activate(context) {
       if (disposed) return sessions;
       const initial = firstRefresh;
       firstRefresh = false;
+      // Recuperacion puntual al abrir/recargar VS Code: no se vigila ni
+      // reinicia nada mientras el editor permanece abierto.
+      if (initial) {
+        const quiz = sessions.find(item => item.kind === 'development-task');
+        if (quiz && !quiz.active) {
+          try {
+            if (quiz.deviceReady && await service.platform.taskRunning()) {
+              // La tarea sigue viva, pero Android ha cerrado la actividad.
+              await service.platform.run(service.platform.adb, [
+                '-s', quiz.serial, 'shell', 'am', 'start', '-n',
+                quiz.packageName + '/.MainActivity'
+              ]);
+            } else {
+              // Tras un cierre/reinicio, volver a solicitar la tarea unica.
+              await service.start(quiz.id);
+            }
+          } catch (error) {
+            output.appendLine('Recuperacion inicial de QuizAI: ' + error.message);
+          }
+        }
+      }
       changed.fire();
       const views = viewer.listSessions?.() || [];
       for (const session of sessions) {

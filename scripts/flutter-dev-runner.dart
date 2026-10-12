@@ -94,69 +94,7 @@ Future<void> main(List<String> args) async {
     );
   }
 
-  // Recuperacion de bloqueos, cierres y perdida de primer plano de QuizAI.
-  final startupWatchdog = Timer(const Duration(minutes: 12), () {
-    if (!controller.isReady && !controller.relaunchRequested &&
-        !controller.stopRequested) {
-      stderr.writeln('QuizAI no responde durante el arranque; recuperando sesion.');
-      controller.requestRelaunch();
-    }
-  });
-  Timer? appWatchdog;
-  var probing = false;
-  var missing = 0;
-  if (options.adb != null) {
-    appWatchdog = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (!controller.isReady || controller.relaunchRequested ||
-          controller.stopRequested || probing) return;
-      probing = true;
-      unawaited(() async {
-        try {
-          final pid = await _androidCommand(options, [
-            'shell', 'pidof', options.packageName!,
-          ]);
-          if (!controller.isReady || controller.relaunchRequested) return;
-          if (pid.status != 0 || pid.output.trim().isEmpty) {
-            missing++;
-            if (missing >= 2) {
-              stderr.writeln('QuizAI no responde en Android; recuperando sesion.');
-              controller.requestRelaunch();
-            }
-            return;
-          }
-          missing = 0;
-          // Solo recuperar el launcher del emulador dedicado; no interrumpir
-          // actividades externas de autenticacion o permisos.
-          final focus = await _androidCommand(options, [
-            'shell', 'dumpsys', 'window', 'displays',
-          ]);
-          final foreground = RegExp(
-            r'mCurrentFocus=Window\{[^\r\n]*\s([A-Za-z][\w.]*)/',
-          ).firstMatch(focus.output)?.group(1);
-          if (focus.status == 0 && foreground != null &&
-              foreground.toLowerCase().contains('launcher')) {
-            final restore = await _androidCommand(options, [
-              'shell', 'am', 'start', '-n',
-              options.packageName! + '/.MainActivity',
-            ]);
-            if (restore.status == 0) {
-              stdout.writeln('QuizAI recuperada en primer plano.');
-            }
-          }
-        } finally {
-          probing = false;
-        }
-      }());
-    });
-  }
-  controller.onStopped = () {
-    if (!controller.relaunchRequested && !controller.stopRequested) {
-      stderr.writeln('QuizAI no responde tras app.stop; recuperando sesion.');
-      controller.requestRelaunch();
-    }
-  };
   controller.onReady = () {
-    startupWatchdog.cancel();
     stdout.writeln(
       'Hot reload automatico activo: los cambios sincronizados se '
       'reflejaran en el dispositivo.',
@@ -170,8 +108,6 @@ Future<void> main(List<String> args) async {
   _configureKeyboard(controller);
 
   final code = await process.exitCode;
-  startupWatchdog.cancel();
-  appWatchdog?.cancel();
   debounce?.cancel();
   for (final watcher in watchers) {
     await watcher.cancel();
@@ -306,7 +242,6 @@ final class _FlutterMachineController {
   final _reloadRequests = <int>{};
   final _restartRequests = <int>{};
   void Function()? onReady;
-  void Function()? onStopped;
 
   bool get isReady => _appId != null && _started;
   bool get lostConnection => _lostConnection;
@@ -352,7 +287,6 @@ final class _FlutterMachineController {
   }
 
   void requestRelaunch() {
-    if (_relaunchRequested || _stopRequested) return;
     _relaunchRequested = true;
     unawaited(_terminateProcessTree());
   }
@@ -428,7 +362,6 @@ final class _FlutterMachineController {
       if (event == 'app.stop') {
         _appId = null;
         _started = false;
-        onStopped?.call();
         continue;
       }
 
@@ -520,32 +453,6 @@ final class _FlutterMachineController {
   }
 }
 
-// ADB tiene tiempo limite y termina el proceso si deja de responder.
-Future<({int status, String output})> _androidCommand(
-  _Options options, List<String> arguments,
-) async {
-  Process? command;
-  try {
-    command = await Process.start(options.adb!, [
-      '-s', options.device, ...arguments,
-    ]);
-    final output = command.stdout.transform(utf8.decoder).join();
-    final errors = command.stderr.drain<void>();
-    final status = await command.exitCode.timeout(
-      const Duration(seconds: 8),
-      onTimeout: () {
-        command?.kill();
-        return -1;
-      },
-    );
-    await errors;
-    return (status: status, output: await output);
-  } catch (_) {
-    command?.kill();
-    return (status: -1, output: '');
-  }
-}
-
 final class _Options {
   const _Options({
     required this.flutter,
@@ -554,8 +461,6 @@ final class _Options {
     required this.workingDirectory,
     required this.watchRoots,
     this.noDds = false,
-    this.adb,
-    this.packageName,
   });
 
   final String flutter;
@@ -564,8 +469,6 @@ final class _Options {
   final String workingDirectory;
   final List<String> watchRoots;
   final bool noDds;
-  final String? adb;
-  final String? packageName;
 
   static _Options parse(List<String> args) {
     final values = <String, String>{};
@@ -600,27 +503,7 @@ final class _Options {
       return value;
     }
 
-    if (values.containsKey('--adb') != values.containsKey('--package')) {
-      throw const FormatException('--adb y --package deben suministrarse juntos.');
-    }
-    final packageName = values['--package'];
-    if (packageName != null &&
-        !RegExp(r'^[a-zA-Z][\w]*(?:\.[a-zA-Z][\w]*)+
-      device: requiredValue('--device'),
-      definesFile: requiredValue('--defines-file'),
-      workingDirectory: requiredValue('--working-directory'),
-      watchRoots: List.unmodifiable(watchRoots),
-      noDds: noDds,
-    );
-  }
-}
-).hasMatch(packageName)) {
-      throw const FormatException('Identificador de paquete Android invalido.');
-    }
-
     return _Options(
-      adb: values['--adb'],
-      packageName: packageName,
       flutter: requiredValue('--flutter'),
       device: requiredValue('--device'),
       definesFile: requiredValue('--defines-file'),

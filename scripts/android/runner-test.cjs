@@ -39,10 +39,7 @@ const root=${JSON.stringify(dir)}, messages=${JSON.stringify(messages)};
 fs.mkdirSync(path.join(root,'android/app'),{recursive:true});
 fs.mkdirSync(path.join(root,'android/.gradle/cache'),{recursive:true});
 console.log(JSON.stringify([{event:'app.start',params:{appId:'fixture',deviceId:'test-device'}},{event:'app.started'}]));
-if(process.env.FAKE_STOP==='1') {
- setTimeout(()=>console.log(JSON.stringify([{event:'app.stop'}])),300);
- setInterval(()=>{},1000);
-} else if(process.env.FAKE_NATIVE==='1') {
+if(process.env.FAKE_NATIVE==='1') {
  const child=require('node:child_process').spawn(process.execPath,[${JSON.stringify(sleeper)}],{windowsHide:true,stdio:'ignore',env:process.env});
  fs.writeFileSync(${JSON.stringify(descendants)},JSON.stringify({parent:process.pid,child:child.pid}));
  setTimeout(()=>fs.writeFileSync(path.join(root,'android/app/build.gradle'),'// native change '+Date.now()),300);
@@ -71,8 +68,6 @@ if(process.env.FAKE_STOP==='1') {
   assert.doesNotMatch(output, /Cambio nativo/);
   assert.throws(() => execFileSync(dart, watchArgs, { ...options, env: { ...options.env, FAKE_NATIVE: '1' } }),
     error => error.status === 86, 'Native relaunch exits through the worker restart protocol');
-  assert.throws(() => execFileSync(dart, watchArgs, { ...options, env: { ...options.env, FAKE_STOP: '1' } }),
-    error => error.status === 86, 'Unexpected app.stop triggers recovery without VS Code');
   const owned = JSON.parse(fs.readFileSync(descendants));
   for (const pid of [owned.parent, owned.child]) {
     assert.throws(() => process.kill(pid, 0), 'Relaunch removes only the owned Flutter wrapper and descendants');
