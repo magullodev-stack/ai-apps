@@ -524,6 +524,8 @@ try {
                     & $dart $devRunner `
                         --flutter $flutter `
                         --device $Device `
+                        --adb $adb `
+                        --package com.aiapps.quizai `
                         --defines-file $definesFile `
                         --working-directory (Join-Path $repo 'apps\quizai') `
                         --watch (Join-Path $repo 'apps\quizai\lib') `

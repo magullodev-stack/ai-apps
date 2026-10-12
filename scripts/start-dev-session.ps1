@@ -40,36 +40,64 @@ try {
         Write-SessionLog 'Sincronizacion no iniciada: script ausente.'
     }
 
-    $stage = 'Android'
-    Write-SessionLog 'Preparando Android.'
-    & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
-    Write-SessionLog 'Android preparado: emulator-5554.'
-    $stage = 'QuizAI'
-    Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
-    & (Join-Path $repo 'apps\quizai\run.ps1') -Device emulator-5554 *>&1 |
-        ForEach-Object {
-            $line = $_.ToString().Trim()
-            if ($line -eq 'Hot reload automatico completado.' -or
-                $line -eq 'Hot restart completado.') {
-                Write-SessionLog $line
-            } elseif ($line -like 'Hot reload automatico activo:*') {
-                Write-SessionLog 'QuizAI preparado; hot reload automatico activo.'
-            } elseif ($line -like 'Cambio detectado:*') {
-                Write-SessionLog 'Cambio de codigo/asset detectado.'
-            } elseif ($line -like 'Running Gradle task*') {
-                Write-SessionLog 'Compilacion Gradle iniciada.'
-            } elseif ($line -match '^Hot (reload|restart) fallo:') {
-                Write-SessionLog 'ERROR: hot reload/restart fallido.'
+    # La tarea programada supervisa la sesion; Flutter nunca queda sin propietario.
+    $failures = 0
+    while ($true) {
+        $startedAt = Get-Date
+        $stage = 'Android'
+        try {
+            Write-SessionLog 'Preparando Android.'
+            & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
+            Write-SessionLog 'Android preparado: emulator-5554.'
+            $stage = 'QuizAI'
+            Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
+
+            # Los avisos nativos de Java/Gradle son ErrorRecords en PowerShell 5.1;
+            # no deben provocar un cierre de una sesion Flutter valida.
+            $previousPreference = $ErrorActionPreference
+            try {
+                $ErrorActionPreference = 'Continue'
+                & (Join-Path $repo 'apps\quizai\run.ps1') -Device emulator-5554 *>&1 |
+                    ForEach-Object {
+                        $line = $_.ToString().Trim()
+                        if ($line -eq 'Hot reload automatico completado.' -or
+                            $line -eq 'Hot restart completado.') {
+                            Write-SessionLog $line
+                        } elseif ($line -like 'Hot reload automatico activo:*') {
+                            Write-SessionLog 'QuizAI preparado; hot reload automatico activo.'
+                        } elseif ($line -like 'Cambio detectado:*') {
+                            Write-SessionLog 'Cambio de codigo/asset detectado.'
+                        } elseif ($line -like 'Running Gradle task*') {
+                            Write-SessionLog 'Compilacion Gradle iniciada.'
+                        } elseif ($line -match '^Hot (reload|restart) fallo:') {
+                            Write-SessionLog 'ERROR: hot reload/restart fallido.'
+                        } elseif ($line -like 'QuizAI recuperada*') {
+                            Write-SessionLog 'QuizAI recuperada en primer plano.'
+                        } elseif ($line -like 'QuizAI no responde*') {
+                            Write-SessionLog 'Vigilancia Android: recuperando QuizAI.'
+                        }
+                    }
+            } finally {
+                $ErrorActionPreference = $previousPreference
+            }
+            Write-SessionLog 'Sesion Flutter terminada; recuperando.'
+        } catch {
+            Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
+            if ($_.Exception.Message -like '*clave*') {
+                Write-SessionLog 'Comprueba la clave DPAPI del usuario con el lanzador de QuizAI.'
+            } elseif ($_.Exception.Message -like '*Flutter*') {
+                Write-SessionLog 'Comprueba Flutter con el lanzador de QuizAI en PowerShell.'
             }
         }
-    Write-SessionLog 'Sesion Flutter terminada.'
-} catch {
-    Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
-    # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
-    if ($_.Exception.Message -like '*clave*') {
-        Write-SessionLog 'Comprueba la clave DPAPI del usuario con el lanzador de QuizAI.'
-    } elseif ($_.Exception.Message -like '*Flutter*') {
-        Write-SessionLog 'Comprueba Flutter con el lanzador de QuizAI en PowerShell.'
+
+        # Pausa acotada; tras una sesion estable se reinicia el contador.
+        if (((Get-Date) - $startedAt).TotalMinutes -ge 5) { $failures = 0 }
+        $failures = [Math]::Min($failures + 1, 6)
+        $waitSeconds = [Math]::Min(60, [int][Math]::Pow(2, $failures))
+        Write-SessionLog "Reintentando Android y QuizAI en $waitSeconds segundos."
+        Start-Sleep -Seconds $waitSeconds
     }
-    exit 1
+} catch {
+    Write-SessionLog ('ERROR en supervisor: {0}.' -f $_.Exception.GetType().Name)
+    throw
 }

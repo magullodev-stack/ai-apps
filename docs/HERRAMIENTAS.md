@@ -29,6 +29,8 @@ La tarea usa la sesión interactiva del usuario actual, sin contraseña guardada
 con privilegios limitados y PowerShell oculto/no interactivo. Arranca al iniciar
 sesión, ignora nuevas ejecuciones mientras está activa (`IgnoreNew`), no tiene
 límite temporal y no se detiene por inactividad ni al pasar a batería.
+Si el supervisor falla, Windows lo reinicia después de un minuto (hasta 999
+intentos); hay que reinstalar la tarea una vez para aplicar esta configuración.
 La configuración corresponde a las opciones del
 [Programador de tareas de Windows](https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/new-scheduledtasksettingsset).
 Su entrada mínima, `scripts/start-dev-session.ps1`, inicia en segundo plano
@@ -38,6 +40,11 @@ La sincronización es transversal al repositorio e independiente de que QuizAI
 arranque correctamente. El primer lanzador reutiliza el emulador o prepara
 el AVD `AI_APPS_Dev` sin ventana; el segundo prepara/reutiliza Dart y
 mantiene el Flutter Dev Runner existente.
+
+El supervisor reintenta indefinidamente Android y QuizAI cuando Flutter sale,
+con pausas progresivas entre 2 y 60 segundos. El runner vigila el proceso Android,
+recupera cierres inesperados y arranques atascados, y trae la aplicación al
+primer plano si aparece el launcher del emulador dedicado. No depende de VS Code.
 
 El registro `.ai-apps/dev-session.log` contiene estados, errores por etapa y
 confirmaciones de Hot Reload. Solo conserva mensajes conocidos: no vuelca logs
