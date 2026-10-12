@@ -7,7 +7,7 @@ fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
 fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Test');
 fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
-let treeProvider;
+let treeProvider, taskRunning = true;
 let entries = [
   { appId: 'quizai', label: 'QuizAI', serial: 'emulator-5554', id: 'quizai@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' },
   { appId: 'lab', label: 'Lab', serial: 'emulator-5556', id: 'lab@emulator-5556', kind: 'flutter', active: true, deviceReady: true, status: 'running', epoch: '2:200' }
@@ -40,7 +40,9 @@ const sandbox = { module: { exports: {} }, setInterval: fn => { intervals.push(f
   require(name) {
     if (name === 'vscode') return vscode;
     if (name.replace(/\\/g, '/').endsWith('android/sessions.cjs')) return { Sessions };
-    if (name.replace(/\\/g, '/').endsWith('android/windows.cjs')) return { Windows: class {} };
+    if (name.replace(/\\/g, '/').endsWith('android/windows.cjs')) return {
+      Windows: class { async taskRunning() { return taskRunning; } }
+    };
     return require(name);
   } };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'extension.js'), 'utf8'), sandbox);
@@ -50,7 +52,8 @@ async function run() {
   assert.equal(panels.size, 2, 'All active applications recovered at activation');
   assert.equal(treeProvider.getTreeItem({ ...entries[1], active: false, status: 'starting' }).contextValue,
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
-  assert.equal(calls.some(call => call[0] !== 'open'), false, 'Editor startup never starts Flutter or task');
+  assert.equal(calls.some(call => call[0] !== 'open'), false,
+    'A running development task is never started twice');
   await api.refresh();
   assert.equal(calls.length, 2, 'Polling does not duplicate views');
   panels.delete('lab@emulator-5556');
@@ -70,7 +73,13 @@ async function run() {
   await commands.get('aiAppsAndroid.stop')(entries[1]);
   assert.ok(calls.some(call => call[0] === 'stop' && call[1] === entries[1].id));
   assert.equal(calls.some(call => call[0] === 'stop' && call[1] === entries[0].id), false);
+  // Un paquete Android antiguo puede seguir en primer plano aunque Flutter
+  // y la tarea ya hayan terminado: debe recuperarse la tarea, no el APK.
+  taskRunning = false;
   await sandbox.module.exports.activate({ subscriptions: [] });
+  assert.deepEqual(calls.filter(call => call[0] === 'start'),
+    [['start', 'quizai@emulator-5554']],
+    'VS Code reopens the stopped Flutter development task even with a stale Android PID');
   assert.equal(panels.size, 2, 'Reactivation recovers active sessions without tab growth');
   entries = Array.from({ length: 150 }, (_, i) => ({ ...entries[1], id: `app-${i}@device-${i}`, appId: `app-${i}`,
     serial: `device-${i}`, label: `App ${i}`, epoch: String(i) }));
@@ -78,6 +87,6 @@ async function run() {
   assert.equal(panels.size, 152, 'No fixed maximum of tabs; existing tabs untouched');
   vscode.workspace.isTrusted = false;
   assert.equal(await sandbox.module.exports.activate({ subscriptions: [] }), undefined);
-  console.log('PASS: startup recovery, multi-selector, no runtime startup, polling/close separation, target reconnect/stop, reactivation, 150 sessions and workspace trust.');
+  console.log('PASS: startup task recovery without duplicate Flutter or stale APK relaunch, multi-selector, polling/close separation, target reconnect/stop, reactivation, 150 sessions and workspace trust.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

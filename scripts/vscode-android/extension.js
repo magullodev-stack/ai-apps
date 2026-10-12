@@ -42,24 +42,18 @@ async function activate(context) {
       if (disposed) return sessions;
       const initial = firstRefresh;
       firstRefresh = false;
-      // Recuperacion puntual al abrir/recargar VS Code: no se vigila ni
-      // reinicia nada mientras el editor permanece abierto.
+      // La APK instalada no demuestra que Flutter siga conectado.
+      // Al abrir VS Code, recuperar la tarea de desarrollo si esta parada;
+      // nunca abrir una APK antigua con adb ni lanzar otro Flutter.
       if (initial) {
         const quiz = sessions.find(item => item.kind === 'development-task');
-        if (quiz && !quiz.active) {
+        if (quiz) {
           try {
-            if (quiz.deviceReady && await service.platform.taskRunning()) {
-              // La tarea sigue viva, pero Android ha cerrado la actividad.
-              await service.platform.run(service.platform.adb, [
-                '-s', quiz.serial, 'shell', 'am', 'start', '-n',
-                quiz.packageName + '/.MainActivity'
-              ]);
-            } else {
-              // Tras un cierre/reinicio, volver a solicitar la tarea unica.
+            if (!(await service.platform.taskRunning())) {
               await service.start(quiz.id);
             }
           } catch (error) {
-            output.appendLine('Recuperacion inicial de QuizAI: ' + error.message);
+            output.appendLine('Arranque de desarrollo QuizAI: ' + error.message);
           }
         }
       }
