@@ -11,3 +11,15 @@ Thumbs.db
 # Mantener privados los archivos locales; versionar experimentos de cualquier fecha.
 .ai-apps/*
 !.ai-apps/experimentos-*/
+
+# Muondia replaced the previous application directory.
+# Never re-import generated leftovers from the old local Flutter tree.
+/apps/quizai/
+
+# Android/Flutter machine-generated files must not be auto-committed.
+/apps/muondia/.flutter-plugins-dependencies
+/apps/muondia/android/local.properties
+/apps/muondia/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+/apps/muondia/android/gradle/wrapper/gradle-wrapper.jar
+/apps/muondia/android/gradlew
+/apps/muondia/android/gradlew.bat
