@@ -186,7 +186,7 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              'assets/auth/QuizAI_Auth_background_1080x1920.png',
+              'assets/auth/Background.png',
               fit: BoxFit.cover,
               alignment: Alignment.center,
               filterQuality: FilterQuality.high,

@@ -16,11 +16,33 @@ void main() {
 
     final identity = _FakeIdentityService();
     await tester.pumpWidget(QuizAIApp(identityService: identity));
-    await tester.pumpAndSettle();
+    // El parallax es continuo: no puede utilizarse pumpAndSettle en esta ruta.
+    await tester.pump();
 
     expect(find.byType(AuthEntryPage), findsOneWidget);
     expect(find.byKey(const Key('quizai-auth-entry')), findsOneWidget);
     expect(find.byType(AppShell), findsNothing);
+
+    for (final asset in [
+      'assets/auth/Background.png',
+      'assets/auth/Estrellas.png',
+      'assets/auth/Esferas.png',
+      'assets/auth/Robot.png',
+    ]) {
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Image &&
+              widget.image is AssetImage &&
+              (widget.image as AssetImage).assetName == asset,
+        ),
+        findsOneWidget,
+      );
+    }
+    final robot = find.byKey(const Key('quizai-auth-parallax-robot'));
+    final startX = tester.widget<Transform>(robot).transform.getTranslation().x;
+    await tester.pump(const Duration(seconds: 2));
+    final movedX = tester.widget<Transform>(robot).transform.getTranslation().x;
+    expect(movedX, isNot(closeTo(startX, 0.01)));
 
     final google = find.byKey(const Key('quizai-auth-button-google'));
     final apple = find.byKey(const Key('quizai-auth-button-apple'));

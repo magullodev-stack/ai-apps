@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:ai_apps_identity/ai_apps_identity.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -24,13 +26,6 @@ class AuthEntryPage extends StatefulWidget {
 }
 
 class _AuthEntryPageState extends State<AuthEntryPage> {
-  static const _layers = <String>[
-    'assets/auth/QuizAI_Auth_background_1080x1920.png',
-    'assets/auth/QuizAI_Auth_LOGO_1080x1920.png',
-    'assets/auth/QuizAI_Auth_AI-APPS_1080x1920.png',
-    'assets/auth/QuizAI_Auth_Lema_1080x1920.png',
-  ];
-
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
   bool _providerBusy = false;
@@ -158,30 +153,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            IgnorePointer(
-              child: Transform.scale(
-                scale: 1.20,
-                child: Image.asset(
-                  _layers.first,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                  filterQuality: FilterQuality.high,
-                ),
-              ),
-            ),
-            for (final asset in _layers.skip(1))
-              IgnorePointer(
-                child: Transform.scale(
-                  scale: asset == _layers[1] ? 0.85 : 1.0,
-                  alignment: const Alignment(0, -0.45),
-                  child: Image.asset(
-                    asset,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                    filterQuality: FilterQuality.high,
-                  ),
-                ),
-              ),
+            const _AuthParallaxArt(),
             LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
@@ -284,3 +256,96 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
     );
   }
 }
+
+/// Las cuatro imágenes comparten el lienzo 1080x1920 original.
+/// El fondo no se mueve: las estrellas, esferas y robot tienen distintas
+/// amplitudes y fases para dar profundidad sin alterar la composición.
+class _AuthParallaxArt extends StatefulWidget {
+  const _AuthParallaxArt();
+
+  @override
+  State<_AuthParallaxArt> createState() => _AuthParallaxArtState();
+}
+
+class _AuthParallaxArtState extends State<_AuthParallaxArt>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _motion = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 16),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
+
+  Widget _movingLayer({
+    required String name,
+    required String asset,
+    required double x,
+    required double y,
+    double scale = 1,
+  }) {
+    return Transform.translate(
+      key: Key('quizai-auth-parallax-$name'),
+      offset: Offset(x, y),
+      child: Transform.scale(
+        scale: scale,
+        child: Image.asset(
+          asset,
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          filterQuality: FilterQuality.high,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _motion,
+        builder: (context, _) {
+          final angle = _motion.value * 2 * math.pi;
+          return Stack(
+            fit: StackFit.expand,
+            clipBehavior: Clip.hardEdge,
+            children: [
+              Image.asset(
+                'assets/auth/Background.png',
+                key: const Key('quizai-auth-background'),
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                filterQuality: FilterQuality.high,
+              ),
+              _movingLayer(
+                name: 'stars',
+                asset: 'assets/auth/Estrellas.png',
+                x: math.sin(angle) * 3,
+                y: math.cos(angle) * 4,
+                scale: 1.005,
+              ),
+              _movingLayer(
+                name: 'spheres',
+                asset: 'assets/auth/Esferas.png',
+                x: math.sin(angle + 0.7) * 7,
+                y: math.cos(angle + 0.7) * 6,
+                scale: 1.012,
+              ),
+              _movingLayer(
+                name: 'robot',
+                asset: 'assets/auth/Robot.png',
+                x: math.sin(angle + 1.4) * 11,
+                y: math.cos(angle + 1.4) * 8,
+                scale: 1.005 + math.sin(angle + 1.4) * 0.004,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
