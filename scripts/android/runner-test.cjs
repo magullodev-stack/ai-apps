@@ -82,6 +82,7 @@ if(process.env.FAKE_NATIVE==='1') {
   assert.equal(assetRestarts[0].params.fullRestart, true,
     'Raster asset changes use hot restart instead of hot reload');
   assert.match(assetOutput, /Hot restart completado/);
+  fs.rmSync(path.join(dir, 'assets/auth/NewImage.png'), { force: true });
   assert.throws(() => execFileSync(dart, watchArgs, {
     ...options, env: { ...options.env, FAKE_NEW_ASSET: '1' },
   }), error => error.status === 86,
