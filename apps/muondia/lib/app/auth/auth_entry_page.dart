@@ -190,32 +190,57 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   ],
                 );
 
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, welcomeTop, 16, 0),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 410),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '¡Qué alegría\nverte por aquí!',
-                            key: const Key('muondia-auth-welcome-title'),
-                            textAlign: TextAlign.center,
-                            style: welcomeStyle,
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            '¿Empezamos?',
-                            key: const Key('muondia-auth-welcome-question'),
-                            textAlign: TextAlign.center,
-                            style: welcomeStyle,
-                          ),
-                        ],
+                final logoWidth = math.min(constraints.maxWidth * 0.56, 230.0);
+                final logoHeight = math.min(logoWidth / 3, welcomeTop - 12.0);
+
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Logotipo original en la franja libre sobre el saludo.
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: welcomeTop - logoHeight - 8,
+                        ),
+                        child: Image.asset(
+                          'assets/auth/Logotipo_MuondIA.png',
+                          key: const Key('muondia-auth-logo'),
+                          width: logoWidth,
+                          height: logoHeight,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                        ),
                       ),
                     ),
-                  ),
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(16, welcomeTop, 16, 0),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 410),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '¡Qué alegría\nverte por aquí!',
+                                key: const Key('muondia-auth-welcome-title'),
+                                textAlign: TextAlign.center,
+                                style: welcomeStyle,
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                '¿Empezamos?',
+                                key: const Key('muondia-auth-welcome-question'),
+                                textAlign: TextAlign.center,
+                                style: welcomeStyle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
