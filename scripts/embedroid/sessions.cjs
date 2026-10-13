@@ -8,8 +8,6 @@ function createViews(Base, context, sdk, devices, log) {
       this.sessions = new Map();
       this.pending = new Map();
       this.restoredCount = 0;
-      this.legacy = new Set();
-      this.legacyTitles = new WeakMap();
       context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('embedroid.embedded', {
         deserializeWebviewPanel: (panel, state) => this.restore(panel, state)
       }));
@@ -83,55 +81,27 @@ function createViews(Base, context, sdk, devices, log) {
           this.send(view, { type: 'session', session: this.identity(session.serial) });
           view.panel.reveal(undefined, true);
           if (reconnect) await this.attachStream(session.serial, session.serial);
-        } else {
-          const old = [...this.legacy].find(panel => this.matchesLegacy(panel, session));
-          if (old) {
-            this.legacy.delete(old);
-            const restored = this.adopt(old, session.serial, this.title(session));
-            restored.serial = session.serial;
-            await this.attachStream(session.serial, session.serial);
-          } else await super.open(session.serial);
-        }
+        } else await super.open(session.serial);
       })();
       this.pending.set(session.serial, operation);
       try { await operation; } finally { this.pending.delete(session.serial); }
     }
     async restore(panel, state) {
       this.restoredCount++;
-      const session = state?.session;
-      if (!session || typeof session.serial !== 'string' || typeof session.appId !== 'string' ||
-          typeof session.label !== 'string') {
-        const known = [...this.sessions.values()].find(item => this.matchesLegacy(panel, item));
-        if (known) return this.restore(panel, { session: known });
-        this.legacy.add(panel);
-        this.legacyTitles.set(panel, panel.title);
-        panel.title = 'Android';
-        panel.onDidDispose(() => this.legacy.delete(panel));
-        panel.webview.html = '<p>Esta vista antigua no conserva su dispositivo. Abre la sesión desde AI-APPS Android.</p>';
-        return;
-      }
-      // Creative lab windows are disposable: reopening VS Code must not restore
-      // yesterday's prototypes. Their actual Flutter process is separate.
-      if (/^lab-[a-f0-9]{12}$/.test(session.appId)) {
+      // Persist only the device serial, not an application label or appId.
+      // Panels saved by an older format have no serial-only state: dispose
+      // them and let the current registry open a clean view.
+      const serial = state?.serial;
+      if (typeof serial !== 'string' || !serial || state?.transient === true) {
         panel.dispose();
         return;
       }
-      // Startup and deserialization can race. Dispose only this duplicate of the
-      // same device, preserving every other panel and the existing live bridge.
-      if (this.views.has(session.serial)) { panel.dispose(); return; }
-      // The persisted label/appId may belong to a retired app. The registry,
-      // delivered by openSession(), is the authority for the current identity.
-      // Until then display a neutral title and never trust the stale appId.
-      const pending = { serial: session.serial, appId: '', label: 'Android' };
-      this.sessions.set(session.serial, pending);
-      const view = this.adopt(panel, session.serial, this.title(pending));
-      view.serial = session.serial;
-      await this.attachStream(session.serial, session.serial).catch(error => log.warn(String(error)));
-    }
-    matchesLegacy(panel, session) {
-      const title = this.legacyTitles.get(panel) || panel.title;
-      return title === session.serial || (!!session.avdName && title === session.avdName) ||
-        title.endsWith(` - ${session.serial}`) || title.endsWith(` · ${session.serial}`);
+      if (this.views.has(serial)) { panel.dispose(); return; }
+      const pending = { serial, appId: '', label: 'Android' };
+      this.sessions.set(serial, pending);
+      const view = this.adopt(panel, serial, this.title(pending));
+      view.serial = serial;
+      await this.attachStream(serial, serial).catch(error => log.warn(String(error)));
     }
     listSessions() {
       return [...this.views.values()].filter(view => view.serial).map(view => ({
