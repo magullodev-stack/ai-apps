@@ -407,7 +407,7 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                 name: 'robot',
                 asset: 'assets/auth/Robot.png',
                 x: 0,
-                y: -12 + math.cos(angle + 1.4) * 11,
+                y: -12 + math.cos(angle + 1.4) * 4,
                 scale: 1.005 + math.sin(angle + 1.4) * 0.004,
               ),
             ],
