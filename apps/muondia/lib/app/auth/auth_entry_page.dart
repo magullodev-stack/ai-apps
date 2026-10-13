@@ -166,50 +166,62 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             const ClipRect(
               child: _AuthParallaxArt(),
             ),
-            // Mensaje editable de bienvenida, independiente del arte animado.
-            // Se sitúa en la zona superior para no invadir al robot ni al acceso.
+            // Bienvenida: jerarquía propia, distinta de los avisos legales.
+            // Anclada arriba sin desplazar el robot ni los botones.
             LayoutBuilder(
               builder: (context, constraints) {
                 final titleSize = math.min(
-                  22.0,
-                  math.max(18.0, constraints.maxWidth * 0.054),
+                  31.0,
+                  math.max(27.0, constraints.maxWidth * 0.078),
                 );
                 final subtitleSize = math.min(
-                  16.0,
-                  math.max(13.5, constraints.maxWidth * 0.039),
+                  15.5,
+                  math.max(14.0, constraints.maxWidth * 0.039),
                 );
-                const welcomeShadows = [
+                final topInset = math.min(
+                  24.0,
+                  math.max(10.0, constraints.maxHeight * 0.028),
+                );
+                const titleShadows = [
                   Shadow(
-                    color: Color(0xE6110A31),
-                    offset: Offset(0, 2),
-                    blurRadius: 8,
+                    color: Color(0xE6150733),
+                    offset: Offset(0, 3),
+                    blurRadius: 5,
                   ),
                   Shadow(
-                    color: Color(0x997A40F6),
-                    blurRadius: 12,
+                    color: Color(0xC8FF4DD8),
+                    blurRadius: 14,
+                  ),
+                ];
+                const subtitleShadows = [
+                  Shadow(
+                    color: Color(0xF0150733),
+                    offset: Offset(0, 2),
+                    blurRadius: 5,
                   ),
                 ];
 
                 return Align(
-                  alignment: const Alignment(0, -0.65),
+                  alignment: Alignment.topCenter,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.fromLTRB(16, topInset, 16, 0),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 410),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '¡Qué alegría verte por aquí! ✨',
+                            '¡Qué alegría\nverte por aquí! ✨',
                             key: const Key('muondia-auth-welcome-title'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: MuondiaTypography.family,
                               fontSize: titleSize,
-                              height: 1.12,
+                              height: 1.0,
+                              letterSpacing: -0.9,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              shadows: welcomeShadows,
+                              color: const Color(0xFFFFD5F5),
+                              shadows: titleShadows,
                             ),
                           ),
                           const SizedBox(height: 7),
@@ -220,10 +232,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                             style: TextStyle(
                               fontFamily: MuondiaTypography.family,
                               fontSize: subtitleSize,
-                              height: 1.2,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFFF5EDFF),
-                              shadows: welcomeShadows,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              shadows: subtitleShadows,
                             ),
                           ),
                         ],
