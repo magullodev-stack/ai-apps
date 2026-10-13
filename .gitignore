@@ -12,9 +12,6 @@ Thumbs.db
 .ai-apps/*
 !.ai-apps/experimentos-*/
 
-# Muondia replaced the previous application directory.
-# Never re-import generated leftovers from the old local Flutter tree.
-/apps/quizai/
 
 # Android/Flutter machine-generated files must not be auto-committed.
 /apps/muondia/.flutter-plugins-dependencies
