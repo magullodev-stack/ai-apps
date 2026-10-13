@@ -86,9 +86,9 @@ async function run() {
   const invalid = panel('Unknown');
   await serializers[2].deserializeWebviewPanel(invalid, undefined);
   assert.equal(invalid.disposed, true, 'Unidentified panels are discarded');
-  const duplicate = panel('Duplicate');
-  await serializers[1].deserializeWebviewPanel(duplicate, { serial: a.serial, transient: false });
-  assert.equal(duplicate.disposed, true, 'A duplicate of the same serial is discarded');
+  const restoredDuplicate = panel('Duplicate');
+  await serializers[1].deserializeWebviewPanel(restoredDuplicate, { serial: a.serial, transient: false });
+  assert.equal(restoredDuplicate.disposed, true, 'A duplicate of the same serial is discarded');
   assert.ok(bundle.includes('onWebviewPanel') === false); // Activation belongs in manifest.
   const builtWebview = fs.readFileSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/media/webview.js'), 'utf8');
   assert.ok(builtWebview.includes('x.setState({serial:t.session.serial,transient:'));
