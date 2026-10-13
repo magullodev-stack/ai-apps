@@ -5,6 +5,8 @@ build/
 .idea/
 .vscode/*
 !.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/settings.json
 *.iml
 .DS_Store
 Thumbs.db
