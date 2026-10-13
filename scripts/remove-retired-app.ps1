@@ -45,19 +45,6 @@ if (Test-Path -LiteralPath $retired) {
     Write-Host "VERIFICADO: apps/$App/ no existe."
 }
 
-# Remove the obsolete ignore rule only AFTER deleting the ignored directory.
-$ignoreFile = Join-Path $repo '.gitignore'
-$ignore = [IO.File]::ReadAllText($ignoreFile, [Text.Encoding]::UTF8)
-$rule = '/apps/' + $App + '/'
-$escaped = [regex]::Escape($rule)
-$revised = [regex]::Replace($ignore, "(?m)^$escaped\r?\n", '')
-$revised = [regex]::Replace($revised,
-    '(?m)^# Muondia replaced the previous application directory\.\r?\n# Never re-import generated leftovers from the old local Flutter tree\.\r?\n', '')
-if ($revised -ne $ignore) {
-    [IO.File]::WriteAllText($ignoreFile, $revised, (New-Object Text.UTF8Encoding($false)))
-    Write-Host 'ELIMINADO: regla antigua de .gitignore.' -ForegroundColor Green
-}
-
 # Only exact Android package names are ever uninstalled. Preserve Android,
 # its snapshots, all other packages and every running development process.
 $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) {
@@ -90,6 +77,25 @@ if (Test-Path -LiteralPath $adb) {
 } else {
     Write-Warning 'ADB missing; Android package verification remains pending.'
     $allVerified = $false
+}
+
+# Do not clear the migration marker until the old Android package has been
+# verified absent. An offline emulator must be checked on a later login.
+if ($allVerified) {
+    # Remove the obsolete ignore rule only AFTER deleting the ignored directory.
+    $ignoreFile = Join-Path $repo '.gitignore'
+    $ignore = [IO.File]::ReadAllText($ignoreFile, [Text.Encoding]::UTF8)
+    $rule = '/apps/' + $App + '/'
+    $escaped = [regex]::Escape($rule)
+    $revised = [regex]::Replace($ignore, "(?m)^$escaped\r?\n", '')
+    $revised = [regex]::Replace($revised,
+        '(?m)^# Muondia replaced the previous application directory\.\r?\n# Never re-import generated leftovers from the old local Flutter tree\.\r?\n', '')
+    if ($revised -ne $ignore) {
+        [IO.File]::WriteAllText($ignoreFile, $revised, (New-Object Text.UTF8Encoding($false)))
+        Write-Host 'ELIMINADO: regla antigua de .gitignore.' -ForegroundColor Green
+    }
+} else {
+    Write-Warning 'Retaining the migration marker until Android has been verified.'
 }
 
 # The maintained extension restores the authoritative current session identity.
