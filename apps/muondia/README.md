@@ -33,6 +33,10 @@ progreso, se realizará el recorrido allí también.
 La entrada monta cuatro capas de `assets/auth/`: `Background.png`,
 `Estrellas.png`, `Esferas.png` y `Robot.png`, con parallax suave.
 Las capas respetan las áreas seguras; las barras nativas Android son negras.
+La bienvenida («¡Qué alegría verte por aquí! ✨» y «En Muondia siempre hay
+algo nuevo por descubrir. ¿Empezamos?») se dibuja como texto Flutter sobre
+el espacio superior del robot. Usa Nunito y tamaños adaptables, y puede
+ajustarse en `lib/app/auth/auth_entry_page.dart` sin editar las ilustraciones.
 Los botones de acceso y el texto legal forman un bloque inferior adaptable.
 Los tres botones se dibujan mediante Flutter; Google utiliza
 `assets/auth/Muondia_Auth_Google_ICON.png` como icono.
