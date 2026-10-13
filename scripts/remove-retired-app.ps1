@@ -6,7 +6,7 @@ param(
     [ValidatePattern('^[a-z0-9][a-z0-9-]*$')]
     [string]$App,
     [Parameter(Mandatory = $true)]
-    [ValidatePattern('^[A-Za-z][\\w]*(?:\\.[A-Za-z][\\w]*)+$')]
+    [ValidatePattern('^[A-Za-z][\w]*(?:\.[A-Za-z][\w]*)+$')]
     [string]$Package,
     [switch]$SkipEditorInstall
 )
@@ -18,7 +18,7 @@ if ($App -eq 'muondia' -or $Package -eq 'com.aiapps.muondia') {
     throw 'Refusing to remove Muondia.'
 }
 $root = (& git -C $repo rev-parse --show-toplevel | Out-String).Trim()
-if ($LASTEXITCODE -ne 0 -or $root.TrimEnd('\\') -ine $repo.TrimEnd('\\')) {
+if ($LASTEXITCODE -ne 0 -or $root.TrimEnd('\') -ine $repo.TrimEnd('\')) {
     throw 'This command must run from the AI-APPS repository.'
 }
 $branch = (& git -C $repo branch --show-current | Out-String).Trim()
@@ -49,9 +49,9 @@ $ignoreFile = Join-Path $repo '.gitignore'
 $ignore = [IO.File]::ReadAllText($ignoreFile, [Text.Encoding]::UTF8)
 $rule = '/apps/' + $App + '/'
 $escaped = [regex]::Escape($rule)
-$revised = [regex]::Replace($ignore, "(?m)^$escaped\\r?\\n", '')
+$revised = [regex]::Replace($ignore, "(?m)^$escaped\r?\n", '')
 $revised = [regex]::Replace($revised,
-    '(?m)^# Muondia replaced the previous application directory\\.\\r?\\n# Never re-import generated leftovers from the old local Flutter tree\\.\\r?\\n', '')
+    '(?m)^# Muondia replaced the previous application directory\.\r?\n# Never re-import generated leftovers from the old local Flutter tree\.\r?\n', '')
 if ($revised -ne $ignore) {
     [IO.File]::WriteAllText($ignoreFile, $revised, (New-Object Text.UTF8Encoding($false)))
     Write-Host 'ELIMINADO: regla antigua de .gitignore.' -ForegroundColor Green
@@ -65,8 +65,8 @@ $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROO
 $adb = Join-Path $sdk 'platform-tools/adb.exe'
 $allVerified = $true
 if (Test-Path -LiteralPath $adb) {
-    $devices = @(& $adb devices | Where-Object { $_ -match '^(emulator-[0-9]+)\\s+device\\s*$' } |
-        ForEach-Object { ($_ -split '\\s+')[0] })
+    $devices = @(& $adb devices | Where-Object { $_ -match '^(emulator-[0-9]+)\s+device\s*$' } |
+        ForEach-Object { ($_ -split '\s+')[0] })
     if ($LASTEXITCODE -ne 0) { throw 'ADB could not list Android devices.' }
     if ($devices.Count -eq 0) {
         Write-Warning 'No emulator is online: the old Android package cannot yet be verified.'
