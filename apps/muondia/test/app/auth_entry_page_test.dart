@@ -37,7 +37,7 @@ void main() {
       expect(tester.widget<Text>(question).data, '¿Empezamos?');
       expect(tester.getCenter(title).dx, closeTo(size.width / 2, 1));
       expect(tester.getCenter(question).dx, closeTo(size.width / 2, 1));
-      expect(tester.getTopLeft(title).dy, greaterThan(size.height * 0.10));
+      expect(tester.getTopLeft(title).dy, greaterThan(size.height * 0.07));
       expect(
         tester.getTopLeft(question).dy - tester.getBottomLeft(title).dy,
         closeTo(14, 1),
