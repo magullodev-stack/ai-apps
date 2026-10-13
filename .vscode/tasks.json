@@ -38,6 +38,27 @@
         "panel": "dedicated",
         "focus": true
       }
+    },
+    {
+      "label": "Muondia: preparar Flutter",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$ErrorActionPreference='Stop'; & '${workspaceFolder}\\scripts\\android\\task-control.ps1' -Action Stop -RepoRoot '${workspaceFolder}'; & '${workspaceFolder}\\apps\\muondia\\run.ps1' -Device emulator-5554 -ServiceOnly"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "focus": false
+      }
     }
   ]
 }
