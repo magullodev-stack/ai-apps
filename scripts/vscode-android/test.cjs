@@ -12,6 +12,7 @@ let entries = [
   { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' }
 ];
 class Sessions {
+  constructor(_root, platform) { this.platform = platform; }
   async list() { return entries; }
   find(id) { return entries.find(item => item.id === id); }
   async start(id) { calls.push(['start', id]); }
