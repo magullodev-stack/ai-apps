@@ -174,7 +174,21 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   32.0,
                   math.max(29.0, constraints.maxWidth * 0.083),
                 );
-                final welcomeTop = constraints.maxHeight * 0.14;
+                final welcomeTop = constraints.maxHeight * 0.11;
+                final welcomeStyle = TextStyle(
+                  fontFamily: MuondiaTypography.family,
+                  fontSize: welcomeSize,
+                  fontWeight: FontWeight.w900,
+                  height: 0.96,
+                  color: Colors.white,
+                  shadows: const [
+                    Shadow(
+                      color: Color(0xDA061234),
+                      offset: Offset(0, 2),
+                      blurRadius: 5,
+                    ),
+                  ],
+                );
 
                 return Align(
                   alignment: Alignment.topCenter,
@@ -182,24 +196,23 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                     padding: EdgeInsets.fromLTRB(16, welcomeTop, 16, 0),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 410),
-                      child: Text(
-                        '¡Qué alegría\nverte por aquí!\n¿Empezamos?',
-                        key: const Key('muondia-auth-welcome-title'),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: MuondiaTypography.family,
-                          fontSize: welcomeSize,
-                          fontWeight: FontWeight.w900,
-                          height: 0.96,
-                          color: Colors.white,
-                          shadows: const [
-                            Shadow(
-                              color: Color(0xDA061234),
-                              offset: Offset(0, 2),
-                              blurRadius: 5,
-                            ),
-                          ],
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '¡Qué alegría\nverte por aquí!',
+                            key: const Key('muondia-auth-welcome-title'),
+                            textAlign: TextAlign.center,
+                            style: welcomeStyle,
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            '¿Empezamos?',
+                            key: const Key('muondia-auth-welcome-question'),
+                            textAlign: TextAlign.center,
+                            style: welcomeStyle,
+                          ),
+                        ],
                       ),
                     ),
                   ),
