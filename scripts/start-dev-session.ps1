@@ -23,66 +23,7 @@ try {
     if (Test-Path -LiteralPath $ignorePath) {
         $ignoreText = [IO.File]::ReadAllText($ignorePath, [Text.Encoding]::UTF8)
         $retirement = [regex]::Match($ignoreText,
-            '(?m)^# Muondia replaced the previous application directory\.\r?\n# Never re-import generated leftovers from the old local Flutter tree\.\r?\n/apps/([a-z0-9-]+)/\r?
-    # auto-sync-dev.ps1 already holds an exclusive lock; duplicate launchers exit.
-    $autoSyncScript = Join-Path $PSScriptRoot 'auto-sync-dev.ps1'
-    if (Test-Path -LiteralPath $autoSyncScript) {
-        try {
-            $powershellCommand = Get-Command powershell.exe -ErrorAction Stop
-            Start-Process -FilePath $powershellCommand.Source `
-                -ArgumentList @(
-                    '-NoProfile',
-                    '-NonInteractive',
-                    '-ExecutionPolicy', 'Bypass',
-                    '-File', ('"' + $autoSyncScript + '"')
-                ) `
-                -WorkingDirectory $repo `
-                -WindowStyle Hidden | Out-Null
-            Write-SessionLog 'Sincronizacion continua de dev solicitada.'
-        } catch {
-            # Sync is independent: do not prevent Android or Muondia from starting.
-            Write-SessionLog ('Sincronizacion no iniciada: {0}.' -f $_.Exception.GetType().Name)
-        }
-    } else {
-        Write-SessionLog 'Sincronizacion no iniciada: script ausente.'
-    }
-
-    $stage = 'Android'
-    Write-SessionLog 'Preparando Android.'
-    if (-not $androidPrepared) {
-        & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
-    }
-    Write-SessionLog 'Android preparado: emulator-5554.'
-    $stage = 'Muondia'
-    Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
-    & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 *>&1 |
-        ForEach-Object {
-            $line = $_.ToString().Trim()
-            if ($line -eq 'Hot reload automatico completado.' -or
-                $line -eq 'Hot restart completado.') {
-                Write-SessionLog $line
-            } elseif ($line -like 'Hot reload automatico activo:*') {
-                Write-SessionLog 'Muondia preparado; hot reload automatico activo.'
-            } elseif ($line -like 'Cambio detectado:*') {
-                Write-SessionLog 'Cambio de codigo/asset detectado.'
-            } elseif ($line -like 'Running Gradle task*') {
-                Write-SessionLog 'Compilacion Gradle iniciada.'
-            } elseif ($line -match '^Hot (reload|restart) fallo:') {
-                Write-SessionLog 'ERROR: hot reload/restart fallido.'
-            }
-        }
-    Write-SessionLog 'Sesion Flutter terminada.'
-} catch {
-    Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
-    # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
-    if ($_.Exception.Message -like '*clave*') {
-        Write-SessionLog 'Comprueba la clave DPAPI del usuario con el lanzador de Muondia.'
-    } elseif ($_.Exception.Message -like '*Flutter*') {
-        Write-SessionLog 'Comprueba Flutter con el lanzador de Muondia en PowerShell.'
-    }
-    exit 1
-}
-)
+            '(?m)^# Muondia replaced the previous application directory\.\r?\n# Never re-import generated leftovers from the old local Flutter tree\.\r?\n/apps/([a-z0-9-]+)/\r?$')
         if ($retirement.Success) {
             try {
                 $retiredApp = $retirement.Groups[1].Value
@@ -124,7 +65,9 @@ try {
 
     $stage = 'Android'
     Write-SessionLog 'Preparando Android.'
-    & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
+    if (-not $androidPrepared) {
+        & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
+    }
     Write-SessionLog 'Android preparado: emulator-5554.'
     $stage = 'Muondia'
     Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
