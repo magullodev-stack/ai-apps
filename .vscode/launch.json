@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Muondia",
+      "type": "dart",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/muondia/lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/muondia",
+      "deviceId": "emulator-5554",
+      "toolArgs": [
+        "--dart-define-from-file=${workspaceFolder}/.ai-apps/muondia-flutter-defines.json"
+      ],
+      "preLaunchTask": "Muondia: preparar Flutter"
+    }
+  ]
+}
