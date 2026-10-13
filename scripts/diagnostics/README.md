@@ -48,5 +48,11 @@ sincronizador actualizado.
 .\scripts\diagnostics\test.ps1
 ```
 
-El colector `collect.cjs` funciona con Node o con el motor Node incluido en
-VS Code. No necesita acceso a Internet y no modifica Gradle ni Flutter.
+El módulo `collect.cjs` contiene la extracción y se ejecuta siempre a través
+de `collect-cli.cjs`: este segundo comprueba la creación física del JSON,
+muestra `DIAGNOSTICS_COLLECTED` al terminar correctamente y devuelve error
+en caso contrario. Funciona con Node o con el motor Node incluido en VS Code.
+No necesita acceso a Internet y no modifica Gradle ni Flutter.
+
+Si `publish-now.ps1` informa un fallo, el diagnóstico no ha sido validado;
+no interpretes la ejecución de PowerShell como publicación confirmada.
