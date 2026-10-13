@@ -29,6 +29,7 @@ param(
     [ValidateRange(1, 200)]
     [int]$Usuarios = 1,
     [switch]$StopService,
+    [switch]$ServiceOnly,
     [switch]$RefreshServiceOnly,
     [switch]$SaveKeyFromClipboard
 )
@@ -239,6 +240,25 @@ if ($RefreshServiceOnly) {
         throw 'La versión nueva del servicio Dart no ha quedado activa.'
     }
     Write-Host 'Servicio Dart actualizado: imágenes habilitadas; puerto y token conservados.'
+    return
+}
+
+if ($ServiceOnly) {
+    # VS Code administra Flutter. Esta tarea solo prepara su backend y Android.
+    $serial = if ($Device) { $Device } else { 'emulator-5554' }
+    $port = ([Uri]$session.endpoint).Port
+    & $adb -s $serial reverse tcp:8787 "tcp:$port"
+    if ($LASTEXITCODE -ne 0) { throw 'No se pudo conectar Android al servicio Dart.' }
+
+    $definesFile = Join-Path $runtime 'muondia-flutter-defines.json'
+    @{
+        AI_APPS_AI_URL = 'http://127.0.0.1:8787'
+        AI_APPS_GAME_TOKEN = $session.token
+        AI_APPS_CATALOG_MODEL = $CatalogModel
+        AI_APPS_FACTUAL_MODEL = $FactualModel
+        AI_APPS_ONBOARDING_QUIZ_REVIEW_MODEL = $OnboardingQuizReviewModel
+    } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $definesFile
+    Write-Host 'Backend de Muondia disponible para Flutter en VS Code.'
     return
 }
 
