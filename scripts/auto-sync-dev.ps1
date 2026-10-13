@@ -44,32 +44,6 @@ function Write-Log([string]$Message) {
     Add-Content -LiteralPath $script:LogFile -Value $line -Encoding UTF8
 }
 
-# Publish a bounded, sanitized snapshot through the existing dev sync.
-function Export-Diagnostics {
-    $collector = Join-Path $script:Repo 'scripts/diagnostics/collect-cli.cjs'
-    if (-not (Test-Path -LiteralPath $collector)) { return }
-
-    $node = Get-Command node -ErrorAction SilentlyContinue
-    if ($node) {
-        & $node.Source $collector $script:Repo 2>$null | Out-Null
-    } else {
-        # VS Code embeds Node; no extra Node installation is necessary.
-        $code = Get-Command code -ErrorAction SilentlyContinue
-        if (-not $code) { throw 'Diagnostics runtime unavailable.' }
-        $runtime = [IO.Path]::GetFullPath((Join-Path (Split-Path $code.Source -Parent) '../Code.exe'))
-        if (-not (Test-Path -LiteralPath $runtime)) { throw 'Diagnostics runtime unavailable.' }
-        $previous = $env:ELECTRON_RUN_AS_NODE
-        try {
-            $env:ELECTRON_RUN_AS_NODE = '1'
-            & $runtime $collector $script:Repo 2>$null | Out-Null
-        }
-        finally { $env:ELECTRON_RUN_AS_NODE = $previous }
-    }
-    if ($LASTEXITCODE -ne 0) { throw 'Diagnostics exporter failed.' }
-    $snapshot = Join-Path $script:Repo 'diagnostics/current.json'
-    if (-not (Test-Path -LiteralPath $snapshot -PathType Leaf)) { throw 'Diagnostics exporter returned no snapshot.' }
-}
-
 function Test-GitOperationInProgress {
     $gitDir = Get-Text (Invoke-Git -GitArgs @('rev-parse', '--git-dir')).Output
     if (-not [IO.Path]::IsPathRooted($gitDir)) {
@@ -285,22 +259,7 @@ try {
         $dirtySince = $null
         $nextRemoteCheck = [DateTime]::UtcNow
 
-        $nextDiagnosticsCheck = [DateTime]::UtcNow
-        $diagnosticsFailed = $false
-
         while ($true) {
-            if ([DateTime]::UtcNow -ge $nextDiagnosticsCheck) {
-                try {
-                    Export-Diagnostics
-                    $diagnosticsFailed = $false
-                }
-                catch {
-                    # Never include exception text in logs: it might expose paths.
-                    if (-not $diagnosticsFailed) { Write-Log 'Diagnostics exporter unavailable.' }
-                    $diagnosticsFailed = $true
-                }
-                $nextDiagnosticsCheck = [DateTime]::UtcNow.AddMinutes(1)
-            }
             if (Test-GitOperationInProgress) {
                 Start-Sleep -Seconds 1
                 continue

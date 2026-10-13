@@ -12,7 +12,6 @@ ai-apps/
 │
 ├── .ai-apps/                  # Datos internos de trabajo y desarrollo.
 ├── .vscode/                   # Configuración local de VS Code.
-├── diagnostics/               # Resumen operativo compartido, generado desde Windows.
 ├── AGENTS.md                  # Instrucciones de trabajo para agentes.
 │
 ├── apps/                      # Aplicaciones construidas sobre AI-APPS.
@@ -51,7 +50,6 @@ ai-apps/
 │   ├── start-ai-apps-android.ps1 # Prepara el AVD de cada sesión; por defecto emulator-5554.
 │   ├── android-session.ps1      # Registro, consulta y control independiente de sesiones.
 │   ├── android/                # Workers, registro y pruebas multiemulador.
-│   ├── diagnostics/            # Extractor seguro de problemas Gradle y eventos operativos.
 │   ├── flutter-dev-runner.dart # Vigila archivos y aplica Hot Reload.
 │   ├── start-android.ps1
 │   ├── sync-dev.ps1
