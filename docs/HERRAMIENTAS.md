@@ -36,7 +36,14 @@ Su entrada mínima, `scripts/start-dev-session.ps1`, inicia en segundo plano
 `scripts/auto-sync-dev.ps1` y después ejecuta en orden
 `scripts/start-ai-apps-android.ps1` y `apps/muondia/run.ps1 -Device emulator-5554`.
 La sincronización es transversal al repositorio e independiente de que Muondia
-arranque correctamente. El primer lanzador reutiliza el emulador o prepara
+arranque correctamente. Si existe la marca de una migración de aplicación
+pendiente en `.gitignore`, el lanzador arranca primero Android y ejecuta una
+única limpieza local mediante `scripts/remove-retired-app.ps1`, antes de
+iniciar la sincronización. La marca solo se retira tras verificar que el
+paquete antiguo ya no está instalado; no se conservan copias del directorio
+retirado. Esta transición se ejecuta al siguiente inicio de sesión de Windows,
+no durante una descarga de Git.
+ El primer lanzador reutiliza el emulador o prepara
 el AVD `AI_APPS_Dev` sin ventana; el segundo prepara/reutiliza Dart y
 mantiene el Flutter Dev Runner existente.
 
