@@ -1,5 +1,6 @@
 {
-    "embedroid.openIn": "active",
-    "embedroid.headless": true,
-    "git.ignoreLimitWarning": true
+  "embedroid.openIn": "active",
+  "embedroid.headless": true,
+  "git.ignoreLimitWarning": true,
+  "dart.flutterHotReloadOnSave": "all"
 }
