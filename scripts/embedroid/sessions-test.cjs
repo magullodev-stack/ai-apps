@@ -64,45 +64,36 @@ async function run() {
   await assert.rejects(views.openSession({ ...a, appId: 'conflict' }), /another application/);
   const reopened = createViews(Base, context, {}, { find() {} }, log);
   const restoredA = panel('Restored A'), restoredB = panel('Restored B');
-  await serializers[1].deserializeWebviewPanel(restoredA, { session: a });
-  await serializers[1].deserializeWebviewPanel(restoredB, { session: b });
-  assert.equal(restoredB.disposed, true, 'Discarded lab preview is not restored at editor startup');
+  await serializers[1].deserializeWebviewPanel(restoredA, { serial: a.serial, transient: false });
+  await serializers[1].deserializeWebviewPanel(restoredB, { serial: b.serial, transient: true });
+  assert.equal(restoredB.disposed, true, 'Lab previews are not reopened automatically');
+  assert.equal(restoredA.title, 'Android · emulator-5554', 'No app name is persisted in the tab');
   await reopened.openSession(a); await reopened.openSession(b);
   assert.equal(reopened.views.size, 2, 'Explicit lab selection still works');
-  assert.equal(restoredA.title, 'Muondia · emulator-5554');
+  assert.equal(restoredA.title, 'Muondia · emulator-5554', 'Current registry restores the label');
   assert.equal(reopened.listSessions().find(item => item.serial === b.serial)?.label, b.label);
   const migrated = createViews(Base, context, {}, { find() {} }, log);
-  const legacy = panel('AI_APPS_Dev');
-  await serializers[2].deserializeWebviewPanel(legacy, undefined);
-  const countBeforeMigration = panels.length;
-  await migrated.openSession({ ...a, avdName: 'AI_APPS_Dev' });
-  assert.equal(panels.length, countBeforeMigration, 'Known legacy AVD panel is adopted, not duplicated');
-  assert.equal(legacy.title, 'Muondia · emulator-5554');
-  // A persisted app identity is not authoritative after an app migration.
-  const stale = createViews(Base, context, {}, { find() {} }, log);
-  const stalePanel = panel('Retired - emulator-5554');
-  await serializers[3].deserializeWebviewPanel(stalePanel, {
-    session: { serial: a.serial, appId: 'retired', label: 'Retired' }
+  const previousPanel = panel('Old application - emulator-5554');
+  await serializers[2].deserializeWebviewPanel(previousPanel, {
+    session: { serial: a.serial, appId: 'retired', label: 'Old application' }
   });
-  assert.equal(stalePanel.title, 'Android · emulator-5554',
-    'Old app labels must never reappear while the session is reconciling');
-  const beforeStaleReconnect = panels.length;
-  await stale.openSession(a);
-  assert.equal(panels.length, beforeStaleReconnect, 'Reconcile without creating another panel');
-  assert.equal(stalePanel.title, 'Muondia · emulator-5554', 'Current registry identity wins');
-
-  const oldTitle = createViews(Base, context, {}, { find() {} }, log);
-  const oldPanel = panel('Retired - emulator-5554');
-  await serializers[4].deserializeWebviewPanel(oldPanel, undefined);
-  assert.equal(oldPanel.title, 'Android', 'Unidentified panels must not retain retired labels');
-  const beforeOldTitle = panels.length;
-  await oldTitle.openSession(a);
-  assert.equal(panels.length, beforeOldTitle, 'Adopt a legacy panel using its original serial');
-  assert.equal(oldPanel.title, 'Muondia · emulator-5554');
+  assert.equal(previousPanel.disposed, true, 'Incompatible persisted identities are discarded');
+  const countBeforeMigration = panels.length;
+  await migrated.openSession(a);
+  assert.equal(panels.length, countBeforeMigration + 1,
+    'Current session opens a fresh panel after discarding obsolete state');
+  assert.equal(panels.at(-1).title, 'Muondia · emulator-5554');
+  const invalid = panel('Unknown');
+  await serializers[2].deserializeWebviewPanel(invalid, undefined);
+  assert.equal(invalid.disposed, true, 'Unidentified panels are discarded');
+  const duplicate = panel('Duplicate');
+  await serializers[1].deserializeWebviewPanel(duplicate, { serial: a.serial, transient: false });
+  assert.equal(duplicate.disposed, true, 'A duplicate of the same serial is discarded');
   assert.ok(bundle.includes('onWebviewPanel') === false); // Activation belongs in manifest.
   const builtWebview = fs.readFileSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/media/webview.js'), 'utf8');
-  assert.ok(builtWebview.includes('x.setState({session:t.session})'));
+  assert.ok(builtWebview.includes('x.setState({serial:t.session.serial,transient:'));
+  assert.ok(!builtWebview.includes('x.setState({session:t.session})'));
   assert.ok(builtWebview.includes('v.onclose=null;v.close()'));
-  console.log('PASS: bundled manager, concurrent deduplication, two apps/devices, independent close/reconnect, serializer/startup race, restore and persistent webview identity.');
+  console.log('PASS: bundled manager, concurrent deduplication, two apps/devices, independent close/reconnect, serializer/startup race, serial-only restoration and disposable lab previews.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });
