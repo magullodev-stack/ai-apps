@@ -23,6 +23,7 @@ Future<void> main(List<String> args) async {
   final watchers = <StreamSubscription<FileSystemEvent>>[];
   Timer? debounce;
   var pendingReload = false;
+  var pendingImageRestart = false;
   var relaunchRequested = false;
 
   void scheduleRelaunch(String path) {
@@ -64,19 +65,31 @@ Future<void> main(List<String> args) async {
   }
 
   void scheduleReload(String path) {
+    // Las imágenes conservan su ImageCache tras Hot Reload. Requerir un
+    // Hot Restart del isolate, no un relanzamiento nativo/Gradle.
+    pendingImageRestart |= _isImageAsset(path);
     debounce?.cancel();
-    debounce = Timer(const Duration(milliseconds: 650), () {
-      if (!controller.isReady) {
-        pendingReload = true;
-        return;
-      }
-      pendingReload = false;
-      stdout.writeln(
-        'Cambio detectado: ' +
-            _relativePath(options.workingDirectory, path),
-      );
-      unawaited(controller.reload());
-    });
+    debounce = Timer(
+      Duration(milliseconds: pendingImageRestart ? 1200 : 650),
+      () {
+        if (!controller.isReady) {
+          pendingReload = true;
+          return;
+        }
+        pendingReload = false;
+        final restartImages = pendingImageRestart;
+        pendingImageRestart = false;
+        stdout.writeln(
+          'Cambio detectado: ' +
+              _relativePath(options.workingDirectory, path),
+        );
+        if (restartImages) {
+          unawaited(controller.restart());
+        } else {
+          unawaited(controller.reload());
+        }
+      },
+    );
   }
 
   for (final root in options.watchRoots) {
@@ -101,7 +114,13 @@ Future<void> main(List<String> args) async {
     );
     if (pendingReload) {
       pendingReload = false;
-      unawaited(controller.reload());
+      final restartImages = pendingImageRestart;
+      pendingImageRestart = false;
+      if (restartImages) {
+        unawaited(controller.restart());
+      } else {
+        unawaited(controller.reload());
+      }
     }
   };
 
@@ -200,13 +219,18 @@ bool _shouldReload(String path) {
   }
 
   return normalized.endsWith('.dart') ||
-      normalized.endsWith('.png') ||
-      normalized.endsWith('.jpg') ||
-      normalized.endsWith('.jpeg') ||
-      normalized.endsWith('.webp') ||
+      _isImageAsset(normalized) ||
       normalized.endsWith('.json') ||
       normalized.endsWith('.ttf') ||
       normalized.endsWith('.otf');
+}
+
+bool _isImageAsset(String path) {
+  final normalized = path.replaceAll('\\', '/').toLowerCase();
+  return normalized.endsWith('.png') ||
+      normalized.endsWith('.jpg') ||
+      normalized.endsWith('.jpeg') ||
+      normalized.endsWith('.webp');
 }
 
 String _relativePath(String base, String path) {
