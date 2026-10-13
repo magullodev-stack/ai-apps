@@ -28,28 +28,35 @@ void main() {
       final email = find.byKey(const Key('muondia-auth-button-email'));
       final legal = find.byKey(const Key('muondia-auth-legal'));
       final title = find.byKey(const Key('muondia-auth-welcome-title'));
+      final question = find.byKey(const Key('muondia-auth-welcome-question'));
 
       expect(
         tester.widget<Text>(title).data,
-        '¡Qué alegría\nverte por aquí!\n¿Empezamos?',
+        '¡Qué alegría\nverte por aquí!',
       );
-      expect(
-        find.byKey(const Key('muondia-auth-welcome-subtitle')),
-        findsNothing,
-      );
+      expect(tester.widget<Text>(question).data, '¿Empezamos?');
       expect(tester.getCenter(title).dx, closeTo(size.width / 2, 1));
-      expect(tester.getTopLeft(title).dy, greaterThan(size.height * 0.14));
-      expect(tester.getBottomLeft(title).dy, lessThan(size.height * 0.32));
+      expect(tester.getCenter(question).dx, closeTo(size.width / 2, 1));
+      expect(tester.getTopLeft(title).dy, greaterThan(size.height * 0.10));
       expect(
-        tester.getBottomLeft(title).dy,
+        tester.getTopLeft(question).dy - tester.getBottomLeft(title).dy,
+        closeTo(14, 1),
+      );
+      expect(
+        tester.getBottomLeft(question).dy,
         lessThan(tester.getTopLeft(google).dy),
       );
 
       final welcomeText = tester.widget<Text>(title);
+      final questionText = tester.widget<Text>(question);
       final legalText = tester.widget<Text>(legal);
+      expect(questionText.style, welcomeText.style);
       expect(welcomeText.style!.fontFamily, 'Nunito');
       expect(welcomeText.style!.fontWeight, FontWeight.w900);
-      expect(welcomeText.style!.fontSize!, greaterThan(legalText.textSpan!.style!.fontSize! * 2));
+      expect(
+        welcomeText.style!.fontSize!,
+        greaterThan(legalText.textSpan!.style!.fontSize! * 2),
+      );
       expect(welcomeText.style!.color, Colors.white);
 
       expect(
