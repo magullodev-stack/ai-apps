@@ -14,6 +14,7 @@ enum IdentityFailureCode {
   network,
   tooManyRequests,
   providerNotReady,
+  cancelled,
   unknown,
 }
 

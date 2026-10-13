@@ -162,6 +162,7 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
         'Demasiados intentos. Espera un poco y vuelve a probar.',
       IdentityFailureCode.providerNotReady =>
         'Este método de acceso todavía no está disponible.',
+      IdentityFailureCode.cancelled => 'Acceso cancelado.',
       IdentityFailureCode.unknown =>
         'No se ha podido completar el acceso.',
     };

@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'identity_failure.dart';
 import 'identity_service.dart';
@@ -92,14 +94,56 @@ final class FirebaseIdentityService implements IdentityService {
   }
 
   @override
-  Future<IdentityUser> signInWithGoogle() {
-    throw const IdentityFailure.providerNotReady(IdentityProvider.google);
+  Future<IdentityUser> signInWithGoogle() async {
+    final auth = _requireAuth;
+    try {
+      final account = await GoogleSignIn(scopes: ['email']).signIn();
+      if (account == null) {
+        throw const IdentityFailure(IdentityFailureCode.cancelled);
+      }
+      final tokens = await account.authentication;
+      final credential = GoogleAuthProvider.credential(
+        idToken: tokens.idToken,
+        accessToken: tokens.accessToken,
+      );
+      return _mapCredential(await auth.signInWithCredential(credential));
+    } on IdentityFailure {
+      rethrow;
+    } on FirebaseAuthException catch (error) {
+      throw _mapAuthFailure(error);
+    } on PlatformException catch (error) {
+      if (_isProviderCancellation(error.code)) {
+        throw IdentityFailure(IdentityFailureCode.cancelled, cause: error);
+      }
+      throw IdentityFailure(IdentityFailureCode.unknown, cause: error);
+    }
   }
 
   @override
-  Future<IdentityUser> signInWithApple() {
-    throw const IdentityFailure.providerNotReady(IdentityProvider.apple);
+  Future<IdentityUser> signInWithApple() async {
+    final auth = _requireAuth;
+    final provider = AppleAuthProvider()
+      ..addScope('email')
+      ..addScope('name');
+    try {
+      return _mapCredential(await auth.signInWithProvider(provider));
+    } on FirebaseAuthException catch (error) {
+      throw _mapAuthFailure(error);
+    } on PlatformException catch (error) {
+      if (_isProviderCancellation(error.code)) {
+        throw IdentityFailure(IdentityFailureCode.cancelled, cause: error);
+      }
+      throw IdentityFailure(IdentityFailureCode.unknown, cause: error);
+    }
   }
+
+  bool _isProviderCancellation(String code) =>
+      code == 'sign_in_canceled' ||
+      code == 'sign_in_cancelled' ||
+      code == 'canceled' ||
+      code == 'cancelled' ||
+      code == 'web-context-cancelled' ||
+      code == 'popup-closed-by-user';
 
   @override
   Future<void> signOut() => _requireAuth.signOut();
@@ -138,6 +182,11 @@ final class FirebaseIdentityService implements IdentityService {
       'invalid-credential' => IdentityFailureCode.wrongCredentials,
       'network-request-failed' => IdentityFailureCode.network,
       'too-many-requests' => IdentityFailureCode.tooManyRequests,
+      'operation-not-allowed' => IdentityFailureCode.providerNotReady,
+      'canceled' ||
+      'cancelled' ||
+      'web-context-cancelled' ||
+      'popup-closed-by-user' => IdentityFailureCode.cancelled,
       _ => IdentityFailureCode.unknown,
     };
     return IdentityFailure(code, cause: error);

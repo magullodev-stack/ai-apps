@@ -8,10 +8,12 @@ sin depender de Firebase directamente. `FirebaseIdentityService` es la primera
 implementación técnica y proporciona sesión persistente, acceso y registro con
 email/contraseña, recuperación de contraseña y cierre de sesión.
 
-La misma API reserva `signInWithGoogle()` y `signInWithApple()`. Esos dos
-proveedores todavía no tienen implementación y devuelven
-`IdentityFailureCode.providerNotReady` hasta que se conecten sus SDK y
-credenciales.
+`signInWithGoogle()` abre el selector nativo de Google mediante
+`google_sign_in` y entrega la credencial a Firebase Authentication.
+`signInWithApple()` inicia el flujo OAuth de Apple mediante Firebase Auth;
+en Android utiliza la configuración web de Apple en Firebase. Ambos
+servicios conservan la sesión mediante el mismo `authStateChanges()` que email.
+La cancelación del usuario no se considera un error de acceso.
 
 La identidad común no contiene progreso, partidas, compras ni estado particular
 de una aplicación. Esos datos siguen perteneciendo a cada producto.

@@ -72,7 +72,24 @@ El `applicationId` de Muondia es `com.aiapps.muondia`. Debe estar registrado
 en el proyecto Firebase compartido de AI-APPS. Descarga el
 `google-services.json` correspondiente **a ese ID** y colócalo localmente en
 `apps/muondia/android/app/google-services.json`; no publiques ese fichero.
-Es necesario registrar también las huellas SHA Android para Google.
+Para activar los botones reales de Auth:
+
+1. Habilita **Google** y **Apple** en Firebase Authentication → Sign-in method.
+2. Para Google en Android registra en Firebase los SHA-1 y SHA-256 del
+   certificado con que firmas (debug y posteriormente release); vuelve a
+   descargar `google-services.json` después de registrar las huellas y
+   confirma que contiene el cliente OAuth web de ese proyecto.
+3. Para Apple configura **Sign in with Apple** en Apple Developer (Services ID,
+   clave privada de Sign in with Apple, Team ID y Key ID) y registra la
+   configuración requerida en el proveedor Apple de Firebase. Verifica el
+   dominio y la URL de retorno indicados por Firebase para el flujo web Android.
+4. Ejecuta `flutter pub get` y reconstruye la app desde F5 (hot reload no
+   instala nuevos plugins nativos). Usa un emulador Android con Google Play
+   Services para probar Google y un navegador funcional para Apple.
+
+Las credenciales sensibles de Apple se configuran en sus consolas, nunca se
+incorporan a los archivos Dart ni al repositorio. La identidad de ambos
+proveedores desemboca en el mismo recorrido inicial o Home que email.
 
 ## Comprobaciones
 

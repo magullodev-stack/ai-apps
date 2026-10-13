@@ -97,16 +97,19 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
           return;
       }
     } on IdentityFailure catch (failure) {
-      if (!mounted) return;
+      if (!mounted || failure.code == IdentityFailureCode.cancelled) return;
 
-      if (failure.code == IdentityFailureCode.providerNotReady) {
+      if (failure.code == IdentityFailureCode.providerNotReady ||
+          failure.code == IdentityFailureCode.notConfigured) {
         final name = provider == IdentityProvider.google ? 'Google' : 'Apple';
-        _showMessage(
-          'El acceso con $name está preparado, pero todavía falta conectar su proveedor.',
-        );
+        _showMessage('Configura el acceso con $name en Firebase.');
+      } else if (failure.code == IdentityFailureCode.network) {
+        _showMessage('No hay conexión. Comprueba tu red e inténtalo de nuevo.');
       } else {
         _showMessage('No se ha podido completar el acceso.');
       }
+    } catch (_) {
+      if (mounted) _showMessage('No se ha podido completar el acceso.');
     } finally {
       if (mounted) setState(() => _providerBusy = false);
     }

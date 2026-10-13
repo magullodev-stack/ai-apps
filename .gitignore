@@ -25,3 +25,6 @@ Thumbs.db
 
 # Keep obsolete local diagnostic exports out of the repository.
 /diagnostics/
+
+# Firebase application-specific configuration stays local.
+/apps/muondia/android/app/google-services.json
