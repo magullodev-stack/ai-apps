@@ -78,6 +78,27 @@ async function run() {
   await migrated.openSession({ ...a, avdName: 'AI_APPS_Dev' });
   assert.equal(panels.length, countBeforeMigration, 'Known legacy AVD panel is adopted, not duplicated');
   assert.equal(legacy.title, 'Muondia · emulator-5554');
+  // A persisted app identity is not authoritative after an app migration.
+  const stale = createViews(Base, context, {}, { find() {} }, log);
+  const stalePanel = panel('Retired - emulator-5554');
+  await serializers[3].deserializeWebviewPanel(stalePanel, {
+    session: { serial: a.serial, appId: 'retired', label: 'Retired' }
+  });
+  assert.equal(stalePanel.title, 'Android · emulator-5554',
+    'Old app labels must never reappear while the session is reconciling');
+  const beforeStaleReconnect = panels.length;
+  await stale.openSession(a);
+  assert.equal(panels.length, beforeStaleReconnect, 'Reconcile without creating another panel');
+  assert.equal(stalePanel.title, 'Muondia · emulator-5554', 'Current registry identity wins');
+
+  const oldTitle = createViews(Base, context, {}, { find() {} }, log);
+  const oldPanel = panel('Retired - emulator-5554');
+  await serializers[4].deserializeWebviewPanel(oldPanel, undefined);
+  assert.equal(oldPanel.title, 'Android', 'Unidentified panels must not retain retired labels');
+  const beforeOldTitle = panels.length;
+  await oldTitle.openSession(a);
+  assert.equal(panels.length, beforeOldTitle, 'Adopt a legacy panel using its original serial');
+  assert.equal(oldPanel.title, 'Muondia · emulator-5554');
   assert.ok(bundle.includes('onWebviewPanel') === false); // Activation belongs in manifest.
   const builtWebview = fs.readFileSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/media/webview.js'), 'utf8');
   assert.ok(builtWebview.includes('x.setState({session:t.session})'));
