@@ -526,8 +526,7 @@ try {
                         --device $Device `
                         --defines-file $definesFile `
                         --working-directory (Join-Path $repo 'apps\muondia') `
-                        --watch (Join-Path $repo 'apps\muondia\lib') `
-                        --watch (Join-Path $repo 'apps\muondia\assets') `
+                        --watch (Join-Path $repo 'apps\muondia') `
                         --watch (Join-Path $repo 'shared') `
                         --watch (Join-Path $repo 'ai\flutter_client')
                     $runnerExitCode = $LASTEXITCODE
