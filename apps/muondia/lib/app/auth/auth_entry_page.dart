@@ -166,6 +166,73 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             const ClipRect(
               child: _AuthParallaxArt(),
             ),
+            // Mensaje editable de bienvenida, independiente del arte animado.
+            // Se sitúa en la zona superior para no invadir al robot ni al acceso.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final titleSize = math.min(
+                  22.0,
+                  math.max(18.0, constraints.maxWidth * 0.054),
+                );
+                final subtitleSize = math.min(
+                  16.0,
+                  math.max(13.5, constraints.maxWidth * 0.039),
+                );
+                const welcomeShadows = [
+                  Shadow(
+                    color: Color(0xE6110A31),
+                    offset: Offset(0, 2),
+                    blurRadius: 8,
+                  ),
+                  Shadow(
+                    color: Color(0x997A40F6),
+                    blurRadius: 12,
+                  ),
+                ];
+
+                return Align(
+                  alignment: const Alignment(0, -0.65),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 410),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '¡Qué alegría verte por aquí! ✨',
+                            key: const Key('muondia-auth-welcome-title'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: MuondiaTypography.family,
+                              fontSize: titleSize,
+                              height: 1.12,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              shadows: welcomeShadows,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          Text(
+                            'En Muondia siempre hay algo nuevo por descubrir. ¿Empezamos?',
+                            key: const Key('muondia-auth-welcome-subtitle'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: MuondiaTypography.family,
+                              fontSize: subtitleSize,
+                              height: 1.2,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFF5EDFF),
+                              shadows: welcomeShadows,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
             LayoutBuilder(
               builder: (context, constraints) {
                 final buttonWidth = math.min(constraints.maxWidth * 0.86, 420.0);
