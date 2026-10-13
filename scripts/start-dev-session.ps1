@@ -70,24 +70,12 @@ try {
     }
     Write-SessionLog 'Android preparado: emulator-5554.'
     $stage = 'Muondia'
-    Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
-    & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 *>&1 |
-        ForEach-Object {
-            $line = $_.ToString().Trim()
-            if ($line -eq 'Hot reload automatico completado.' -or
-                $line -eq 'Hot restart completado.') {
-                Write-SessionLog $line
-            } elseif ($line -like 'Hot reload automatico activo:*') {
-                Write-SessionLog 'Muondia preparado; hot reload automatico activo.'
-            } elseif ($line -like 'Cambio detectado:*') {
-                Write-SessionLog 'Cambio de codigo/asset detectado.'
-            } elseif ($line -like 'Running Gradle task*') {
-                Write-SessionLog 'Compilacion Gradle iniciada.'
-            } elseif ($line -match '^Hot (reload|restart) fallo:') {
-                Write-SessionLog 'ERROR: hot reload/restart fallido.'
-            }
-        }
-    Write-SessionLog 'Sesion Flutter terminada.'
+    Write-SessionLog 'Preparando servicio Dart para VS Code.'
+    & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 -ServiceOnly *>&1 | Out-Null
+    if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+        throw 'El backend de Muondia no pudo prepararse.'
+    }
+    Write-SessionLog 'Android y servicio Dart preparados. Flutter se ejecuta desde VS Code.'
 } catch {
     Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
     # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
