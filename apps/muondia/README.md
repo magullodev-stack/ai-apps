@@ -33,6 +33,8 @@ progreso, se realizará el recorrido allí también.
 La entrada monta cuatro capas de `assets/auth/`: `Background.png`,
 `Estrellas.png`, `Esferas.png` y `Robot.png`, con parallax suave.
 Las capas respetan las áreas seguras; las barras nativas Android son negras.
+Sobre la bienvenida se muestra el PNG original
+`assets/auth/Logotipo_MuondIA.png`, centrado y sin alterar su proporción.
 La bienvenida se limita a «¡Qué alegría verte por aquí! ¿Empezamos?»,
 distribuida en tres líneas con la tipografía redondeada Nunito en peso
 máximo, tamaño grande adaptable y color blanco. Se muestra sobre la franja
