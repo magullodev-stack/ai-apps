@@ -52,15 +52,19 @@ Los gráficos de la secuencia inicial viven en `assets/onboarding/loading/`.
 
 ## Arranque y sincronización
 
-La tarea programada de Windows **AI-APPS Development** mantiene el emulador
-`emulator-5554`, el servicio Dart, el runner Flutter y la sincronización de
-la rama `dev`. El lanzador es `apps/muondia/run.ps1`; la entrada de la
-sesión sigue siendo `scripts/start-dev-session.ps1`. No inicies otro
-`flutter run` mientras la tarea esté activa.
+La tarea de Windows **AI-APPS Development** prepara Android, el servicio
+Dart y la sincronización de la rama `dev`. **No lanza Flutter**.
 
-Los cambios de Dart y assets se recogen mediante Hot Reload automático.
-Las modificaciones de identificador Android, actividad Kotlin o configuración
-nativa sí requieren **una recompilación/instalación nativa**.
+Abre la raíz de AI-APPS en VS Code y pulsa **F5** con la configuración
+**Muondia** seleccionada. La integración oficial Dart/Flutter de VS Code
+lanza la aplicación en `emulator-5554`, la conecta con la IA y realiza
+Hot Reload al guardar. La tarea previa de F5 cierra la antigua sesión
+Flutter personalizada, si existía, sin detener el servicio de IA.
+
+Los cambios nativos de Android pueden requerir recompilación. Los cambios
+externos procedentes de Git no equivalen necesariamente a un guardado
+en VS Code: el Hot Reload al guardar no garantiza recarga automática
+tras una actualización externa del repositorio.
 
 ## Firebase y autenticación
 
