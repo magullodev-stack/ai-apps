@@ -28,6 +28,7 @@ async function activate(context) {
   // notificamos los cambios del repositorio, incluso los recibidos por Git.
   let updateTimer;
   let pendingResourceChange = false;
+  let pendingBundleChange = false;
   let pendingSourceChange = false;
   const savedInEditor = new Map();
   const rootPath = folder.uri.fsPath;
@@ -38,18 +39,23 @@ async function activate(context) {
   };
   async function updateFlutter() {
     if (!activeMuondia()) return;
+    const rebuild = pendingBundleChange;
     const restart = pendingResourceChange;
-    if (!restart && !pendingSourceChange) return;
+    if (!rebuild && !restart && !pendingSourceChange) return;
+    pendingBundleChange = false;
     pendingResourceChange = false;
     pendingSourceChange = false;
     try {
-      await vscode.commands.executeCommand(restart ? 'dart.hotRestart' : 'dart.hotReload');
-      output.appendLine(restart ? 'Recursos actualizados en Flutter.' : 'Código actualizado en Flutter.');
+      const command = rebuild ? 'workbench.action.debug.restart' :
+        restart ? 'dart.hotRestart' : 'dart.hotReload';
+      await vscode.commands.executeCommand(command);
+      output.appendLine(rebuild ? 'Recurso nuevo incorporado a Flutter.' :
+        restart ? 'Recursos actualizados en Flutter.' : 'Código actualizado en Flutter.');
     } catch (error) {
       output.appendLine('No se pudo actualizar Flutter: ' + String(error.message || error));
     }
   }
-  function changedFile(uri) {
+  function changedFile(uri, event = 'change') {
     const file = relativeFile(uri);
     const muondia = file.startsWith('apps/muondia/');
     const shared = file.startsWith('shared/') || file.startsWith('ai/flutter_client/');
@@ -62,8 +68,15 @@ async function activate(context) {
     if (!source && !resource) return;
     // El editor ya activa Hot Reload para Dart al guardar; evitamos duplicarlo.
     if (source && Date.now() - (savedInEditor.get(file) || 0) < 1500) return;
-    if (resource) pendingResourceChange = true;
-    else pendingSourceChange = true;
+    if (resource) {
+      if (event !== 'change' || file.endsWith('/pubspec.yaml')) {
+        pendingBundleChange = true;
+      } else {
+        pendingResourceChange = true;
+      }
+    } else {
+      pendingSourceChange = true;
+    }
     clearTimeout(updateTimer);
     updateTimer = setTimeout(() => void updateFlutter(), 900);
   }
@@ -72,21 +85,25 @@ async function activate(context) {
     'shared/**/*',
     'ai/flutter_client/**/*',
   ];
-  for (const pattern of watchPatterns) {
-    const watcher = vscode.workspace.createFileSystemWatcher(
-      new vscode.RelativePattern(folder, pattern),
-    );
-    watcher.onDidCreate(changedFile, null, context.subscriptions);
-    watcher.onDidChange(changedFile, null, context.subscriptions);
-    watcher.onDidDelete(changedFile, null, context.subscriptions);
-    context.subscriptions.push(watcher);
+  if (vscode.workspace.createFileSystemWatcher) {
+    for (const pattern of watchPatterns) {
+      const watcher = vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(folder, pattern),
+      );
+      watcher.onDidCreate(uri => changedFile(uri, 'create'), null, context.subscriptions);
+      watcher.onDidChange(uri => changedFile(uri), null, context.subscriptions);
+      watcher.onDidDelete(uri => changedFile(uri, 'delete'), null, context.subscriptions);
+      context.subscriptions.push(watcher);
+    }
   }
-  context.subscriptions.push(
-    vscode.workspace.onDidSaveTextDocument(document => {
-      savedInEditor.set(relativeFile(document.uri), Date.now());
-    }),
-    { dispose() { clearTimeout(updateTimer); } },
-  );
+  if (vscode.workspace.onDidSaveTextDocument) {
+    context.subscriptions.push(
+      vscode.workspace.onDidSaveTextDocument(document => {
+        savedInEditor.set(relativeFile(document.uri), Date.now());
+      }),
+    );
+  }
+  context.subscriptions.push({ dispose() { clearTimeout(updateTimer); } });
 
   function report(error) {
     const message = String(error.message || error);
