@@ -10,7 +10,7 @@ foreach ($scriptFile in @(
     [System.Management.Automation.Language.Parser]::ParseFile(
         $scriptFile, [ref]$tokens, [ref]$parseErrors
     ) | Out-Null
-    if (@($parseErrors).Count -gt 0) {
+    if ($null -ne $parseErrors -and $parseErrors.Count -gt 0) {
         throw ('PowerShell syntax errors in ' + $scriptFile + ': ' + $parseErrors[0].Message)
     }
 }
