@@ -28,38 +28,29 @@ void main() {
       final email = find.byKey(const Key('muondia-auth-button-email'));
       final legal = find.byKey(const Key('muondia-auth-legal'));
       final title = find.byKey(const Key('muondia-auth-welcome-title'));
-      final subtitle = find.byKey(const Key('muondia-auth-welcome-subtitle'));
 
       expect(
         tester.widget<Text>(title).data,
-        '¡Qué alegría\nverte por aquí!',
+        '¡Qué alegría\nverte por aquí!\n¿Empezamos?',
       );
       expect(
-        tester.widget<Text>(subtitle).data,
-        'En Muondia siempre hay algo nuevo por descubrir. ¿Empezamos?',
-      );
-      expect(
-        tester.getBottomLeft(title).dy,
-        lessThan(tester.getTopLeft(subtitle).dy),
-      );
-      expect(
-        tester.getBottomLeft(subtitle).dy,
-        lessThan(tester.getTopLeft(google).dy),
+        find.byKey(const Key('muondia-auth-welcome-subtitle')),
+        findsNothing,
       );
       expect(tester.getCenter(title).dx, closeTo(size.width / 2, 1));
-      expect(tester.getCenter(subtitle).dx, closeTo(size.width / 2, 1));
-      final titleText = tester.widget<Text>(title);
-      final subtitleText = tester.widget<Text>(subtitle);
+      expect(tester.getTopLeft(title).dy, greaterThan(size.height * 0.14));
+      expect(tester.getBottomLeft(title).dy, lessThan(size.height * 0.32));
+      expect(
+        tester.getBottomLeft(title).dy,
+        lessThan(tester.getTopLeft(google).dy),
+      );
+
+      final welcomeText = tester.widget<Text>(title);
       final legalText = tester.widget<Text>(legal);
-      expect(tester.getTopLeft(title).dy, greaterThan(size.height * 0.13));
-      expect(tester.getBottomLeft(subtitle).dy, lessThan(size.height * 0.36));
-      expect(titleText.style!.fontSize!, greaterThan(legalText.textSpan!.style!.fontSize! * 1.6));
-      expect(titleText.style!.color, const Color(0xFFF3FCFF));
-      expect(subtitleText.style!.fontFamily, 'Roboto');
-      expect(subtitleText.style!.fontStyle, FontStyle.italic);
-      expect(subtitleText.style!.fontSize!, greaterThan(15));
-      expect(subtitleText.style!.color, const Color(0xFFC6F0FF));
-      expect(subtitleText.style!.fontWeight, FontWeight.w500);
+      expect(welcomeText.style!.fontFamily, 'cursive');
+      expect(welcomeText.style!.fontFamily, isNot(legalText.textSpan!.style!.fontFamily));
+      expect(welcomeText.style!.fontSize!, greaterThan(legalText.textSpan!.style!.fontSize! * 1.4));
+      expect(welcomeText.style!.color, const Color(0xFFF3FCFF));
 
       expect(
         tester.getTopLeft(legal).dy - tester.getBottomLeft(email).dy,
