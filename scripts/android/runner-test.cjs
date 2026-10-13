@@ -50,8 +50,9 @@ if(process.env.FAKE_NATIVE==='1') {
   fs.writeFileSync(path.join(root,'android/.gradle/cache/generated.properties'),'fixture=true');
   fs.writeFileSync(path.join(root,'android/.gradle/cache/generated.json'),'{}');
   if(process.env.FAKE_ASSET==='1') {
-  fs.mkdirSync(path.join(root,'assets/auth'),{recursive:true});
   fs.writeFileSync(path.join(root,'assets/auth/Background.png'), Buffer.from('updated-image'));
+ } else if(process.env.FAKE_NEW_ASSET==='1') {
+  fs.writeFileSync(path.join(root,'assets/auth/NewImage.png'), Buffer.from('new-image'));
  } else {
   fs.writeFileSync(path.join(root,'main.dart'),'void main() {} // '+Date.now());
  }
@@ -64,6 +65,8 @@ if(process.env.FAKE_NATIVE==='1') {
  setTimeout(()=>process.exit(0),2200);
 }
 `);
+  fs.mkdirSync(path.join(dir,'assets/auth'),{recursive:true});
+  fs.writeFileSync(path.join(dir,'assets/auth/Background.png'),Buffer.from('original-image'));
   const watchArgs = base.map(item => item === batch ? machineBatch : item);
   const output = execFileSync(dart, watchArgs, options);
   const reloads = JSON.parse(fs.readFileSync(messages));
@@ -79,6 +82,10 @@ if(process.env.FAKE_NATIVE==='1') {
   assert.equal(assetRestarts[0].params.fullRestart, true,
     'Raster asset changes use hot restart instead of hot reload');
   assert.match(assetOutput, /Hot restart completado/);
+  assert.throws(() => execFileSync(dart, watchArgs, {
+    ...options, env: { ...options.env, FAKE_NEW_ASSET: '1' },
+  }), error => error.status === 86,
+  'New image asset triggers automatic repackaging, not a hot restart');
   assert.throws(() => execFileSync(dart, watchArgs, { ...options, env: { ...options.env, FAKE_NATIVE: '1' } }),
     error => error.status === 86, 'Native relaunch exits through the worker restart protocol');
   const owned = JSON.parse(fs.readFileSync(descendants));
