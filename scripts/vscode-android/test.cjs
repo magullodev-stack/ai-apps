@@ -9,8 +9,7 @@ fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
 let treeProvider, taskRunning = true;
 let entries = [
-  { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' },
-  { appId: 'lab', label: 'Lab', serial: 'emulator-5556', id: 'lab@emulator-5556', kind: 'flutter', active: true, deviceReady: true, status: 'running', epoch: '2:200' }
+  { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' }
 ];
 class Sessions {
   async list() { return entries; }
@@ -49,31 +48,31 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'extension.js'), 'utf8')
 async function run() {
   const context = { subscriptions: [] };
   const api = await sandbox.module.exports.activate(context);
-  assert.equal(panels.size, 1, 'Startup restores Muondia without reopening transient experiments');
+  assert.equal(panels.size, 1, 'Startup restores only the registered Muondia session');
   assert.equal(panels.has('muondia@emulator-5554'), true);
-  assert.equal(panels.has('lab@emulator-5556'), false);
-  assert.equal(treeProvider.getTreeItem({ ...entries[1], active: false, status: 'starting' }).contextValue,
+  assert.equal(treeProvider.getTreeItem({ ...entries[0], active: false, status: 'starting' }).contextValue,
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
   assert.equal(calls.some(call => call[0] !== 'open'), false,
     'A running development task is never started twice');
   await api.refresh();
-  assert.equal(calls.length, 1, 'Polling does not duplicate Muondia or revive a transient experiment');
+  assert.equal(calls.length, 1, 'Polling does not duplicate Muondia');
+  panels.delete('muondia@emulator-5554');
   await api.refresh();
-  assert.equal(panels.size, 1, 'Transient applications stay closed until explicitly selected');
+  assert.equal(panels.size, 0, 'Manually closed panel stays closed while its session is unchanged');
   await commands.get('aiAppsAndroid.select')();
-  assert.equal(panels.size, 2, 'Multi-selection reopens without closing the other app');
+  assert.equal(panels.size, 1, 'Explicit selection reopens the Muondia viewer');
   await commands.get('aiAppsAndroid.open')();
   assert.deepEqual(calls.at(-1), ['open', 'muondia@emulator-5554', false], 'Command palette opens a single picked session');
-  await commands.get('aiAppsAndroid.reconnect')(entries[1]);
-  assert.deepEqual(calls.at(-1), ['open', 'lab@emulator-5556', true]);
-  entries[1].deviceReady = false; entries[1].active = false;
+  await commands.get('aiAppsAndroid.reconnect')(entries[0]);
+  assert.deepEqual(calls.at(-1), ['open', 'muondia@emulator-5554', true]);
+  entries[0].deviceReady = false; entries[0].active = false;
   await api.refresh();
-  entries[1].deviceReady = true; entries[1].active = true;
+  entries[0].deviceReady = true; entries[0].active = true;
   await api.refresh();
-  assert.deepEqual(calls.at(-1), ['open', 'lab@emulator-5556', true], 'ADB disconnect/reconnect recovers only its existing panel');
-  await commands.get('aiAppsAndroid.stop')(entries[1]);
-  assert.ok(calls.some(call => call[0] === 'stop' && call[1] === entries[1].id));
-  assert.equal(calls.some(call => call[0] === 'stop' && call[1] === entries[0].id), false);
+  assert.deepEqual(calls.at(-1), ['open', 'muondia@emulator-5554', true],
+    'ADB disconnect/reconnect recovers the existing Muondia panel');
+  await commands.get('aiAppsAndroid.stop')(entries[0]);
+  assert.ok(calls.some(call => call[0] === 'stop' && call[1] === entries[0].id));
   // Un paquete Android antiguo puede seguir en primer plano aunque Flutter
   // y la tarea ya hayan terminado: debe recuperarse la tarea, no el APK.
   taskRunning = false;
@@ -81,13 +80,16 @@ async function run() {
   assert.deepEqual(calls.filter(call => call[0] === 'start'),
     [['start', 'muondia@emulator-5554']],
     'VS Code reopens the stopped Flutter development task even with a stale Android PID');
-  assert.equal(panels.size, 2, 'Reactivation recovers active sessions without tab growth');
-  entries = Array.from({ length: 150 }, (_, i) => ({ ...entries[1], id: `app-${i}@device-${i}`, appId: `app-${i}`,
-    serial: `device-${i}`, label: `App ${i}`, epoch: String(i) }));
+  assert.equal(panels.size, 1, 'Reactivation reuses the existing Muondia panel');
+  // Stress-test the generic registry without simulating a named second app.
+  entries = Array.from({ length: 150 }, (_, i) => ({
+    appId: `app-${i}`, label: `App ${i}`, serial: `device-${i}`, id: `app-${i}@device-${i}`,
+    kind: 'external', active: true, deviceReady: true, status: 'running', epoch: String(i)
+  }));
   await api.refresh();
-  assert.equal(panels.size, 152, 'No fixed maximum of tabs; existing tabs untouched');
+  assert.equal(panels.size, 151, 'No fixed maximum of tabs; existing Muondia panel untouched');
   vscode.workspace.isTrusted = false;
   assert.equal(await sandbox.module.exports.activate({ subscriptions: [] }), undefined);
-  console.log('PASS: startup task recovery without duplicate Flutter or stale APK relaunch, multi-selector, polling/close separation, target reconnect/stop, reactivation, 150 sessions and workspace trust.');
+  console.log('PASS: Muondia startup/recovery, no duplicate Flutter, viewer reopening, reconnect/stop, stress registry and workspace trust.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });
