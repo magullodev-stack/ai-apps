@@ -29,6 +29,16 @@ void main() {
       final legal = find.byKey(const Key('muondia-auth-legal'));
       final title = find.byKey(const Key('muondia-auth-welcome-title'));
       final question = find.byKey(const Key('muondia-auth-welcome-question'));
+      final logo = find.byKey(const Key('muondia-auth-logo'));
+      expect(logo, findsOneWidget);
+      expect(
+        (tester.widget<Image>(logo).image as AssetImage).assetName,
+        'assets/auth/Logotipo_MuondIA.png',
+      );
+      expect(
+        tester.getTopLeft(title).dy - tester.getBottomLeft(logo).dy,
+        closeTo(8, 1),
+      );
 
       expect(
         tester.widget<Text>(title).data,
