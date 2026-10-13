@@ -32,7 +32,7 @@ void main() {
 
       expect(
         tester.widget<Text>(title).data,
-        '¡Qué alegría\nverte por aquí! ✨',
+        '¡Qué alegría\nverte por aquí!',
       );
       expect(
         tester.widget<Text>(subtitle).data,
@@ -49,12 +49,17 @@ void main() {
       expect(tester.getCenter(title).dx, closeTo(size.width / 2, 1));
       expect(tester.getCenter(subtitle).dx, closeTo(size.width / 2, 1));
       final titleText = tester.widget<Text>(title);
+      final subtitleText = tester.widget<Text>(subtitle);
       final legalText = tester.widget<Text>(legal);
-      expect(titleText.style!.fontSize!, greaterThan(26));
-      expect(
-        titleText.style!.fontSize!,
-        greaterThan(legalText.textSpan!.style!.fontSize! * 1.8),
-      );
+      expect(tester.getTopLeft(title).dy, greaterThan(size.height * 0.13));
+      expect(tester.getBottomLeft(subtitle).dy, lessThan(size.height * 0.36));
+      expect(titleText.style!.fontSize!, greaterThan(legalText.textSpan!.style!.fontSize! * 1.6));
+      expect(titleText.style!.color, const Color(0xFFF3FCFF));
+      expect(subtitleText.style!.fontFamily, 'Roboto');
+      expect(subtitleText.style!.fontStyle, FontStyle.italic);
+      expect(subtitleText.style!.fontSize!, greaterThan(15));
+      expect(subtitleText.style!.color, const Color(0xFFC6F0FF));
+      expect(subtitleText.style!.fontWeight, FontWeight.w500);
 
       expect(
         tester.getTopLeft(legal).dy - tester.getBottomLeft(email).dy,
