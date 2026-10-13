@@ -6,6 +6,9 @@ build/
 .vscode/*
 !.vscode/tasks.json
 *.iml
+# Publish only the bounded diagnostic snapshot. Never stage raw reports or tmp files.
+/diagnostics/*
+!/diagnostics/current.json
 .DS_Store
 Thumbs.db
 # Mantener privados los archivos locales; versionar experimentos de cualquier fecha.
