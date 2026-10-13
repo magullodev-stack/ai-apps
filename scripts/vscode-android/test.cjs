@@ -49,16 +49,17 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'extension.js'), 'utf8')
 async function run() {
   const context = { subscriptions: [] };
   const api = await sandbox.module.exports.activate(context);
-  assert.equal(panels.size, 2, 'All active applications recovered at activation');
+  assert.equal(panels.size, 1, 'Startup restores Muondia without reopening transient experiments');
+  assert.equal(panels.has('muondia@emulator-5554'), true);
+  assert.equal(panels.has('lab@emulator-5556'), false);
   assert.equal(treeProvider.getTreeItem({ ...entries[1], active: false, status: 'starting' }).contextValue,
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
   assert.equal(calls.some(call => call[0] !== 'open'), false,
     'A running development task is never started twice');
   await api.refresh();
-  assert.equal(calls.length, 2, 'Polling does not duplicate views');
-  panels.delete('lab@emulator-5556');
+  assert.equal(calls.length, 1, 'Polling does not duplicate Muondia or revive a transient experiment');
   await api.refresh();
-  assert.equal(panels.size, 1, 'Closing a tab stays closed during the same session epoch');
+  assert.equal(panels.size, 1, 'Transient applications stay closed until explicitly selected');
   await commands.get('aiAppsAndroid.select')();
   assert.equal(panels.size, 2, 'Multi-selection reopens without closing the other app');
   await commands.get('aiAppsAndroid.open')();
