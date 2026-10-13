@@ -18,7 +18,8 @@ if ($App -eq 'muondia' -or $Package -eq 'com.aiapps.muondia') {
     throw 'Refusing to remove Muondia.'
 }
 $root = (& git -C $repo rev-parse --show-toplevel | Out-String).Trim()
-if ($LASTEXITCODE -ne 0 -or $root.TrimEnd('\') -ine $repo.TrimEnd('\')) {
+if ($LASTEXITCODE -ne 0 -or
+    [IO.Path]::GetFullPath($root).TrimEnd('\', '/') -ine [IO.Path]::GetFullPath($repo).TrimEnd('\', '/')) {
     throw 'This command must run from the AI-APPS repository.'
 }
 $branch = (& git -C $repo branch --show-current | Out-String).Trim()
