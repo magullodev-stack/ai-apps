@@ -166,79 +166,40 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             const ClipRect(
               child: _AuthParallaxArt(),
             ),
-            // Franja azul libre entre las nebulosas superiores y el robot.
-            // El bloque se posiciona respecto de la altura disponible:
-            // no desplaza las ilustraciones ni el acceso inferior.
+            // Un único mensaje, con una sola tipografía y estilo.
+            // La posición aprovecha la franja azul sin tocar el robot.
             LayoutBuilder(
               builder: (context, constraints) {
-                final titleSize = math.min(
-                  27.0,
-                  math.max(24.0, constraints.maxWidth * 0.075),
+                final welcomeSize = math.min(
+                  23.0,
+                  math.max(20.0, constraints.maxWidth * 0.063),
                 );
-                final subtitleSize = math.min(
-                  17.0,
-                  math.max(15.5, constraints.maxWidth * 0.046),
-                );
-                final welcomeTop = constraints.maxHeight * 0.15;
-                const titleShadows = [
-                  Shadow(
-                    color: Color(0xE6001038),
-                    offset: Offset(0, 2),
-                    blurRadius: 6,
-                  ),
-                  Shadow(
-                    color: Color(0xB000BFFF),
-                    blurRadius: 12,
-                  ),
-                ];
-                const subtitleShadows = [
-                  Shadow(
-                    color: Color(0xF0001238),
-                    offset: Offset(0, 2),
-                    blurRadius: 5,
-                  ),
-                ];
+                final welcomeTop = constraints.maxHeight * 0.17;
 
-                return Padding(
-                  padding: EdgeInsets.fromLTRB(16, welcomeTop, 16, 0),
-                  child: Align(
-                    alignment: Alignment.topCenter,
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, welcomeTop, 16, 0),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 410),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '¡Qué alegría\nverte por aquí!',
-                            key: const Key('muondia-auth-welcome-title'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: MuondiaTypography.family,
-                              fontSize: titleSize,
-                              height: 1.02,
-                              letterSpacing: -0.7,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFFF3FCFF),
-                              shadows: titleShadows,
+                      child: Text(
+                        '¡Qué alegría\nverte por aquí!\n¿Empezamos?',
+                        key: const Key('muondia-auth-welcome-title'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'cursive',
+                          fontSize: welcomeSize,
+                          fontWeight: FontWeight.w700,
+                          height: 1.05,
+                          color: const Color(0xFFF3FCFF),
+                          shadows: const [
+                            Shadow(
+                              color: Color(0xDA061234),
+                              offset: Offset(0, 2),
+                              blurRadius: 5,
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'En Muondia siempre hay algo nuevo por descubrir. ¿Empezamos?',
-                            key: const Key('muondia-auth-welcome-subtitle'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: subtitleSize,
-                              fontStyle: FontStyle.italic,
-                              height: 1.15,
-                              letterSpacing: 0.1,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFFC6F0FF),
-                              shadows: subtitleShadows,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
