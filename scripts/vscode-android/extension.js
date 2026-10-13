@@ -24,6 +24,70 @@ async function activate(context) {
   await config.update('openIn', 'active', vscode.ConfigurationTarget.Workspace);
   await config.update('headless', true, vscode.ConfigurationTarget.Workspace);
 
+  // Flutter sigue perteneciendo a la extensión oficial Dart. Solo le
+  // notificamos los cambios del repositorio, incluso los recibidos por Git.
+  let updateTimer;
+  let pendingResourceChange = false;
+  let pendingSourceChange = false;
+  const savedInEditor = new Map();
+  const rootPath = folder.uri.fsPath;
+  const relativeFile = uri => path.relative(rootPath, uri.fsPath).replace(/\\/g, '/');
+  const activeMuondia = () => {
+    const session = vscode.debug.activeDebugSession;
+    return session?.type === 'dart' && session.name === 'Muondia';
+  };
+  async function updateFlutter() {
+    if (!activeMuondia()) return;
+    const restart = pendingResourceChange;
+    if (!restart && !pendingSourceChange) return;
+    pendingResourceChange = false;
+    pendingSourceChange = false;
+    try {
+      await vscode.commands.executeCommand(restart ? 'dart.hotRestart' : 'dart.hotReload');
+      output.appendLine(restart ? 'Recursos actualizados en Flutter.' : 'Código actualizado en Flutter.');
+    } catch (error) {
+      output.appendLine('No se pudo actualizar Flutter: ' + String(error.message || error));
+    }
+  }
+  function changedFile(uri) {
+    const file = relativeFile(uri);
+    const muondia = file.startsWith('apps/muondia/');
+    const shared = file.startsWith('shared/') || file.startsWith('ai/flutter_client/');
+    if (!muondia && !shared) return;
+    if (file.includes('/build/') || file.includes('/.dart_tool/') ||
+        file.includes('/.git/') || file.includes('/node_modules/')) return;
+    const source = file.endsWith('.dart');
+    const resource = muondia && (file.startsWith('apps/muondia/assets/') ||
+      file === 'apps/muondia/pubspec.yaml');
+    if (!source && !resource) return;
+    // El editor ya activa Hot Reload para Dart al guardar; evitamos duplicarlo.
+    if (source && Date.now() - (savedInEditor.get(file) || 0) < 1500) return;
+    if (resource) pendingResourceChange = true;
+    else pendingSourceChange = true;
+    clearTimeout(updateTimer);
+    updateTimer = setTimeout(() => void updateFlutter(), 900);
+  }
+  const watchPatterns = [
+    'apps/muondia/**/*',
+    'shared/**/*',
+    'ai/flutter_client/**/*',
+  ];
+  for (const pattern of watchPatterns) {
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(folder, pattern),
+    );
+    watcher.onDidCreate(changedFile, null, context.subscriptions);
+    watcher.onDidChange(changedFile, null, context.subscriptions);
+    watcher.onDidDelete(changedFile, null, context.subscriptions);
+    context.subscriptions.push(watcher);
+  }
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument(document => {
+      savedInEditor.set(relativeFile(document.uri), Date.now());
+    }),
+    { dispose() { clearTimeout(updateTimer); } },
+  );
+
   function report(error) {
     const message = String(error.message || error);
     output.appendLine('ERROR: ' + message);
