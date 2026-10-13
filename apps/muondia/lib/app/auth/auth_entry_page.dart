@@ -171,10 +171,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final welcomeSize = math.min(
-                  23.0,
-                  math.max(20.0, constraints.maxWidth * 0.063),
+                  32.0,
+                  math.max(29.0, constraints.maxWidth * 0.083),
                 );
-                final welcomeTop = constraints.maxHeight * 0.17;
+                final welcomeTop = constraints.maxHeight * 0.14;
 
                 return Align(
                   alignment: Alignment.topCenter,
@@ -187,11 +187,11 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                         key: const Key('muondia-auth-welcome-title'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'cursive',
+                          fontFamily: MuondiaTypography.family,
                           fontSize: welcomeSize,
-                          fontWeight: FontWeight.w700,
-                          height: 1.05,
-                          color: const Color(0xFFF3FCFF),
+                          fontWeight: FontWeight.w900,
+                          height: 0.96,
+                          color: Colors.white,
                           shadows: const [
                             Shadow(
                               color: Color(0xDA061234),
