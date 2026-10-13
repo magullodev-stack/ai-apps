@@ -98,7 +98,11 @@ Future<void> main(List<String> args) async {
 
     watchers.add(
       directory.watch(recursive: true).listen((event) {
-        if (_requiresRelaunch(event.path)) {
+        // La primera incorporación de una imagen requiere empaquetarla.
+        // Los cambios de imágenes existentes solo precisan Hot Restart.
+        if (_requiresRelaunch(event.path) ||
+            (event is FileSystemCreateEvent &&
+                _isNewBundledImage(event.path))) {
           scheduleRelaunch(event.path);
         } else if (_shouldReload(event.path)) {
           scheduleReload(event.path);
@@ -231,6 +235,14 @@ bool _isImageAsset(String path) {
       normalized.endsWith('.jpg') ||
       normalized.endsWith('.jpeg') ||
       normalized.endsWith('.webp');
+}
+
+bool _isNewBundledImage(String path) {
+  final normalized = path.replaceAll('\\', '/').toLowerCase();
+  return normalized.contains('/assets/') &&
+      !normalized.contains('/build/') &&
+      !normalized.contains('/.dart_tool/') &&
+      _isImageAsset(path);
 }
 
 String _relativePath(String base, String path) {
