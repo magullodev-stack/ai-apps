@@ -46,7 +46,7 @@ function Write-Log([string]$Message) {
 
 # Publish a bounded, sanitized snapshot through the existing dev sync.
 function Export-Diagnostics {
-    $collector = Join-Path $script:Repo 'scripts/diagnostics/collect.cjs'
+    $collector = Join-Path $script:Repo 'scripts/diagnostics/collect-cli.cjs'
     if (-not (Test-Path -LiteralPath $collector)) { return }
 
     $node = Get-Command node -ErrorAction SilentlyContinue
@@ -66,6 +66,8 @@ function Export-Diagnostics {
         finally { $env:ELECTRON_RUN_AS_NODE = $previous }
     }
     if ($LASTEXITCODE -ne 0) { throw 'Diagnostics exporter failed.' }
+    $snapshot = Join-Path $script:Repo 'diagnostics/current.json'
+    if (-not (Test-Path -LiteralPath $snapshot -PathType Leaf)) { throw 'Diagnostics exporter returned no snapshot.' }
 }
 
 function Test-GitOperationInProgress {
