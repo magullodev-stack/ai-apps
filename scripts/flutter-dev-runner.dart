@@ -25,6 +25,22 @@ Future<void> main(List<String> args) async {
   var pendingReload = false;
   var pendingImageRestart = false;
   var relaunchRequested = false;
+  // Evita que una sustitución atómica de un PNG ya existente se confunda
+  // con un recurso nuevo que exige reempaquetado.
+  final knownImageAssets = <String>{};
+  final assetDirectory = Directory(
+    options.workingDirectory + Platform.pathSeparator + 'assets',
+  );
+  if (assetDirectory.existsSync()) {
+    for (final entity in assetDirectory.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is File && _isImageAsset(entity.path)) {
+        knownImageAssets.add(_normalizedPath(entity.path));
+      }
+    }
+  }
 
   void scheduleRelaunch(String path) {
     if (relaunchRequested) return;
@@ -100,9 +116,10 @@ Future<void> main(List<String> args) async {
       directory.watch(recursive: true).listen((event) {
         // La primera incorporación de una imagen requiere empaquetarla.
         // Los cambios de imágenes existentes solo precisan Hot Restart.
-        if (_requiresRelaunch(event.path) ||
-            (event is FileSystemCreateEvent &&
-                _isNewBundledImage(event.path))) {
+        final isNewImage = event is FileSystemCreateEvent &&
+            _isNewBundledImage(event.path) &&
+            knownImageAssets.add(_normalizedPath(event.path));
+        if (_requiresRelaunch(event.path) || isNewImage) {
           scheduleRelaunch(event.path);
         } else if (_shouldReload(event.path)) {
           scheduleReload(event.path);
@@ -237,8 +254,11 @@ bool _isImageAsset(String path) {
       normalized.endsWith('.webp');
 }
 
+String _normalizedPath(String path) =>
+    path.replaceAll('\\', '/').toLowerCase();
+
 bool _isNewBundledImage(String path) {
-  final normalized = path.replaceAll('\\', '/').toLowerCase();
+  final normalized = _normalizedPath(path);
   return normalized.contains('/assets/') &&
       !normalized.contains('/build/') &&
       !normalized.contains('/.dart_tool/') &&
