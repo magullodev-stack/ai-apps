@@ -174,7 +174,6 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   30.0,
                   math.max(27.0, constraints.maxWidth * 0.083),
                 );
-                final welcomeTop = constraints.maxHeight * 0.09 + 20.0;
                 final welcomeStyle = TextStyle(
                   fontFamily: MuondiaTypography.family,
                   fontSize: welcomeSize,
@@ -190,57 +189,50 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   ],
                 );
 
-                final logoWidth = math.min(constraints.maxWidth * 0.56, 230.0);
-                final logoHeight = math.min(logoWidth / 3, welcomeTop - 12.0);
+                final logoWidth = math.min(
+                  constraints.maxWidth * 0.64,
+                  250.0,
+                );
+                final logoHeight = math.min(
+                  logoWidth / 3,
+                  constraints.maxHeight * 0.10,
+                );
 
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Logotipo original en la franja libre sobre el saludo.
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          top: welcomeTop - logoHeight - 8,
-                        ),
-                        child: Image.asset(
-                          'assets/auth/Logotipo_MuondIA.png',
-                          key: const Key('muondia-auth-logo'),
-                          width: logoWidth,
-                          height: logoHeight,
-                          fit: BoxFit.contain,
-                          filterQuality: FilterQuality.high,
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(16, welcomeTop, 16, 0),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 410),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '¡Qué alegría\nverte por aquí!',
-                                key: const Key('muondia-auth-welcome-title'),
-                                textAlign: TextAlign.center,
-                                style: welcomeStyle,
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                '¿Empezamos?',
-                                key: const Key('muondia-auth-welcome-question'),
-                                textAlign: TextAlign.center,
-                                style: welcomeStyle,
-                              ),
-                            ],
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 410),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            'assets/auth/Logotipo_MuondIA.png',
+                            key: const Key('muondia-auth-logo'),
+                            width: logoWidth,
+                            height: logoHeight,
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.high,
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '¡Qué alegría\nverte por aquí!',
+                            key: const Key('muondia-auth-welcome-title'),
+                            textAlign: TextAlign.center,
+                            style: welcomeStyle,
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            '¿Empezamos?',
+                            key: const Key('muondia-auth-welcome-question'),
+                            textAlign: TextAlign.center,
+                            style: welcomeStyle,
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 );
               },
             ),
