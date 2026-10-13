@@ -47,10 +47,10 @@ void main() {
 
       final welcomeText = tester.widget<Text>(title);
       final legalText = tester.widget<Text>(legal);
-      expect(welcomeText.style!.fontFamily, 'cursive');
-      expect(welcomeText.style!.fontFamily, isNot(legalText.textSpan!.style!.fontFamily));
-      expect(welcomeText.style!.fontSize!, greaterThan(legalText.textSpan!.style!.fontSize! * 1.4));
-      expect(welcomeText.style!.color, const Color(0xFFF3FCFF));
+      expect(welcomeText.style!.fontFamily, 'Nunito');
+      expect(welcomeText.style!.fontWeight, FontWeight.w900);
+      expect(welcomeText.style!.fontSize!, greaterThan(legalText.textSpan!.style!.fontSize! * 2));
+      expect(welcomeText.style!.color, Colors.white);
 
       expect(
         tester.getTopLeft(legal).dy - tester.getBottomLeft(email).dy,
