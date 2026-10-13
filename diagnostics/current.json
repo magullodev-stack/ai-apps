@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "purpose": "Private operational diagnostics, never raw system logs",
+  "checkedUtcHour": "2026-10-13T12:00Z",
+  "gradle": [
+    {
+      "source": "build/reports/problems/problems-report.html",
+      "bytes": 129771,
+      "sha256": "1f7b9bba2ed55d92296ee4901bef8a1ca2bc12717beea3d6aa112c239dda324c",
+      "issues": [],
+      "extraction": "metadata_only"
+    },
+    {
+      "source": "apps/muondia/build/reports/problems/problems-report.html",
+      "bytes": 169582,
+      "sha256": "5eba15271ca27f238094d2fc22118f0f8c8578b162c66bac3d6dd20425ab2db1",
+      "issues": [],
+      "extraction": "metadata_only"
+    }
+  ],
+  "development": {
+    "available": true,
+    "events": [
+      "android_ready",
+      "sync_requested",
+      "android_ready",
+      "sync_requested",
+      "android_ready",
+      "sync_requested",
+      "android_ready",
+      "muondia_ready"
+    ]
+  },
+  "synchronization": {
+    "available": true,
+    "events": [
+      "sync_started",
+      "remote_applied",
+      "local_committed",
+      "remote_applied",
+      "local_committed",
+      "remote_applied",
+      "local_committed",
+      "remote_applied",
+      "sync_started",
+      "remote_applied",
+      "local_committed",
+      "remote_applied"
+    ]
+  }
+}
