@@ -56,7 +56,7 @@ class AuthProviderButton extends StatelessWidget {
               // superficie visible que los glifos de Apple y correo.
               final iconScale = switch (provider) {
                 AuthProvider.google => 0.46,
-                AuthProvider.apple => 0.53,
+                AuthProvider.apple => 0.62,
                 AuthProvider.email => 0.53,
               };
               final iconSize = height * iconScale;
