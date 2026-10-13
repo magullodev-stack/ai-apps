@@ -9,6 +9,7 @@ function createViews(Base, context, sdk, devices, log) {
       this.pending = new Map();
       this.restoredCount = 0;
       this.legacy = new Set();
+      this.legacyTitles = new WeakMap();
       context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('embedroid.embedded', {
         deserializeWebviewPanel: (panel, state) => this.restore(panel, state)
       }));
@@ -103,6 +104,8 @@ function createViews(Base, context, sdk, devices, log) {
         const known = [...this.sessions.values()].find(item => this.matchesLegacy(panel, item));
         if (known) return this.restore(panel, { session: known });
         this.legacy.add(panel);
+        this.legacyTitles.set(panel, panel.title);
+        panel.title = 'Android';
         panel.onDidDispose(() => this.legacy.delete(panel));
         panel.webview.html = '<p>Esta vista antigua no conserva su dispositivo. Abre la sesión desde AI-APPS Android.</p>';
         return;
@@ -116,13 +119,19 @@ function createViews(Base, context, sdk, devices, log) {
       // Startup and deserialization can race. Dispose only this duplicate of the
       // same device, preserving every other panel and the existing live bridge.
       if (this.views.has(session.serial)) { panel.dispose(); return; }
-      this.sessions.set(session.serial, session);
-      const view = this.adopt(panel, session.serial, this.title(session));
+      // The persisted label/appId may belong to a retired app. The registry,
+      // delivered by openSession(), is the authority for the current identity.
+      // Until then display a neutral title and never trust the stale appId.
+      const pending = { serial: session.serial, appId: '', label: 'Android' };
+      this.sessions.set(session.serial, pending);
+      const view = this.adopt(panel, session.serial, this.title(pending));
       view.serial = session.serial;
       await this.attachStream(session.serial, session.serial).catch(error => log.warn(String(error)));
     }
     matchesLegacy(panel, session) {
-      return panel.title === session.serial || (!!session.avdName && panel.title === session.avdName);
+      const title = this.legacyTitles.get(panel) || panel.title;
+      return title === session.serial || (!!session.avdName && title === session.avdName) ||
+        title.endsWith(` - ${session.serial}`) || title.endsWith(` · ${session.serial}`);
     }
     listSessions() {
       return [...this.views.values()].filter(view => view.serial).map(view => ({
