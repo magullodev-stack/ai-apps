@@ -49,7 +49,12 @@ if(process.env.FAKE_NATIVE==='1') {
   fs.writeFileSync(path.join(root,'android/local.properties'),'sdk.dir=fixture');
   fs.writeFileSync(path.join(root,'android/.gradle/cache/generated.properties'),'fixture=true');
   fs.writeFileSync(path.join(root,'android/.gradle/cache/generated.json'),'{}');
+  if(process.env.FAKE_ASSET==='1') {
+  fs.mkdirSync(path.join(root,'assets/auth'),{recursive:true});
+  fs.writeFileSync(path.join(root,'assets/auth/Background.png'), Buffer.from('updated-image'));
+ } else {
   fs.writeFileSync(path.join(root,'main.dart'),'void main() {} // '+Date.now());
+ }
  },200);
  const received=[];
  require('node:readline').createInterface({input:process.stdin}).on('line',line=>{
@@ -66,12 +71,20 @@ if(process.env.FAKE_NATIVE==='1') {
   assert.equal(reloads[0].params.fullRestart, false);
   assert.match(output, /Hot reload automatico completado/);
   assert.doesNotMatch(output, /Cambio nativo/);
+  const assetOutput = execFileSync(dart, watchArgs, {
+    ...options, env: { ...options.env, FAKE_ASSET: '1' },
+  });
+  const assetRestarts = JSON.parse(fs.readFileSync(messages));
+  assert.equal(assetRestarts.length, 1, 'Image replacement triggers one restart');
+  assert.equal(assetRestarts[0].params.fullRestart, true,
+    'Raster asset changes use hot restart instead of hot reload');
+  assert.match(assetOutput, /Hot restart completado/);
   assert.throws(() => execFileSync(dart, watchArgs, { ...options, env: { ...options.env, FAKE_NATIVE: '1' } }),
     error => error.status === 86, 'Native relaunch exits through the worker restart protocol');
   const owned = JSON.parse(fs.readFileSync(descendants));
   for (const pid of [owned.parent, owned.child]) {
     assert.throws(() => process.kill(pid, 0), 'Relaunch removes only the owned Flutter wrapper and descendants');
   }
-  console.log('PASS: actual Dart runner, legacy default arguments unchanged, managed no-dds option per-device machine mode, generated Android files, automatic reload and native tree cleanup.');
+  console.log('PASS: actual Dart runner, legacy default arguments unchanged, managed no-dds option per-device machine mode, generated Android files, automatic reload, image hot restart and native tree cleanup.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });
