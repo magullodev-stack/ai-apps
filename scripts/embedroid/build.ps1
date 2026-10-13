@@ -41,7 +41,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'scid.cjs') -Destination $extens
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'sessions.cjs') -Destination $extension -Force
 $webviewPath = Join-Path $extension 'media/webview.js'
 $webview = [IO.File]::ReadAllText($webviewPath)
-$webview = Replace-ExactlyOnce $webview 'case"config":' 'case"session":x.setState({serial:t.session.serial,transient:/^lab-[a-f0-9]{12}$/.test(t.session.appId)});break;case"config":'
+$webview = Replace-ExactlyOnce $webview 'case"config":' 'case"session":x.setState({serial:t.session.serial});break;case"config":'
 $webview = Replace-ExactlyOnce $webview 'case"config":w=t.wsUrl' 'case"config":if(v){v.onclose=null;v.close()}try{d?.close()}catch{}d=void 0;h=!1;g&&(clearTimeout(g),g=void 0);w=t.wsUrl'
 $webview = Replace-ExactlyOnce $webview 'function N(e){' 'var renderedFrames=0,lastFrameReport=0;function N(e){renderedFrames++;if(Date.now()-lastFrameReport>=1000){lastFrameReport=Date.now();x.postMessage({type:"frame",frames:renderedFrames})}'
 [IO.File]::WriteAllText($webviewPath, $webview, $utf8)

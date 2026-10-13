@@ -29,9 +29,8 @@ al autor. Esta distribución es el mecanismo de mantenimiento disponible.
 `build.ps1` verifica los hashes y exige encontrar exactamente los dos
 generadores conocidos antes de sustituirlos por `generateScid()`. Verifica
 también cada punto de integración del manager, API de sesiones y webview antes
-de aplicar cambios. El webview guarda con `setState` únicamente el serial del dispositivo y
-una marca de vista temporal: nunca persiste el nombre ni el identificador de
-una aplicación. En cada apertura, el registro de AI-APPS aporta la identidad
+de aplicar cambios. El webview guarda con `setState` únicamente el serial del dispositivo: nunca persiste el nombre ni el
+identificador de una aplicación. En cada apertura, el registro de AI-APPS aporta la identidad
 vigente. Un panel cuyo estado pertenece al formato anterior se descarta y
 se crea una vista nueva desde ese registro. La conexión renueva
 socket/decodificador al reconectar y reporta frames renderizados para

@@ -27,14 +27,9 @@ exports.run = async (options = {}) => {
     assert.ok(session?.active, 'Second Flutter app is running');
     await until(() => viewer.listSessions().some(item => item.appId === 'muondia' && item.videoFrames > 0),
       'The primary Muondia view must render H.264 video');
-    if (phase === 2 && /^lab-[a-f0-9]{12}$/.test(target.appId)) {
-      await delay(800);
-      assert.equal(viewer.listSessions().some(item => item.appId === target.appId), false,
-        'Disposable agent-lab previews must not reopen on editor restart');
-    }
     await vscode.commands.executeCommand('aiAppsAndroid.open', session);
     await until(() => viewer.listSessions().length === 2 && viewer.listSessions().every(item => item.videoFrames > 0),
-      'Explicitly opened experiment must render H.264 video');
+      'Explicitly opened application must render H.264 video');
     assert.equal(tabs().length, 2);
     report.initial = viewer.listSessions();
     await api.refresh(); await api.refresh();
@@ -45,8 +40,8 @@ exports.run = async (options = {}) => {
     await until(() => viewer.listSessions().find(item => item.appId === target.appId)?.lastFrameAt > Date.now() - 1500,
       'Target reconnection renders video');
     assert.ok(tabs().includes(primary), 'Reconnect preserves the other panel instance');
-    const labTab = tabs().find(tab => tab.label === `${target.label} · ${target.serial}`);
-    await vscode.window.tabGroups.close(labTab, true);
+    const secondaryTab = tabs().find(tab => tab.label === `${target.label} · ${target.serial}`);
+    await vscode.window.tabGroups.close(secondaryTab, true);
     await delay(1000); await api.refresh();
     assert.equal(tabs().length, 1, 'User tab close does not restart/reopen the active app');
     assert.ok(api.list().find(item => item.appId === target.appId).active, 'Flutter remains alive after tab close');

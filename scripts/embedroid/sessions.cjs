@@ -92,7 +92,7 @@ function createViews(Base, context, sdk, devices, log) {
       // Panels saved by an older format have no serial-only state: dispose
       // them and let the current registry open a clean view.
       const serial = state?.serial;
-      if (typeof serial !== 'string' || !serial || state?.transient === true) {
+      if (typeof serial !== 'string' || !serial) {
         panel.dispose();
         return;
       }

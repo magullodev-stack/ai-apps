@@ -21,31 +21,103 @@
     "magullodev.ai-apps-embedroid"
   ],
   "main": "./extension.js",
-  "capabilities": { "untrustedWorkspaces": { "supported": false } },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    }
+  },
   "contributes": {
     "commands": [
-      { "command": "aiAppsAndroid.select", "title": "Seleccionar visores", "category": "AI-APPS Android", "icon": "$(device-mobile)" },
-      { "command": "aiAppsAndroid.open", "title": "Visualizar sesión", "category": "AI-APPS Android", "icon": "$(open-preview)" },
-      { "command": "aiAppsAndroid.reconnect", "title": "Reconectar visor", "category": "AI-APPS Android", "icon": "$(debug-restart)" },
-      { "command": "aiAppsAndroid.start", "title": "Iniciar sesión", "category": "AI-APPS Android", "icon": "$(play)" },
-      { "command": "aiAppsAndroid.stop", "title": "Detener aplicación", "category": "AI-APPS Android", "icon": "$(debug-stop)" },
-      { "command": "aiAppsAndroid.discard", "title": "Descartar experimento y archivos", "category": "AI-APPS Android", "icon": "$(trash)" },
-      { "command": "aiAppsAndroid.register", "title": "Registrar aplicación Flutter", "category": "AI-APPS Android", "icon": "$(add)" },
-      { "command": "aiAppsAndroid.refresh", "title": "Actualizar sesiones", "category": "AI-APPS Android", "icon": "$(refresh)" }
+      {
+        "command": "aiAppsAndroid.select",
+        "title": "Seleccionar visores",
+        "category": "AI-APPS Android",
+        "icon": "$(device-mobile)"
+      },
+      {
+        "command": "aiAppsAndroid.open",
+        "title": "Visualizar sesión",
+        "category": "AI-APPS Android",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "aiAppsAndroid.reconnect",
+        "title": "Reconectar visor",
+        "category": "AI-APPS Android",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "aiAppsAndroid.start",
+        "title": "Iniciar sesión",
+        "category": "AI-APPS Android",
+        "icon": "$(play)"
+      },
+      {
+        "command": "aiAppsAndroid.stop",
+        "title": "Detener aplicación",
+        "category": "AI-APPS Android",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "aiAppsAndroid.register",
+        "title": "Registrar aplicación Flutter",
+        "category": "AI-APPS Android",
+        "icon": "$(add)"
+      },
+      {
+        "command": "aiAppsAndroid.refresh",
+        "title": "Actualizar sesiones",
+        "category": "AI-APPS Android",
+        "icon": "$(refresh)"
+      }
     ],
-    "views": { "explorer": [{ "id": "aiAppsAndroid.sessions", "name": "AI-APPS Android" }] },
+    "views": {
+      "explorer": [
+        {
+          "id": "aiAppsAndroid.sessions",
+          "name": "AI-APPS Android"
+        }
+      ]
+    },
     "menus": {
       "view/title": [
-        { "command": "aiAppsAndroid.select", "when": "view == aiAppsAndroid.sessions", "group": "navigation" },
-        { "command": "aiAppsAndroid.register", "when": "view == aiAppsAndroid.sessions", "group": "navigation" },
-        { "command": "aiAppsAndroid.refresh", "when": "view == aiAppsAndroid.sessions", "group": "navigation" }
+        {
+          "command": "aiAppsAndroid.select",
+          "when": "view == aiAppsAndroid.sessions",
+          "group": "navigation"
+        },
+        {
+          "command": "aiAppsAndroid.register",
+          "when": "view == aiAppsAndroid.sessions",
+          "group": "navigation"
+        },
+        {
+          "command": "aiAppsAndroid.refresh",
+          "when": "view == aiAppsAndroid.sessions",
+          "group": "navigation"
+        }
       ],
       "view/item/context": [
-        { "command": "aiAppsAndroid.open", "when": "view == aiAppsAndroid.sessions", "group": "inline" },
-        { "command": "aiAppsAndroid.reconnect", "when": "view == aiAppsAndroid.sessions", "group": "session" },
-        { "command": "aiAppsAndroid.start", "when": "view == aiAppsAndroid.sessions && (viewItem == androidStopped || viewItem == androidLab)", "group": "session" },
-        { "command": "aiAppsAndroid.stop", "when": "view == aiAppsAndroid.sessions && (viewItem == androidRunning || viewItem == androidLab)", "group": "session" },
-        { "command": "aiAppsAndroid.discard", "when": "view == aiAppsAndroid.sessions && viewItem == androidLab", "group": "session" }
+        {
+          "command": "aiAppsAndroid.open",
+          "when": "view == aiAppsAndroid.sessions",
+          "group": "inline"
+        },
+        {
+          "command": "aiAppsAndroid.reconnect",
+          "when": "view == aiAppsAndroid.sessions",
+          "group": "session"
+        },
+        {
+          "command": "aiAppsAndroid.start",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == androidStopped)",
+          "group": "session"
+        },
+        {
+          "command": "aiAppsAndroid.stop",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == androidRunning)",
+          "group": "session"
+        }
       ]
     }
   }

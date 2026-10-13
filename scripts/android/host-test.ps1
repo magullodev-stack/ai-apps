@@ -1,8 +1,8 @@
 param(
     [string]$Workspace = (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent),
-    [string]$AppId = 'lab-validation',
-    [string]$Serial = 'emulator-5556',
-    [string]$Label = 'Lab validation',
+    [Parameter(Mandatory = $true)][string]$AppId,
+    [Parameter(Mandatory = $true)][string]$Serial,
+    [Parameter(Mandatory = $true)][string]$Label,
     [ValidatePattern('^[a-z0-9-]+$')][string]$RuntimeName = 'android-host'
 )
 $ErrorActionPreference = 'Stop'
@@ -45,6 +45,6 @@ try {
         $hostProcess.WaitForExit()
         $report = Get-Content -Raw -Encoding UTF8 "$runtime/result-$phase.json" | ConvertFrom-Json
         if ($hostProcess.ExitCode -ne 0 -or -not $report.passed) { throw "Host phase $phase failed: $($report.error)" }
-        Write-Output "PASS: isolated editor phase $phase; two real emulators, video, deduplication and independent reconnect/close."
+        Write-Output "PASS: isolated editor phase $phase; two registered devices, video, deduplication and independent reconnect/close."
     }
 } finally { $env:ELECTRON_RUN_AS_NODE = $previous }

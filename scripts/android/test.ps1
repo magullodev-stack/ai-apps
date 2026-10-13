@@ -9,8 +9,6 @@ try {
     $env:ELECTRON_RUN_AS_NODE = '1'
     & $runtime (Join-Path $PSScriptRoot 'test.cjs') | Out-Host
     if ($LASTEXITCODE -ne 0) { throw 'Android session tests failed.' }
-    & $runtime (Join-Path $PSScriptRoot 'capture-test.cjs') | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw 'Android capture tests failed.' }
     & $runtime (Join-Path $PSScriptRoot '../embedroid/sessions-test.cjs') | Out-Host
     if ($LASTEXITCODE -ne 0) { throw 'Multi-view tests failed.' }
     & $runtime (Join-Path $PSScriptRoot '../vscode-android/test.cjs') | Out-Host

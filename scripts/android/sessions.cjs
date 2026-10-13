@@ -101,42 +101,6 @@ class Sessions {
       return result;
     } catch (error) { fs.closeSync(handle); fs.unlinkSync(lock); throw error; }
   }
-  async discard(id) {
-    const session = this.find(id);
-    // Only throwaway projects created by agent-lab. Never Muondia, personal
-    // Flutter projects or another user's registration.
-    const match = /^lab-([a-f0-9]{12})$/.exec(session.appId);
-    if (!match || session.kind !== 'flutter' ||
-        session.avdName !== 'AI_APPS_Lab_' + match[1] ||
-        path.basename(session.projectPath).toLowerCase() !== 'workspace') {
-      throw new Error('Only owned agent-lab previews can be discarded');
-    }
-    const run = path.dirname(session.projectPath);
-    const roots = [
-      path.resolve(this.root, 'agent-lab/runs'),
-      ...(process.env.LOCALAPPDATA
-        ? [path.resolve(process.env.LOCALAPPDATA, 'AI-APPS/experiences')] : [])
-    ];
-    if (!roots.some(root => path.dirname(run).toLowerCase() === root.toLowerCase()) ||
-        !fs.existsSync(path.join(run, 'manifest.json')) ||
-        !fs.statSync(run).isDirectory() ||
-        fs.lstatSync(run).isSymbolicLink() ||
-        fs.realpathSync.native(run).toLowerCase() !== path.resolve(run).toLowerCase() ||
-        (fs.existsSync(session.projectPath) && fs.lstatSync(session.projectPath).isSymbolicLink())) {
-      throw new Error('Unsafe or unrecognized agent-lab preview location');
-    }
-    const manifest = readJson(path.join(run, 'manifest.json'), {});
-    if (manifest.run_id !== path.basename(run) ||
-        crypto.createHash('sha256').update(path.basename(run)).digest('hex').slice(0, 12) !== match[1]) {
-      throw new Error('Experiment identity mismatch: refusing to delete files');
-    }
-    await this.stop(id);
-    if (this.platform.retireAvd) await this.platform.retireAvd(session);
-    await this.unregister(id);
-    fs.rmSync(this.directory(session), { recursive: true, force: true });
-    fs.rmSync(run, { recursive: true, force: true });
-    return { discarded: id, workspace: run, avd: session.avdName };
-  }
   async unregister(id) {
     return this.registryTransaction(async () => {
       const session = this.find(id);
@@ -183,36 +147,6 @@ class Sessions {
       return { ...session, id: key(session), deviceReady, active, status, appPid: pid,
         epoch: `${state.token || ''}:${pid}` };
     }));
-  }
-  async capture(id) {
-    const session = this.find(id);
-    if (session.kind !== 'flutter') throw new Error('Capture requires an independently managed Flutter session');
-    const check = () => {
-      const current = this.find(id), state = this.state(current), lease = readJson(this.leaseFile(current), {});
-      if (JSON.stringify(current) !== JSON.stringify(session) || !alive(lease.pid) ||
-          lease.removing || state.status !== 'running' || state.token !== lease.token ||
-          fs.existsSync(path.join(this.directory(current), `${lease.token}.stop.json`))) {
-        throw new Error('Capture requires the same running Flutter owner');
-      }
-      return state.token;
-    };
-    const token = check();
-    const image = await this.platform.capture(session);
-    if (check() !== token) throw new Error('Flutter owner changed during capture');
-    const data = image.bytes;
-    if (!Buffer.isBuffer(data) || data.length < 45 || data.length > 16 * 1024 * 1024 ||
-        data.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a' ||
-        data.subarray(12, 16).toString('ascii') !== 'IHDR' ||
-        data.subarray(-8, -4).toString('ascii') !== 'IEND') throw new Error('Invalid Android PNG capture');
-    const directory = path.join(this.directory(session), 'captures');
-    fs.mkdirSync(directory, { recursive: true });
-    const file = path.join(directory, `${crypto.randomUUID()}.png`);
-    fs.writeFileSync(file, data, { flag: 'wx', mode: 0o600 });
-    return { file, sha256: crypto.createHash('sha256').update(data).digest('hex'),
-      width: data.readUInt32BE(16), height: data.readUInt32BE(20),
-      appId: session.appId, serial: session.serial, packageName: session.packageName,
-      avdName: session.avdName, appPid: image.before.appPid, epoch: `${token}:${image.before.appPid}`,
-      before: image.before, after: image.after, capturedAt: new Date().toISOString() };
   }
   async start(id) {
     const session = this.find(id);

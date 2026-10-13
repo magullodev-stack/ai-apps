@@ -2,8 +2,8 @@
 
 AI-APPS Android gestiona un visor por aplicación y dispositivo mediante
 EmbeDroid mantenido 1.1.0. Incluye selección múltiple; la vista de Muondia se
-recupera al abrir VS Code, mientras que las vistas de experimentos del laboratorio
-son temporales y se abren bajo demanda. Consulta [sesiones, configuración y pruebas](../android/README.md).
+recupera al abrir VS Code. Otras aplicaciones registradas pueden abrirse
+desde el selector. Consulta [sesiones, configuración y pruebas](../android/README.md).
 La tarea **AI-APPS Development** mantiene Android, Dart y Flutter fuera del
 editor. Al abrir VS Code se solicita la tarea si estaba detenida, incluso si
 Android conserva una APK antigua abierta; abrir o cerrar un visor no ejecuta

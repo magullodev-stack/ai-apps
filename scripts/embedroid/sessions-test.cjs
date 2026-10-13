@@ -61,10 +61,8 @@ async function run() {
   assert.equal(duplicate.disposed, true); assert.equal(views.views.size, 1);
   await assert.rejects(views.openSession({ ...a, appId: 'conflict' }), /another application/);
   const reopened = createViews(Base, context, {}, { find() {} }, log);
-  const restoredA = panel('Restored A'), disposablePanel = panel('Transient view');
-  await serializers[1].deserializeWebviewPanel(restoredA, { serial: a.serial, transient: false });
-  await serializers[1].deserializeWebviewPanel(disposablePanel, { serial: a.serial, transient: true });
-  assert.equal(disposablePanel.disposed, true, 'Transient webviews are not restored');
+  const restoredA = panel('Restored A');
+  await serializers[1].deserializeWebviewPanel(restoredA, { serial: a.serial });
   assert.equal(restoredA.title, 'Android · emulator-5554', 'No app name is persisted in the tab');
   await reopened.openSession(a);
   assert.equal(reopened.views.size, 1, 'Current session reconnects its persisted viewer');
@@ -85,13 +83,13 @@ async function run() {
   await serializers[2].deserializeWebviewPanel(invalid, undefined);
   assert.equal(invalid.disposed, true, 'Unidentified panels are discarded');
   const restoredDuplicate = panel('Duplicate');
-  await serializers[1].deserializeWebviewPanel(restoredDuplicate, { serial: a.serial, transient: false });
+  await serializers[1].deserializeWebviewPanel(restoredDuplicate, { serial: a.serial });
   assert.equal(restoredDuplicate.disposed, true, 'A duplicate of the same serial is discarded');
   assert.ok(bundle.includes('onWebviewPanel') === false); // Activation belongs in manifest.
   const builtWebview = fs.readFileSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/media/webview.js'), 'utf8');
-  assert.ok(builtWebview.includes('x.setState({serial:t.session.serial,transient:'));
+  assert.ok(builtWebview.includes('x.setState({serial:t.session.serial})'));
   assert.ok(!builtWebview.includes('x.setState({session:t.session})'));
   assert.ok(builtWebview.includes('v.onclose=null;v.close()'));
-  console.log('PASS: Muondia viewer deduplication, independent video reconnection, clean obsolete-state disposal, serial-only restoration and transient view dismissal.');
+  console.log('PASS: Muondia viewer deduplication, independent video reconnection, clean obsolete-state disposal, serial-only restoration.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

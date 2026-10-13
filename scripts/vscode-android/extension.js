@@ -63,8 +63,7 @@ async function activate(context) {
         if (!session.deviceReady && views.some(view => view.serial === session.serial)) disconnected.add(session.id);
       }
       for (const session of sessions.filter(item => item.active)) {
-        // When VS Code starts, do not revive old experimental views.
-        // New app launches after activation can still appear automatically.
+        // Restore Muondia first. Other registered applications can be opened explicitly.
         if (initial && session.kind !== 'development-task') {
           shown.set(session.id, session.epoch);
           continue;
@@ -98,7 +97,7 @@ async function activate(context) {
     await refresh();
   }
   async function register() {
-    const appId = await vscode.window.showInputBox({ title: 'Identificador de aplicación', prompt: 'Ejemplo: lab-counter' });
+    const appId = await vscode.window.showInputBox({ title: 'Identificador de aplicación', prompt: 'Ejemplo: app-demo' });
     if (!appId) return;
     const label = await vscode.window.showInputBox({ title: 'Nombre de la aplicación', value: appId });
     if (!label) return;
@@ -124,8 +123,7 @@ async function activate(context) {
       const item = new vscode.TreeItem(`${session.label} · ${session.serial}`);
       item.description = session.status;
       item.tooltip = `${session.appId} · ${session.serial}\n${session.projectPath || 'Sesión externa'}`;
-      item.contextValue = /^lab-[a-f0-9]{12}$/.test(session.appId) ? 'androidLab' :
-        session.kind === 'external' ? 'androidExternal' :
+      item.contextValue = session.kind === 'external' ? 'androidExternal' :
         session.active || ['starting', 'stopping'].includes(session.status) ? 'androidRunning' : 'androidStopped';
       item.iconPath = new vscode.ThemeIcon(session.active ? 'device-mobile' : 'circle-outline');
       item.command = { command: 'aiAppsAndroid.open', title: 'Visualizar sesión', arguments: [session] };
@@ -155,24 +153,6 @@ async function activate(context) {
   });
   command('start', supplied => chooseAction('start', supplied));
   command('stop', supplied => chooseAction('stop', supplied));
-  command('discard', async supplied => {
-    await refresh();
-    const entry = supplied?.id ? sessions.find(item => item.id === supplied.id) :
-      (await pick(sessions.filter(item => /^lab-[a-f0-9]{12}$/.test(item.appId)),
-        'Descartar un experimento completo'))?.session;
-    if (!entry || !/^lab-[a-f0-9]{12}$/.test(entry.appId)) return;
-    const confirm = await vscode.window.showWarningMessage(
-      '¿Eliminar definitivamente "' + entry.label + '"? Se detendrán Flutter y su emulador ' +
-      'y se borrarán el AVD, los registros y la carpeta del experimento. Muondia no se modifica.',
-      { modal: true }, 'Descartar experimento');
-    if (confirm !== 'Descartar experimento') return;
-    await service.discard(entry.id);
-    viewer.closeSession?.(entry.serial);
-    shown.delete(entry.id);
-    disconnected.delete(entry.id);
-    await refresh();
-    vscode.window.showInformationMessage('Experimento descartado: ' + entry.label);
-  });
   command('register', register);
   command('refresh', refresh);
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
