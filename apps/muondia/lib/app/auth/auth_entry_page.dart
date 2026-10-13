@@ -171,10 +171,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final welcomeSize = math.min(
-                  32.0,
-                  math.max(29.0, constraints.maxWidth * 0.083),
+                  30.0,
+                  math.max(27.0, constraints.maxWidth * 0.083),
                 );
-                final welcomeTop = constraints.maxHeight * 0.075;
+                final welcomeTop = constraints.maxHeight * 0.09;
                 final welcomeStyle = TextStyle(
                   fontFamily: MuondiaTypography.family,
                   fontSize: welcomeSize,
