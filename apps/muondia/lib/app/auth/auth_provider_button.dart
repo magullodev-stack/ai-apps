@@ -54,11 +54,12 @@ class AuthProviderButton extends StatelessWidget {
               final height = constraints.maxHeight;
               // Normalizar el tamaño óptico: el PNG de Google ocupa más
               // superficie visible que los glifos de Apple y correo.
-              final iconSize = height * switch (provider) {
+              final iconScale = switch (provider) {
                 AuthProvider.google => 0.34,
                 AuthProvider.apple => 0.65,
                 AuthProvider.email => 0.62,
               };
+              final iconSize = height * iconScale;
 
               return CustomPaint(
                 painter: const _NeonButtonPainter(),
