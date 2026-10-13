@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const { collect } = require('./collect.cjs');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-apps-diagnostics-'));
 try {
@@ -28,6 +29,19 @@ try {
     '[time] Muondia preparado; hot reload automatico activo. password=12345\n');
   write('.ai-apps/auto-sync-dev.log',
     '[time] Fetch failed: https://secret.example.com/sk-verysecret\n');
+  // Regression: the executable must create its file even if the embedded
+  // Node host does not identify the collector module as require.main.
+  const cliRoot = path.join(root, 'cli-test');
+  fs.mkdirSync(cliRoot);
+  fs.writeFileSync(path.join(cliRoot, 'AGENTS.md'), '# AI-APPS');
+  const run = spawnSync(process.execPath,
+    [path.join(__dirname, 'collect-cli.cjs'), cliRoot],
+    { encoding: 'utf8', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, timeout: 15000 });
+  assert.equal(run.status, 0, 'CLI must succeed: ' + (run.stderr || 'no stderr'));
+  assert.match(run.stdout, /DIAGNOSTICS_COLLECTED/);
+  assert.ok(fs.statSync(path.join(cliRoot, 'diagnostics/current.json')).isFile(),
+    'CLI must create diagnostics/current.json without require.main');
+
   const timestamp = new Date('2026-10-13T13:23:00Z');
   assert.equal(collect(root, timestamp).changed, true);
   assert.equal(collect(root, timestamp).changed, false, 'No redundant commits in the same hour');
