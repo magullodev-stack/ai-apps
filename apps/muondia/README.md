@@ -34,8 +34,8 @@ La entrada monta cuatro capas de `assets/auth/`: `Background.png`,
 `Estrellas.png`, `Esferas.png` y `Robot.png`, con parallax suave.
 Las capas respetan las áreas seguras; las barras nativas Android son negras.
 La bienvenida se limita a «¡Qué alegría verte por aquí! ¿Empezamos?»,
-distribuida en tres líneas con una única tipografía cursiva del sistema,
-el mismo tamaño y el mismo color blanco frío. Se muestra sobre la franja
+distribuida en tres líneas con la tipografía redondeada Nunito en peso
+máximo, tamaño grande adaptable y color blanco. Se muestra sobre la franja
 azul anterior al robot, sin modificar la posición ni las animaciones de
 las ilustraciones. El texto se ajusta desde
 `lib/app/auth/auth_entry_page.dart`.
