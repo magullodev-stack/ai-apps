@@ -174,7 +174,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   30.0,
                   math.max(27.0, constraints.maxWidth * 0.083),
                 );
-                final welcomeTop = constraints.maxHeight * 0.09;
+                final welcomeTop = constraints.maxHeight * 0.09 + 20.0;
                 final welcomeStyle = TextStyle(
                   fontFamily: MuondiaTypography.family,
                   fontSize: welcomeSize,
