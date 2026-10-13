@@ -55,9 +55,9 @@ class AuthProviderButton extends StatelessWidget {
               // Normalizar el tamaño óptico: el PNG de Google ocupa más
               // superficie visible que los glifos de Apple y correo.
               final iconScale = switch (provider) {
-                AuthProvider.google => 0.34,
-                AuthProvider.apple => 0.65,
-                AuthProvider.email => 0.62,
+                AuthProvider.google => 0.46,
+                AuthProvider.apple => 0.53,
+                AuthProvider.email => 0.53,
               };
               final iconSize = height * iconScale;
 
