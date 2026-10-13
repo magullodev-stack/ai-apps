@@ -30,21 +30,24 @@ if ($node) {
 if ($collectorCode -ne 0) {
     throw 'Diagnostic collector failed. See the DIAGNOSTICS_FAILED message above.'
 }
-$confirmed = @($collectorOutput | Where-Object {
-    $_ -match '^DIAGNOSTICS_COLLECTED (updated|unchanged)$'
-})
-if ($confirmed.Count -ne 1) {
-    throw 'Diagnostic collector returned no success confirmation.'
-}
-Write-Host $confirmed[0]
+# GUI-hosted Node may not forward stdout. Verify the snapshot directly.
 
 $file = Join-Path $repo 'diagnostics/current.json'
 if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
     throw 'Diagnostic snapshot was not created.'
 }
 $report = Get-Content -LiteralPath $file -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($report.schema -ne 1) {
+if ($report.schema -ne 1 -or $null -eq $report.gradle -or
+    $null -eq $report.development -or $null -eq $report.synchronization) {
     throw 'Diagnostic snapshot has an invalid schema.'
+}
+$hour = [DateTime]::UtcNow
+$acceptableHours = @(
+    $hour.ToString('yyyy-MM-ddTHH:00Z'),
+    $hour.AddHours(-1).ToString('yyyy-MM-ddTHH:00Z')
+)
+if ([string]$report.checkedUtcHour -notin $acceptableHours) {
+    throw 'Diagnostic snapshot is outdated or was not regenerated.'
 }
 Write-Host 'Diagnostic snapshot verified locally. Checking GitHub publication...'
 
