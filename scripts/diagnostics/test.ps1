@@ -1,4 +1,21 @@
 $ErrorActionPreference = 'Stop'
+# Catch truncated or duplicated PowerShell strings before Windows installation.
+$repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+foreach ($scriptFile in @(
+    (Join-Path $PSScriptRoot 'publish-now.ps1'),
+    (Join-Path $repo 'scripts/auto-sync-dev.ps1')
+)) {
+    $tokens = $null
+    $parseErrors = $null
+    [System.Management.Automation.Language.Parser]::ParseFile(
+        $scriptFile, [ref]$tokens, [ref]$parseErrors
+    ) | Out-Null
+    if (@($parseErrors).Count -gt 0) {
+        throw ('PowerShell syntax errors in ' + $scriptFile + ': ' + $parseErrors[0].Message)
+    }
+}
+Write-Host 'PASS: PowerShell publisher and synchronizer syntax.'
+
 $test = Join-Path $PSScriptRoot 'collect-test.cjs'
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
