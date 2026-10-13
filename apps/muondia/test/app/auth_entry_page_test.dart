@@ -27,6 +27,27 @@ void main() {
       final apple = find.byKey(const Key('muondia-auth-button-apple'));
       final email = find.byKey(const Key('muondia-auth-button-email'));
       final legal = find.byKey(const Key('muondia-auth-legal'));
+      final title = find.byKey(const Key('muondia-auth-welcome-title'));
+      final subtitle = find.byKey(const Key('muondia-auth-welcome-subtitle'));
+
+      expect(
+        tester.widget<Text>(title).data,
+        '¡Qué alegría verte por aquí! ✨',
+      );
+      expect(
+        tester.widget<Text>(subtitle).data,
+        'En Muondia siempre hay algo nuevo por descubrir. ¿Empezamos?',
+      );
+      expect(
+        tester.getBottomLeft(title).dy,
+        lessThan(tester.getTopLeft(subtitle).dy),
+      );
+      expect(
+        tester.getBottomLeft(subtitle).dy,
+        lessThan(tester.getTopLeft(google).dy),
+      );
+      expect(tester.getCenter(title).dx, closeTo(size.width / 2, 1));
+      expect(tester.getCenter(subtitle).dx, closeTo(size.width / 2, 1));
 
       expect(
         tester.getTopLeft(legal).dy - tester.getBottomLeft(email).dy,
