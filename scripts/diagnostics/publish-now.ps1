@@ -4,7 +4,7 @@ $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $branch = (& git -C $repo branch --show-current | Out-String).Trim()
 if ($LASTEXITCODE -ne 0 -or $branch -ne 'dev') { throw 'Expected AI-APPS branch dev.' }
 
-$collector = Join-Path $PSScriptRoot 'collect.cjs'
+$collector = Join-Path $PSScriptRoot 'collect-cli.cjs'
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
     & $node.Source $collector $repo
@@ -18,10 +18,12 @@ if ($node) {
         & $runtime $collector $repo
     } finally { $env:ELECTRON_RUN_AS_NODE = $previous }
 }
-if ($LASTEXITCODE -ne 0) { throw 'Diagnostic collection failed.' }
+if ($LASTEXITCODE -ne 0) { throw 'Diagnostic collector failed; inspect DIAGNOSTICS_FAILED above.' }
 $file = Join-Path $repo 'diagnostics/current.json'
-if (-not (Test-Path -LiteralPath $file)) { throw 'Diagnostic snapshot is missing.' }
-Write-Host 'Diagnostic snapshot created. Checking GitHub publication...'
+if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+    throw 'Collector exited without creating diagnostics/current.json; execution was not successful.'
+}
+Write-Host 'Diagnostic snapshot verified locally. Checking GitHub publication...'
 
 # If the continuous sync owns the lock, allow it to publish; do not race Git
 # with a separate push while its background process is active.
