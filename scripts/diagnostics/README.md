@@ -24,6 +24,24 @@ ni procesos. Un `checkedUtcHour` antiguo indica que no se ha publicado un
 nuevo diagnóstico; puede deberse a que se ha detenido el equipo, el sincronizador
 o la red. El log local es la fuente para resolver esa distinción.
 
+## Primera publicación sin reiniciar Android
+
+Si el sincronizador ya estaba ejecutándose antes de instalar esta versión,
+su proceso PowerShell conservará el código anterior hasta el siguiente inicio
+de sesión de Windows. Para publicar **ahora** el primer informe desde el
+Windows actual, ejecuta una sola vez:
+
+```powershell
+.\scripts\diagnostics\publish-now.ps1
+```
+
+El comando genera el resumen, deja que el sincronizador existente lo publique
+(si está activo) y comprueba que el objeto de Git en `origin/dev` coincide con
+el diagnóstico local. Si la sincronización continua no está activa, utiliza
+`scripts/sync-dev.ps1` para publicar. No reinicia Android, Muondia ni Flutter.
+La recogida periódica quedará activa desde la siguiente ejecución del
+sincronizador actualizado.
+
 ## Validación
 
 ```powershell
