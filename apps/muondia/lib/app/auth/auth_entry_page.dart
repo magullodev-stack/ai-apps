@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:ai_apps_identity/ai_apps_identity.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +36,13 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
   bool _providerBusy = false;
+  bool _layersPanelOpen = false;
+  bool _showStars = true;
+  bool _showSpheres = true;
+
+  // Disponible solo en la previsualización, nunca en el Auth real o release.
+  bool get _canInspectLayers =>
+      kDebugMode && widget.onDevelopmentContinue != null;
 
   @override
   void initState() {
@@ -197,8 +205,11 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             fit: StackFit.expand,
             children: [
             // Recortar tambien las transformaciones ampliadas, no solo el Stack.
-            const ClipRect(
-              child: _AuthParallaxArt(),
+            ClipRect(
+              child: _AuthParallaxArt(
+                showStars: !_canInspectLayers || _showStars,
+                showSpheres: !_canInspectLayers || _showSpheres,
+              ),
             ),
             // Un único mensaje, con una sola tipografía y estilo.
             // La posición aprovecha la franja azul sin tocar el robot.
@@ -362,6 +373,78 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                 );
               },
             ),
+            if (_canInspectLayers)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Material(
+                  key: const Key('muondia-auth-development-layers'),
+                  color: const Color(0xEB120D2C),
+                  borderRadius: BorderRadius.circular(12),
+                  elevation: 5,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton.icon(
+                        key: const Key('muondia-auth-toggle-layers'),
+                        onPressed: () => setState(
+                          () => _layersPanelOpen = !_layersPanelOpen,
+                        ),
+                        icon: Icon(
+                          _layersPanelOpen ? Icons.close : Icons.layers_outlined,
+                          color: Colors.white,
+                          size: 17,
+                        ),
+                        label: Text(
+                          _layersPanelOpen ? 'Cerrar capas' : 'Capas',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      if (_layersPanelOpen)
+                        SizedBox(
+                          width: 212,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CheckboxListTile(
+                                key: const Key('muondia-auth-layer-stars'),
+                                value: _showStars,
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                activeColor: const Color(0xFFC39AFD),
+                                checkColor: Colors.black,
+                                controlAffinity: ListTileControlAffinity.trailing,
+                                title: const Text(
+                                  'Estrellas',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                onChanged: (enabled) => setState(
+                                  () => _showStars = enabled ?? true,
+                                ),
+                              ),
+                              CheckboxListTile(
+                                key: const Key('muondia-auth-layer-spheres'),
+                                value: _showSpheres,
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                activeColor: const Color(0xFFC39AFD),
+                                checkColor: Colors.black,
+                                controlAffinity: ListTileControlAffinity.trailing,
+                                title: const Text(
+                                  'Esferas',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                onChanged: (enabled) => setState(
+                                  () => _showSpheres = enabled ?? true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -374,7 +457,13 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
 /// El fondo no se mueve: las estrellas, esferas y robot tienen distintas
 /// amplitudes y fases para dar profundidad sin alterar la composición.
 class _AuthParallaxArt extends StatefulWidget {
-  const _AuthParallaxArt();
+  const _AuthParallaxArt({
+    required this.showStars,
+    required this.showSpheres,
+  });
+
+  final bool showStars;
+  final bool showSpheres;
 
   @override
   State<_AuthParallaxArt> createState() => _AuthParallaxArtState();
@@ -440,20 +529,22 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                   filterQuality: FilterQuality.high,
                 ),
               ),
-              _movingLayer(
-                name: 'stars',
-                asset: 'assets/auth/Estrellas.png',
-                x: math.sin(angle) * 3,
-                y: math.cos(angle) * 4,
-                scale: 1.005,
-              ),
-              _movingLayer(
-                name: 'spheres',
-                asset: 'assets/auth/Esferas.png',
-                x: math.sin(angle + 0.7) * 7,
-                y: math.cos(angle + 0.7) * 6,
-                scale: 1.012,
-              ),
+              if (widget.showStars)
+                _movingLayer(
+                  name: 'stars',
+                  asset: 'assets/auth/Estrellas.png',
+                  x: math.sin(angle) * 3,
+                  y: math.cos(angle) * 4,
+                  scale: 1.005,
+                ),
+              if (widget.showSpheres)
+                _movingLayer(
+                  name: 'spheres',
+                  asset: 'assets/auth/Esferas.png',
+                  x: math.sin(angle + 0.7) * 7,
+                  y: math.cos(angle + 0.7) * 6,
+                  scale: 1.012,
+                ),
               _movingLayer(
                 name: 'robot',
                 asset: 'assets/auth/Robot.png',

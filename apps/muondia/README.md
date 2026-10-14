@@ -2,6 +2,12 @@
 
 ## Explorador de experiencias de desarrollo
 
+En **Auth de previsualización** (debug) aparece el control **«Capas»**.
+Permite ocultar o mostrar **Estrellas** y **Esferas** de forma independiente
+e inmediata, sin borrar archivos, alterar imágenes ni consumir tokens.
+La decisión es temporal: al volver a abrir Auth se recuperan ambas capas.
+No aparece en release ni en el acceso normal de los usuarios.
+
 En VS Code, expande «Explorador de experiencias» dentro de la vista existente «AI-APPS Android» para abrir directamente Auth, Loading, Test de bienvenida y Home. El catálogo está en `lib/app/development/experiences.json` y las previews en `lib/app/development/experience_preview.dart`. Se reutilizan los widgets reales.
 
 Loading ofrece tres estados; el test utiliza diez preguntas fijas. En la aplicación real ejecutada en modo debug, el arranque muestra Auth en previsualización, sin entrar en el onboarding y sin generar preguntas. También F7 abre esta vista segura. «Continuar con Google» en la previsualización pasa al Loading simulado, sin iniciar sesión real. El test del explorador usa diez preguntas fijas; no modifica el progreso. La navegación de usuarios en release no cambia. Después de recibir cambios de código de la extensión, puede ser necesario recargar VS Code, no Flutter.
