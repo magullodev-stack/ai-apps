@@ -41,7 +41,12 @@ const sandbox = { module: { exports: {} }, setInterval: fn => { intervals.push(f
     if (name === 'vscode') return vscode;
     if (name.replace(/\\/g, '/').endsWith('android/sessions.cjs')) return { Sessions };
     if (name.replace(/\\/g, '/').endsWith('android/windows.cjs')) return {
-      Windows: class { async taskRunning() { return taskRunning; } }
+      Windows: class {
+        constructor() { this.adb = 'adb.exe'; }
+        async taskRunning() { return taskRunning; }
+        async appPid() { return '2345'; }
+        async run(file, args) { calls.push(['adb', file, ...args]); return ''; }
+      }
     };
     return require(name);
   } };
@@ -55,6 +60,11 @@ async function run() {
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
   assert.equal(calls.some(call => call[0] !== 'open'), false,
     'A running development task is never started twice');
+  await commands.get('aiAppsAndroid.auth')();
+  assert.deepEqual(calls.at(-1), [
+    'adb', 'adb.exe', '-s', 'emulator-5554', 'shell', 'input', 'keyevent', '137',
+  ], 'F7 targets the registered Muondia emulator without restarting Flutter');
+  calls.pop();
   await api.refresh();
   assert.equal(calls.length, 1, 'Polling does not duplicate Muondia');
   panels.delete('muondia@emulator-5554');
@@ -91,6 +101,6 @@ async function run() {
   assert.equal(panels.size, 151, 'No fixed maximum of tabs; existing Muondia panel untouched');
   vscode.workspace.isTrusted = false;
   assert.equal(await sandbox.module.exports.activate({ subscriptions: [] }), undefined);
-  console.log('PASS: Muondia startup/recovery, no duplicate Flutter, viewer reopening, reconnect/stop, stress registry and workspace trust.');
+  console.log('PASS: F7 dev Auth, Muondia startup/recovery, no duplicate Flutter, viewer reopening, reconnect/stop, stress registry and workspace trust.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

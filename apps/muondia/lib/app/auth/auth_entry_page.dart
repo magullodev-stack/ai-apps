@@ -15,11 +15,14 @@ class AuthEntryPage extends StatefulWidget {
     required this.identity,
     required this.identityReady,
     this.initializationError,
+    this.onResumeDevelopmentSession,
   });
 
   final IdentityService identity;
   final bool identityReady;
   final Object? initializationError;
+  /// Solo se pasa durante la vista Auth de desarrollo con sesión activa.
+  final VoidCallback? onResumeDevelopmentSession;
 
   @override
   State<AuthEntryPage> createState() => _AuthEntryPageState();
@@ -74,6 +77,12 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   Future<void> _signInWithProvider(IdentityProvider provider) async {
     if (_providerBusy) return;
 
+    // La vista Auth de F7 no es un cierre de sesión de Firebase.
+    if (provider == IdentityProvider.google &&
+        widget.onResumeDevelopmentSession != null) {
+      widget.onResumeDevelopmentSession!();
+      return;
+    }
     if (!widget.identityReady) {
       _showMessage(
         widget.initializationError == null

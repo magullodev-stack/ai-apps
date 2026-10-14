@@ -1,5 +1,7 @@
 import 'package:ai_apps_identity/ai_apps_identity.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_shell.dart';
 import 'app_theme.dart';
@@ -28,9 +30,35 @@ class _MuondiaAppState extends State<MuondiaApp> {
   late final Future<void> _identityInitialization = _identity.initialize();
   late final OnboardingCompletionStore _onboardingStore =
       widget.onboardingStore ?? LocalOnboardingCompletionStore();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  bool _previewAuth = false;
+
+  KeyEventResult _developmentKey(FocusNode node, KeyEvent event) {
+    if (!kDebugMode ||
+        event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.f7) {
+      return KeyEventResult.ignored;
+    }
+    // F7 solo cambia la vista; Firebase y el progreso permanecen intactos.
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (!_previewAuth) setState(() => _previewAuth = true);
+    return KeyEventResult.handled;
+  }
+
+  void _resumeSession() {
+    if (_previewAuth) setState(() => _previewAuth = false);
+  }
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+    navigatorKey: _navigatorKey,
+    builder: (context, child) => kDebugMode
+        ? Focus(
+            autofocus: true,
+            onKeyEvent: _developmentKey,
+            child: child ?? const SizedBox.shrink(),
+          )
+        : child ?? const SizedBox.shrink(),
     title: 'Muondia',
     debugShowCheckedModeBanner: false,
     theme: muondiaTheme,
@@ -38,6 +66,8 @@ class _MuondiaAppState extends State<MuondiaApp> {
       identity: _identity,
       initialization: _identityInitialization,
       onboardingStore: _onboardingStore,
+      previewAuth: kDebugMode && _previewAuth,
+      onResumeDevelopmentSession: _resumeSession,
     ),
   );
 }
@@ -47,11 +77,15 @@ class _IdentityGate extends StatelessWidget {
     required this.identity,
     required this.initialization,
     required this.onboardingStore,
+    required this.previewAuth,
+    required this.onResumeDevelopmentSession,
   });
 
   final IdentityService identity;
   final Future<void> initialization;
   final OnboardingCompletionStore onboardingStore;
+  final bool previewAuth;
+  final VoidCallback onResumeDevelopmentSession;
 
   @override
   Widget build(BuildContext context) {
@@ -72,10 +106,13 @@ class _IdentityGate extends StatelessWidget {
           initialData: identity.currentUser,
           builder: (context, authSnapshot) {
             final user = authSnapshot.data;
-            if (user == null) {
+            if (user == null || previewAuth) {
               return AuthEntryPage(
                 identity: identity,
                 identityReady: true,
+                onResumeDevelopmentSession: user != null && previewAuth
+                    ? onResumeDevelopmentSession
+                    : null,
               );
             }
             return _OnboardingGate(

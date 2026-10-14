@@ -9,6 +9,18 @@ editor. Al abrir VS Code se solicita la tarea si estaba detenida, incluso si
 Android conserva una APK antigua abierta; abrir o cerrar un visor no ejecuta
 directamente Flutter ni una APK instalada.
 
+## F7: volver a Auth en desarrollo
+
+La integración AI-APPS Android registra F7 como comando
+`aiAppsAndroid.auth`, habilitado solo cuando el proyecto establece
+`aiAppsAndroid.devShortcuts`. El comando envía el keyevent Android 137 a
+`emulator-5554`, si Muondia está ejecutándose, sin controlar Flutter ni
+reiniciar el emulador. Flutter atiende el atajo únicamente en debug,
+sin cerrar Firebase ni eliminar datos. Así funciona también desde el
+visor EmbeDroid, que no reenvía F7 por su propio transporte.
+Tras sincronizar la extensión enlazada, recargar VS Code una vez para
+registrar el nuevo comando y su atajo.
+
 ## Corrección del transporte
 
 EmbeDroid 1.0.2 generaba `scid` con `randomBytes(4).toString('hex')`

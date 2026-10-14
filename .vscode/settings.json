@@ -2,5 +2,6 @@
   "embedroid.openIn": "active",
   "embedroid.headless": true,
   "git.ignoreLimitWarning": true,
-  "dart.flutterHotReloadOnSave": "all"
+  "dart.flutterHotReloadOnSave": "all",
+  "aiAppsAndroid.devShortcuts": true
 }

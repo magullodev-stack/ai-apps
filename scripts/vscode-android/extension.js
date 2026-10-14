@@ -236,6 +236,26 @@ async function activate(context) {
   command('stop', supplied => chooseAction('stop', supplied));
   command('register', register);
   command('refresh', refresh);
+  command('auth', async () => {
+    // EmbeDroid no transmite teclas de función: inyectar F7 por ADB al
+    // emulador propio, sin tocar la sesión Flutter ni Firebase.
+    const target = (await service.list()).find(session =>
+      session.kind === 'development-task' &&
+      session.appId === 'muondia' &&
+      session.serial === 'emulator-5554');
+    if (!target?.deviceReady) {
+      throw new Error('El emulador de Muondia no está conectado.');
+    }
+    const pid = await service.platform.appPid({
+      serial: target.serial,
+      packageName: 'com.aiapps.muondia',
+    });
+    if (!pid) throw new Error('Muondia no está ejecutándose en el emulador.');
+    await service.platform.run(service.platform.adb, [
+      '-s', target.serial, 'shell', 'input', 'keyevent', '137',
+    ]);
+    output.appendLine('F7 enviado a Muondia (volver a Auth en desarrollo).');
+  });
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   status.text = '$(device-mobile) Android'; status.command = 'aiAppsAndroid.select'; status.show();
   const interval = setInterval(() => refresh().catch(error => output.appendLine(error.message)), 5000);

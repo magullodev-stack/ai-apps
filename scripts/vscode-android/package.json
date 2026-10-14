@@ -69,6 +69,11 @@
         "title": "Actualizar sesiones",
         "category": "AI-APPS Android",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "aiAppsAndroid.auth",
+        "title": "Volver a Auth (F7)",
+        "category": "AI-APPS Android"
       }
     ],
     "views": {
@@ -119,6 +124,23 @@
           "group": "session"
         }
       ]
+    },
+    "keybindings": [
+      {
+        "command": "aiAppsAndroid.auth",
+        "key": "f7",
+        "when": "config.aiAppsAndroid.devShortcuts"
+      }
+    ],
+    "configuration": {
+      "title": "AI-APPS Android",
+      "properties": {
+        "aiAppsAndroid.devShortcuts": {
+          "type": "boolean",
+          "default": false,
+          "description": "Activa F7 para mostrar Auth de Muondia durante el desarrollo."
+        }
+      }
     }
   }
 }

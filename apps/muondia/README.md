@@ -85,6 +85,25 @@ Si VS Code se cierra de forma forzada durante una depuración, el ciclo
 normal vuelve a arrancar al iniciar Windows; en condiciones normales basta
 con detener la sesión de depuración en VS Code.
 
+## Atajo de desarrollo F7
+
+En VS Code, **F7 vuelve a la pantalla Auth** desde onboarding, Home u otra
+pantalla mientras Muondia esté ejecutándose en modo debug. No cierra Firebase,
+no borra progreso y no exige F5 ni reiniciar Flutter. El comando
+`AI-APPS Android: Volver a Auth (F7)` envía la tecla al emulador mediante ADB,
+porque el visor EmbeDroid no reenvía las teclas de función.
+
+Con sesión activa, Auth es una **previsualización de desarrollo**:
+«Continuar con Google» reanuda la sesión sin pedir credenciales de nuevo y
+vuelve a la pantalla que corresponde al estado real del usuario (onboarding
+si está pendiente, Home si ya lo completó). El recorrido antiguo sigue
+existiendo hasta que se rediseñe; este atajo no lo sustituye.
+
+El manejador Flutter solo se registra en modo debug (`kDebugMode`).
+Las versiones release de Google Play no incluyen este comportamiento.
+Al actualizar la extensión enlazada del repositorio, recarga una vez VS Code
+para que registre la asignación F7. La sesión persistente sigue independiente.
+
 ## Firebase y autenticación
 
 El `applicationId` de Muondia es `com.aiapps.muondia`. Debe estar registrado
