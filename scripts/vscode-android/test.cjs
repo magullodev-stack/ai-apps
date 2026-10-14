@@ -69,6 +69,8 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'extension.js'), 'utf8')
 async function run() {
   const context = { subscriptions: [] };
   const api = await sandbox.module.exports.activate(context);
+  assert.ok(treeProvider,
+    'Activation must register the AI-APPS Android TreeDataProvider');
   assert.equal(panels.size, 1, 'Startup restores only the registered Muondia session');
   assert.equal(panels.has('muondia@emulator-5554'), true);
   assert.equal(treeProvider.getTreeItem({ ...entries[0], active: false, status: 'starting' }).contextValue,

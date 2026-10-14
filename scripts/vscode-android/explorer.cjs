@@ -42,8 +42,9 @@ function createExperienceExplorer(vscode, service, report) {
   let sessions = [];
   let lastCatalogSnapshot;
   const node = (kind, label, session, item, state) => ({kind,label,session,item,state});
+  // Los cambios del explorador se notifican desde el árbol principal de
+  // AI-APPS Android. Este proveedor interno no registra un emitter propio.
   const provider = {
-    onDidChangeTreeData: changed.event,
     getChildren(parent) {
       if (!parent) return sessions.filter(s => readCatalog(s))
         .map(s => node('app', s.label, s));

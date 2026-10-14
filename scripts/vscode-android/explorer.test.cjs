@@ -15,7 +15,11 @@ async function main(){
   const vscode={EventEmitter:class{constructor(){this.event=()=>{}}fire(){}},
    TreeItem:class{constructor(label,collapsibleState){this.label=label;this.collapsibleState=collapsibleState}},
    TreeItemCollapsibleState:{None:0,Collapsed:1}};
+  // Smoke test: construir el proveedor debe funcionar sin un EventEmitter
+  // independiente. Un fallo aquí impide registrar todo AI-APPS Android.
   const explorer=createExperienceExplorer(vscode,service,()=>{});
+  assert.equal(typeof explorer.provider.getChildren,'function',
+    'The nested tree provider must initialize before VS Code registration');
   assert.equal(explorer.refresh(await service.list()),true);
   assert.equal(explorer.refresh(await service.list()),false,
     'unchanged sessions do not trigger tree regeneration');
