@@ -100,7 +100,12 @@ function createViews(Base, context, sdk, devices, log) {
         return;
       }
       if (this.views.has(serial)) { panel.dispose(); return; }
-      const pending = { serial, appId: '', label: 'Android' };
+      // emulator-5554 is exclusively reserved for Muondia. Display its
+      // definitive title immediately, even before the first video frame.
+      // Other device names are resolved by the application registry.
+      const pending = serial === 'emulator-5554'
+        ? { serial, appId: 'muondia', label: 'Muondia' }
+        : { serial, appId: '', label: 'Android' };
       this.sessions.set(serial, pending);
       const view = this.adopt(panel, serial, this.title(pending));
       view.serial = serial;

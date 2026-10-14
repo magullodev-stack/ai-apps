@@ -64,9 +64,10 @@ async function run() {
   const reopened = createViews(Base, context, {}, { find() {} }, log);
   const restoredA = panel('QuizAI - emulator-5554');
   await serializers[1].deserializeWebviewPanel(restoredA, { serial: a.serial });
-  assert.equal(titlesBeforeStream.at(-1), 'Android · emulator-5554',
-    'A stale title is discarded before trying to attach a video stream');
-  assert.equal(restoredA.title, 'Android · emulator-5554', 'No app name is persisted in the tab');
+  assert.equal(titlesBeforeStream.at(-1), 'Muondia · emulator-5554',
+    'The reserved emulator is named Muondia before attaching video');
+  assert.equal(restoredA.title, 'Muondia · emulator-5554',
+    'A legacy QuizAI tab is renamed directly to Muondia without an Android placeholder');
   await reopened.openSession(a);
   assert.equal(reopened.views.size, 1, 'Current session reconnects its persisted viewer');
   assert.equal(restoredA.title, 'Muondia · emulator-5554', 'Current registry restores the label');

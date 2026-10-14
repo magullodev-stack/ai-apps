@@ -61,8 +61,9 @@ un nombre de una aplicación retirada (por ejemplo, `QuizAI - emulator-5554`),
 verifica que estén instaladas y activas las extensiones mantenidas, ejecuta de
 nuevo `scripts/install-embedroid.ps1` y **recarga VS Code**. La identidad actual
 es `Muondia · emulator-5554`, obtenida del registro, no del estado del visor.
-La restauración elimina el título anterior incluso cuando falla la conexión
-al vídeo, sin borrar AVD, APK ni estado de la aplicación.
+Al restaurar `emulator-5554` se asigna directamente el título
+`Muondia · emulator-5554`, sin pasar por `Android` y aunque falle la conexión
+al vídeo. No se borra el AVD, la APK ni el estado de la aplicación.
 La actualización upstream exige importar,
 revisar y validar deliberadamente otra versión; el constructor rechaza un
 paquete original que no coincida con los hashes fijados. El repositorio
