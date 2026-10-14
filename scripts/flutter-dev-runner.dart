@@ -191,11 +191,13 @@ Future<void> main(List<String> args) async {
   }
 
   if (controller.relaunchRequested) {
-    exitCode = 87;
+    // Mantener compatibilidad con el lanzador persistente anterior que
+    // todavía puede estar ejecutándose durante la sincronización de dev.
+    exitCode = 86;
   } else if (controller.stopRequested) {
     exitCode = 0;
   } else if (controller.lostConnection) {
-    exitCode = 86;
+    exitCode = 88;
   } else {
     exitCode = code;
   }
