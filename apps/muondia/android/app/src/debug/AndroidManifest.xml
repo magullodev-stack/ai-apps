@@ -1,8 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- The INTERNET permission is required for development. Specifically,
-         the Flutter tool needs it to communicate with the running application
-         to allow setting breakpoints, to provide hot reload, etc.
-    -->
+    <!-- El acceso de desarrollo funciona sin recurrir a la consola Flutter.
+         El intent de Auth solo existe en compilaciones debug. -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <application android:networkSecurityConfig="@xml/network_security_config"/>
+    <application android:networkSecurityConfig="@xml/network_security_config">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="com.aiapps.muondia.DEV_SHOW_AUTH"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>

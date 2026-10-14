@@ -31,7 +31,29 @@ class _MuondiaAppState extends State<MuondiaApp> {
   late final OnboardingCompletionStore _onboardingStore =
       widget.onboardingStore ?? LocalOnboardingCompletionStore();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  static const MethodChannel _devChannel = MethodChannel('muondia/development');
   bool _previewAuth = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) {
+      _devChannel.setMethodCallHandler((call) async {
+        if (call.method == 'showAuth' && mounted) _showDevelopmentAuth();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    if (kDebugMode) _devChannel.setMethodCallHandler(null);
+    super.dispose();
+  }
+
+  void _showDevelopmentAuth() {
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (!_previewAuth) setState(() => _previewAuth = true);
+  }
 
   KeyEventResult _developmentKey(FocusNode node, KeyEvent event) {
     if (!kDebugMode ||
@@ -39,9 +61,8 @@ class _MuondiaAppState extends State<MuondiaApp> {
         event.logicalKey != LogicalKeyboardKey.f7) {
       return KeyEventResult.ignored;
     }
-    // F7 solo cambia la vista; Firebase y el progreso permanecen intactos.
-    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
-    if (!_previewAuth) setState(() => _previewAuth = true);
+    // Mismo comportamiento para teclados que transmitan F7 directamente.
+    _showDevelopmentAuth();
     return KeyEventResult.handled;
   }
 

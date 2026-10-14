@@ -62,8 +62,10 @@ async function run() {
     'A running development task is never started twice');
   await commands.get('aiAppsAndroid.auth')();
   assert.deepEqual(calls.at(-1), [
-    'adb', 'adb.exe', '-s', 'emulator-5554', 'shell', 'input', 'keyevent', '137',
-  ], 'F7 targets the registered Muondia emulator without restarting Flutter');
+    'adb', 'adb.exe', '-s', 'emulator-5554', 'shell', 'am', 'start',
+    '-n', 'com.aiapps.muondia/.MainActivity',
+    '-a', 'com.aiapps.muondia.DEV_SHOW_AUTH', '-f', '0x20000000',
+  ], 'F7 invokes Muondia development activity without keyboard or Flutter restart');
   calls.pop();
   await api.refresh();
   assert.equal(calls.length, 1, 'Polling does not duplicate Muondia');

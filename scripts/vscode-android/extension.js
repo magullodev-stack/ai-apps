@@ -237,8 +237,8 @@ async function activate(context) {
   command('register', register);
   command('refresh', refresh);
   command('auth', async () => {
-    // EmbeDroid no transmite teclas de función: inyectar F7 por ADB al
-    // emulador propio, sin tocar la sesión Flutter ni Firebase.
+    // Entregar la orden a la Activity de Muondia directamente: el visor
+    // EmbeDroid y Android pueden filtrar F7 como evento de teclado.
     const target = (await service.list()).find(session =>
       session.kind === 'development-task' &&
       session.appId === 'muondia' &&
@@ -252,9 +252,13 @@ async function activate(context) {
     });
     if (!pid) throw new Error('Muondia no está ejecutándose en el emulador.');
     await service.platform.run(service.platform.adb, [
-      '-s', target.serial, 'shell', 'input', 'keyevent', '137',
+      '-s', target.serial,
+      'shell', 'am', 'start',
+      '-n', 'com.aiapps.muondia/.MainActivity',
+      '-a', 'com.aiapps.muondia.DEV_SHOW_AUTH',
+      '-f', '0x20000000',
     ]);
-    output.appendLine('F7 enviado a Muondia (volver a Auth en desarrollo).');
+    output.appendLine('Vista Auth solicitada a Muondia (canal de desarrollo).');
   });
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   status.text = '$(device-mobile) Android'; status.command = 'aiAppsAndroid.select'; status.show();

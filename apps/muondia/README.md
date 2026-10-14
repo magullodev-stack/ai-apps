@@ -90,8 +90,10 @@ con detener la sesión de depuración en VS Code.
 En VS Code, **F7 vuelve a la pantalla Auth** desde onboarding, Home u otra
 pantalla mientras Muondia esté ejecutándose en modo debug. No cierra Firebase,
 no borra progreso y no exige F5 ni reiniciar Flutter. El comando
-`AI-APPS Android: Volver a Auth (F7)` envía la tecla al emulador mediante ADB,
-porque el visor EmbeDroid no reenvía las teclas de función.
+`AI-APPS Android: Volver a Auth (F7)` envía un intent explícito a
+`MainActivity` mediante ADB. La actividad comunica el evento al
+`MuondiaApp` a través de un canal Flutter de desarrollo, sin depender de
+las teclas que EmbeDroid consiga transmitir.
 
 Con sesión activa, Auth es una **previsualización de desarrollo**:
 «Continuar con Google» reanuda la sesión sin pedir credenciales de nuevo y
@@ -99,8 +101,10 @@ vuelve a la pantalla que corresponde al estado real del usuario (onboarding
 si está pendiente, Home si ya lo completó). El recorrido antiguo sigue
 existiendo hasta que se rediseñe; este atajo no lo sustituye.
 
-El manejador Flutter solo se registra en modo debug (`kDebugMode`).
-Las versiones release de Google Play no incluyen este comportamiento.
+El manejador Flutter solo se registra en modo debug (`kDebugMode`) y la
+actividad Android ignora ese intent cuando la app no es depurable. El
+intent-filter está en el manifiesto debug. Las versiones release de Google
+Play no incluyen este comportamiento.
 Al actualizar la extensión enlazada del repositorio, recarga una vez VS Code
 para que registre la asignación F7. La sesión persistente sigue independiente.
 

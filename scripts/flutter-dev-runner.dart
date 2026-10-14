@@ -267,7 +267,11 @@ bool _requiresRelaunch(String path) {
         fileName == 'google-services.json' ||
         fileName.endsWith('.gradle') ||
         fileName.endsWith('.gradle.kts') ||
-        fileName.endsWith('.properties');
+        fileName.endsWith('.properties') ||
+        (normalized.contains('/android/app/src/') &&
+            (fileName.endsWith('.kt') ||
+                fileName.endsWith('.java') ||
+                fileName.endsWith('.xml')));
   }
 
   if (normalized.contains('/ios/')) {

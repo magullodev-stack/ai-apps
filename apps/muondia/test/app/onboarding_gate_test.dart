@@ -63,6 +63,33 @@ void main() {
     expect(store.completed, isEmpty);
   });
 
+  testWidgets('El comando Android abre Auth sin depender del foco del teclado',
+      (tester) async {
+    final identity = _SignedInIdentity();
+    final store = _MemoryOnboardingStore();
+    await tester.pumpWidget(
+      MuondiaApp(identityService: identity, onboardingStore: store),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(OnboardingQuizPage), findsOneWidget);
+
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    await messenger.handlePlatformMessage(
+      'muondia/development',
+      const StandardMethodCodec().encodeMethodCall(
+        const MethodCall('showAuth'),
+      ),
+      (_) {},
+    );
+    await tester.pump();
+
+    expect(find.byType(AuthEntryPage), findsOneWidget);
+    expect(identity.signOutCalls, 0);
+    expect(store.completed, isEmpty);
+  });
+
   testWidgets('F7 muestra Auth desde Home sin perder el progreso completado',
       (tester) async {
     final identity = _SignedInIdentity();

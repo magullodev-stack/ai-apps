@@ -13,11 +13,13 @@ directamente Flutter ni una APK instalada.
 
 La integración AI-APPS Android registra F7 como comando
 `aiAppsAndroid.auth`, habilitado solo cuando el proyecto establece
-`aiAppsAndroid.devShortcuts`. El comando envía el keyevent Android 137 a
-`emulator-5554`, si Muondia está ejecutándose, sin controlar Flutter ni
-reiniciar el emulador. Flutter atiende el atajo únicamente en debug,
-sin cerrar Firebase ni eliminar datos. Así funciona también desde el
-visor EmbeDroid, que no reenvía F7 por su propio transporte.
+`aiAppsAndroid.devShortcuts`. El comando entrega un intent explícito
+`com.aiapps.muondia.DEV_SHOW_AUTH` a la actividad de Muondia en
+`emulator-5554`. Android lo comunica mediante el canal
+`muondia/development` a Flutter, sin depender del transporte de teclado
+de EmbeDroid, sin controlar Flutter ni reiniciar el emulador. Flutter
+atiende el evento únicamente en debug, sin cerrar Firebase ni eliminar datos.
+La actividad Android también lo rechaza fuera de una compilación depurable.
 Tras sincronizar la extensión enlazada, recargar VS Code una vez para
 registrar el nuevo comando y su atajo.
 
