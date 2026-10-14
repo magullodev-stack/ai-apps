@@ -72,6 +72,11 @@ function createExperienceExplorer(vscode, service, report) {
         result.description = 'Simulación · sin IA';
       }
       if (item.kind === 'app') result.description = item.session.serial;
+      // IDs estables para conservar los nodos desplegados entre refrescos.
+      result.id = [
+        'experience', item.kind, item.session.id,
+        item.item?.id || item.label, item.state?.id || ''
+      ].join(':');
       return result;
     }
   };

@@ -86,10 +86,6 @@
         {
           "id": "aiAppsAndroid.sessions",
           "name": "AI-APPS Android"
-        },
-        {
-          "id": "aiAppsAndroid.experiences",
-          "name": "Explorador de experiencias"
         }
       ]
     },

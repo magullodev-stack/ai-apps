@@ -200,10 +200,37 @@ async function activate(context) {
     service.register({ appId, label, serial, avdName, packageName, kind: 'flutter', projectPath: directories[0].fsPath });
     await refresh();
   }
+  // El árbol existente AI-APPS Android está registrado en todas las
+  // instalaciones. No crear una vista nueva cuyo manifest instalado puede
+  // estar desactualizado: incorporar el explorador como una rama del árbol.
+  const explorerRoot = { experienceExplorerRoot: true };
+  const wrapExperience = entry => ({ experienceExplorerNode: entry });
   const tree = {
     onDidChangeTreeData: changed.event,
-    getChildren: () => sessions,
+    getChildren(parent) {
+      if (parent === undefined) return [...sessions, explorerRoot];
+      if (parent === explorerRoot) {
+        return explorer.provider.getChildren().map(wrapExperience);
+      }
+      if (parent?.experienceExplorerNode) {
+        return explorer.provider.getChildren(parent.experienceExplorerNode)
+          .map(wrapExperience);
+      }
+      return [];
+    },
     getTreeItem(session) {
+      if (session === explorerRoot) {
+        const item = new vscode.TreeItem(
+          'Explorador de experiencias',
+          vscode.TreeItemCollapsibleState.Expanded,
+        );
+        item.id = 'ai-apps-experience-explorer';
+        item.iconPath = new vscode.ThemeIcon('layers');
+        return item;
+      }
+      if (session.experienceExplorerNode) {
+        return explorer.provider.getTreeItem(session.experienceExplorerNode);
+      }
       const item = new vscode.TreeItem(`${session.label} · ${session.serial}`);
       item.description = session.status;
       item.tooltip = `${session.appId} · ${session.serial}\n${session.projectPath || 'Sesión externa'}`;
@@ -270,9 +297,6 @@ async function activate(context) {
   const interval = setInterval(() => refresh().catch(error => output.appendLine(error.message)), 5000);
   context.subscriptions.push(output, changed, explorer.changed, status,
     vscode.window.createTreeView('aiAppsAndroid.sessions', { treeDataProvider: tree }),
-    vscode.window.createTreeView('aiAppsAndroid.experiences', {
-      treeDataProvider: explorer.provider,
-    }),
     { dispose() { disposed = true; clearInterval(interval); } });
   await refresh().catch(report);
   return { refresh, list: () => sessions, service };

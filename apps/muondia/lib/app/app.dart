@@ -16,10 +16,14 @@ class MuondiaApp extends StatefulWidget {
     super.key,
     this.identityService,
     this.onboardingStore,
+    this.developmentPreviewOnStartup,
   });
 
   final IdentityService? identityService;
   final OnboardingCompletionStore? onboardingStore;
+  /// Las pruebas pueden activar/desactivar el arranque seguro explícitamente.
+  /// La app real arranca en preview siempre que sea una compilación debug.
+  final bool? developmentPreviewOnStartup;
 
   @override
   State<MuondiaApp> createState() => _MuondiaAppState();
@@ -38,9 +42,23 @@ class _MuondiaAppState extends State<MuondiaApp> {
   bool _previewAuth = false;
   int _developmentRevision = 0;
 
+  bool get _safeDevelopmentStartup =>
+      kDebugMode &&
+      (widget.developmentPreviewOnStartup ??
+          widget.identityService == null);
+
   @override
   void initState() {
     super.initState();
+    // No construir _IdentityGate ni _FirstExperience durante el arranque
+    // de desarrollo: hacerlo dispararía el generador real de diez preguntas.
+    if (_safeDevelopmentStartup) {
+      _selectedPreview.value = (
+        experience: 'auth',
+        state: 'inicio',
+        revision: ++_developmentRevision,
+      );
+    }
     if (kDebugMode) {
       _devChannel.setMethodCallHandler((call) async {
         if (!mounted) return;
@@ -62,6 +80,20 @@ class _MuondiaAppState extends State<MuondiaApp> {
   }
 
   @override
+  void reassemble() {
+    super.reassemble();
+    // También rescata una sesión de desarrollo ya abierta cuando el código
+    // llega por Hot Reload y estaba en el onboarding real.
+    if (_safeDevelopmentStartup && _selectedPreview.value == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _selectedPreview.value == null) {
+          _openDevelopmentExperience('auth', 'inicio');
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     if (kDebugMode) _devChannel.setMethodCallHandler(null);
     _selectedPreview.dispose();
@@ -69,9 +101,9 @@ class _MuondiaAppState extends State<MuondiaApp> {
   }
 
   void _showDevelopmentAuth() {
-    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
-    _selectedPreview.value = null;
-    if (!_previewAuth) setState(() => _previewAuth = true);
+    // F7 abre siempre una vista simulada. No volver a la ruta del onboarding
+    // real: pulsar Google allí podría lanzar de nuevo el gasto de tokens.
+    _openDevelopmentExperience('auth', 'inicio');
   }
 
   void _openDevelopmentExperience(String experience, String state) {

@@ -10,6 +10,29 @@ import 'package:muondia/app/onboarding/completion_store.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_page.dart';
 
 void main() {
+  testWidgets('Debug inicia en Auth seguro sin consultar Firebase ni onboarding',
+      (tester) async {
+    final identity = _IdentityStub();
+    final store = _StoreStub();
+    await tester.pumpWidget(MuondiaApp(
+      identityService: identity,
+      onboardingStore: store,
+      developmentPreviewOnStartup: true,
+    ));
+    await tester.pump();
+    expect(find.byType(AuthEntryPage), findsOneWidget);
+    expect(find.byType(OnboardingQuizPage), findsNothing);
+    expect(identity.googleCalls, 0);
+    expect(store.reads, 0);
+    expect(store.writes, 0);
+
+    await tester.tap(find.byKey(const Key('muondia-auth-button-google')));
+    await tester.pump();
+    expect(find.byType(MuondiaStage), findsOneWidget);
+    expect(identity.googleCalls, 0);
+    expect(store.reads, 0);
+  });
+
   testWidgets('Abre experiencias sin llamar a Google ni generar preguntas',
       (tester) async {
     final identity = _IdentityStub();

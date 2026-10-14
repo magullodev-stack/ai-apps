@@ -2,9 +2,9 @@
 
 ## Explorador de experiencias de desarrollo
 
-En VS Code, «Explorador de experiencias» permite abrir directamente Auth, Loading, Test de bienvenida y Home. El catálogo está en `lib/app/development/experiences.json` y las previews en `lib/app/development/experience_preview.dart`. Se reutilizan los widgets reales.
+En VS Code, expande «Explorador de experiencias» dentro de la vista existente «AI-APPS Android» para abrir directamente Auth, Loading, Test de bienvenida y Home. El catálogo está en `lib/app/development/experiences.json` y las previews en `lib/app/development/experience_preview.dart`. Se reutilizan los widgets reales.
 
-Loading ofrece tres estados; el test utiliza diez preguntas fijas. La previsualización evita Google Sign-In y las llamadas a IA, y no marca el onboarding como completado. La navegación real del usuario permanece independiente. Disponible solo en APK debug. Tras sincronizar `dev`, recarga VS Code para activar la vista; la sesión persistente de Flutter no se reinicia desde el panel.
+Loading ofrece tres estados; el test utiliza diez preguntas fijas. En la aplicación real ejecutada en modo debug, el arranque muestra Auth en previsualización, sin entrar en el onboarding y sin generar preguntas. También F7 abre esta vista segura. «Continuar con Google» en la previsualización pasa al Loading simulado, sin iniciar sesión real. El test del explorador usa diez preguntas fijas; no modifica el progreso. La navegación de usuarios en release no cambia. Después de recibir cambios de código de la extensión, puede ser necesario recargar VS Code, no Flutter.
 
 
 **Muondia** es la aplicación móvil interactiva de AI-APPS. Vive en

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:muondia/app/app.dart';
 import 'package:muondia/app/app_shell.dart';
 import 'package:muondia/app/auth/auth_entry_page.dart';
+import 'package:muondia/app/interaction/ai_stage.dart';
 import 'package:muondia/app/onboarding/completion_store.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_page.dart';
 
@@ -58,7 +59,8 @@ void main() {
     await tester.tap(find.byKey(const Key('muondia-auth-button-google')));
     await tester.pump();
     await tester.pump();
-    expect(find.byType(OnboardingQuizPage), findsOneWidget);
+    expect(find.byType(MuondiaStage), findsOneWidget);
+    expect(find.byType(OnboardingQuizPage), findsNothing);
     expect(identity.googleSignInCalls, 0);
     expect(store.completed, isEmpty);
   });
@@ -110,7 +112,8 @@ void main() {
     await tester.tap(find.byKey(const Key('muondia-auth-button-google')));
     await tester.pump();
     await tester.pump();
-    expect(find.byType(AppShell), findsOneWidget);
+    expect(find.byType(MuondiaStage), findsOneWidget);
+    expect(find.byType(AppShell), findsNothing);
     expect(store.completed, contains('user-1'));
   });
 

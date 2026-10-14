@@ -9,7 +9,8 @@ fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
 let treeProvider, taskRunning = true;
 let entries = [
-  { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100' }
+  { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100',
+    projectPath: path.resolve(__dirname, '../../apps/muondia'), packageName: 'com.aiapps.muondia' }
 ];
 class Sessions {
   constructor(_root, platform) { this.platform = platform; }
@@ -26,7 +27,7 @@ const vscode = {
   workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: root } }],
     getConfiguration: () => ({ update: async () => {} }) },
   ConfigurationTarget: { Workspace: 2 }, StatusBarAlignment: { Left: 1 },
-  TreeItemCollapsibleState: { None: 0, Collapsed: 1 },
+  TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
   TreeItem: class { constructor(label) { this.label = label; } }, ThemeIcon: class {},
   EventEmitter: class { constructor() { this.event = () => {}; } fire() {} dispose() {} },
   extensions: { getExtension: () => ({ activate: async () => viewer }) },
@@ -64,6 +65,28 @@ async function run() {
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
   assert.equal(calls.some(call => call[0] !== 'open'), false,
     'A running development task is never started twice');
+  const roots = treeProvider.getChildren();
+  const explorerRoot = roots.find(entry => entry.experienceExplorerRoot);
+  assert.ok(explorerRoot, 'The explorer is embedded in the existing Android view');
+  assert.equal(treeProvider.getTreeItem(explorerRoot).label, 'Explorador de experiencias');
+  const apps = treeProvider.getChildren(explorerRoot);
+  assert.equal(apps.length, 1, 'Muondia catalog is detected');
+  const groups = treeProvider.getChildren(apps[0]);
+  assert.deepEqual(Array.from(groups, group => group.experienceExplorerNode.label),
+    ['Acceso', 'Primera experiencia', 'Aplicación']);
+  const firstExperience = treeProvider.getChildren(groups[1])[0];
+  const states = treeProvider.getChildren(firstExperience);
+  assert.deepEqual(Array.from(states, state => state.experienceExplorerNode.state.id),
+    ['inicio', 'progreso', 'final']);
+  const preview = treeProvider.getTreeItem(states[1]).command;
+  await commands.get(preview.command)(...preview.arguments);
+  assert.deepEqual(calls.at(-1), [
+    'adb', 'adb.exe', '-s', 'emulator-5554', 'shell', 'am', 'start',
+    '-n', 'com.aiapps.muondia/.MainActivity',
+    '-a', 'com.aiapps.muondia.DEV_OPEN_EXPERIENCE', '-f', '0x20000000',
+    '--es', 'experience', 'loading', '--es', 'state', 'progreso'
+  ], 'Clicking a tree state changes the running emulator without Flutter restart');
+  calls.pop();
   await commands.get('aiAppsAndroid.auth')();
   assert.deepEqual(calls.at(-1), [
     'adb', 'adb.exe', '-s', 'emulator-5554', 'shell', 'am', 'start',

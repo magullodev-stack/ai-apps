@@ -153,7 +153,8 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (widget.loadQuestions == null)
+                if (widget.loadQuestions == null &&
+                    widget.previewQuestions == null)
                   const Text('Generación no disponible.')
                 else if (questions == null || _finished) ...[
                   Text(
