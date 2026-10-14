@@ -18,6 +18,7 @@ async function activate(context) {
   const shown = new Map();
   const disconnected = new Set();
   let sessions = [], refreshing, disposed = false, firstRefresh = true;
+  let lastTreeSnapshot;
   const extension = vscode.extensions.getExtension(EMBEDROID_ID);
   if (!extension) throw new Error('Instala EmbeDroid con scripts/install-embedroid.ps1.');
   const viewer = await extension.activate();
@@ -140,8 +141,18 @@ async function activate(context) {
           }
         }
       }
-      changed.fire();
-      explorer.refresh(sessions);
+      // El sondeo de dispositivos se ejecuta cada 5 segundos, pero el
+      // árbol no debe reconstruirse mientras el usuario lo despliega.
+      const currentTreeSnapshot = JSON.stringify(sessions.map(session => [
+        session.id, session.label, session.serial, session.status,
+        session.active, session.deviceReady, session.epoch,
+        session.projectPath, session.packageName, session.kind,
+      ]));
+      const catalogChanged = explorer.refresh(sessions);
+      if (lastTreeSnapshot !== currentTreeSnapshot || catalogChanged) {
+        lastTreeSnapshot = currentTreeSnapshot;
+        changed.fire();
+      }
       const views = viewer.listSessions?.() || [];
       for (const session of sessions) {
         if (!session.deviceReady && views.some(view => view.serial === session.serial)) disconnected.add(session.id);
@@ -295,7 +306,7 @@ async function activate(context) {
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   status.text = '$(device-mobile) Android'; status.command = 'aiAppsAndroid.select'; status.show();
   const interval = setInterval(() => refresh().catch(error => output.appendLine(error.message)), 5000);
-  context.subscriptions.push(output, changed, explorer.changed, status,
+  context.subscriptions.push(output, changed, status,
     vscode.window.createTreeView('aiAppsAndroid.sessions', { treeDataProvider: tree }),
     { dispose() { disposed = true; clearInterval(interval); } });
   await refresh().catch(report);

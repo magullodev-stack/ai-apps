@@ -4,6 +4,12 @@
 
 El nodo «Explorador de experiencias» se muestra dentro del árbol **AI-APPS Android** que ya está instalado (ID `aiAppsAndroid.sessions`), sin depender de registrar otra vista. Descubre los catálogos definidos por las aplicaciones en `lib/app/development/experiences.json`; no deduce pantallas a partir de assets o archivos Dart. Una entrada abre el widget Flutter real con un estado de desarrollo.
 
+Para evitar solapamientos de etiquetas al desplegar el árbol, el sondeo
+de sesiones cada cinco segundos actualiza los nodos **solo** si cambia
+el estado de una sesión o la revisión del catálogo; los clics y la
+navegación no invalidan innecesariamente el árbol. Esta regla se
+comprueba en las pruebas de la extensión.
+
 El comando `aiAppsAndroid.preview` valida la experiencia solicitada y envía un intent `<package>.DEV_OPEN_EXPERIENCE` al emulador asignado. No inicia sesiones Flutter, no borra datos y no dispara IA. Muondia expone Auth, Loading (inicio/en curso/finalización), Test con preguntas de prueba y Home. El arranque de Muondia en debug muestra Auth simulado para evitar peticiones IA automáticas; F7 hace lo mismo. Tras sincronizar, recargar VS Code una vez. Ejecutar las pruebas `node scripts/vscode-android/explorer.test.cjs` y `node scripts/vscode-android/test.cjs`.
 
 

@@ -16,7 +16,9 @@ async function main(){
    TreeItem:class{constructor(label,collapsibleState){this.label=label;this.collapsibleState=collapsibleState}},
    TreeItemCollapsibleState:{None:0,Collapsed:1}};
   const explorer=createExperienceExplorer(vscode,service,()=>{});
-  explorer.refresh(await service.list());
+  assert.equal(explorer.refresh(await service.list()),true);
+  assert.equal(explorer.refresh(await service.list()),false,
+    'unchanged sessions do not trigger tree regeneration');
   const [app]=explorer.provider.getChildren();assert.equal(app.label,'Muondia');
   const groups=explorer.provider.getChildren(app);
   assert.deepEqual(groups.map(x=>x.label),['Acceso','Primera experiencia','Aplicación']);
@@ -35,6 +37,10 @@ async function main(){
   catalog.experiences[0].id='auth; reboot';
   fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
   assert.throws(()=>readCatalog(session),/Experiencia inválida/);
+  assert.equal(explorer.refresh(await service.list()),true,
+    'changing the catalog causes exactly one tree refresh');
+  assert.equal(explorer.refresh(await service.list()),false,
+    'subsequent polls do not redraw after catalog changes');
   console.log('PASS: catálogo, árbol, comando ADB y validación');
  }finally{fs.rmSync(temp,{recursive:true,force:true})}
 }

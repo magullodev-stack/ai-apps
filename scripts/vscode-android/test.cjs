@@ -29,7 +29,17 @@ const vscode = {
   ConfigurationTarget: { Workspace: 2 }, StatusBarAlignment: { Left: 1 },
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
   TreeItem: class { constructor(label) { this.label = label; } }, ThemeIcon: class {},
-  EventEmitter: class { constructor() { this.event = () => {}; } fire() {} dispose() {} },
+  EventEmitter: class {
+    constructor() {
+      this.listeners = [];
+      this.event = callback => {
+        this.listeners.push(callback);
+        return disposable();
+      };
+    }
+    fire() { for (const callback of this.listeners) callback(); }
+    dispose() { this.listeners = []; }
+  },
   extensions: { getExtension: () => ({ activate: async () => viewer }) },
   commands: { registerCommand: (name, callback) => { commands.set(name, callback); return disposable(); } },
   window: { createOutputChannel: () => ({ ...disposable(), appendLine() {} }),
@@ -69,6 +79,12 @@ async function run() {
   const explorerRoot = roots.find(entry => entry.experienceExplorerRoot);
   assert.ok(explorerRoot, 'The explorer is embedded in the existing Android view');
   assert.equal(treeProvider.getTreeItem(explorerRoot).label, 'Explorador de experiencias');
+  let invalidations = 0;
+  treeProvider.onDidChangeTreeData(() => invalidations++);
+  await api.refresh();
+  await api.refresh();
+  assert.equal(invalidations, 0,
+    'Polling without session/catalog changes must not redraw expanded nodes');
   const apps = treeProvider.getChildren(explorerRoot);
   assert.equal(apps.length, 1, 'Muondia catalog is detected');
   const groups = treeProvider.getChildren(apps[0]);
@@ -95,6 +111,8 @@ async function run() {
   ], 'F7 invokes Muondia development activity without keyboard or Flutter restart');
   calls.pop();
   await api.refresh();
+  assert.equal(invalidations, 0,
+    'Preview and routine polling must preserve the expanded tree');
   assert.equal(calls.length, 1, 'Polling does not duplicate Muondia');
   panels.delete('muondia@emulator-5554');
   await api.refresh();

@@ -39,8 +39,8 @@ function readCatalog(session) {
 }
 
 function createExperienceExplorer(vscode, service, report) {
-  const changed = new vscode.EventEmitter();
   let sessions = [];
+  let lastCatalogSnapshot;
   const node = (kind, label, session, item, state) => ({kind,label,session,item,state});
   const provider = {
     onDidChangeTreeData: changed.event,
@@ -99,7 +99,33 @@ function createExperienceExplorer(vscode, service, report) {
     ]);
     report(live.label + ': ' + exp.label + ' / ' + state.label + ' (simulación)');
   }
-  return {provider, changed, refresh(next) {sessions=next;changed.fire();}, open};
+  function catalogSignature(session) {
+    if (!session?.projectPath || session.kind === 'external') return null;
+    try {
+      const info = fs.statSync(path.join(session.projectPath, CATALOG));
+      return [info.mtimeMs, info.size];
+    } catch (error) {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    }
+  }
+
+  return {
+    provider,
+    refresh(next) {
+      sessions = next;
+      // Los datos de ejecución del emulador no alteran el catálogo. Solo
+      // reaccionar ante cambios reales en sus entradas y archivos.
+      const snapshot = JSON.stringify(next.map(s => [
+        s.id, s.label, s.projectPath, s.packageName,
+        catalogSignature(s),
+      ]));
+      if (snapshot === lastCatalogSnapshot) return false;
+      lastCatalogSnapshot = snapshot;
+      return true;
+    },
+    open,
+  };
 }
 module.exports = {readCatalog,createExperienceExplorer};
 
