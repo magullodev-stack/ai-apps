@@ -30,6 +30,7 @@ async function main() {
     const vscode = { TreeItem: class { constructor(label, state) {
       this.label=label;this.collapsibleState=state;
     }},ThemeIcon:class{constructor(name){this.id=name}},
+    Uri:{file:fsPath=>({fsPath})},
     TreeItemCollapsibleState:{Collapsed:1,None:0}};
     const inspector = createVisualAssetInspector(vscode,svc,()=>{});
     assert.deepEqual(listVisualAssets(base),
@@ -40,9 +41,11 @@ async function main() {
     const images = inspector.getChildren(folder);
     assert.equal(images.length,2);
     const stars = images.find(i=>i.asset.endsWith('Estrellas.png'));
-    assert.equal(inspector.getTreeItem(stars).description,'Visible');
+    assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetVisible');
     await inspector.toggle(session.id,stars.asset);
     assert.equal(inspector.getTreeItem(stars).description,'Oculta');
+    assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetHidden');
+    assert.equal(inspector.getTreeItem(stars).command.command,'vscode.open');
     assert.deepEqual(calls.at(-1),['adb.exe',[
       '-s','emulator-5554','shell','am','start',
       '-n','com.aiapps.muondia/.MainActivity',
@@ -50,7 +53,7 @@ async function main() {
       '-f','0x20000000','--es','asset','assets/auth/Estrellas.png',
       '--ez','visible','false']]);
     await inspector.toggle(session.id,stars.asset);
-    assert.equal(inspector.getTreeItem(stars).description,'Visible');
+    assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetVisible');
     assert.equal(calls.at(-1)[1].at(-1),'true');
     await assert.rejects(
       inspector.toggle(session.id,'../../secret.png'),/no disponible/);

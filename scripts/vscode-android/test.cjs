@@ -71,6 +71,20 @@ async function run() {
   const api = await sandbox.module.exports.activate(context);
   assert.ok(treeProvider,
     'Activation must register the AI-APPS Android TreeDataProvider');
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+  const menus = manifest.contributes.menus['view/item/context'];
+  for (const [command, context, group] of [
+    ['hideVisualAsset', 'visualAssetVisible', 'inline@1'],
+    ['showVisualAsset', 'visualAssetHidden', 'inline@1'],
+    ['replaceVisualAsset', 'visualAssetVisible', 'navigation@1'],
+    ['deleteVisualAsset', 'visualAssetHidden', 'navigation@2'],
+  ]) {
+    assert.ok(menus.some(menu =>
+      menu.command === 'aiAppsAndroid.' + command &&
+      menu.when.includes(context) && menu.group === group),
+    'The installed manifest must expose the native visual resource action: ' + command);
+  }
   assert.equal(panels.size, 1, 'Startup restores only the registered Muondia session');
   assert.equal(panels.has('muondia@emulator-5554'), true);
   assert.equal(treeProvider.getTreeItem({ ...entries[0], active: false, status: 'starting' }).contextValue,

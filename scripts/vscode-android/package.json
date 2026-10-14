@@ -79,6 +79,30 @@
         "command": "aiAppsAndroid.preview",
         "title": "Abrir experiencia en el emulador",
         "category": "AI-APPS Android"
+      },
+      {
+        "command": "aiAppsAndroid.hideVisualAsset",
+        "title": "Ocultar imagen",
+        "category": "AI-APPS Android",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "aiAppsAndroid.showVisualAsset",
+        "title": "Mostrar imagen",
+        "category": "AI-APPS Android",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "aiAppsAndroid.replaceVisualAsset",
+        "title": "Sustituir imagen…",
+        "category": "AI-APPS Android",
+        "icon": "$(replace)"
+      },
+      {
+        "command": "aiAppsAndroid.deleteVisualAsset",
+        "title": "Eliminar imagen…",
+        "category": "AI-APPS Android",
+        "icon": "$(trash)"
       }
     ],
     "views": {
@@ -110,7 +134,7 @@
       "view/item/context": [
         {
           "command": "aiAppsAndroid.open",
-          "when": "view == aiAppsAndroid.sessions",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == androidExternal || viewItem == androidStopped || viewItem == androidRunning)",
           "group": "inline"
         },
         {
@@ -127,6 +151,26 @@
           "command": "aiAppsAndroid.stop",
           "when": "view == aiAppsAndroid.sessions && (viewItem == androidRunning)",
           "group": "session"
+        },
+        {
+          "command": "aiAppsAndroid.hideVisualAsset",
+          "when": "view == aiAppsAndroid.sessions && viewItem == visualAssetVisible",
+          "group": "inline@1"
+        },
+        {
+          "command": "aiAppsAndroid.showVisualAsset",
+          "when": "view == aiAppsAndroid.sessions && viewItem == visualAssetHidden",
+          "group": "inline@1"
+        },
+        {
+          "command": "aiAppsAndroid.replaceVisualAsset",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == visualAssetVisible || viewItem == visualAssetHidden)",
+          "group": "navigation@1"
+        },
+        {
+          "command": "aiAppsAndroid.deleteVisualAsset",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == visualAssetVisible || viewItem == visualAssetHidden)",
+          "group": "navigation@2"
         }
       ]
     },

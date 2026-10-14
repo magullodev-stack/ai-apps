@@ -305,9 +305,27 @@ async function activate(context) {
   command('refresh', refresh);
   command('preview', (sessionId, experience, state) =>
     explorer.open(sessionId, experience, state));
-  command('toggleVisualAsset', async (sessionId, asset) => {
-    await assets.toggle(sessionId, asset);
+  // El ojo es una acción inline nativa. Se mantiene también el clic de fila.
+  const toggleNode = async node => {
+    const entry = assets.resolveNode(node);
+    await assets.toggle(entry.session.id, entry.asset);
     changed.fire();
+  };
+  command('toggleVisualAsset', async (node, asset) => {
+    if (typeof node === 'string') {
+      await assets.toggle(node, asset);
+      changed.fire();
+    } else {
+      await toggleNode(node);
+    }
+  });
+  command('hideVisualAsset', toggleNode);
+  command('showVisualAsset', toggleNode);
+  command('replaceVisualAsset', async node => {
+    if (await assets.replaceImage(node)) changed.fire();
+  });
+  command('deleteVisualAsset', async node => {
+    if (await assets.deleteImage(node)) changed.fire();
   });
   command('auth', async () => {
     // Entregar la orden a la Activity de Muondia directamente: el visor

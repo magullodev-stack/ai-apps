@@ -518,6 +518,7 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
               // El PNG original tiene márgenes oscuros integrados.
               // Ampliar solo el fondo elimina las franjas sin alterar
               // las coordenadas de robot, estrellas, esferas y botones.
+              // ai-apps:visual:start assets/auth/Background.png
               Transform.scale(
                 key: const Key('muondia-auth-background-fill'),
                 scale: 1.30,
@@ -529,6 +530,8 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                   filterQuality: FilterQuality.high,
                 ),
               ),
+              // ai-apps:visual:end assets/auth/Background.png
+              // ai-apps:visual:start assets/auth/Estrellas.png
               if (widget.showStars)
                 _movingLayer(
                   name: 'stars',
@@ -537,6 +540,8 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                   y: math.cos(angle) * 4,
                   scale: 1.005,
                 ),
+              // ai-apps:visual:end assets/auth/Estrellas.png
+              // ai-apps:visual:start assets/auth/Esferas.png
               if (widget.showSpheres)
                 _movingLayer(
                   name: 'spheres',
@@ -545,6 +550,8 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                   y: math.cos(angle + 0.7) * 6,
                   scale: 1.012,
                 ),
+              // ai-apps:visual:end assets/auth/Esferas.png
+              // ai-apps:visual:start assets/auth/Robot.png
               _movingLayer(
                 name: 'robot',
                 asset: 'assets/auth/Robot.png',
@@ -552,6 +559,7 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                 y: -12 + math.cos(angle + 1.4) * 4,
                 scale: 1.005 + math.sin(angle + 1.4) * 0.004,
               ),
+              // ai-apps:visual:end assets/auth/Robot.png
             ],
           );
         },

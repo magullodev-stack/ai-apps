@@ -157,3 +157,45 @@ En cada aplicación Flutter activa con catálogo de experiencias y recursos en `
 La capacidad Flutter vive en `shared/ui/lib/src/development/visual_asset_inspector.dart` y se instala una vez por aplicación con `AiAppsVisualAssetScope` alrededor del contenido de `MaterialApp.builder` y `AiAppsVisualAssetController.connectDebugChannel()`. El host Android de esa aplicación reenvía el intent `<applicationId>.DEV_ASSET_VISIBILITY` al canal `ai_apps/visual_inspector` solo en compilaciones debug. Muondia es la primera integración. Los recursos usados con `rootBundle` explícito, plugins externos o imágenes de red no atraviesan `DefaultAssetBundle` y requieren adaptadores específicos; por eso el alcance garantizado es `Image.asset` / `AssetImage` que usan el bundle normal de Flutter. Las preferencias son temporales durante la sesión y se restablecen en un reinicio de Flutter.
 
 Prueba del explorador: `node scripts/vscode-android/asset-inspector.test.cjs`. Prueba Flutter: `flutter test test/visual_asset_inspector_test.dart` desde `shared/ui/`.
+
+## Ojo rápido y menú contextual de recursos
+
+Cada imagen ofrece un **ojo a la derecha** al pasar el ratón: ojo abierto
+para ocultarla, ojo tachado para mostrarla. Pulsar el nombre abre el PNG,
+no modifica la visibilidad. El botón derecho permite **Sustituir imagen…**
+(seleccionar otra del mismo formato, conservando nombre y posición) y
+**Eliminar imagen…**. La sustitución pide confirmación, comprueba el formato
+y sobrescribe únicamente el PNG existente; Flutter lo detecta.
+
+**Eliminar imagen…** analiza primero el código. Solo retira un elemento
+visual si existe una asociación declarativa inequívoca con ese recurso,
+el PNG no aparece en otras expresiones Dart y el documento está guardado.
+Después de confirmar, VS Code aplica una única edición que quita ese widget
+y manda el PNG a la papelera. Se guarda Dart para que la tarea persistente
+de Flutter actualice la pantalla. Si falta la asociación o hay referencias
+ambiguas, el inspector **no elimina nada**.
+
+Las pantallas futuras pueden registrar sus elementos declarativamente
+sin añadir controles de visibilidad particulares. Un bloque completo de
+una lista de widgets, terminado en coma, se anota con estos comentarios:
+
+```dart
+// ai-apps:visual:start assets/scene/Stars.png
+Image.asset('assets/scene/Stars.png'),
+// ai-apps:visual:end assets/scene/Stars.png
+```
+
+La anotación no cambia el comportamiento de Flutter. Auth registra inicialmente
+Background, Estrellas, Esferas y Robot de esta manera. Las imágenes que aún
+no estén registradas se pueden mostrar, ocultar o sustituir, pero la
+eliminación del código se rechazará para no romper la aplicación.
+
+Los botones del ojo y el menú contextual se declaran en el manifiesto de
+VS Code `scripts/vscode-android/package.json`. En instalaciones enlazadas
+por junction se cargan con **Developer: Reload Window**. Si se instaló una
+copia en vez del enlace, ejecutar `scripts/install-vscode-android.ps1` para
+actualizar también el manifiesto instalado.
+
+Pruebas: `node scripts/vscode-android/asset-actions.test.cjs`,
+`node scripts/vscode-android/asset-inspector.test.cjs`,
+`node scripts/vscode-android/test.cjs`.

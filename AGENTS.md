@@ -45,3 +45,13 @@ AI-APPS Android incluye el Explorador de experiencias (`scripts/vscode-android/`
 El Explorador de experiencias está integrado directamente bajo cada aplicación activa dentro de `AI-APPS Android` (`aiAppsAndroid.sessions`), sin carpetas redundantes ni listados de laboratorios inactivos. Los grupos con una sola experiencia se aplanan. Los demás registros siguen administrables desde la paleta de comandos. En Muondia debug (sin `identityService` inyectado) arranca Auth de previsualización y el onboarding real no se ejecuta automáticamente; el modo release conserva el recorrido de usuarios. F7 también abre Auth simulado. Los tests de widget pueden activar/desactivar este arranque con `developmentPreviewOnStartup`.
 
 El inspector visual compartido está en `shared/ui/lib/src/development/visual_asset_inspector.dart` y `scripts/vscode-android/asset-inspector.cjs`. Cada app integra una vez el `AiAppsVisualAssetScope` en `MaterialApp.builder`, conecta su controlador al canal `ai_apps/visual_inspector` y reenvía el intent Android de debug `DEV_ASSET_VISIBILITY`; nunca incorpora interruptores por pantalla. El inspector enumera los assets visuales de forma automática y solo modifica su visibilidad temporal; excluye referencias explícitas a `rootBundle`, plugins y recursos remotos. Probar `node scripts/vscode-android/asset-inspector.test.cjs` y pruebas Flutter de `shared/ui`.
+
+El inspector visual presenta un ojo inline para la visibilidad reversible
+y un menú nativo de VS Code para sustituir o eliminar imágenes. La propiedad
+de una imagen sobre un elemento visual se declara rodeando el widget completo
+de una lista con comentarios `// ai-apps:visual:start assets/...` y
+`// ai-apps:visual:end assets/...`. Solo los bloques declarados, con
+referencia única, pueden borrarse mediante un `WorkspaceEdit`; las demás
+imágenes solo se ocultan o sustituyen. La lógica genérica se implementa en
+`scripts/vscode-android/asset-actions.cjs`. No se realizan ediciones
+heurísticas de Dart ni se eliminan recursos compartidos.
