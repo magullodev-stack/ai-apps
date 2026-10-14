@@ -1,0 +1,42 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {readCatalog,createExperienceExplorer}=require('./explorer.cjs');
+async function main(){
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'ai-apps-explorer-'));
+ try{
+  const directory=path.join(temp,'lib/app/development');fs.mkdirSync(directory,{recursive:true});
+  const source=path.resolve(__dirname,'../../apps/muondia/lib/app/development/experiences.json');
+  const catalog=JSON.parse(fs.readFileSync(source,'utf8'));
+  fs.copyFileSync(source,path.join(directory,'experiences.json'));
+  let ready=true,pid='42';const calls=[];
+  const session={id:'muondia@emulator-5554',label:'Muondia',serial:'emulator-5554',projectPath:temp,packageName:'com.aiapps.muondia',kind:'development-task'};
+  const service={async list(){return [{...session,deviceReady:ready}]},
+   platform:{adb:'adb.exe',async appPid(){return pid},async run(...args){calls.push(args)}}};
+  const vscode={EventEmitter:class{constructor(){this.event=()=>{}}fire(){}},
+   TreeItem:class{constructor(label,collapsibleState){this.label=label;this.collapsibleState=collapsibleState}},
+   TreeItemCollapsibleState:{None:0,Collapsed:1}};
+  const explorer=createExperienceExplorer(vscode,service,()=>{});
+  explorer.refresh(await service.list());
+  const [app]=explorer.provider.getChildren();assert.equal(app.label,'Muondia');
+  const groups=explorer.provider.getChildren(app);
+  assert.deepEqual(groups.map(x=>x.label),['Acceso','Primera experiencia','Aplicación']);
+  const loading=explorer.provider.getChildren(groups[1])[0];
+  assert.deepEqual(explorer.provider.getChildren(loading).map(x=>x.state.id),['inicio','progreso','final']);
+  await explorer.open(session.id,'loading','progreso');
+  assert.deepEqual(calls[0],['adb.exe',['-s','emulator-5554','shell','am','start',
+    '-n','com.aiapps.muondia/.MainActivity','-a','com.aiapps.muondia.DEV_OPEN_EXPERIENCE',
+    '-f','0x20000000','--es','experience','loading','--es','state','progreso']]);
+  await assert.rejects(explorer.open(session.id,'invalid','inicio'),/no registrada/);
+  await assert.rejects(explorer.open(session.id,'loading','invalid'),/no registrada/);
+  assert.equal(calls.length,1);
+  ready=false;await assert.rejects(explorer.open(session.id,'auth','inicio'),/desconectado/);
+  ready=true;pid='';await assert.rejects(explorer.open(session.id,'home','inicio'),/no está ejecutándose/);
+  assert.equal(calls.length,1);
+  catalog.experiences[0].id='auth; reboot';
+  fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
+  assert.throws(()=>readCatalog(session),/Experiencia inválida/);
+  console.log('PASS: catálogo, árbol, comando ADB y validación');
+ }finally{fs.rmSync(temp,{recursive:true,force:true})}
+}
+main().catch(e=>{console.error(e);process.exitCode=1});
+

@@ -16,6 +16,7 @@ class AuthEntryPage extends StatefulWidget {
     required this.identityReady,
     this.initializationError,
     this.onResumeDevelopmentSession,
+    this.onDevelopmentContinue,
   });
 
   final IdentityService identity;
@@ -23,6 +24,8 @@ class AuthEntryPage extends StatefulWidget {
   final Object? initializationError;
   /// Solo se pasa durante la vista Auth de desarrollo con sesión activa.
   final VoidCallback? onResumeDevelopmentSession;
+  /// Previsualización de Auth: continuar sin autenticación externa.
+  final VoidCallback? onDevelopmentContinue;
 
   @override
   State<AuthEntryPage> createState() => _AuthEntryPageState();
@@ -67,6 +70,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   );
 
   Future<void> _openEmail() async {
+    if (widget.onDevelopmentContinue != null) {
+      widget.onDevelopmentContinue!();
+      return;
+    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => EmailAuthPage(identity: widget.identity),
@@ -76,6 +83,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
 
   Future<void> _signInWithProvider(IdentityProvider provider) async {
     if (_providerBusy) return;
+    if (widget.onDevelopmentContinue != null) {
+      widget.onDevelopmentContinue!();
+      return;
+    }
 
     // La vista Auth de F7 no es un cierre de sesión de Firebase.
     if (provider == IdentityProvider.google &&

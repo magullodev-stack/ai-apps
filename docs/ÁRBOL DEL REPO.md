@@ -20,6 +20,7 @@ ai-apps/
 │       │   ├── main.dart
 │       │   ├── app/           # Estructura general de Muondia.
 │       │   │   ├── auth/        # Entrada y UI de autenticación propia de Muondia.
+│       │   │   ├── development/ # Catálogo y vistas previsualizables de Muondia.
 │       │   │   ├── interaction/ # Presentación de intervenciones de Muondia.
 │       │   │   └── onboarding/  # Recorrido inicial obligatorio tras el registro.
 │       │   │       ├── interaction/ # Pantallas y animaciones de bienvenida.
@@ -55,7 +56,7 @@ ai-apps/
 │   ├── sync-dev.ps1
 │   ├── embedroid/               # EmbeDroid mantenido, paquete base y pruebas.
 │   ├── install-embedroid.ps1     # Instala el visor corregido y la integración.
-│   └── vscode-android/
+│   └── vscode-android/        # Extensión VS Code y Explorador de experiencias.
 │
 ├── docs/                      # Documentación general de AI-APPS.
 │   ├── MANIFIESTO ARQUITECTÓNICO.md

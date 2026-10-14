@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "activity": "com.aiapps.muondia/.MainActivity",
+  "experiences": [
+    {
+      "id": "auth",
+      "label": "Auth",
+      "group": "Acceso",
+      "states": [
+        {
+          "id": "inicio",
+          "label": "Vista inicial"
+        }
+      ]
+    },
+    {
+      "id": "loading",
+      "label": "Loading · Introducción del robot",
+      "group": "Primera experiencia",
+      "states": [
+        {
+          "id": "inicio",
+          "label": "Inicio"
+        },
+        {
+          "id": "progreso",
+          "label": "En curso"
+        },
+        {
+          "id": "final",
+          "label": "Finalización"
+        }
+      ]
+    },
+    {
+      "id": "test",
+      "label": "Test de bienvenida",
+      "group": "Primera experiencia",
+      "states": [
+        {
+          "id": "inicio",
+          "label": "Preguntas de prueba"
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "label": "Home",
+      "group": "Aplicación",
+      "states": [
+        {
+          "id": "inicio",
+          "label": "Pantalla principal"
+        }
+      ]
+    }
+  ]
+}

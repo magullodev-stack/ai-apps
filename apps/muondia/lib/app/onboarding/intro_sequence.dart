@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../interaction/ai_stage.dart';
 
-const _defaultIntroQuizMessages = <MuondiaStageMessage>[
+const muondiaIntroQuizMessages = <MuondiaStageMessage>[
   MuondiaStageMessage(
     lead: 'Empezamos sin elegir terreno.',
     highlight: 'Así tiene más gracia.',
@@ -43,7 +43,7 @@ class MuondiaIntroSequence extends StatefulWidget {
     required this.ready,
     required this.onCompleted,
     required this.scene,
-    this.messages = _defaultIntroQuizMessages,
+    this.messages = muondiaIntroQuizMessages,
     this.delayMessage = _defaultIntroQuizDelayMessage,
     this.messageDuration = const Duration(seconds: 4),
     this.delayThreshold = const Duration(seconds: 20),

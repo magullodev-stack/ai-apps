@@ -1,5 +1,12 @@
 # Visualización de Android en VS Code
 
+## Explorador de experiencias
+
+La vista «Explorador de experiencias» descubre los catálogos definidos por las aplicaciones en `lib/app/development/experiences.json`; no deduce pantallas a partir de assets o archivos Dart. Una entrada abre el widget Flutter real con un estado de desarrollo.
+
+El comando `aiAppsAndroid.preview` valida la experiencia solicitada y envía un intent `<package>.DEV_OPEN_EXPERIENCE` al emulador asignado. No inicia sesiones Flutter, no borra datos y no dispara IA. Muondia expone Auth, Loading (inicio/en curso/finalización), Test con preguntas de prueba y Home. Tras sincronizar, recargar VS Code una vez. Ejecutar las pruebas `node scripts/vscode-android/explorer.test.cjs` y `node scripts/vscode-android/test.cjs`.
+
+
 AI-APPS Android gestiona un visor por aplicación y dispositivo mediante
 EmbeDroid mantenido 1.1.0. Incluye selección múltiple; la vista de Muondia se
 recupera al abrir VS Code. Otras aplicaciones registradas pueden abrirse

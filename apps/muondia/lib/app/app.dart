@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'app_shell.dart';
 import 'app_theme.dart';
 import 'auth/auth_entry_page.dart';
+import 'development/experience_preview.dart';
 import 'generation_dependencies.dart';
 import 'onboarding/completion_store.dart';
 import 'onboarding/interaction/onboarding_quiz_page.dart';
@@ -32,14 +33,30 @@ class _MuondiaAppState extends State<MuondiaApp> {
       widget.onboardingStore ?? LocalOnboardingCompletionStore();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   static const MethodChannel _devChannel = MethodChannel('muondia/development');
+  final ValueNotifier<({String experience, String state, int revision})?>
+      _selectedPreview = ValueNotifier(null);
   bool _previewAuth = false;
+  int _developmentRevision = 0;
 
   @override
   void initState() {
     super.initState();
     if (kDebugMode) {
       _devChannel.setMethodCallHandler((call) async {
-        if (call.method == 'showAuth' && mounted) _showDevelopmentAuth();
+        if (!mounted) return;
+        if (call.method == 'showAuth') {
+          _showDevelopmentAuth();
+        } else if (call.method == 'openExperience') {
+          final args = call.arguments;
+          if (args is Map &&
+              args['experience'] is String &&
+              args['state'] is String) {
+            _openDevelopmentExperience(
+              args['experience'] as String,
+              args['state'] as String,
+            );
+          }
+        }
       });
     }
   }
@@ -47,12 +64,33 @@ class _MuondiaAppState extends State<MuondiaApp> {
   @override
   void dispose() {
     if (kDebugMode) _devChannel.setMethodCallHandler(null);
+    _selectedPreview.dispose();
     super.dispose();
   }
 
   void _showDevelopmentAuth() {
     _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    _selectedPreview.value = null;
     if (!_previewAuth) setState(() => _previewAuth = true);
+  }
+
+  void _openDevelopmentExperience(String experience, String state) {
+    const allowed = <String, Set<String>>{
+      'auth': {'inicio'},
+      'loading': {'inicio', 'progreso', 'final'},
+      'test': {'inicio'},
+      'home': {'inicio'},
+    };
+    if (!kDebugMode || !mounted || allowed[experience]?.contains(state) != true) {
+      return;
+    }
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (_previewAuth) setState(() => _previewAuth = false);
+    _selectedPreview.value = (
+      experience: experience,
+      state: state,
+      revision: ++_developmentRevision,
+    );
   }
 
   KeyEventResult _developmentKey(FocusNode node, KeyEvent event) {
@@ -83,12 +121,26 @@ class _MuondiaAppState extends State<MuondiaApp> {
     title: 'Muondia',
     debugShowCheckedModeBanner: false,
     theme: muondiaTheme,
-    home: _IdentityGate(
-      identity: _identity,
-      initialization: _identityInitialization,
-      onboardingStore: _onboardingStore,
-      previewAuth: kDebugMode && _previewAuth,
-      onResumeDevelopmentSession: _resumeSession,
+    home: ValueListenableBuilder<({String experience, String state, int revision})?>(
+      valueListenable: _selectedPreview,
+      builder: (context, selection, _) {
+        if (kDebugMode && selection != null) {
+          return MuondiaExperiencePreview(
+            key: ValueKey(selection.revision),
+            experience: selection.experience,
+            state: selection.state,
+            identity: _identity,
+            open: _openDevelopmentExperience,
+          );
+        }
+        return _IdentityGate(
+          identity: _identity,
+          initialization: _identityInitialization,
+          onboardingStore: _onboardingStore,
+          previewAuth: kDebugMode && _previewAuth,
+          onResumeDevelopmentSession: _resumeSession,
+        );
+      },
     ),
   );
 }

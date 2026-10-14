@@ -74,6 +74,11 @@
         "command": "aiAppsAndroid.auth",
         "title": "Volver a Auth (F7)",
         "category": "AI-APPS Android"
+      },
+      {
+        "command": "aiAppsAndroid.preview",
+        "title": "Abrir experiencia en el emulador",
+        "category": "AI-APPS Android"
       }
     ],
     "views": {
@@ -81,6 +86,10 @@
         {
           "id": "aiAppsAndroid.sessions",
           "name": "AI-APPS Android"
+        },
+        {
+          "id": "aiAppsAndroid.experiences",
+          "name": "Explorador de experiencias"
         }
       ]
     },

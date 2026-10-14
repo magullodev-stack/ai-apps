@@ -26,13 +26,17 @@ const vscode = {
   workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: root } }],
     getConfiguration: () => ({ update: async () => {} }) },
   ConfigurationTarget: { Workspace: 2 }, StatusBarAlignment: { Left: 1 },
+  TreeItemCollapsibleState: { None: 0, Collapsed: 1 },
   TreeItem: class { constructor(label) { this.label = label; } }, ThemeIcon: class {},
   EventEmitter: class { constructor() { this.event = () => {}; } fire() {} dispose() {} },
   extensions: { getExtension: () => ({ activate: async () => viewer }) },
   commands: { registerCommand: (name, callback) => { commands.set(name, callback); return disposable(); } },
   window: { createOutputChannel: () => ({ ...disposable(), appendLine() {} }),
     showErrorMessage: message => { throw new Error(message); },
-    createTreeView: (_, options) => { treeProvider = options.treeDataProvider; return disposable(); },
+    createTreeView: (id, options) => {
+      if (id === 'aiAppsAndroid.sessions') treeProvider = options.treeDataProvider;
+      return disposable();
+    },
     createStatusBarItem: () => ({ ...disposable(), show() {} }),
     showQuickPick: async (choices, options) => options.canPickMany ? choices : choices[0] }
 };

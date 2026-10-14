@@ -6,9 +6,16 @@ import '../production/onboarding_quiz_pipeline.dart';
 import 'onboarding_loading_scene.dart';
 
 class OnboardingQuizPage extends StatefulWidget {
-  const OnboardingQuizPage({super.key, this.loadQuestions, required this.onCompleted});
+  const OnboardingQuizPage({
+    super.key,
+    this.loadQuestions,
+    this.previewQuestions,
+    required this.onCompleted,
+  });
 
   final Future<List<OnboardingQuizFinalQuestion>> Function()? loadQuestions;
+  /// Datos listos: no realiza llamadas a IA al montar esta pantalla.
+  final List<OnboardingQuizFinalQuestion>? previewQuestions;
   final Future<void> Function() onCompleted;
 
   @override
@@ -32,7 +39,9 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   void initState() {
     super.initState();
 
-    if (widget.loadQuestions != null) {
+    if (widget.previewQuestions != null) {
+      _questions = widget.previewQuestions;
+    } else if (widget.loadQuestions != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _start();
       });

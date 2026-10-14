@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const fs = require('node:fs');
 const path = require('node:path');
 const EMBEDROID_ID = 'magullodev.ai-apps-embedroid';
+const { createExperienceExplorer } = require('./explorer.cjs');
 
 async function activate(context) {
   const folder = (vscode.workspace.workspaceFolders || []).find(item =>
@@ -12,6 +13,7 @@ async function activate(context) {
   const { Windows } = require(path.join(folder.uri.fsPath, 'scripts/android/windows.cjs'));
   const output = vscode.window.createOutputChannel('AI-APPS Android');
   const service = new Sessions(folder.uri.fsPath, new Windows(folder.uri.fsPath));
+  const explorer = createExperienceExplorer(vscode, service, message => output.appendLine(message));
   const changed = new vscode.EventEmitter();
   const shown = new Map();
   const disconnected = new Set();
@@ -139,6 +141,7 @@ async function activate(context) {
         }
       }
       changed.fire();
+      explorer.refresh(sessions);
       const views = viewer.listSessions?.() || [];
       for (const session of sessions) {
         if (!session.deviceReady && views.some(view => view.serial === session.serial)) disconnected.add(session.id);
@@ -236,6 +239,8 @@ async function activate(context) {
   command('stop', supplied => chooseAction('stop', supplied));
   command('register', register);
   command('refresh', refresh);
+  command('preview', (sessionId, experience, state) =>
+    explorer.open(sessionId, experience, state));
   command('auth', async () => {
     // Entregar la orden a la Activity de Muondia directamente: el visor
     // EmbeDroid y Android pueden filtrar F7 como evento de teclado.
@@ -263,8 +268,11 @@ async function activate(context) {
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   status.text = '$(device-mobile) Android'; status.command = 'aiAppsAndroid.select'; status.show();
   const interval = setInterval(() => refresh().catch(error => output.appendLine(error.message)), 5000);
-  context.subscriptions.push(output, changed, status,
+  context.subscriptions.push(output, changed, explorer.changed, status,
     vscode.window.createTreeView('aiAppsAndroid.sessions', { treeDataProvider: tree }),
+    vscode.window.createTreeView('aiAppsAndroid.experiences', {
+      treeDataProvider: explorer.provider,
+    }),
     { dispose() { disposed = true; clearInterval(interval); } });
   await refresh().catch(report);
   return { refresh, list: () => sessions, service };

@@ -9,17 +9,26 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
-        // El atajo de desarrollo se envía desde VS Code mediante un intent
-        // explícito: no depende del teclado ni del visor EmbeDroid.
-        if (intent.action != "com.aiapps.muondia.DEV_SHOW_AUTH" ||
-            applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0
-        ) {
-            return
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
+        val method: String
+        val args: Any?
+        when (intent.action) {
+            "com.aiapps.muondia.DEV_SHOW_AUTH" -> {
+                method = "showAuth"
+                args = null
+            }
+            "com.aiapps.muondia.DEV_OPEN_EXPERIENCE" -> {
+                method = "openExperience"
+                args = mapOf(
+                    "experience" to intent.getStringExtra("experience"),
+                    "state" to intent.getStringExtra("state")
+                )
+            }
+            else -> return
         }
-
         flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
             MethodChannel(messenger, "muondia/development")
-                .invokeMethod("showAuth", null)
+                .invokeMethod(method, args)
         }
     }
 }

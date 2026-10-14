@@ -39,3 +39,5 @@ La tarea de Windows `AI-APPS Development` arranca al iniciar sesión y mantiene 
 **Invariante del entorno:** ningún cambio de herramientas, extensiones o depuradores puede sustituir el arranque persistente de Muondia, transferir a VS Code la propiedad de Flutter ni eliminar el Hot Reload de cambios sincronizados sin autorización expresa del usuario.
 
 Muondia se identifica como `muondia` y `com.aiapps.muondia`. El test inicial de diez preguntas es onboarding obligatorio tras registrar la cuenta, previo a Home; no se ofrece desde Home como modalidad independiente. El estado de finalización se conserva por usuario.
+
+AI-APPS Android incluye el Explorador de experiencias (`scripts/vscode-android/`). Cada aplicación declara las vistas previsualizables en `lib/app/development/experiences.json`; los assets no crean entradas. Muondia implementa sus previews en `apps/muondia/lib/app/development/`, con datos controlados y sin llamadas a IA. El panel comunica con la app mediante intents Android de depuración, sin reiniciar Flutter. Verificar mediante `node scripts/vscode-android/explorer.test.cjs`, `node scripts/vscode-android/test.cjs` y las pruebas Flutter.
