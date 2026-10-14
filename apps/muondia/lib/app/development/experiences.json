@@ -15,7 +15,7 @@
     },
     {
       "id": "loading",
-      "label": "Loading · Introducción del robot",
+      "label": "Loading del robot",
       "group": "Primera experiencia",
       "states": [
         {

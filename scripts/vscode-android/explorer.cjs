@@ -50,8 +50,19 @@ function createExperienceExplorer(vscode, service, report) {
         .map(s => node('app', s.label, s));
       const catalog = readCatalog(parent.session);
       if (!catalog) return [];
-      if (parent.kind === 'app') return [...new Set(catalog.experiences.map(e => e.group))]
-        .map(group => node('group', group, parent.session));
+      if (parent.kind === 'app') {
+        // Evitar carpetas sin utilidad: los grupos con una sola experiencia
+        // se muestran directamente (Auth y Home en Muondia).
+        const groups = new Map();
+        for (const entry of catalog.experiences) {
+          if (!groups.has(entry.group)) groups.set(entry.group, []);
+          groups.get(entry.group).push(entry);
+        }
+        return [...groups.entries()].flatMap(([group, entries]) =>
+          entries.length === 1
+            ? [node('experience', entries[0].label, parent.session, entries[0])]
+            : [node('group', group, parent.session)]);
+      }
       if (parent.kind === 'group') return catalog.experiences
         .filter(e => e.group === parent.label)
         .map(e => node('experience', e.label, parent.session, e));

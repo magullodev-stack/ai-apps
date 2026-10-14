@@ -24,10 +24,17 @@ async function main(){
   assert.equal(explorer.refresh(await service.list()),false,
     'unchanged sessions do not trigger tree regeneration');
   const [app]=explorer.provider.getChildren();assert.equal(app.label,'Muondia');
-  const groups=explorer.provider.getChildren(app);
-  assert.deepEqual(groups.map(x=>x.label),['Acceso','Primera experiencia','Aplicación']);
-  const loading=explorer.provider.getChildren(groups[1])[0];
-  assert.deepEqual(explorer.provider.getChildren(loading).map(x=>x.state.id),['inicio','progreso','final']);
+  const children=explorer.provider.getChildren(app);
+  assert.deepEqual(children.map(x=>x.label),['Auth','Primera experiencia','Home']);
+  assert.deepEqual(children.map(x=>x.kind),['experience','group','experience']);
+  const groupChildren=explorer.provider.getChildren(children[1]);
+  assert.deepEqual(groupChildren.map(x=>x.label),
+    ['Loading del robot','Test de bienvenida']);
+  const loading=groupChildren[0];
+  assert.deepEqual(explorer.provider.getChildren(loading).map(x=>x.state.id),
+    ['inicio','progreso','final']);
+  assert.equal(explorer.provider.getTreeItem(children[0]).command.arguments[1],'auth');
+  assert.equal(explorer.provider.getTreeItem(children[2]).command.arguments[1],'home');
   await explorer.open(session.id,'loading','progreso');
   assert.deepEqual(calls[0],['adb.exe',['-s','emulator-5554','shell','am','start',
     '-n','com.aiapps.muondia/.MainActivity','-a','com.aiapps.muondia.DEV_OPEN_EXPERIENCE',

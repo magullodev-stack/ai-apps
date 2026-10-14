@@ -1,19 +1,27 @@
 # Visualización de Android en VS Code
 
-## Sesiones visibles y otras sesiones
+## Explorador de experiencias y sesiones
 
-En la vista `AI-APPS Android` se muestran directamente Muondia (sesión
-persistente) y las sesiones realmente activas. Los emuladores que figuren
-como `offline`, `failed` o estén registrados sin una aplicación en
-ejecución se agrupan bajo **Otras sesiones (N)**, contraído por defecto.
-El grupo aparece después del Explorador de experiencias y se puede
-desplegar para administrar esas sesiones. No se eliminan registros,
-emuladores ni datos de Android. El selector existente sigue
-permitiendo acceder a las sesiones compatibles.
+**AI-APPS Android** muestra directamente las aplicaciones en ejecución.
+La fila «Muondia · emulator-5554» es el único nodo raíz habitual y, al
+desplegarla, aparecen sus experiencias: **Auth**, **Primera experiencia**
+(Loading del robot y Test de bienvenida) y **Home**. Loading se despliega
+en Inicio, En curso y Finalización. No se crean filas duplicadas
+«Explorador de experiencias» ni «Muondia», ni carpetas «Acceso» o
+«Aplicación» para una sola experiencia.
 
-## Explorador de experiencias
+Los laboratorios `offline`/`failed` permanecen registrados, pero **no
+se muestran en el árbol de trabajo**. Los comandos de administración
+`AI-APPS Android: Iniciar sesión`, `Detener aplicación` y
+`Seleccionar visores` siguen disponibles en la paleta de comandos.
+El botón de visualizar sesión sigue disponible en el menú contextual de
+las aplicaciones. No se borran AVD, sesiones, archivos ni datos.
 
-El nodo «Explorador de experiencias» se muestra dentro del árbol **AI-APPS Android** que ya está instalado (ID `aiAppsAndroid.sessions`), sin depender de registrar otra vista. Descubre los catálogos definidos por las aplicaciones en `lib/app/development/experiences.json`; no deduce pantallas a partir de assets o archivos Dart. Una entrada abre el widget Flutter real con un estado de desarrollo.
+El catálogo de experiencias se define en cada aplicación, en
+`lib/app/development/experiences.json`. No se infieren experiencias de
+assets o archivos Dart. Los grupos con una sola experiencia se muestran
+directamente bajo su aplicación; los que contienen varias mantienen
+su agrupación.
 
 Para evitar solapamientos de etiquetas al desplegar el árbol, el sondeo
 de sesiones cada cinco segundos actualiza los nodos **solo** si cambia

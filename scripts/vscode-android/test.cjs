@@ -77,14 +77,10 @@ async function run() {
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
   assert.equal(calls.some(call => call[0] !== 'open'), false,
     'A running development task is never started twice');
-  const roots = treeProvider.getChildren();
-  const explorerRoot = roots.find(entry => entry.experienceExplorerRoot);
-  assert.ok(explorerRoot, 'The explorer is embedded in the existing Android view');
-  assert.equal(treeProvider.getTreeItem(explorerRoot).label, 'Explorador de experiencias');
-  // Las sesiones de laboratorio pueden seguir registradas sin tapar
-  // las herramientas de Muondia: se agrupan, nunca se eliminan.
+  // No duplicar la aplicación ni mostrar laboratorios inactivos en el árbol.
+  const muondia = entries[0];
   entries = [
-    entries[0],
+    muondia,
     ...Array.from({ length: 6 }, (_, index) => ({
       appId: `lab-${index}`,
       label: `Lab ${index}`,
@@ -98,38 +94,21 @@ async function run() {
     })),
   ];
   await api.refresh();
-  const compactRoots = treeProvider.getChildren();
-  assert.equal(compactRoots.length, 3, 'Muondia, explorer and one optional group');
-  assert.equal(compactRoots[0].id, 'muondia@emulator-5554',
-    'The persistent Muondia session remains visible');
-  assert.equal(compactRoots[1], explorerRoot, 'Experiences stay directly accessible');
-  const inactiveGroup = compactRoots[2];
-  assert.equal(treeProvider.getTreeItem(inactiveGroup).label, 'Otras sesiones (6)');
-  assert.equal(treeProvider.getTreeItem(inactiveGroup).collapsibleState,
-    vscode.TreeItemCollapsibleState.Collapsed,
-    'Inactive sessions are collapsed by default');
-  assert.equal(treeProvider.getChildren(inactiveGroup).length, 6,
-    'All registered sessions remain available for management');
-  entries = entries.slice(0, 1);
-  await api.refresh();
-  assert.deepEqual(Array.from(treeProvider.getChildren(), item =>
-    item === explorerRoot ? 'explorer' : item.id),
-    ['muondia@emulator-5554', 'explorer'],
-    'No empty inactive group is shown');
-  let invalidations = 0;
-  treeProvider.onDidChangeTreeData(() => invalidations++);
-  await api.refresh();
-  await api.refresh();
-  assert.equal(invalidations, 0,
-    'Polling without session/catalog changes must not redraw expanded nodes');
-  const apps = treeProvider.getChildren(explorerRoot);
-  assert.equal(apps.length, 1, 'Muondia catalog is detected');
-  const groups = treeProvider.getChildren(apps[0]);
-  assert.deepEqual(Array.from(groups, group => group.experienceExplorerNode.label),
-    ['Acceso', 'Primera experiencia', 'Aplicación']);
-  const firstExperience = treeProvider.getChildren(groups[1])[0];
-  const states = treeProvider.getChildren(firstExperience);
-  assert.deepEqual(Array.from(states, state => state.experienceExplorerNode.state.id),
+  let roots = treeProvider.getChildren();
+  assert.equal(roots.length, 1, 'Only Muondia is visible; no duplicate or lab folder');
+  assert.equal(roots[0].id, muondia.id);
+  assert.equal(treeProvider.getTreeItem(roots[0]).collapsibleState,
+    vscode.TreeItemCollapsibleState.Expanded,
+    'Muondia itself is the experience explorer');
+  const content = treeProvider.getChildren(roots[0]);
+  assert.deepEqual(Array.from(content, entry => entry.experienceExplorerNode.label),
+    ['Auth', 'Primera experiencia', 'Home'],
+    'Singleton groups are flattened');
+  const firstExperience = treeProvider.getChildren(content[1]);
+  assert.deepEqual(Array.from(firstExperience, entry => entry.experienceExplorerNode.label),
+    ['Loading del robot', 'Test de bienvenida']);
+  const states = treeProvider.getChildren(firstExperience[0]);
+  assert.deepEqual(Array.from(states, item => item.experienceExplorerNode.state.id),
     ['inicio', 'progreso', 'final']);
   const preview = treeProvider.getTreeItem(states[1]).command;
   await commands.get(preview.command)(...preview.arguments);
@@ -140,6 +119,29 @@ async function run() {
     '--es', 'experience', 'loading', '--es', 'state', 'progreso'
   ], 'Clicking a tree state changes the running emulator without Flutter restart');
   calls.pop();
+  const homeCommand = treeProvider.getTreeItem(content[2]).command;
+  await commands.get(homeCommand.command)(...homeCommand.arguments);
+  assert.ok(calls.at(-1).includes('home'),
+    'Home is a single-click destination without an extra folder');
+  calls.pop();
+  const authCommand = treeProvider.getTreeItem(content[0]).command;
+  await commands.get(authCommand.command)(...authCommand.arguments);
+  assert.ok(calls.at(-1).includes('auth'),
+    'Auth is a single-click destination without an extra folder');
+  calls.pop();
+  // All registered laboratories remain accessible by management commands,
+  // even though their nodes are absent from the everyday explorer.
+  assert.equal((await api.list()).length, 7);
+  entries = [muondia];
+  await api.refresh();
+  roots = treeProvider.getChildren();
+  assert.equal(roots.length, 1);
+  let invalidations = 0;
+  treeProvider.onDidChangeTreeData(() => invalidations++);
+  await api.refresh();
+  await api.refresh();
+  assert.equal(invalidations, 0,
+    'Polling without session/catalog changes must not redraw expanded nodes');
   await commands.get('aiAppsAndroid.auth')();
   assert.deepEqual(calls.at(-1), [
     'adb', 'adb.exe', '-s', 'emulator-5554', 'shell', 'am', 'start',

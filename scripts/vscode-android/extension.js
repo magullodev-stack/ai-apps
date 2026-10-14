@@ -211,66 +211,53 @@ async function activate(context) {
     service.register({ appId, label, serial, avdName, packageName, kind: 'flutter', projectPath: directories[0].fsPath });
     await refresh();
   }
-  // El árbol existente AI-APPS Android está registrado en todas las
-  // instalaciones. No crear una vista nueva cuyo manifest instalado puede
-  // estar desactualizado: incorporar el explorador como una rama del árbol.
-  const explorerRoot = { experienceExplorerRoot: true };
-  const inactiveRoot = { inactiveSessionsRoot: true };
+  // Una única jerarquía: aplicación -> experiencias -> estados.
+  // Las sesiones de laboratorio inactivas siguen registradas y disponibles
+  // por los comandos de administración, pero no ocupan espacio en el árbol.
   const isVisibleSession = session =>
     session.kind === 'development-task' || session.active;
-  const inactiveSessions = () => sessions.filter(session => !isVisibleSession(session));
   const wrapExperience = entry => ({ experienceExplorerNode: entry });
+  const experiencesOf = session => explorer.provider.getChildren({
+    kind: 'app',
+    session,
+  });
   const tree = {
     onDidChangeTreeData: changed.event,
     getChildren(parent) {
-      if (parent === undefined) {
-        return [
-          ...sessions.filter(isVisibleSession),
-          explorerRoot,
-          ...(inactiveSessions().length ? [inactiveRoot] : []),
-        ];
-      }
-      if (parent === inactiveRoot) return inactiveSessions();
-      if (parent === explorerRoot) {
-        return explorer.provider.getChildren().map(wrapExperience);
-      }
+      if (parent === undefined) return sessions.filter(isVisibleSession);
       if (parent?.experienceExplorerNode) {
         return explorer.provider.getChildren(parent.experienceExplorerNode)
           .map(wrapExperience);
       }
+      if (parent?.id && parent?.serial) {
+        return experiencesOf(parent).map(wrapExperience);
+      }
       return [];
     },
     getTreeItem(session) {
-      if (session === inactiveRoot) {
-        const count = inactiveSessions().length;
-        const item = new vscode.TreeItem(
-          `Otras sesiones (${count})`,
-          vscode.TreeItemCollapsibleState.Collapsed,
-        );
-        item.id = 'ai-apps-inactive-sessions';
-        item.iconPath = new vscode.ThemeIcon('archive');
-        item.tooltip = 'Sesiones registradas que no están ejecutándose. No se eliminan.';
-        return item;
-      }
-      if (session === explorerRoot) {
-        const item = new vscode.TreeItem(
-          'Explorador de experiencias',
-          vscode.TreeItemCollapsibleState.Expanded,
-        );
-        item.id = 'ai-apps-experience-explorer';
-        item.iconPath = new vscode.ThemeIcon('layers');
-        return item;
-      }
       if (session.experienceExplorerNode) {
         return explorer.provider.getTreeItem(session.experienceExplorerNode);
       }
-      const item = new vscode.TreeItem(`${session.label} · ${session.serial}`);
+      const hasExperiences = experiencesOf(session).length > 0;
+      const item = new vscode.TreeItem(
+        `${session.label} · ${session.serial}`,
+        hasExperiences
+          ? vscode.TreeItemCollapsibleState.Expanded
+          : vscode.TreeItemCollapsibleState.None,
+      );
+      item.id = `android-session:${session.id}`;
       item.description = session.status;
       item.tooltip = `${session.appId} · ${session.serial}\n${session.projectPath || 'Sesión externa'}`;
       item.contextValue = session.kind === 'external' ? 'androidExternal' :
         session.active || ['starting', 'stopping'].includes(session.status) ? 'androidRunning' : 'androidStopped';
       item.iconPath = new vscode.ThemeIcon(session.active ? 'device-mobile' : 'circle-outline');
-      item.command = { command: 'aiAppsAndroid.open', title: 'Visualizar sesión', arguments: [session] };
+      if (!hasExperiences) {
+        item.command = {
+          command: 'aiAppsAndroid.open',
+          title: 'Visualizar sesión',
+          arguments: [session],
+        };
+      }
       return item;
     }
   };
