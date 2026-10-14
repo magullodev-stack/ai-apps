@@ -52,19 +52,27 @@ Los gráficos de la secuencia inicial viven en `assets/onboarding/loading/`.
 
 ## Arranque y sincronización
 
-La tarea de Windows **AI-APPS Development** prepara Android, el servicio
-Dart y la sincronización de la rama `dev`. **No lanza Flutter**.
+La tarea programada de Windows **AI-APPS Development** inicia al entrar en
+Windows la sincronización de `dev`, el AVD `AI_APPS_Dev` (`emulator-5554`),
+el servicio Dart y **Muondia con Flutter**. Mantiene su sesión y Hot Reload
+automático aunque VS Code esté cerrado. Al abrir el repositorio, AI-APPS Android
+solo conecta el visor EmbeDroid al emulador ya activo. **No hay que pulsar F5**
+para trabajar normalmente.
 
-Abre la raíz de AI-APPS en VS Code y pulsa **F5** con la configuración
-**Muondia** seleccionada. La integración oficial Dart/Flutter de VS Code
-lanza la aplicación en `emulator-5554`, la conecta con la IA y realiza
-Hot Reload al guardar. La tarea previa de F5 cierra la antigua sesión
-Flutter personalizada, si existía, sin detener el servicio de IA.
+`scripts/start-dev-session.ps1` es el punto de entrada de la tarea y
+`apps/muondia/run.ps1 -Device emulator-5554` ejecuta el Flutter Dev Runner
+persistente. Los cambios Dart y de recursos recibidos mediante Git también
+activan su recarga automática, sin depender de guardar desde VS Code.
 
-Los cambios nativos de Android pueden requerir recompilación. Los cambios
-externos procedentes de Git no equivalen necesariamente a un guardado
-en VS Code: el Hot Reload al guardar no garantiza recarga automática
-tras una actualización externa del repositorio.
+**Depuración alternativa:** la configuración `Muondia` de F5 utiliza el
+depurador oficial Dart/Flutter únicamente si la tarea persistente está
+detenida y no queda ningún runner Flutter usando `emulator-5554`. La tarea
+previa a F5 verifica ambas condiciones y **nunca detiene la sesión de Windows**.
+Para volver al modo habitual, termina primero la depuración y vuelve a iniciar
+`AI-APPS Development`. No pueden convivir dos procesos Flutter en el mismo AVD.
+
+Los cambios nativos Android, de plugins o dependencias pueden exigir
+recompilación y un reinicio controlado de la sesión, no solo Hot Reload.
 
 ## Firebase y autenticación
 
@@ -83,9 +91,10 @@ Para activar los botones reales de Auth:
    clave privada de Sign in with Apple, Team ID y Key ID) y registra la
    configuración requerida en el proveedor Apple de Firebase. Verifica el
    dominio y la URL de retorno indicados por Firebase para el flujo web Android.
-4. Ejecuta `flutter pub get` y reconstruye la app desde F5 (hot reload no
-   instala nuevos plugins nativos). Usa un emulador Android con Google Play
-   Services para probar Google y un navegador funcional para Apple.
+4. Ejecuta `flutter pub get` y recompila Muondia reiniciando de forma controlada
+   la sesión persistente (o mediante F5 tras detenerla). Hot Reload no instala
+   plugins nativos. Usa un emulador Android con Google Play Services para probar
+   Google y un navegador funcional para Apple.
 
 Las credenciales sensibles de Apple se configuran en sus consolas, nunca se
 incorporan a los archivos Dart ni al repositorio. La identidad de ambos

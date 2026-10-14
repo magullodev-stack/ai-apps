@@ -31,7 +31,9 @@ generadores conocidos antes de sustituirlos por `generateScid()`. Verifica
 también cada punto de integración del manager, API de sesiones y webview antes
 de aplicar cambios. El webview guarda con `setState` únicamente el serial del dispositivo: nunca persiste el nombre ni el
 identificador de una aplicación. En cada apertura, el registro de AI-APPS aporta la identidad
-vigente. Un panel cuyo estado pertenece al formato anterior se descarta y
+vigente. Los paneles restaurados descartan inmediatamente el título antiguo,
+incluso si el transporte de vídeo no consigue reconectarse. Un panel cuyo
+estado pertenece al formato anterior se descarta y
 se crea una vista nueva desde ese registro. La conexión renueva
 socket/decodificador al reconectar y reporta frames renderizados para
 verificar el vídeo. El token de transporte no se persiste. Produce

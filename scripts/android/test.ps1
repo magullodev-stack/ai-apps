@@ -7,6 +7,8 @@ New-Item -ItemType Directory -Force -Path $testDirectory | Out-Null
 Push-Location $testDirectory
 try {
     $env:ELECTRON_RUN_AS_NODE = '1'
+    & $runtime (Join-Path $PSScriptRoot 'startup-contract-test.cjs') | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw 'Persistent Muondia startup tests failed.' }
     & $runtime (Join-Path $PSScriptRoot 'test.cjs') | Out-Host
     if ($LASTEXITCODE -ne 0) { throw 'Android session tests failed.' }
     & $runtime (Join-Path $PSScriptRoot '../embedroid/sessions-test.cjs') | Out-Host

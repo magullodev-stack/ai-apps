@@ -47,8 +47,8 @@
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
-        "-Command",
-        "$ErrorActionPreference='Stop'; & '${workspaceFolder}\\scripts\\android\\task-control.ps1' -Action Stop -RepoRoot '${workspaceFolder}'; & '${workspaceFolder}\\apps\\muondia\\run.ps1' -Device emulator-5554 -ServiceOnly"
+        "-File",
+        "${workspaceFolder}\\apps\\muondia\\prepare-debug.ps1"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

@@ -56,7 +56,14 @@ para preparar ambos componentes utiliza:
 La identidad propia impide que Marketplace sobrescriba el arreglo con una
 actualización de `utpalbarman.embedroid`. Los archivos originales, sus
 hashes, el generador, el constructor del VSIX y las pruebas están en Git.
-No se edita el bundle instalado. La actualización upstream exige importar,
+No se edita el bundle instalado. Si al restaurar una pestaña sigue apareciendo
+un nombre de una aplicación retirada (por ejemplo, `QuizAI - emulator-5554`),
+verifica que estén instaladas y activas las extensiones mantenidas, ejecuta de
+nuevo `scripts/install-embedroid.ps1` y **recarga VS Code**. La identidad actual
+es `Muondia · emulator-5554`, obtenida del registro, no del estado del visor.
+La restauración elimina el título anterior incluso cuando falla la conexión
+al vídeo, sin borrar AVD, APK ni estado de la aplicación.
+La actualización upstream exige importar,
 revisar y validar deliberadamente otra versión; el constructor rechaza un
 paquete original que no coincida con los hashes fijados. El repositorio
 upstream indicado por el paquete devolvió 404 durante esta intervención;

@@ -17,7 +17,9 @@ abrirse desde el selector **AI-APPS Android**.
 
 Muondia utiliza la tarea persistente `AI-APPS Development`. Su identificador,
 paquete `com.aiapps.muondia` y AVD `AI_APPS_Dev` están reservados.
-No ejecutes una segunda instancia Flutter sobre ese dispositivo.
+No ejecutes una segunda instancia Flutter sobre ese dispositivo. F5 es solo
+una alternativa de depuración: su preparación se niega mientras la tarea esté
+activa o queden procesos Flutter en `emulator-5554`; nunca los detiene.
 
 ## Otras aplicaciones Flutter
 

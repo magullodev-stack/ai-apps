@@ -70,12 +70,30 @@ try {
     }
     Write-SessionLog 'Android preparado: emulator-5554.'
     $stage = 'Muondia'
-    Write-SessionLog 'Preparando servicio Dart para VS Code.'
-    & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 -ServiceOnly *>&1 | Out-Null
-    if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-        throw 'El backend de Muondia no pudo prepararse.'
+    # Evitar competir con una sesion Flutter iniciada desde VS Code o que siga viva.
+    $flutterOwner = (& (Join-Path $PSScriptRoot 'android/task-control.ps1') -Action Check -Serial emulator-5554 | Out-String).Trim()
+    if ($flutterOwner -ne 'free') {
+        Write-SessionLog 'ERROR: emulator-5554 ya tiene una sesion Flutter.'
+        throw 'Ya existe una sesion Flutter en emulator-5554.'
     }
-    Write-SessionLog 'Android y servicio Dart preparados. Flutter se ejecuta desde VS Code.'
+    Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
+    & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 *>&1 |
+        ForEach-Object {
+            $line = $_.ToString().Trim()
+            if ($line -eq 'Hot reload automatico completado.' -or
+                $line -eq 'Hot restart completado.') {
+                Write-SessionLog $line
+            } elseif ($line -like 'Hot reload automatico activo:*') {
+                Write-SessionLog 'Muondia preparado; hot reload automatico activo.'
+            } elseif ($line -like 'Cambio detectado:*') {
+                Write-SessionLog 'Cambio de codigo/asset detectado.'
+            } elseif ($line -like 'Running Gradle task*') {
+                Write-SessionLog 'Compilacion Gradle iniciada.'
+            } elseif ($line -match '^Hot (reload|restart) fallo:') {
+                Write-SessionLog 'ERROR: hot reload/restart fallido.'
+            }
+        }
+    Write-SessionLog 'Sesion Flutter terminada.'
 } catch {
     Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
     # Categorias fijas para errores operativos, sin incluir datos de la excepcion.

@@ -24,6 +24,9 @@ function createViews(Base, context, sdk, devices, log) {
       return this.adopt(panel, key, title);
     }
     adopt(panel, key, title) {
+      // VS Code may restore a retired app title. Reset it before attaching
+      // scrcpy so a transport failure cannot leave that stale title visible.
+      panel.title = title;
       panel.webview.options = { enableScripts: true,
         localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')] };
       panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'activitybar-icon.svg');

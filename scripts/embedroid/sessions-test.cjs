@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { EventEmitter } = require('node:events');
 const bundle = fs.readFileSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/dist/extension.js'), 'utf8');
-const panels = [], serializers = [], streams = [], disposals = [];
+const panels = [], serializers = [], streams = [], disposals = [], titlesBeforeStream = [];
 function panel(title) {
   const events = new EventEmitter();
   const messages = new EventEmitter();
@@ -30,6 +30,7 @@ vm.runInNewContext(`${bundle}\n;module.exports.Base = $e;`, sandbox);
 const Base = sandbox.module.exports.Base;
 Base.prototype.attachStream = async function(key, serial) {
   const view = this.views.get(key);
+  titlesBeforeStream.push(view.panel.title);
   if (view.bridge) await view.bridge.dispose();
   view.serial = serial;
   view.bridge = { dispose: async () => { disposals.push(serial); } };
@@ -61,8 +62,10 @@ async function run() {
   assert.equal(duplicate.disposed, true); assert.equal(views.views.size, 1);
   await assert.rejects(views.openSession({ ...a, appId: 'conflict' }), /another application/);
   const reopened = createViews(Base, context, {}, { find() {} }, log);
-  const restoredA = panel('Restored A');
+  const restoredA = panel('QuizAI - emulator-5554');
   await serializers[1].deserializeWebviewPanel(restoredA, { serial: a.serial });
+  assert.equal(titlesBeforeStream.at(-1), 'Android · emulator-5554',
+    'A stale title is discarded before trying to attach a video stream');
   assert.equal(restoredA.title, 'Android · emulator-5554', 'No app name is persisted in the tab');
   await reopened.openSession(a);
   assert.equal(reopened.views.size, 1, 'Current session reconnects its persisted viewer');

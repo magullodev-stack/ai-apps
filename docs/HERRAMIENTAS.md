@@ -42,9 +42,13 @@ iniciar la sincronización. La marca solo se retira tras verificar que el
 paquete antiguo ya no está instalado; no se conservan copias del directorio
 retirado. Esta transición se ejecuta al siguiente inicio de sesión de Windows,
 no durante una descarga de Git.
- El primer lanzador reutiliza el emulador o prepara
+El primer lanzador reutiliza el emulador o prepara
 el AVD `AI_APPS_Dev` sin ventana; el segundo prepara/reutiliza Dart y
-mantiene el Flutter Dev Runner existente.
+mantiene el Flutter Dev Runner existente. El lanzamiento persistente es el
+comportamiento normal: no requiere F5 ni un proceso Flutter propiedad de VS Code.
+La depuración F5 es una alternativa explícita, bloqueada mientras la tarea o
+cualquier Flutter para `emulator-5554` esté activo. Su tarea previa solo verifica
+estas condiciones, prepara Android y el backend; nunca detiene la tarea persistente.
 
 El registro `.ai-apps/dev-session.log` contiene estados, errores por etapa y
 confirmaciones de Hot Reload. Solo conserva mensajes conocidos: no vuelca logs
