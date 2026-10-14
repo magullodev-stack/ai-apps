@@ -79,6 +79,41 @@ async function run() {
   const explorerRoot = roots.find(entry => entry.experienceExplorerRoot);
   assert.ok(explorerRoot, 'The explorer is embedded in the existing Android view');
   assert.equal(treeProvider.getTreeItem(explorerRoot).label, 'Explorador de experiencias');
+  // Las sesiones de laboratorio pueden seguir registradas sin tapar
+  // las herramientas de Muondia: se agrupan, nunca se eliminan.
+  entries = [
+    entries[0],
+    ...Array.from({ length: 6 }, (_, index) => ({
+      appId: `lab-${index}`,
+      label: `Lab ${index}`,
+      serial: `emulator-${5556 + (2 * index)}`,
+      id: `lab-${index}@emulator-${5556 + (2 * index)}`,
+      kind: 'flutter',
+      active: false,
+      deviceReady: false,
+      status: index === 0 ? 'offline' : 'failed',
+      epoch: '',
+    })),
+  ];
+  await api.refresh();
+  const compactRoots = treeProvider.getChildren();
+  assert.equal(compactRoots.length, 3, 'Muondia, explorer and one optional group');
+  assert.equal(compactRoots[0].id, 'muondia@emulator-5554',
+    'The persistent Muondia session remains visible');
+  assert.equal(compactRoots[1], explorerRoot, 'Experiences stay directly accessible');
+  const inactiveGroup = compactRoots[2];
+  assert.equal(treeProvider.getTreeItem(inactiveGroup).label, 'Otras sesiones (6)');
+  assert.equal(treeProvider.getTreeItem(inactiveGroup).collapsibleState,
+    vscode.TreeItemCollapsibleState.Collapsed,
+    'Inactive sessions are collapsed by default');
+  assert.equal(treeProvider.getChildren(inactiveGroup).length, 6,
+    'All registered sessions remain available for management');
+  entries = entries.slice(0, 1);
+  await api.refresh();
+  assert.deepEqual(Array.from(treeProvider.getChildren(), item =>
+    item === explorerRoot ? 'explorer' : item.id),
+    ['muondia@emulator-5554', 'explorer'],
+    'No empty inactive group is shown');
   let invalidations = 0;
   treeProvider.onDidChangeTreeData(() => invalidations++);
   await api.refresh();

@@ -1,5 +1,16 @@
 # Visualización de Android en VS Code
 
+## Sesiones visibles y otras sesiones
+
+En la vista `AI-APPS Android` se muestran directamente Muondia (sesión
+persistente) y las sesiones realmente activas. Los emuladores que figuren
+como `offline`, `failed` o estén registrados sin una aplicación en
+ejecución se agrupan bajo **Otras sesiones (N)**, contraído por defecto.
+El grupo aparece después del Explorador de experiencias y se puede
+desplegar para administrar esas sesiones. No se eliminan registros,
+emuladores ni datos de Android. El selector existente sigue
+permitiendo acceder a las sesiones compatibles.
+
 ## Explorador de experiencias
 
 El nodo «Explorador de experiencias» se muestra dentro del árbol **AI-APPS Android** que ya está instalado (ID `aiAppsAndroid.sessions`), sin depender de registrar otra vista. Descubre los catálogos definidos por las aplicaciones en `lib/app/development/experiences.json`; no deduce pantallas a partir de assets o archivos Dart. Una entrada abre el widget Flutter real con un estado de desarrollo.

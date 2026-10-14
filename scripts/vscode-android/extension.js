@@ -215,11 +215,22 @@ async function activate(context) {
   // instalaciones. No crear una vista nueva cuyo manifest instalado puede
   // estar desactualizado: incorporar el explorador como una rama del árbol.
   const explorerRoot = { experienceExplorerRoot: true };
+  const inactiveRoot = { inactiveSessionsRoot: true };
+  const isVisibleSession = session =>
+    session.kind === 'development-task' || session.active;
+  const inactiveSessions = () => sessions.filter(session => !isVisibleSession(session));
   const wrapExperience = entry => ({ experienceExplorerNode: entry });
   const tree = {
     onDidChangeTreeData: changed.event,
     getChildren(parent) {
-      if (parent === undefined) return [...sessions, explorerRoot];
+      if (parent === undefined) {
+        return [
+          ...sessions.filter(isVisibleSession),
+          explorerRoot,
+          ...(inactiveSessions().length ? [inactiveRoot] : []),
+        ];
+      }
+      if (parent === inactiveRoot) return inactiveSessions();
       if (parent === explorerRoot) {
         return explorer.provider.getChildren().map(wrapExperience);
       }
@@ -230,6 +241,17 @@ async function activate(context) {
       return [];
     },
     getTreeItem(session) {
+      if (session === inactiveRoot) {
+        const count = inactiveSessions().length;
+        const item = new vscode.TreeItem(
+          `Otras sesiones (${count})`,
+          vscode.TreeItemCollapsibleState.Collapsed,
+        );
+        item.id = 'ai-apps-inactive-sessions';
+        item.iconPath = new vscode.ThemeIcon('archive');
+        item.tooltip = 'Sesiones registradas que no están ejecutándose. No se eliminan.';
+        return item;
+      }
       if (session === explorerRoot) {
         const item = new vscode.TreeItem(
           'Explorador de experiencias',
