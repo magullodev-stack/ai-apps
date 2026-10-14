@@ -22,6 +22,20 @@ Future<void> main(List<String> args) async {
   final controller = _FlutterMachineController(process);
   final watchers = <StreamSubscription<FileSystemEvent>>[];
   Timer? debounce;
+  // Las sustituciones de JSON en Windows pueden perder eventos del watcher.
+  // Comparar contenido, no solo fechas, sin exponer credenciales.
+  final googleConfig = File(
+    options.workingDirectory +
+        Platform.pathSeparator +
+        'android' +
+        Platform.pathSeparator +
+        'app' +
+        Platform.pathSeparator +
+        'google-services.json',
+  );
+  var googleConfigSignature = _configurationSignature(googleConfig);
+  String? pendingSignature;
+  var stableChecks = 0;
   var pendingReload = false;
   var pendingImageRestart = false;
   var relaunchRequested = false;
@@ -128,6 +142,28 @@ Future<void> main(List<String> args) async {
     );
   }
 
+  final googleMonitor = Timer.periodic(const Duration(seconds: 2), (_) {
+    final current = _configurationSignature(googleConfig);
+    if (current == googleConfigSignature) {
+      pendingSignature = null;
+      stableChecks = 0;
+      return;
+    }
+    if (pendingSignature == current) {
+      stableChecks++;
+    } else {
+      pendingSignature = current;
+      stableChecks = 1;
+    }
+    // No relanzar mientras se copia parcialmente el archivo.
+    if (stableChecks >= 2) {
+      googleConfigSignature = current;
+      pendingSignature = null;
+      stableChecks = 0;
+      if (!relaunchRequested) scheduleRelaunch(googleConfig.path);
+    }
+  });
+
   controller.onReady = () {
     stdout.writeln(
       'Hot reload automatico activo: los cambios sincronizados se '
@@ -148,13 +184,14 @@ Future<void> main(List<String> args) async {
   _configureKeyboard(controller);
 
   final code = await process.exitCode;
+  googleMonitor.cancel();
   debounce?.cancel();
   for (final watcher in watchers) {
     await watcher.cancel();
   }
 
   if (controller.relaunchRequested) {
-    exitCode = 86;
+    exitCode = 87;
   } else if (controller.stopRequested) {
     exitCode = 0;
   } else if (controller.lostConnection) {
@@ -189,6 +226,20 @@ void _configureKeyboard(_FlutterMachineController controller) {
     });
   } catch (_) {
     // El hot reload automatico no depende de la entrada interactiva.
+  }
+}
+
+String _configurationSignature(File file) {
+  try {
+    if (!file.existsSync()) return 'absent';
+    final bytes = file.readAsBytesSync();
+    var hash = 2166136261;
+    for (final byte in bytes) {
+      hash = ((hash ^ byte) * 16777619) & 0xFFFFFFFF;
+    }
+    return '${bytes.length}:${hash.toRadixString(16)}';
+  } on FileSystemException {
+    return 'unreadable';
   }
 }
 

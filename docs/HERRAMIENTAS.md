@@ -46,9 +46,12 @@ El primer lanzador reutiliza el emulador o prepara
 el AVD `AI_APPS_Dev` sin ventana; el segundo prepara/reutiliza Dart y
 mantiene el Flutter Dev Runner existente. El lanzamiento persistente es el
 comportamiento normal: no requiere F5 ni un proceso Flutter propiedad de VS Code.
-La depuración F5 es una alternativa explícita, bloqueada mientras la tarea o
-cualquier Flutter para `emulator-5554` esté activo. Su tarea previa solo verifica
-estas condiciones, prepara Android y el backend; nunca detiene la tarea persistente.
+F5 inicia una cesión controlada: `apps/muondia/prepare-debug.ps1` detiene
+solo el runner persistente identificado, prepara el backend y permite que VS Code
+sea temporalmente el único propietario de Flutter. Al terminar,
+`apps/muondia/restore-debug.ps1` repone la tarea de Windows únicamente cuando
+F5 había desplazado una sesión previa. No se cierran los visores ni el
+emulador; ninguna segunda instancia Flutter puede compartir `emulator-5554`.
 
 El registro `.ai-apps/dev-session.log` contiene estados, errores por etapa y
 confirmaciones de Hot Reload. Solo conserva mensajes conocidos: no vuelca logs

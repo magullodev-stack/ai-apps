@@ -87,6 +87,11 @@ try {
                 Write-SessionLog 'Muondia preparado; hot reload automatico activo.'
             } elseif ($line -like 'Cambio detectado:*') {
                 Write-SessionLog 'Cambio de codigo/asset detectado.'
+            } elseif ($line -like 'Cambio nativo/dependencias detectado:*' -or
+                      $line -like 'Cambio nativo detectado; recompilando*') {
+                Write-SessionLog 'Cambio nativo detectado; reconstruccion solicitada.'
+            } elseif ($line -like 'FIREBASE_CONFIG_OK:*') {
+                Write-SessionLog 'Configuracion Firebase Android verificada.'
             } elseif ($line -like 'Running Gradle task*') {
                 Write-SessionLog 'Compilacion Gradle iniciada.'
             } elseif ($line -match '^Hot (reload|restart) fallo:') {
@@ -97,7 +102,11 @@ try {
 } catch {
     Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
     # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
-    if ($_.Exception.Message -like '*clave*') {
+    if ($_.Exception.Message -like '*FIREBASE_CONFIG_MISSING*') {
+        Write-SessionLog 'ERROR: falta google-services.json en Muondia.'
+    } elseif ($_.Exception.Message -like '*FIREBASE_CONFIG_INVALID*') {
+        Write-SessionLog 'ERROR: google-services.json invalido o pertenece a otra app.'
+    } elseif ($_.Exception.Message -like '*clave*') {
         Write-SessionLog 'Comprueba la clave DPAPI del usuario con el lanzador de Muondia.'
     } elseif ($_.Exception.Message -like '*Flutter*') {
         Write-SessionLog 'Comprueba Flutter con el lanzador de Muondia en PowerShell.'

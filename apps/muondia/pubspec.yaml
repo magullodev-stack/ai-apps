@@ -32,6 +32,7 @@ dependencies:
     path: ../../ai/flutter_client
   ai_apps_identity:
     path: ../../shared/identity
+  # La dependencia compartida instala los plugins nativos de Firebase Auth.
   ai_apps_ui:
     path: ../../shared/ui
   flutter:

@@ -59,6 +59,27 @@
         "panel": "shared",
         "focus": false
       }
+    },
+    {
+      "label": "Muondia: restaurar desarrollo persistente",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\apps\\muondia\\restore-debug.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "focus": false
+      }
     }
   ]
 }

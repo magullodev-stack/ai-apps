@@ -23,11 +23,14 @@ class IdentityFailure implements Exception {
     this.code, {
     this.provider,
     this.cause,
+    this.diagnosticCode,
   });
 
   final IdentityFailureCode code;
   final IdentityProvider? provider;
   final Object? cause;
+  /// Código técnico sin mensajes ni claves de Firebase.
+  final String? diagnosticCode;
 
   const IdentityFailure.providerNotReady(IdentityProvider provider)
     : this(

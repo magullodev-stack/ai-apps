@@ -174,6 +174,39 @@ void main() {
     expect(find.byType(EmailAuthPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('El error de Firebase incluye un diagnóstico sin llamar al proveedor', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final identity = _FailingInitializationIdentityService();
+    await tester.pumpWidget(MuondiaApp(identityService: identity));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('muondia-auth-button-google')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.textContaining('firebase/core/no-app'), findsOneWidget);
+    expect(identity.googleAttempts, 0);
+  });
+}
+
+class _FailingInitializationIdentityService extends _FakeIdentityService {
+  int googleAttempts = 0;
+
+  @override
+  Future<void> initialize() async {
+    throw const IdentityFailure(
+      IdentityFailureCode.notConfigured,
+      diagnosticCode: 'firebase/core/no-app',
+    );
+  }
+
+  @override
+  Future<IdentityUser> signInWithGoogle() async {
+    googleAttempts++;
+    throw UnimplementedError();
+  }
 }
 
 class _FakeIdentityService implements IdentityService {

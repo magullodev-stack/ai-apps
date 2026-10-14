@@ -34,11 +34,19 @@ final class FirebaseIdentityService implements IdentityService {
       throw IdentityFailure(
         IdentityFailureCode.notConfigured,
         cause: error,
+        diagnosticCode: 'firebase/${error.code}',
+      );
+    } on PlatformException catch (error) {
+      throw IdentityFailure(
+        IdentityFailureCode.notConfigured,
+        cause: error,
+        diagnosticCode: 'android/${error.code}',
       );
     } catch (error) {
       throw IdentityFailure(
         IdentityFailureCode.notConfigured,
         cause: error,
+        diagnosticCode: error.runtimeType.toString(),
       );
     }
   }

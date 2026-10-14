@@ -384,11 +384,8 @@ function Invoke-FlutterPubGetIfRequired([string]$AppDirectory) {
             return
         }
 
-        if ([string]::IsNullOrWhiteSpace($stored)) {
-            Set-Content -LiteralPath $stamp -Value $before -Encoding ASCII -NoNewline
-            Write-Host 'Dependencias Flutter ya resueltas; inicializada la huella local.'
-            return
-        }
+        # Sin huella previa, package_config.json no certifica que esten
+        # instalados los plugins nativos actuales. Ejecutar pub get una vez.
     }
 
     Write-Host 'Dependencias Flutter cambiadas; ejecutando pub get...'
@@ -399,6 +396,31 @@ function Invoke-FlutterPubGetIfRequired([string]$AppDirectory) {
 
     $after = Get-FlutterDependencyFingerprint -AppDirectory $AppDirectory
     Set-Content -LiteralPath $stamp -Value $after -Encoding ASCII -NoNewline
+}
+
+function Assert-MuondiaFirebaseConfiguration([string]$AppDirectory) {
+    $path = Join-Path $AppDirectory 'android\app\google-services.json'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw 'FIREBASE_CONFIG_MISSING: falta android/app/google-services.json.'
+    }
+    try {
+        $config = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        throw 'FIREBASE_CONFIG_INVALID: el archivo JSON no se puede interpretar.'
+    }
+    $clients = @($config.client | Where-Object {
+        $_ -and $_.client_info.android_client_info.package_name -eq 'com.aiapps.muondia'
+    })
+    if ($clients.Count -ne 1 -or [string]::IsNullOrWhiteSpace($config.project_info.project_id)) {
+        throw 'FIREBASE_CONFIG_INVALID: el archivo no corresponde a com.aiapps.muondia.'
+    }
+    $oauth = @($clients[0].oauth_client | Where-Object {
+        $_ -and $_.client_type -eq 3 -and -not [string]::IsNullOrWhiteSpace($_.client_id)
+    })
+    if ($oauth.Count -eq 0) {
+        Write-Warning 'FIREBASE_OAUTH_MISSING: falta cliente OAuth web para Google Sign-In.'
+    }
+    Write-Host 'FIREBASE_CONFIG_OK: configuracion Android verificada.'
 }
 
 # OpenAI credentials are never inherited by Flutter or passed as dart-defines.
@@ -528,13 +550,16 @@ try {
                 AI_APPS_FACTUAL_MODEL = $FactualModel
                 AI_APPS_ONBOARDING_QUIZ_REVIEW_MODEL = $OnboardingQuizReviewModel
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $definesFile
+            Assert-MuondiaFirebaseConfiguration -AppDirectory $appDirectory
             $devRunner = Join-Path $repo 'scripts\flutter-dev-runner.dart'
             if (-not (Test-Path -LiteralPath $devRunner)) {
                 throw "No se encuentra el lanzador de desarrollo Flutter: $devRunner"
             }
 
-            $maxFlutterLaunchAttempts = 3
-            for ($launchAttempt = 1; $launchAttempt -le $maxFlutterLaunchAttempts; $launchAttempt++) {
+            # Los relanzamientos por cambios nativos no consumen reintentos.
+            # El limite aplica solo a perdidas reales de conexion del emulador.
+            $consecutiveConnectionFailures = 0
+            while ($true) {
                 # Windows PowerShell convierte stderr nativo redirigido en
                 # ErrorRecord (incluidas advertencias de Java/Gradle). Con Stop
                 # abortaria una sesion oculta valida antes de leer su exit code.
@@ -554,9 +579,19 @@ try {
                     $ErrorActionPreference = $runnerErrorAction
                 }
 
-                if ($runnerExitCode -eq 86 -and
-                    $launchAttempt -lt $maxFlutterLaunchAttempts) {
-                    Write-Warning "Se perdió la conexión con $Device. Reintentando Flutter sin reiniciar VS Code..."
+                if ($runnerExitCode -eq 87) {
+                    # Nueva compilacion Gradle para cambios Android/pubspec.
+                    $consecutiveConnectionFailures = 0
+                    Write-Host 'Cambio nativo detectado; recompilando Muondia...'
+                    continue
+                }
+
+                if ($runnerExitCode -eq 86) {
+                    $consecutiveConnectionFailures++
+                    if ($consecutiveConnectionFailures -ge 3) {
+                        throw "Flutter perdio la conexion con $Device tres veces."
+                    }
+                    Write-Warning "Se perdió la conexión con $Device. Reintentando Flutter..."
                     & $adb connect $Device 2>$null | Out-Null
                     Start-Sleep -Seconds 2
                     continue

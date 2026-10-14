@@ -64,15 +64,26 @@ para trabajar normalmente.
 persistente. Los cambios Dart y de recursos recibidos mediante Git también
 activan su recarga automática, sin depender de guardar desde VS Code.
 
-**Depuración alternativa:** la configuración `Muondia` de F5 utiliza el
-depurador oficial Dart/Flutter únicamente si la tarea persistente está
-detenida y no queda ningún runner Flutter usando `emulator-5554`. La tarea
-previa a F5 verifica ambas condiciones y **nunca detiene la sesión de Windows**.
-Para volver al modo habitual, termina primero la depuración y vuelve a iniciar
-`AI-APPS Development`. No pueden convivir dos procesos Flutter en el mismo AVD.
+**F5 con depuración:** la configuración `Muondia` de VS Code cede
+temporalmente la sesión Flutter persistente al depurador, sin cerrar el
+emulador ni el servicio de IA. Al terminar la depuración, la tarea
+`postDebugTask` restaura `AI-APPS Development` si F5 había tomado su
+control. Nunca se ejecutan simultáneamente dos sesiones Flutter en
+`emulator-5554`. El sincronizador Git es independiente.
 
-Los cambios nativos Android, de plugins o dependencias pueden exigir
-recompilación y un reinicio controlado de la sesión, no solo Hot Reload.
+Los cambios nativos Android, plugins o dependencias provocan una nueva
+compilación Gradle desde el runner persistente, no un Hot Reload. No existe
+límite por número de reconstrucciones: solamente se limita la recuperación
+tras pérdidas reales de conexión al emulador. La vigilancia de
+`google-services.json` combina eventos de archivo y comprobación de contenido
+periódica, útil cuando Windows sustituye el fichero sin notificar el cambio.
+El arranque comprueba que Firebase corresponde a `com.aiapps.muondia`
+y verifica los clientes OAuth para Google. Un fallo de inicialización
+muestra un código de diagnóstico en Auth, sin exponer credenciales.
+
+Si VS Code se cierra de forma forzada durante una depuración, el ciclo
+normal vuelve a arrancar al iniciar Windows; en condiciones normales basta
+con detener la sesión de depuración en VS Code.
 
 ## Firebase y autenticación
 

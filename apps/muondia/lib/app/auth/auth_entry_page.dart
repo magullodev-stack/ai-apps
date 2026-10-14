@@ -78,7 +78,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
       _showMessage(
         widget.initializationError == null
             ? 'Preparando el servicio de acceso…'
-            : 'El servicio de acceso todavía no está configurado.',
+            : _initializationFailureMessage(),
       );
       return;
     }
@@ -113,6 +113,17 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
     } finally {
       if (mounted) setState(() => _providerBusy = false);
     }
+  }
+
+  String _initializationFailureMessage() {
+    final error = widget.initializationError;
+    if (error is IdentityFailure) {
+      final code = error.diagnosticCode;
+      if (code != null && code.isNotEmpty) {
+        return 'Firebase no se inició ($code). Comprueba la compilación Android.';
+      }
+    }
+    return 'Firebase no se inició. Comprueba la compilación Android.';
   }
 
   void _showMessage(String message) {
