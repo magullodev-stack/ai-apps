@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const EMBEDROID_ID = 'magullodev.ai-apps-embedroid';
 const { createExperienceExplorer } = require('./explorer.cjs');
+const { createVisualAssetInspector } = require('./asset-inspector.cjs');
 
 async function activate(context) {
   const folder = (vscode.workspace.workspaceFolders || []).find(item =>
@@ -14,6 +15,7 @@ async function activate(context) {
   const output = vscode.window.createOutputChannel('AI-APPS Android');
   const service = new Sessions(folder.uri.fsPath, new Windows(folder.uri.fsPath));
   const explorer = createExperienceExplorer(vscode, service, message => output.appendLine(message));
+  const assets = createVisualAssetInspector(vscode, service, message => output.appendLine(message));
   const changed = new vscode.EventEmitter();
   const shown = new Map();
   const disconnected = new Set();
@@ -69,6 +71,9 @@ async function activate(context) {
     const resource = muondia && (file.startsWith('apps/muondia/assets/') ||
       file === 'apps/muondia/pubspec.yaml');
     if (!source && !resource) return;
+    if (resource && file.startsWith('apps/muondia/assets/')) {
+      changed.fire();
+    }
     // El editor ya activa Hot Reload para Dart al guardar; evitamos duplicarlo.
     if (source && Date.now() - (savedInEditor.get(file) || 0) < 1500) return;
     if (resource) {
@@ -229,14 +234,26 @@ async function activate(context) {
         return explorer.provider.getChildren(parent.experienceExplorerNode)
           .map(wrapExperience);
       }
+      if (parent?.visualAssetNode) {
+        return assets.getChildren(parent.visualAssetNode).map(visualAssetNode =>
+          ({ visualAssetNode }));
+      }
       if (parent?.id && parent?.serial) {
-        return experiencesOf(parent).map(wrapExperience);
+        const experiences = experiencesOf(parent).map(wrapExperience);
+        if (parent.kind !== 'external' &&
+            assets.listVisualAssets(parent.projectPath).length) {
+          experiences.push({ visualAssetNode: assets.root(parent) });
+        }
+        return experiences;
       }
       return [];
     },
     getTreeItem(session) {
       if (session.experienceExplorerNode) {
         return explorer.provider.getTreeItem(session.experienceExplorerNode);
+      }
+      if (session.visualAssetNode) {
+        return assets.getTreeItem(session.visualAssetNode);
       }
       const hasExperiences = experiencesOf(session).length > 0;
       const item = new vscode.TreeItem(
@@ -288,6 +305,10 @@ async function activate(context) {
   command('refresh', refresh);
   command('preview', (sessionId, experience, state) =>
     explorer.open(sessionId, experience, state));
+  command('toggleVisualAsset', async (sessionId, asset) => {
+    await assets.toggle(sessionId, asset);
+    changed.fire();
+  });
   command('auth', async () => {
     // Entregar la orden a la Activity de Muondia directamente: el visor
     // EmbeDroid y Android pueden filtrar F7 como evento de teclado.

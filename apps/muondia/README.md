@@ -160,3 +160,7 @@ El segundo invoca `tool/verify_onboarding_pipeline.dart`: audita
 la producción real de las diez preguntas sin crear una modalidad nueva.
 Los experimentos históricos de modelos se conservan como evidencias de
 desarrollo, no como funciones del producto.
+
+## Capas e imágenes (debug)
+
+El inspector visual compartido de AI-APPS aparece en **AI-APPS Android → Muondia → Capas e imágenes**. Enumera automáticamente los recursos de `assets/` (no solo Auth). Pulsa `Estrellas.png`, `Esferas.png` o cualquier otra imagen para ocultarla o restaurarla en la vista del emulador sin modificar archivos. El scope Flutter está en `MaterialApp.builder` y el canal de desarrollo lo atiende `MainActivity` desde el intent debug `com.aiapps.muondia.DEV_ASSET_VISIBILITY`. Se conserva la sesión de Google y no se inicia generación de IA. La visibilidad se restablece al reiniciar Flutter; no se guardan cambios en producción.

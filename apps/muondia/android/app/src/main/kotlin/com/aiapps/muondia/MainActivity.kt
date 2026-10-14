@@ -24,6 +24,19 @@ class MainActivity : FlutterActivity() {
                     "state" to intent.getStringExtra("state")
                 )
             }
+            "com.aiapps.muondia.DEV_ASSET_VISIBILITY" -> {
+                val asset = intent.getStringExtra("asset") ?: return
+                // El host Android no permite rutas fuera del bundle.
+                if (!asset.startsWith("assets/") || asset.contains("..")) return
+                flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+                    MethodChannel(messenger, "ai_apps/visual_inspector").invokeMethod(
+                        "setAssetVisibility",
+                        mapOf("asset" to asset,
+                              "visible" to intent.getBooleanExtra("visible", true))
+                    )
+                }
+                return
+            }
             else -> return
         }
         flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->

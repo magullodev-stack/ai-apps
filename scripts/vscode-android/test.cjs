@@ -101,9 +101,17 @@ async function run() {
     vscode.TreeItemCollapsibleState.Expanded,
     'Muondia itself is the experience explorer');
   const content = treeProvider.getChildren(roots[0]);
-  assert.deepEqual(Array.from(content, entry => entry.experienceExplorerNode.label),
+  assert.deepEqual(Array.from(content.filter(item => item.experienceExplorerNode),
+    entry => entry.experienceExplorerNode.label),
     ['Auth', 'Primera experiencia', 'Home'],
     'Singleton groups are flattened');
+  const layers = content.find(item => item.visualAssetNode);
+  assert.ok(layers, 'Shared visual inspector is present under the app');
+  assert.equal(treeProvider.getTreeItem(layers).label, 'Capas e imágenes');
+  const layerFolders = treeProvider.getChildren(layers);
+  assert.ok(layerFolders.some(item =>
+    item.visualAssetNode.folderPath === 'assets/auth'),
+    'Asset folders are discovered without screen-specific configuration');
   const firstExperience = treeProvider.getChildren(content[1]);
   assert.deepEqual(Array.from(firstExperience, entry => entry.experienceExplorerNode.label),
     ['Loading del robot', 'Test de bienvenida']);
@@ -128,6 +136,19 @@ async function run() {
   await commands.get(authCommand.command)(...authCommand.arguments);
   assert.ok(calls.at(-1).includes('auth'),
     'Auth is a single-click destination without an extra folder');
+  calls.pop();
+  const authAssets = layerFolders.find(item =>
+    item.visualAssetNode.folderPath === 'assets/auth');
+  const fileNodes = treeProvider.getChildren(authAssets);
+  const stars = fileNodes.find(item =>
+    item.visualAssetNode.asset === 'assets/auth/Estrellas.png');
+  assert.ok(stars, 'Auth stars are discoverable');
+  const hide = treeProvider.getTreeItem(stars).command;
+  await commands.get(hide.command)(...hide.arguments);
+  assert.ok(calls.at(-1).includes('com.aiapps.muondia.DEV_ASSET_VISIBILITY'),
+    'Inspector uses debug intent to toggle a resource');
+  assert.ok(calls.at(-1).includes('false'));
+  assert.equal(treeProvider.getTreeItem(stars).description, 'Oculta');
   calls.pop();
   // All registered laboratories remain accessible by management commands,
   // even though their nodes are absent from the everyday explorer.

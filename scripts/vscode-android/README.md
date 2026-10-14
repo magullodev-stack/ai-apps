@@ -149,3 +149,11 @@ debe confirmar `streaming h264` y `streaming established on attempt 1`.
    conservan sus procesos y que `dev-session.log` no registra otra compilación.
 
 No uses **Stop Device**, **Boot** ni **Cold Boot** para reparar el visor.
+
+## Inspector visual reutilizable
+
+En cada aplicación Flutter activa con catálogo de experiencias y recursos en `assets/`, el mismo árbol muestra **Capas e imágenes**. Las carpetas y los archivos PNG, JPG y WebP se descubren automáticamente; no hay listas particulares de Auth ni de ninguna otra pantalla. Haz clic en una imagen para ocultarla o volver a mostrarla en el emulador. La herramienta no edita ni elimina recursos, y no ejecuta la IA.
+
+La capacidad Flutter vive en `shared/ui/lib/src/development/visual_asset_inspector.dart` y se instala una vez por aplicación con `AiAppsVisualAssetScope` alrededor del contenido de `MaterialApp.builder` y `AiAppsVisualAssetController.connectDebugChannel()`. El host Android de esa aplicación reenvía el intent `<applicationId>.DEV_ASSET_VISIBILITY` al canal `ai_apps/visual_inspector` solo en compilaciones debug. Muondia es la primera integración. Los recursos usados con `rootBundle` explícito, plugins externos o imágenes de red no atraviesan `DefaultAssetBundle` y requieren adaptadores específicos; por eso el alcance garantizado es `Image.asset` / `AssetImage` que usan el bundle normal de Flutter. Las preferencias son temporales durante la sesión y se restablecen en un reinicio de Flutter.
+
+Prueba del explorador: `node scripts/vscode-android/asset-inspector.test.cjs`. Prueba Flutter: `flutter test test/visual_asset_inspector_test.dart` desde `shared/ui/`.

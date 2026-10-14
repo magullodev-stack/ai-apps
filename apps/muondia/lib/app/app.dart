@@ -1,4 +1,5 @@
 import 'package:ai_apps_identity/ai_apps_identity.dart';
+import 'package:ai_apps_ui/ai_apps_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,6 +37,8 @@ class _MuondiaAppState extends State<MuondiaApp> {
   late final OnboardingCompletionStore _onboardingStore =
       widget.onboardingStore ?? LocalOnboardingCompletionStore();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final AiAppsVisualAssetController _assetInspector =
+      AiAppsVisualAssetController();
   static const MethodChannel _devChannel = MethodChannel('muondia/development');
   final ValueNotifier<({String experience, String state, int revision})?>
       _selectedPreview = ValueNotifier(null);
@@ -60,6 +63,7 @@ class _MuondiaAppState extends State<MuondiaApp> {
       );
     }
     if (kDebugMode) {
+      _assetInspector.connectDebugChannel();
       _devChannel.setMethodCallHandler((call) async {
         if (!mounted) return;
         if (call.method == 'showAuth') {
@@ -97,6 +101,7 @@ class _MuondiaAppState extends State<MuondiaApp> {
   void dispose() {
     if (kDebugMode) _devChannel.setMethodCallHandler(null);
     _selectedPreview.dispose();
+    _assetInspector.dispose();
     super.dispose();
   }
 
@@ -143,13 +148,18 @@ class _MuondiaAppState extends State<MuondiaApp> {
   @override
   Widget build(BuildContext context) => MaterialApp(
     navigatorKey: _navigatorKey,
-    builder: (context, child) => kDebugMode
-        ? Focus(
-            autofocus: true,
-            onKeyEvent: _developmentKey,
-            child: child ?? const SizedBox.shrink(),
-          )
-        : child ?? const SizedBox.shrink(),
+    builder: (context, child) {
+      final content = child ?? const SizedBox.shrink();
+      if (!kDebugMode) return content;
+      return AiAppsVisualAssetScope(
+        controller: _assetInspector,
+        child: Focus(
+          autofocus: true,
+          onKeyEvent: _developmentKey,
+          child: content,
+        ),
+      );
+    },
     title: 'Muondia',
     debugShowCheckedModeBanner: false,
     theme: muondiaTheme,

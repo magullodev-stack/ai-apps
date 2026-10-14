@@ -12,6 +12,10 @@
                 <action android:name="com.aiapps.muondia.DEV_OPEN_EXPERIENCE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.aiapps.muondia.DEV_ASSET_VISIBILITY"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
     </application>
 </manifest>
