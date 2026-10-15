@@ -22,7 +22,11 @@ function readCatalog(session) {
   // No pueden solaparse: ocultar, sustituir o eliminar un recurso no
   // debe afectar accidentalmente a otra experiencia.
   const assetDirectories = [];
-  const directoryPattern = /^assets(?:\/[a-zA-Z0-9_-]+)+$/;
+  const isAssetDirectory = dir => typeof dir === 'string' &&
+    dir.split('/').length >= 2 && dir.startsWith('assets/') &&
+    dir.split('/').slice(1).every(part => part &&
+      part !== '.' && part !== '..' && !part.startsWith('.') &&
+      !/[\\:*?"<>|\x00-\x1f]/.test(part));
   for (const item of doc.experiences) {
     if (!ID.test(item.id) || ids.has(item.id) ||
         typeof item.label !== 'string' || !item.label.trim() ||
@@ -33,8 +37,7 @@ function readCatalog(session) {
     ids.add(item.id);
     if (item.assetDirectories !== undefined &&
         (!Array.isArray(item.assetDirectories) ||
-          item.assetDirectories.some(dir => typeof dir !== 'string' ||
-            !directoryPattern.test(dir)))) {
+          item.assetDirectories.some(dir => !isAssetDirectory(dir)))) {
       throw new Error('Carpetas visuales inválidas: ' + file);
     }
     for (const dir of item.assetDirectories || []) {

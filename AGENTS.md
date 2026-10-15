@@ -66,3 +66,16 @@ clicables para abrir preview y ahora también desplegables para sus imágenes.
 Loading muestra sus estados e imágenes como hijos de la misma experiencia.
 Las operaciones existentes (ojo, sustituir, eliminar de forma segura)
 continúan aplicándose a los archivos originales.
+
+El explorador sincroniza la UI con el repositorio de cada app: descubre
+altas/bajas/cambios en directorios declarados y lee literales Dart para
+mostrar un ojo solo en imágenes referenciadas, o `⏳ Pendiente` en recursos
+sin referencia directa. El índice compartido se implementa en
+`scripts/vscode-android/visual-source-index.cjs`; la extensión escucha
+eventos de archivos y compara firmas de assets/Dart cada cinco segundos.
+Los renombres hechos mediante el menú de imagen o el Explorador de archivos
+de VS Code actualizan las referencias Dart, marcas de capa, pubspec y las
+carpetas declaradas en el catálogo cuando proceda, mediante
+`scripts/vscode-android/visual-renames.cjs`. No inferir ni refactorizar
+automáticamente carpetas renombradas externamente sin un evento de renombre
+identificable; evitar asociaciones ambiguas entre pantallas.

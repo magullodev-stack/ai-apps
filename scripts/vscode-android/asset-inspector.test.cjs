@@ -16,6 +16,10 @@ async function main() {
     fs.writeFileSync(path.join(dir, 'Esferas.png'), 'dummy');
     fs.writeFileSync(path.join(dir, 'readme.txt'), 'not an image');
     fs.mkdirSync(path.join(base, 'lib', 'app', 'development'), {recursive: true});
+    fs.writeFileSync(path.join(base, 'lib', 'app', 'auth.dart'), [
+      "Image.asset('assets/auth/Estrellas.png');",
+      "Image.asset('assets/auth/Esferas.png');",
+    ].join('\n') + '\n');
     fs.writeFileSync(path.join(base, 'lib', 'app', 'development', 'experiences.json'),
       JSON.stringify({version: 1, activity:'com.aiapps.muondia/.MainActivity',
         experiences:[{id:'auth', label:'Auth',group:'Acceso',
@@ -35,6 +39,8 @@ async function main() {
     const inspector = createVisualAssetInspector(vscode,svc,()=>{});
     assert.deepEqual(listVisualAssets(base),
       ['assets/auth/Esferas.png','assets/auth/Estrellas.png']);
+    assert.equal(inspector.refresh([session]),true);
+    assert.equal(inspector.refresh([session]),false);
     const images = inspector.forExperience(session,
       {id:'auth',assetDirectories:['assets/auth']});
     assert.equal(images.length,2);
@@ -59,11 +65,29 @@ async function main() {
     await inspector.toggle(session.id,stars.asset);
     assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetVisible');
     assert.equal(calls.at(-1)[1].at(-1),'true');
+    fs.writeFileSync(path.join(dir, 'Luna.png'), 'dummy');
+    assert.equal(inspector.refresh([session]),true,
+      'New files invalidate the tree snapshot');
+    const pending = inspector.forExperience(session,
+      {id:'auth',assetDirectories:['assets/auth']})
+      .find(item=>item.asset.endsWith('Luna.png'));
+    assert.equal(inspector.getTreeItem(pending).contextValue,'visualAssetPending');
+    assert.equal(inspector.getTreeItem(pending).description,'⏳ Pendiente');
+    await assert.rejects(inspector.toggle(session.id,pending.asset),/pendiente/);
+    fs.appendFileSync(path.join(base, 'lib', 'app', 'auth.dart'),
+      "Image.asset('assets/auth/Luna.png');\n");
+    assert.equal(inspector.refresh([session]),true,
+      'Changes in Dart also invalidate the UI view');
+    const placed = inspector.forExperience(session,
+      {id:'auth',assetDirectories:['assets/auth']})
+      .find(item=>item.asset.endsWith('Luna.png'));
+    assert.equal(inspector.getTreeItem(placed).contextValue,'visualAssetVisible',
+      'Pending becomes visible as soon as Dart references the image');
     await assert.rejects(
       inspector.toggle(session.id,'../../secret.png'),/no disponible/);
     fs.unlinkSync(path.join(dir,'Estrellas.png'));
     assert.equal(inspector.forExperience(session,
-      {id:'auth',assetDirectories:['assets/auth']}).length,1);
+      {id:'auth',assetDirectories:['assets/auth']}).length,2);
     await assert.rejects(inspector.toggle(session.id,stars.asset),/no disponible/);
     console.log('PASS: descubrimiento de PNG, visibilidad reversible y ADB validado');
   } finally {

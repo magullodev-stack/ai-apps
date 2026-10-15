@@ -103,6 +103,21 @@
         "title": "Eliminar imagen…",
         "category": "AI-APPS Android",
         "icon": "$(trash)"
+      },
+      {
+        "command": "aiAppsAndroid.pendingVisualAsset",
+        "title": "⏳ Pendiente de colocar",
+        "category": "AI-APPS Android",
+        "icon": {
+          "light": "media/hourglass-light.svg",
+          "dark": "media/hourglass-dark.svg"
+        }
+      },
+      {
+        "command": "aiAppsAndroid.renameVisualAsset",
+        "title": "Cambiar nombre de imagen…",
+        "category": "AI-APPS Android",
+        "icon": "$(edit)"
       }
     ],
     "views": {
@@ -164,13 +179,23 @@
         },
         {
           "command": "aiAppsAndroid.replaceVisualAsset",
-          "when": "view == aiAppsAndroid.sessions && (viewItem == visualAssetVisible || viewItem == visualAssetHidden)",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == visualAssetVisible || viewItem == visualAssetHidden || viewItem == visualAssetPending)",
           "group": "navigation@1"
         },
         {
           "command": "aiAppsAndroid.deleteVisualAsset",
-          "when": "view == aiAppsAndroid.sessions && (viewItem == visualAssetVisible || viewItem == visualAssetHidden)",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == visualAssetVisible || viewItem == visualAssetHidden || viewItem == visualAssetPending)",
           "group": "navigation@2"
+        },
+        {
+          "command": "aiAppsAndroid.pendingVisualAsset",
+          "when": "view == aiAppsAndroid.sessions && viewItem == visualAssetPending",
+          "group": "inline@1"
+        },
+        {
+          "command": "aiAppsAndroid.renameVisualAsset",
+          "when": "view == aiAppsAndroid.sessions && (viewItem == visualAssetVisible || viewItem == visualAssetHidden || viewItem == visualAssetPending)",
+          "group": "navigation@0"
         }
       ]
     },

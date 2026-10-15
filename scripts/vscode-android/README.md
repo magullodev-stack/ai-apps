@@ -234,3 +234,53 @@ actualizar también el manifiesto instalado.
 Pruebas: `node scripts/vscode-android/asset-actions.test.cjs`,
 `node scripts/vscode-android/asset-inspector.test.cjs`,
 `node scripts/vscode-android/test.cjs`.
+
+
+## Repositorio y UI sincronizados
+
+El explorador es una vista de la UI y los archivos originales, no una lista
+paralela de imágenes. Cada PNG/JPG/WebP descubierto bajo el directorio de su
+pantalla aparece automáticamente, sin registrarlo por nombre.
+
+**Estado de la imagen** (detectado al examinar los literales de recursos en
+`lib/**/*.dart`, ignorando comentarios de código):
+
+- Ojo abierto: hay una referencia directa en Dart y la capa está visible.
+- Ojo tachado: hay una referencia directa y se ha ocultado temporalmente.
+- **⏳ Pendiente**: existe el archivo, pero no hay una referencia Dart directa.
+  En lugar del ojo aparece el indicador de espera: todavía no existe una
+  capa que se pueda ocultar. Pulsarlo explica cómo colocarla.
+
+Los recursos con rutas generadas dinámicamente no se pueden verificar
+estáticamente: se muestran como pendientes, no como colocados sin pruebas.
+Los archivos pendientes se pueden renombrar, sustituir o eliminar sin
+modificar Dart (confirmando antes de eliminarlos).
+
+**Altas, bajas y cambios externos.** Los eventos de archivos del proyecto
+actualizan el árbol sin intervención manual. Un segundo mecanismo revisa el
+contenido de las carpetas y la firma de los archivos Dart cada cinco segundos
+como respaldo para sincronizaciones Git y operaciones fuera de VS Code.
+El mecanismo de revisión es compartido por todas las aplicaciones Flutter
+registradas. No reinicia la tarea de desarrollo ni el emulador.
+
+**Cambios de nombre.** «Cambiar nombre de imagen…» está en el menú contextual
+del inspector y actualiza el PNG y las referencias Dart y de `pubspec.yaml`
+en una misma edición. Si renombras desde el **Explorador de archivos de
+VS Code**, se aplica el mismo mecanismo para imágenes y carpetas:
+también se actualiza `assetDirectories` en `experiences.json` cuando
+cambia el nombre de una carpeta. Esta operación está limitada a
+**renombrar dentro de su directorio padre**, sin trasladar recursos a otra
+pantalla. Se detiene ante documentos con cambios sin guardar o destinos
+ocupados.
+
+**Precaución:** si renombras una carpeta físicamente mediante PowerShell,
+Windows Explorer o Git mientras VS Code no participa en la operación, el
+sistema puede detectar la nueva ruta pero no siempre demostrar qué pantalla
+era su propietaria. No reescribe Dart ni adivina la propiedad de esa carpeta:
+para conservar los enlaces automáticamente, renómbrala en VS Code. Cambiar
+externamente el nombre de una imagen dentro de su carpeta sí actualiza la
+lista, pero la referencia Dart antigua queda sin resolver hasta corregirla.
+
+Pruebas complementarias:
+`node scripts/vscode-android/visual-source-index.test.cjs`,
+`node scripts/vscode-android/visual-renames.test.cjs`.

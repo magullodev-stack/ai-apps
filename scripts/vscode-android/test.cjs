@@ -7,7 +7,7 @@ fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
 fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Test');
 fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
-let treeProvider, taskRunning = true;
+let treeProvider, taskRunning = true, onWillRenameFiles;
 let entries = [
   { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100',
     projectPath: path.resolve(__dirname, '../../apps/muondia'), packageName: 'com.aiapps.muondia' }
@@ -25,10 +25,25 @@ const viewer = { async openSession(session, reconnect) {
 const disposable = () => ({ dispose() {} });
 const vscode = {
   workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: root } }],
-    getConfiguration: () => ({ update: async () => {} }) },
+    getConfiguration: () => ({ update: async () => {} }),
+    onWillRenameFiles: handler => {
+      onWillRenameFiles = handler;
+      return disposable();
+    },
+    openTextDocument: async uri => {
+      const text = fs.readFileSync(uri.fsPath, 'utf8');
+      return {uri, isDirty: false, getText: () => text,
+        positionAt: offset => offset};
+    } },
   ConfigurationTarget: { Workspace: 2 }, StatusBarAlignment: { Left: 1 },
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
   TreeItem: class { constructor(label) { this.label = label; } }, ThemeIcon: class {},
+  Uri: {file:fsPath => ({fsPath})},
+  Range: class {constructor(start, end) {this.start=start;this.end=end;}},
+  WorkspaceEdit: class {
+    constructor() {this.replacements=[];}
+    replace(uri, range, value) {this.replacements.push({uri,range,value});}
+  },
   EventEmitter: class {
     constructor() {
       this.listeners = [];
@@ -78,13 +93,43 @@ async function run() {
     ['hideVisualAsset', 'visualAssetVisible', 'inline@1'],
     ['showVisualAsset', 'visualAssetHidden', 'inline@1'],
     ['replaceVisualAsset', 'visualAssetVisible', 'navigation@1'],
-    ['deleteVisualAsset', 'visualAssetHidden', 'navigation@2'],
+    ['deleteVisualAsset', 'visualAssetPending', 'navigation@2'],
+    ['renameVisualAsset', 'visualAssetPending', 'navigation@0'],
+    ['pendingVisualAsset', 'visualAssetPending', 'inline@1'],
   ]) {
     assert.ok(menus.some(menu =>
       menu.command === 'aiAppsAndroid.' + command &&
       menu.when.includes(context) && menu.group === group),
     'The installed manifest must expose the native visual resource action: ' + command);
   }
+  assert.equal(typeof onWillRenameFiles, 'function',
+    'A VS Code rename hook must keep Dart and assets in sync');
+  const rename = async (oldName, newName) => {
+    let awaited;
+    onWillRenameFiles({
+      files: [{
+        oldUri:{fsPath:path.resolve(__dirname,'../../apps/muondia',oldName)},
+        newUri:{fsPath:path.resolve(__dirname,'../../apps/muondia',newName)}
+      }],
+      waitUntil(promise) {awaited=promise;},
+    });
+    return awaited;
+  };
+  const renameImageEdit = await rename(
+    'assets/auth/Estrellas.png','assets/auth/Nova.png');
+  assert.ok(renameImageEdit.replacements.some(item =>
+    item.uri.fsPath.endsWith('auth_entry_page.dart') &&
+    item.value.includes('assets/auth/Nova.png')),
+    'Renaming an image through VS Code must rewrite the Dart widget');
+  const renameFolderEdit = await rename('assets/auth','assets/access');
+  assert.ok(renameFolderEdit.replacements.some(item =>
+    item.uri.fsPath.endsWith('experiences.json') &&
+    item.value.includes('"assets/access"')),
+    'Renaming an asset folder must update UI ownership');
+  assert.ok(renameFolderEdit.replacements.some(item =>
+    item.uri.fsPath.endsWith('pubspec.yaml') &&
+    item.value.includes('assets/access/')),
+    'Flutter assets must remain registered after the folder rename');
   assert.equal(panels.size, 1, 'Startup restores only the registered Muondia session');
   assert.equal(panels.has('muondia@emulator-5554'), true);
   assert.equal(treeProvider.getTreeItem({ ...entries[0], active: false, status: 'starting' }).contextValue,
@@ -169,13 +214,23 @@ async function run() {
   const stars = authImages.find(item =>
     item.visualAssetNode.asset === 'assets/auth/Estrellas.png');
   assert.ok(stars, 'Auth stars are discoverable');
-  const hide = treeProvider.getTreeItem(stars).command;
-  await commands.get(hide.command)(...hide.arguments);
+  assert.equal(treeProvider.getTreeItem(stars).contextValue,'visualAssetVisible');
+  assert.equal(treeProvider.getTreeItem(stars).command.command,'vscode.open');
+  await commands.get('aiAppsAndroid.hideVisualAsset')(stars);
   assert.ok(calls.at(-1).includes('com.aiapps.muondia.DEV_ASSET_VISIBILITY'),
     'Inspector uses debug intent to toggle a resource');
   assert.ok(calls.at(-1).includes('false'));
   assert.equal(treeProvider.getTreeItem(stars).description, 'Oculta');
   calls.pop();
+  await commands.get('aiAppsAndroid.showVisualAsset')(stars);
+  assert.equal(treeProvider.getTreeItem(stars).contextValue,'visualAssetVisible');
+  calls.pop();
+  const unused = authImages.find(item =>
+    item.visualAssetNode.asset === 'assets/auth/Muondia_Auth_Google_ICON.png');
+  assert.ok(unused, 'All PNGs remain discoverable');
+  // Actual AuthProviderButton embeds its icon in a different Dart file,
+  // so reference indexing must scan the whole application.
+  assert.equal(treeProvider.getTreeItem(unused).contextValue,'visualAssetVisible');
   // All registered laboratories remain accessible by management commands,
   // even though their nodes are absent from the everyday explorer.
   assert.equal((await api.list()).length, 7);

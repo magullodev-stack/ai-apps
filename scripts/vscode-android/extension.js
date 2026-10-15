@@ -4,6 +4,7 @@ const path = require('node:path');
 const EMBEDROID_ID = 'magullodev.ai-apps-embedroid';
 const { createExperienceExplorer } = require('./explorer.cjs');
 const { createVisualAssetInspector } = require('./asset-inspector.cjs');
+const { planVisualRenames } = require('./visual-renames.cjs');
 
 async function activate(context) {
   const folder = (vscode.workspace.workspaceFolders || []).find(item =>
@@ -62,34 +63,37 @@ async function activate(context) {
   }
   function changedFile(uri, event = 'change') {
     const file = relativeFile(uri);
-    const muondia = file.startsWith('apps/muondia/');
-    const shared = file.startsWith('shared/') || file.startsWith('ai/flutter_client/');
-    if (!muondia && !shared) return;
+    const shared = file.startsWith('shared/') ||
+      file.startsWith('ai/flutter_client/');
     if (file.includes('/build/') || file.includes('/.dart_tool/') ||
         file.includes('/.git/') || file.includes('/node_modules/')) return;
-    const source = file.endsWith('.dart');
-    const resource = muondia && (file.startsWith('apps/muondia/assets/') ||
-      file === 'apps/muondia/pubspec.yaml');
-    if (!source && !resource) return;
-    if (resource && file.startsWith('apps/muondia/assets/')) {
-      changed.fire();
-    }
-    // El editor ya activa Hot Reload para Dart al guardar; evitamos duplicarlo.
+    // Support all registered Flutter apps, not only Muondia.
+    const appFile = sessions.map(session => ({
+      session, local: session.projectPath
+        ? path.relative(session.projectPath, uri.fsPath).replace(/\\/g, '/')
+        : '',
+    })).find(({local,session}) => session.kind !== 'external' &&
+      local && !local.startsWith('../') && !path.isAbsolute(local));
+    const local = appFile?.local || '';
+    const source = file.endsWith('.dart') &&
+      (shared || local.startsWith('lib/'));
+    const resource = !!appFile &&
+      (local.startsWith('assets/') || local === 'pubspec.yaml');
+    const catalog = local === 'lib/app/development/experiences.json';
+    if (!source && !resource && !catalog) return;
+    // UI changes must appear as soon as the filesystem event is delivered.
+    changed.fire();
     if (source && Date.now() - (savedInEditor.get(file) || 0) < 1500) return;
     if (resource) {
-      if (event !== 'change' || file.endsWith('/pubspec.yaml')) {
+      if (event !== 'change' || local === 'pubspec.yaml') {
         pendingBundleChange = true;
-      } else {
-        pendingResourceChange = true;
-      }
-    } else {
-      pendingSourceChange = true;
-    }
+      } else pendingResourceChange = true;
+    } else pendingSourceChange = true;
     clearTimeout(updateTimer);
     updateTimer = setTimeout(() => void updateFlutter(), 900);
   }
   const watchPatterns = [
-    'apps/muondia/**/*',
+    'apps/**/*',
     'shared/**/*',
     'ai/flutter_client/**/*',
   ];
@@ -104,6 +108,56 @@ async function activate(context) {
       context.subscriptions.push(watcher);
     }
   }
+  // Renaming in VS Code's file explorer updates the source of truth
+  // together: Dart literals, visual ownership markers, pubspec and the
+  // catalog's directory association. External git/filesystem renames are
+  // still mirrored by the resource snapshot; their code needs explicit care.
+  const renameDocumentsToSave = new Map();
+  if (vscode.workspace.onWillRenameFiles) {
+    context.subscriptions.push(vscode.workspace.onWillRenameFiles(event => {
+      if (assets.isManagedRename()) return;
+      const proposed = (async () => {
+        const edit = new vscode.WorkspaceEdit();
+        const planned = new Map();
+        for (const session of sessions) {
+          if (!session.projectPath || session.kind === 'external') continue;
+          for (const item of planVisualRenames(session, event.files)) {
+            if (planned.has(item.filename)) {
+              throw new Error('El mismo archivo pertenece a dos aplicaciones.');
+            }
+            planned.set(item.filename, item);
+          }
+        }
+        if (!planned.size) return undefined;
+        const modified = [];
+        for (const item of planned.values()) {
+          const uri = vscode.Uri.file(item.filename);
+          const doc = await vscode.workspace.openTextDocument(uri);
+          if (doc.isDirty || doc.getText() !== item.original) {
+            throw new Error('Guarda ' + path.basename(item.filename) +
+              ' antes de renombrar recursos visuales.');
+          }
+          edit.replace(uri, new vscode.Range(
+            doc.positionAt(0), doc.positionAt(item.original.length)),
+            item.updated);
+          modified.push(doc);
+        }
+        for (const doc of modified) renameDocumentsToSave.set(doc.uri.fsPath, doc);
+        return edit;
+      })();
+      event.waitUntil(proposed);
+    }));
+  }
+  if (vscode.workspace.onDidRenameFiles) {
+    context.subscriptions.push(vscode.workspace.onDidRenameFiles(() => {
+      changed.fire();
+      for (const doc of renameDocumentsToSave.values()) {
+        Promise.resolve(doc.save()).catch(report);
+      }
+      renameDocumentsToSave.clear();
+    }));
+  }
+
   if (vscode.workspace.onDidSaveTextDocument) {
     context.subscriptions.push(
       vscode.workspace.onDidSaveTextDocument(document => {
@@ -154,7 +208,9 @@ async function activate(context) {
         session.projectPath, session.packageName, session.kind,
       ]));
       const catalogChanged = explorer.refresh(sessions);
-      if (lastTreeSnapshot !== currentTreeSnapshot || catalogChanged) {
+      const visualChanged = assets.refresh(sessions);
+      if (lastTreeSnapshot !== currentTreeSnapshot ||
+          catalogChanged || visualChanged) {
         lastTreeSnapshot = currentTreeSnapshot;
         changed.fire();
       }
@@ -335,6 +391,10 @@ async function activate(context) {
   command('replaceVisualAsset', async node => {
     if (await assets.replaceImage(node)) changed.fire();
   });
+  command('renameVisualAsset', async node => {
+    if (await assets.renameImage(node)) changed.fire();
+  });
+  command('pendingVisualAsset', node => assets.pendingInfo(node));
   command('deleteVisualAsset', async node => {
     if (await assets.deleteImage(node)) changed.fire();
   });

@@ -53,6 +53,10 @@ async function main(){
   catalog.experiences[0].assetDirectories=['assets/../auth'];
   fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
   assert.throws(()=>readCatalog(session),/Carpetas visuales inválidas/);
+  catalog.experiences[0].assetDirectories=['assets/Autenticación nueva'];
+  fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
+  assert.deepEqual(readCatalog(session).experiences[0].assetDirectories,
+    ['assets/Autenticación nueva'], 'Renamed paths may contain Unicode and spaces');
   catalog.experiences[0].assetDirectories=['assets/auth'];
   catalog.experiences[0].id='auth; reboot';
   fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
