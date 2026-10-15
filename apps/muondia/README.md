@@ -2,11 +2,9 @@
 
 ## Explorador de experiencias de desarrollo
 
-En **Auth de previsualización** (debug) aparece el control **«Capas»**.
-Permite ocultar o mostrar **Estrellas** y **Esferas** de forma independiente
-e inmediata, sin borrar archivos, alterar imágenes ni consumir tokens.
-La decisión es temporal: al volver a abrir Auth se recuperan ambas capas.
-No aparece en release ni en el acceso normal de los usuarios.
+La interfaz visual de Auth se gestiona desde el explorador **AI-APPS Android**
+en VS Code, sin paneles de capas duplicados en Flutter. Cada imagen tiene
+un ojo reversible y acciones de sustitución y borrado seguro.
 
 En VS Code, expande «Explorador de experiencias» dentro de la vista existente «AI-APPS Android» para abrir directamente Auth, Loading, Test de bienvenida y Home. El catálogo está en `lib/app/development/experiences.json` y las previews en `lib/app/development/experience_preview.dart`. Se reutilizan los widgets reales.
 
@@ -43,8 +41,9 @@ progreso, se realizará el recorrido allí también.
 
 ## Identidad visual
 
-La entrada monta cuatro capas de `assets/auth/`: `Background.png`,
-`Estrellas.png`, `Esferas.png` y `Robot.png`, con parallax suave.
+La entrada utiliza `Background.png` y `Robot.png` de `assets/auth/`,
+con un movimiento suave del robot. El logo y el icono de Google se
+mantienen como recursos independientes.
 Las capas respetan las áreas seguras; las barras nativas Android son negras.
 Sobre la bienvenida se muestra el PNG original
 `assets/auth/Logotipo_MuondIA.png`, centrado y sin alterar su proporción.
@@ -163,4 +162,4 @@ desarrollo, no como funciones del producto.
 
 ## Capas e imágenes (debug)
 
-En el explorador **AI-APPS Android**, abre **Muondia → Auth** para ver sus imágenes directamente bajo la pantalla (Background, Estrellas, Esferas, Robot, logotipo e icono de Google). **Home** y **Loading del robot** muestran las suyas del mismo modo, sin carpeta intermedia. Usa el ojo situado a la derecha para ocultar o mostrar, o el botón derecho para sustituir o eliminar. La eliminación de código solo está disponible cuando la capa está identificada de forma segura. Las relaciones pantalla/carpeta se declaran en `lib/app/development/experiences.json` con `assetDirectories`. La visibilidad se restablece al reiniciar Flutter; el inspector no se incorpora a release ni genera llamadas a IA.
+En el explorador **AI-APPS Android**, abre **Muondia → Auth** para ver sus imágenes directamente bajo la pantalla (Background, Robot, logotipo e icono de Google). **Home** y **Loading del robot** muestran las suyas del mismo modo, sin carpeta intermedia. Usa el ojo situado a la derecha para ocultar o mostrar, o el botón derecho para sustituir o eliminar. La eliminación de código solo está disponible cuando la capa está identificada de forma segura. Las relaciones pantalla/carpeta se declaran en `lib/app/development/experiences.json` con `assetDirectories`. La visibilidad se restablece al reiniciar Flutter; el inspector no se incorpora a release ni genera llamadas a IA.

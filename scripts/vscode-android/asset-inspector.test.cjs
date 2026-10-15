@@ -12,13 +12,13 @@ async function main() {
     const dir = path.join(base, 'assets', 'auth');
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(base, 'pubspec.yaml'), 'name: test\n');
-    fs.writeFileSync(path.join(dir, 'Estrellas.png'), 'dummy');
-    fs.writeFileSync(path.join(dir, 'Esferas.png'), 'dummy');
+    fs.writeFileSync(path.join(dir, 'Layer.png'), 'dummy');
+    fs.writeFileSync(path.join(dir, 'Overlay.png'), 'dummy');
     fs.writeFileSync(path.join(dir, 'readme.txt'), 'not an image');
     fs.mkdirSync(path.join(base, 'lib', 'app', 'development'), {recursive: true});
     fs.writeFileSync(path.join(base, 'lib', 'app', 'auth.dart'), [
-      "Image.asset('assets/auth/Estrellas.png');",
-      "Image.asset('assets/auth/Esferas.png');",
+      "Image.asset('assets/auth/Layer.png');",
+      "Image.asset('assets/auth/Overlay.png');",
     ].join('\n') + '\n');
     fs.writeFileSync(path.join(base, 'lib', 'app', 'development', 'experiences.json'),
       JSON.stringify({version: 1, activity:'com.aiapps.muondia/.MainActivity',
@@ -38,7 +38,7 @@ async function main() {
     TreeItemCollapsibleState:{Collapsed:1,None:0}};
     const inspector = createVisualAssetInspector(vscode,svc,()=>{});
     assert.deepEqual(listVisualAssets(base),
-      ['assets/auth/Esferas.png','assets/auth/Estrellas.png']);
+      ['assets/auth/Layer.png','assets/auth/Overlay.png']);
     assert.equal(inspector.refresh([session]),true);
     assert.equal(inspector.refresh([session]),false);
     const images = inspector.forExperience(session,
@@ -50,7 +50,7 @@ async function main() {
       {id:'test',assetDirectories:[]}).length,0);
     assert.deepEqual(images.map(item=>item.kind),
       ['visualAsset','visualAsset'], 'Images belong directly to their UI screen');
-    const stars = images.find(i=>i.asset.endsWith('Estrellas.png'));
+    const stars = images.find(i=>i.asset.endsWith('Layer.png'));
     assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetVisible');
     await inspector.toggle(session.id,stars.asset);
     assert.equal(inspector.getTreeItem(stars).description,'Oculta');
@@ -60,7 +60,7 @@ async function main() {
       '-s','emulator-5554','shell','am','start',
       '-n','com.aiapps.muondia/.MainActivity',
       '-a','com.aiapps.muondia.DEV_ASSET_VISIBILITY',
-      '-f','0x20000000','--es','asset','assets/auth/Estrellas.png',
+      '-f','0x20000000','--es','asset','assets/auth/Layer.png',
       '--ez','visible','false']]);
     await inspector.toggle(session.id,stars.asset);
     assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetVisible');
@@ -85,7 +85,7 @@ async function main() {
       'Pending becomes visible as soon as Dart references the image');
     await assert.rejects(
       inspector.toggle(session.id,'../../secret.png'),/no disponible/);
-    fs.unlinkSync(path.join(dir,'Estrellas.png'));
+    fs.unlinkSync(path.join(dir,'Layer.png'));
     assert.equal(inspector.forExperience(session,
       {id:'auth',assetDirectories:['assets/auth']}).length,2);
     await assert.rejects(inspector.toggle(session.id,stars.asset),/no disponible/);

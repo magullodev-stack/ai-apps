@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:ai_apps_identity/ai_apps_identity.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,13 +37,6 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
   bool _providerBusy = false;
-  bool _layersPanelOpen = false;
-  bool _showStars = true;
-  bool _showSpheres = true;
-
-  // Disponible solo en la previsualización, nunca en el Auth real o release.
-  bool get _canInspectLayers =>
-      kDebugMode && widget.onDevelopmentContinue != null;
 
   @override
   void initState() {
@@ -203,10 +195,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
             children: [
               // Recortar tambien las transformaciones ampliadas, no solo el Stack.
               ClipRect(
-                child: _AuthParallaxArt(
-                  showStars: !_canInspectLayers || _showStars,
-                  showSpheres: !_canInspectLayers || _showSpheres,
-                ),
+                child: const _AuthParallaxArt(),
               ),
               // Un único mensaje, con una sola tipografía y estilo.
               // La posición aprovecha la franja azul sin tocar el robot.
@@ -375,82 +364,6 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                   );
                 },
               ),
-              if (_canInspectLayers)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Material(
-                    key: const Key('muondia-auth-development-layers'),
-                    color: const Color(0xEB120D2C),
-                    borderRadius: BorderRadius.circular(12),
-                    elevation: 5,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextButton.icon(
-                          key: const Key('muondia-auth-toggle-layers'),
-                          onPressed: () => setState(
-                            () => _layersPanelOpen = !_layersPanelOpen,
-                          ),
-                          icon: Icon(
-                            _layersPanelOpen
-                                ? Icons.close
-                                : Icons.layers_outlined,
-                            color: Colors.white,
-                            size: 17,
-                          ),
-                          label: Text(
-                            _layersPanelOpen ? 'Cerrar capas' : 'Capas',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        if (_layersPanelOpen)
-                          SizedBox(
-                            width: 212,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CheckboxListTile(
-                                  key: const Key('muondia-auth-layer-stars'),
-                                  value: _showStars,
-                                  dense: true,
-                                  visualDensity: VisualDensity.compact,
-                                  activeColor: const Color(0xFFC39AFD),
-                                  checkColor: Colors.black,
-                                  controlAffinity:
-                                      ListTileControlAffinity.trailing,
-                                  title: const Text(
-                                    'Estrellas',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  onChanged: (enabled) => setState(
-                                    () => _showStars = enabled ?? true,
-                                  ),
-                                ),
-                                CheckboxListTile(
-                                  key: const Key('muondia-auth-layer-spheres'),
-                                  value: _showSpheres,
-                                  dense: true,
-                                  visualDensity: VisualDensity.compact,
-                                  activeColor: const Color(0xFFC39AFD),
-                                  checkColor: Colors.black,
-                                  controlAffinity:
-                                      ListTileControlAffinity.trailing,
-                                  title: const Text(
-                                    'Esferas',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  onChanged: (enabled) => setState(
-                                    () => _showSpheres = enabled ?? true,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
@@ -459,14 +372,10 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   }
 }
 
-/// Las cuatro imágenes comparten el lienzo 1080x1920 original.
-/// El fondo no se mueve: las estrellas, esferas y robot tienen distintas
-/// amplitudes y fases para dar profundidad sin alterar la composición.
+/// La composición conserva fondo y robot sobre el lienzo original.
+/// El fondo permanece fijo mientras el robot mantiene un movimiento suave.
 class _AuthParallaxArt extends StatefulWidget {
-  const _AuthParallaxArt({required this.showStars, required this.showSpheres});
-
-  final bool showStars;
-  final bool showSpheres;
+  const _AuthParallaxArt();
 
   @override
   State<_AuthParallaxArt> createState() => _AuthParallaxArtState();
@@ -520,7 +429,7 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
             children: [
               // El PNG original tiene márgenes oscuros integrados.
               // Ampliar solo el fondo elimina las franjas sin alterar
-              // las coordenadas de robot, estrellas, esferas y botones.
+              // las coordenadas de robot y botones.
               // ai-apps:visual:start assets/auth/Background.png
               Transform.scale(
                 key: const Key('muondia-auth-background-fill'),

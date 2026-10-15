@@ -154,7 +154,7 @@ No uses **Stop Device**, **Boot** ni **Cold Boot** para reparar el visor.
 
 El inspector visual **no tiene una carpeta propia**. En AI-APPS Android
 cada imagen aparece directamente bajo la experiencia de UI que la utiliza:
-`Muondia → Auth → Estrellas.png`, `Muondia → Home → ...` o
+`Muondia → Auth → Robot.png`, `Muondia → Home → ...` o
 `Muondia → Primera experiencia → Loading del robot → ...`.
 Loading conserva sus estados Inicio, En curso y Finalización al mismo nivel
 que sus imágenes. Auth y Home mantienen su comando para abrir la vista previa
@@ -202,17 +202,23 @@ no modifica la visibilidad. El botón derecho permite **Sustituir imagen…**
 **Eliminar imagen…**. La sustitución pide confirmación, comprueba el formato
 y sobrescribe únicamente el PNG existente; Flutter lo detecta.
 
-**Eliminar imagen…** analiza primero el código. Solo retira un elemento
-visual si existe una asociación declarativa inequívoca con ese recurso,
-el PNG no aparece en otras expresiones Dart y el documento está guardado.
-Después de confirmar, VS Code aplica una única edición que quita ese widget
-y manda el PNG a la papelera. Se guarda Dart para que la tarea persistente
-de Flutter actualice la pantalla. Si falta la asociación o hay referencias
-ambiguas, el inspector **no elimina nada**.
+**Eliminar imagen…** calcula antes de pedir confirmación un plan integral:
+busca el widget propietario, los demás bloques Dart pertenecientes a la misma
+capa y sus pruebas asociadas. Verifica también los documentos de la aplicación
+y las propiedades del widget utilizadas por la capa. Si permanece una
+referencia, una prueba desactualizada, un interruptor o una propiedad ligada a
+la imagen, la operación se cancela **sin borrar el PNG ni tocar Dart**.
+Los archivos de código y pruebas que pertenecen explícitamente a la capa se
+editan conjuntamente con un `WorkspaceEdit` de VS Code. Si cambia alguno
+durante la confirmación, se vuelve a calcular el plan y se cancela si difiere.
+El PNG se envía a la papelera. El guardado de Dart activa el Hot Reload
+gestionado por la sesión persistente.
 
-Las pantallas futuras pueden registrar sus elementos declarativamente
-sin añadir controles de visibilidad particulares. Un bloque completo de
-una lista de widgets, terminado en coma, se anota con estos comentarios:
+Para futuras pantallas, cada **fragmento exclusivo de la capa** (widget,
+propiedad, control auxiliar y prueba que deba desaparecer con ella) se anota
+con el mismo par de comentarios. El bloque debe estar completo y terminar
+en coma o punto y coma. El inspector puede retirar varios bloques de
+diferentes archivos Dart en la misma operación:
 
 ```dart
 // ai-apps:visual:start assets/scene/Stars.png
@@ -220,10 +226,13 @@ Image.asset('assets/scene/Stars.png'),
 // ai-apps:visual:end assets/scene/Stars.png
 ```
 
-La anotación no cambia el comportamiento de Flutter. Auth registra inicialmente
-Background, Estrellas, Esferas y Robot de esta manera. Las imágenes que aún
-no estén registradas se pueden mostrar, ocultar o sustituir, pero la
-eliminación del código se rechazará para no romper la aplicación.
+La anotación no cambia el comportamiento de Flutter. Auth conserva
+Background y Robot como capas registradas; las estrellas y esferas ya no
+existen en esta pantalla. Para imágenes pendientes se permite borrar el
+archivo si tampoco hay referencias en código, pruebas ni documentación.
+La documentación no se reescribe arbitrariamente: si describe una imagen,
+el borrado se bloquea hasta que se actualice. Las capas no registradas
+pueden ocultarse o sustituirse, pero no se reescribe Dart sin propiedad clara.
 
 Los botones del ojo y el menú contextual se declaran en el manifiesto de
 VS Code `scripts/vscode-android/package.json`. En instalaciones enlazadas

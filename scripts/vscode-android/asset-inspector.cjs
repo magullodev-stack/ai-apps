@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { readCatalog } = require('./explorer.cjs');
-const { assertAsset, planAssetRemoval, isValidImage } = require('./asset-actions.cjs');
+const { assertAsset, planAssetRemoval, planPendingAssetRemoval, isValidImage } = require('./asset-actions.cjs');
 const { referencedAssets, sourceSignature } = require('./visual-source-index.cjs');
 const { planVisualRenames } = require('./visual-renames.cjs');
 
@@ -232,56 +232,65 @@ function createVisualAssetInspector(vscode, service, report) {
   async function deleteImage(supplied) {
     const entry = resolveNode(supplied);
     const pending = !sources(entry.session).has(entry.asset);
-    if (pending) {
-      // No Dart reference to remove. Keep this operation separate from
-      // the source-editing flow and require explicit user confirmation.
-      const {target} = assertAsset(entry.session.projectPath, entry.asset);
-      const ok = await vscode.window.showWarningMessage(
-        '¿Eliminar la imagen pendiente ' + path.basename(target) + '?',
-        {modal: true, detail: 'No se ha encontrado una referencia Dart directa. ' +
-          'Solo se moverá el PNG a la papelera; el código no se modificará. ' +
-          'Si la imagen se usa mediante una ruta dinámica, revísala primero.'},
-        'Eliminar PNG pendiente');
-      if (ok !== 'Eliminar PNG pendiente') return false;
-      assertAsset(entry.session.projectPath, entry.asset);
-      const edit = new vscode.WorkspaceEdit();
-      edit.deleteFile(vscode.Uri.file(target), {useTrash:true});
-      if (!await vscode.workspace.applyEdit(edit)) {
-        throw new Error('VS Code no pudo borrar la imagen pendiente.');
+    const plan = pending
+      ? planPendingAssetRemoval(entry.session.projectPath, entry.asset)
+      : planAssetRemoval(entry.session.projectPath, entry.asset);
+    const documents = [];
+
+    // Prepare the entire multi-file edit before prompting the user.
+    for (const change of plan.changes || []) {
+      const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(change.filename));
+      if (doc.isDirty || doc.getText() !== change.original ||
+          fs.readFileSync(change.filename,'utf8') !== change.original) {
+        throw new Error('Guarda primero los cambios de ' +
+          path.relative(entry.session.projectPath,change.filename));
       }
-    } else {
-      // A placed image can only be removed with a verified, owned Dart block.
-      const plan = planAssetRemoval(entry.session.projectPath, entry.asset);
-      const uri = vscode.Uri.file(plan.sourcePath);
-      const doc = await vscode.workspace.openTextDocument(uri);
-      if (doc.isDirty || doc.getText() !== plan.original) {
-        throw new Error('El código Dart tiene cambios sin guardar. Guárdalos primero.');
+      documents.push({doc,change});
+    }
+    const detail = pending
+      ? 'No hay referencias en el código, las pruebas ni la documentación. ' +
+        'Se enviará el PNG a la papelera.'
+      : 'Se retirarán ' + documents.length + ' archivo(s) Dart asociados ' +
+        'y se enviará el PNG a la papelera. Si queda una dependencia, no se borra nada.';
+    const answer = pending ? 'Eliminar PNG pendiente' : 'Eliminar imagen y capa';
+    const ok = await vscode.window.showWarningMessage(
+      '¿Eliminar ' + path.basename(plan.filePath) + '?',
+      {modal:true,detail},answer);
+    if (ok !== answer) return false;
+
+    // Repeat the full analysis: another editor, Git sync or user action may
+    // have changed any source while the confirmation was open.
+    const current = pending
+      ? planPendingAssetRemoval(entry.session.projectPath,entry.asset)
+      : planAssetRemoval(entry.session.projectPath,entry.asset);
+    if (JSON.stringify(current.changes || []) !==
+        JSON.stringify(plan.changes || [])) {
+      throw new Error('Las dependencias cambiaron durante la confirmación.');
+    }
+    for (const {doc,change} of documents) {
+      if (doc.isDirty || doc.getText() !== change.original) {
+        throw new Error('Archivo cambiado durante la confirmación. Cancelado.');
       }
-      const ok = await vscode.window.showWarningMessage(
-        '¿Eliminar ' + path.basename(plan.filePath) + ' y su capa visual?',
-        {modal: true, detail: 'Se eliminará el widget de ' +
-          path.relative(entry.session.projectPath, plan.sourcePath) +
-          ' y el PNG se moverá a la papelera. Puedes deshacerlo con VS Code.'},
-        'Eliminar imagen y capa');
-      if (ok !== 'Eliminar imagen y capa') return false;
-      if (doc.isDirty || doc.getText() !== plan.original ||
-          fs.readFileSync(plan.sourcePath, 'utf8') !== plan.original) {
-        throw new Error('El código cambió durante la confirmación. Cancelado.');
-      }
-      assertAsset(entry.session.projectPath, entry.asset);
-      const edit = new vscode.WorkspaceEdit();
-      edit.delete(uri, new vscode.Range(
-        doc.positionAt(plan.start), doc.positionAt(plan.end)));
-      edit.deleteFile(vscode.Uri.file(plan.filePath), {useTrash: true});
-      if (!await vscode.workspace.applyEdit(edit)) {
-        throw new Error('VS Code no pudo aplicar la eliminación.');
-      }
+    }
+    const edit = new vscode.WorkspaceEdit();
+    for (const {doc,change} of documents) {
+      edit.replace(doc.uri,new vscode.Range(
+        doc.positionAt(0),doc.positionAt(change.original.length)),
+        change.updated);
+    }
+    edit.deleteFile(vscode.Uri.file(plan.filePath),{useTrash:true});
+    if (!await vscode.workspace.applyEdit(edit)) {
+      throw new Error('VS Code no pudo aplicar todos los cambios.');
+    }
+    for (const {doc} of documents) {
       if (!await doc.save()) {
-        throw new Error('Dart fue modificado, pero no se pudo guardar. Guárdalo manualmente.');
+        throw new Error('Se aplicó la edición pero no se pudo guardar Dart. ' +
+          'Guarda los documentos pendientes antes de continuar.');
       }
     }
     hiddenBySession.get(entry.session.id)?.delete(entry.asset);
-    report('Imagen eliminada: ' + entry.asset);
+    sourceCache.delete(entry.session.projectPath);
+    report('Imagen y dependencias eliminadas: ' + entry.asset);
     return true;
   }
 

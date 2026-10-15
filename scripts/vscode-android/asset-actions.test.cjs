@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { assertAsset, planAssetRemoval, isValidImage } = require('./asset-actions.cjs');
+const { assertAsset, planAssetRemoval, planPendingAssetRemoval, isValidImage } = require('./asset-actions.cjs');
 
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-apps-visual-action-'));
@@ -54,10 +54,59 @@ function main() {
     assert.throws(()=>planAssetRemoval(root,asset),/No se puede eliminar/);
     fs.unlinkSync(other);
     assert.equal(planAssetRemoval(root,asset).updated,plan.updated);
+
+    // An owned UI widget is not enough: unused properties, controls and
+    // tests must be removed too, otherwise the action fails BEFORE editing.
+    const conditional=source.replace(
+      '  Image.asset("assets/auth/Stars.png"),',
+      '  if (widget.showStars) Image.asset("assets/auth/Stars.png"),')
+      .replace('Stack(children: [','final bool showStars;\nStack(children: [');
+    fs.writeFileSync(dart,conditional);
+    assert.throws(()=>planAssetRemoval(root,asset),/showStars/,
+      'Orphan widget property must block deletion');
+    const annotated=conditional.replace('final bool showStars;',
+      '// ai-apps:visual:start assets/auth/Stars.png\n' +
+      'final bool showStars;\n' +
+      '// ai-apps:visual:end assets/auth/Stars.png');
+    fs.writeFileSync(dart,annotated);
+    assert.equal(planAssetRemoval(root,asset).changes.length,1,
+      'Multiple owned source fragments are deleted together');
+    assert.ok(!planAssetRemoval(root,asset).updated.includes('showStars'));
+
+    fs.mkdirSync(path.join(root,'test'),{recursive:true});
+    const fixtureTest=path.join(root,'test','auth_test.dart');
+    fs.writeFileSync(fixtureTest,
+      "test('asset', () { expect('assets/auth/Stars.png', isNotEmpty); });\n");
+    assert.throws(()=>planAssetRemoval(root,asset),/auth_test.dart/,
+      'Stale widget tests must block deletion');
+    fs.writeFileSync(fixtureTest,[
+      '// ai-apps:visual:start assets/auth/Stars.png',
+      "test('asset', () { expect('assets/auth/Stars.png', isNotEmpty); });",
+      '// ai-apps:visual:end assets/auth/Stars.png',''].join('\n'));
+    assert.equal(planAssetRemoval(root,asset).changes.length,2,
+      'Explicitly owned tests are included in the same edit');
+
+    fs.writeFileSync(path.join(root,'README.md'),
+      'Pantalla usa Stars.png para dibujar el fondo.\n');
+    assert.throws(()=>planAssetRemoval(root,asset),/README.md/,
+      'Stale documentation blocks deletion instead of remaining incorrect');
+    fs.unlinkSync(path.join(root,'README.md'));
+    fs.unlinkSync(fixtureTest);
+    fs.writeFileSync(dart,source);
+
+    fs.writeFileSync(path.join(root,'assets','auth','Pending.png'),'pending');
+    const pending='assets/auth/Pending.png';
+    assert.equal(planPendingAssetRemoval(root,pending).asset,pending);
+    fs.writeFileSync(fixtureTest,
+      "Image.asset('assets/auth/Pending.png');\n");
+    assert.throws(()=>planPendingAssetRemoval(root,pending),/auth_test.dart/,
+      'Pending images with test references are not safe to delete');
+    fs.unlinkSync(fixtureTest);
+
     assert.equal(isValidImage(fs.readFileSync(image),'.png'),true);
     assert.equal(isValidImage(Buffer.from('not an image'),'.png'),false);
     assert.equal(isValidImage(Buffer.from('RIFFxxxxWEBP'),'.webp'),true);
-    console.log('PASS: borrado planificado seguro, referencias únicas y PNG válido');
+    console.log('PASS: borrado integral, tests, propiedades, documentación, pendientes y rutas');
   } finally {
     fs.rmSync(root,{recursive:true,force:true});
   }

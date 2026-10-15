@@ -116,7 +116,7 @@ async function run() {
     return awaited;
   };
   const renameImageEdit = await rename(
-    'assets/auth/Estrellas.png','assets/auth/Nova.png');
+    'assets/auth/Robot.png','assets/auth/Nova.png');
   assert.ok(renameImageEdit.replacements.some(item =>
     item.uri.fsPath.endsWith('auth_entry_page.dart') &&
     item.value.includes('assets/auth/Nova.png')),
@@ -137,6 +137,12 @@ async function run() {
   assert.equal(calls.some(call => call[0] !== 'open'), false,
     'A running development task is never started twice');
   // No duplicar la aplicación ni mostrar laboratorios inactivos en el árbol.
+  const authDart = fs.readFileSync(path.resolve(__dirname,
+    '../../apps/muondia/lib/app/auth/auth_entry_page.dart'), 'utf8');
+  assert.doesNotMatch(authDart, /muondia-auth-toggle-layers|_layersPanelOpen|_showStars|_showSpheres/,
+    'Auth must not recreate a redundant on-device layers panel');
+  assert.doesNotMatch(authDart, /Estrellas[.]png|Esferas[.]png/,
+    'Deleted Auth images must not be referenced by Dart');
   const muondia = entries[0];
   entries = [
     muondia,
@@ -168,10 +174,10 @@ async function run() {
     'Do not create a parallel layers folder under Muondia');
   const authChildren = treeProvider.getChildren(content[0]);
   const authImages = authChildren.filter(item => item.visualAssetNode);
-  assert.equal(authImages.length, 6,
+  assert.equal(authImages.length, 4,
     'Auth displays its images directly without another container');
   assert.ok(authImages.some(item =>
-    item.visualAssetNode.asset === 'assets/auth/Estrellas.png'));
+    item.visualAssetNode.asset === 'assets/auth/Robot.png'));
   assert.equal(treeProvider.getTreeItem(content[0]).collapsibleState,
     vscode.TreeItemCollapsibleState.Collapsed,
     'Auth stays clickable for preview while its arrow reveals images');
@@ -212,8 +218,8 @@ async function run() {
     'Auth is a single-click destination without an extra folder');
   calls.pop();
   const stars = authImages.find(item =>
-    item.visualAssetNode.asset === 'assets/auth/Estrellas.png');
-  assert.ok(stars, 'Auth stars are discoverable');
+    item.visualAssetNode.asset === 'assets/auth/Robot.png');
+  assert.ok(stars, 'Auth robot is discoverable');
   assert.equal(treeProvider.getTreeItem(stars).contextValue,'visualAssetVisible');
   assert.equal(treeProvider.getTreeItem(stars).command.command,'vscode.open');
   await commands.get('aiAppsAndroid.hideVisualAsset')(stars);

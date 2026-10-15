@@ -79,3 +79,14 @@ carpetas declaradas en el catálogo cuando proceda, mediante
 `scripts/vscode-android/visual-renames.cjs`. No inferir ni refactorizar
 automáticamente carpetas renombradas externamente sin un evento de renombre
 identificable; evitar asociaciones ambiguas entre pantallas.
+
+La eliminación del inspector utiliza un plan multiarchivo en
+`scripts/vscode-android/asset-actions.cjs`: escanea Dart, pruebas y
+documentación del proyecto, detecta referencias residuales y propiedades
+de widget en fragmentos registrados. Bloques de una misma capa pueden
+declararse repetidamente en lib/test con marcas de propiedad; los editados
+se aplican conjuntamente. Ante referencias no registradas o documentos
+que describan la imagen, se cancela el borrado antes de tocar archivos.
+Los recursos pendientes también se comprueban antes de enviarlos a papelera.
+No debe reaparecer en la UI Flutter ningún panel local «Capas»; el gestor
+de imágenes es exclusivamente el explorador de AI-APPS Android.

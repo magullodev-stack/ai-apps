@@ -99,13 +99,11 @@ void main() {
     expect(find.byType(AuthEntryPage), findsOneWidget);
     expect(find.byKey(const Key('muondia-auth-entry')), findsOneWidget);
     expect(find.byType(AppShell), findsNothing);
-    expect(find.byKey(const Key('muondia-auth-toggle-layers')), findsNothing,
-        reason: 'Auth normal no incluye controles de desarrollo');
+    expect(find.byKey(const Key('muondia-auth-development-layers')), findsNothing,
+        reason: 'La UI se gestiona desde VS Code y no tiene panel interno');
 
     for (final asset in [
       'assets/auth/Background.png',
-      'assets/auth/Estrellas.png',
-      'assets/auth/Esferas.png',
       'assets/auth/Robot.png',
     ]) {
       expect(
@@ -176,7 +174,7 @@ void main() {
     expect(find.byType(EmailAuthPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('Auth preview permite ocultar y recuperar capas sin tocar PNG',
+  testWidgets('Auth de desarrollo no incorpora controles visuales redundantes',
       (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
@@ -189,40 +187,10 @@ void main() {
     ));
     await tester.pump();
 
-    const panelButton = Key('muondia-auth-toggle-layers');
-    const stars = Key('muondia-auth-parallax-stars');
-    const spheres = Key('muondia-auth-parallax-spheres');
-    expect(find.byKey(panelButton), findsOneWidget);
-    expect(find.byKey(stars), findsOneWidget);
-    expect(find.byKey(spheres), findsOneWidget);
-
-    await tester.tap(find.byKey(panelButton));
-    await tester.pump();
-    expect(find.text('Estrellas'), findsOneWidget);
-    expect(find.text('Esferas'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('muondia-auth-layer-stars')));
-    await tester.pump();
-    expect(find.byKey(stars), findsNothing);
-    expect(find.byKey(spheres), findsOneWidget);
+    expect(find.byType(AuthEntryPage), findsOneWidget);
     expect(find.byKey(const Key('muondia-auth-background')), findsOneWidget);
     expect(find.byKey(const Key('muondia-auth-parallax-robot')), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('muondia-auth-layer-spheres')));
-    await tester.pump();
-    expect(find.byKey(stars), findsNothing);
-    expect(find.byKey(spheres), findsNothing);
-
-    await tester.tap(find.byKey(const Key('muondia-auth-layer-stars')));
-    await tester.tap(find.byKey(const Key('muondia-auth-layer-spheres')));
-    await tester.pump();
-    expect(find.byKey(stars), findsOneWidget);
-    expect(find.byKey(spheres), findsOneWidget);
-
-    await tester.tap(find.byKey(panelButton));
-    await tester.pump();
-    expect(find.text('Estrellas'), findsNothing);
-    expect(find.text('Esferas'), findsNothing);
+    expect(find.byKey(const Key('muondia-auth-development-layers')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
