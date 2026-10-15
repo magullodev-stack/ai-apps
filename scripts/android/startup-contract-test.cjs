@@ -5,6 +5,32 @@ const root = path.resolve(__dirname, '../..');
 const file = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 
 const startup = file('scripts/start-dev-session.ps1');
+// Contrato de PowerShell real: un string mal cerrado puede impedir arrancar
+// la tarea antes incluso de que se escriba un mensaje en dev-session.log.
+if (process.platform === 'win32') {
+  const {execFileSync} = require('node:child_process');
+  const startupPath = path.join(root, 'scripts/start-dev-session.ps1')
+    .replace(/'/g, "''");
+  const command = [
+    '$tokens = $null; $errors = $null',
+    "[void][System.Management.Automation.Language.Parser]::ParseFile('" +
+      startupPath + "', [ref]$tokens, [ref]$errors)",
+    'if ($errors.Count -ne 0) {',
+    '  Write-Error ("PowerShell startup parse errors: " + $errors.Count)',
+    '  exit 1',
+    '}',
+  ].join('\n');
+  execFileSync('powershell.exe', [
+    '-NoProfile', '-NonInteractive', '-EncodedCommand',
+    Buffer.from(command, 'utf16le').toString('base64'),
+  ], {timeout: 15000, windowsHide: true});
+}
+assert.equal(
+  startup.split("Write-SessionLog 'Sesion Flutter terminada.'").length - 1, 1,
+  'Only one persistent Flutter pipeline must exist');
+assert.match(startup, /Recuperacion automatica: Hot Restart tras fallo/,
+  'Recovery logging must stay in the PowerShell pipeline');
+
 assert.match(startup, /run\.ps1'\) -Device emulator-5554 \*>\&1 \|/i,
   'Windows logon must launch Flutter, not only Dart');
 assert.doesNotMatch(startup, /run\.ps1'\) -Device emulator-5554 -ServiceOnly/i,
