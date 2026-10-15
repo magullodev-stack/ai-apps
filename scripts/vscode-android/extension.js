@@ -216,7 +216,7 @@ async function activate(context) {
     service.register({ appId, label, serial, avdName, packageName, kind: 'flutter', projectPath: directories[0].fsPath });
     await refresh();
   }
-  // Una única jerarquía: aplicación -> experiencias -> estados.
+  // Una única jerarquía: aplicación -> experiencias -> estados e imágenes.
   // Las sesiones de laboratorio inactivas siguen registradas y disponibles
   // por los comandos de administración, pero no ocupan espacio en el árbol.
   const isVisibleSession = session =>
@@ -231,26 +231,37 @@ async function activate(context) {
     getChildren(parent) {
       if (parent === undefined) return sessions.filter(isVisibleSession);
       if (parent?.experienceExplorerNode) {
-        return explorer.provider.getChildren(parent.experienceExplorerNode)
-          .map(wrapExperience);
-      }
-      if (parent?.visualAssetNode) {
-        return assets.getChildren(parent.visualAssetNode).map(visualAssetNode =>
-          ({ visualAssetNode }));
-      }
-      if (parent?.id && parent?.serial) {
-        const experiences = experiencesOf(parent).map(wrapExperience);
-        if (parent.kind !== 'external' &&
-            assets.listVisualAssets(parent.projectPath).length) {
-          experiences.push({ visualAssetNode: assets.root(parent) });
+        const entry = parent.experienceExplorerNode;
+        // Una experiencia con una sola vista se abre al pulsar su nombre:
+        // no añadir un estado "Vista inicial" redundante bajo sus imágenes.
+        const children = entry.kind === 'experience' &&
+            entry.item.states.length === 1
+          ? []
+          : explorer.provider.getChildren(entry).map(wrapExperience);
+        if (entry.kind === 'experience') {
+          children.push(...assets.forExperience(entry.session, entry.item)
+            .map(visualAssetNode => ({ visualAssetNode })));
         }
-        return experiences;
+        return children;
+      }
+      if (parent?.visualAssetNode) return [];
+      if (parent?.id && parent?.serial) {
+        return experiencesOf(parent).map(wrapExperience);
       }
       return [];
     },
     getTreeItem(session) {
       if (session.experienceExplorerNode) {
-        return explorer.provider.getTreeItem(session.experienceExplorerNode);
+        const entry = session.experienceExplorerNode;
+        const item = explorer.provider.getTreeItem(entry);
+        // Auth/Home tienen una sola vista y antes eran hojas clicables.
+        // Conservan su comando de vista previa; la flecha despliega imágenes.
+        if (entry.kind === 'experience' &&
+            item.collapsibleState === vscode.TreeItemCollapsibleState.None &&
+            assets.forExperience(entry.session, entry.item).length) {
+          item.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        }
+        return item;
       }
       if (session.visualAssetNode) {
         return assets.getTreeItem(session.visualAssetNode);

@@ -55,3 +55,14 @@ referencia única, pueden borrarse mediante un `WorkspaceEdit`; las demás
 imágenes solo se ocultan o sustituyen. La lógica genérica se implementa en
 `scripts/vscode-android/asset-actions.cjs`. No se realizan ediciones
 heurísticas de Dart ni se eliminan recursos compartidos.
+
+El inspector visual **no** crea «Capas e imágenes» ni árboles de assets
+paralelos. Los recursos se muestran directamente bajo las experiencias del
+explorador de UI usando `assetDirectories` en
+`lib/app/development/experiences.json`; cada directorio pertenece a una
+sola experiencia y se valida el no solapamiento. Los archivos se descubren
+automáticamente dentro de esos directorios. Auth/Home siguen siendo
+clicables para abrir preview y ahora también desplegables para sus imágenes.
+Loading muestra sus estados e imágenes como hijos de la misma experiencia.
+Las operaciones existentes (ojo, sustituir, eliminar de forma segura)
+continúan aplicándose a los archivos originales.

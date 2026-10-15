@@ -11,6 +11,9 @@
           "id": "inicio",
           "label": "Vista inicial"
         }
+      ],
+      "assetDirectories": [
+        "assets/auth"
       ]
     },
     {
@@ -30,6 +33,9 @@
           "id": "final",
           "label": "Finalización"
         }
+      ],
+      "assetDirectories": [
+        "assets/onboarding/loading"
       ]
     },
     {
@@ -41,7 +47,8 @@
           "id": "inicio",
           "label": "Preguntas de prueba"
         }
-      ]
+      ],
+      "assetDirectories": []
     },
     {
       "id": "home",
@@ -52,6 +59,9 @@
           "id": "inicio",
           "label": "Pantalla principal"
         }
+      ],
+      "assetDirectories": [
+        "assets/home"
       ]
     }
   ]

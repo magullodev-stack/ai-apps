@@ -35,11 +35,15 @@ async function main() {
     const inspector = createVisualAssetInspector(vscode,svc,()=>{});
     assert.deepEqual(listVisualAssets(base),
       ['assets/auth/Esferas.png','assets/auth/Estrellas.png']);
-    const node = inspector.root(session);
-    const [folder] = inspector.getChildren(node);
-    assert.equal(folder.folderPath,'assets/auth');
-    const images = inspector.getChildren(folder);
+    const images = inspector.forExperience(session,
+      {id:'auth',assetDirectories:['assets/auth']});
     assert.equal(images.length,2);
+    assert.equal(inspector.forExperience(session,
+      {id:'home',assetDirectories:['assets/home']}).length,0);
+    assert.equal(inspector.forExperience(session,
+      {id:'test',assetDirectories:[]}).length,0);
+    assert.deepEqual(images.map(item=>item.kind),
+      ['visualAsset','visualAsset'], 'Images belong directly to their UI screen');
     const stars = images.find(i=>i.asset.endsWith('Estrellas.png'));
     assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetVisible');
     await inspector.toggle(session.id,stars.asset);
@@ -58,7 +62,8 @@ async function main() {
     await assert.rejects(
       inspector.toggle(session.id,'../../secret.png'),/no disponible/);
     fs.unlinkSync(path.join(dir,'Estrellas.png'));
-    assert.equal(inspector.getChildren(folder).length,1);
+    assert.equal(inspector.forExperience(session,
+      {id:'auth',assetDirectories:['assets/auth']}).length,1);
     await assert.rejects(inspector.toggle(session.id,stars.asset),/no disponible/);
     console.log('PASS: descubrimiento de PNG, visibilidad reversible y ADB validado');
   } finally {

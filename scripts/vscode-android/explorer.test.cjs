@@ -45,6 +45,15 @@ async function main(){
   ready=false;await assert.rejects(explorer.open(session.id,'auth','inicio'),/desconectado/);
   ready=true;pid='';await assert.rejects(explorer.open(session.id,'home','inicio'),/no está ejecutándose/);
   assert.equal(calls.length,1);
+  // El catálogo nunca puede asignar las mismas imágenes a dos pantallas.
+  catalog.experiences[1].assetDirectories=['assets/auth'];
+  fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
+  assert.throws(()=>readCatalog(session),/Carpetas visuales compartidas/);
+  catalog.experiences[1].assetDirectories=['assets/onboarding/loading'];
+  catalog.experiences[0].assetDirectories=['assets/../auth'];
+  fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
+  assert.throws(()=>readCatalog(session),/Carpetas visuales inválidas/);
+  catalog.experiences[0].assetDirectories=['assets/auth'];
   catalog.experiences[0].id='auth; reboot';
   fs.writeFileSync(path.join(directory,'experiences.json'),JSON.stringify(catalog));
   assert.throws(()=>readCatalog(session),/Experiencia inválida/);

@@ -18,6 +18,11 @@ function readCatalog(session) {
     throw new Error('Catálogo de experiencias inválido: ' + file);
   }
   const ids = new Set();
+  // Cada carpeta visual tiene una sola pantalla propietaria.
+  // No pueden solaparse: ocultar, sustituir o eliminar un recurso no
+  // debe afectar accidentalmente a otra experiencia.
+  const assetDirectories = [];
+  const directoryPattern = /^assets(?:\/[a-zA-Z0-9_-]+)+$/;
   for (const item of doc.experiences) {
     if (!ID.test(item.id) || ids.has(item.id) ||
         typeof item.label !== 'string' || !item.label.trim() ||
@@ -26,6 +31,20 @@ function readCatalog(session) {
       throw new Error('Experiencia inválida: ' + file);
     }
     ids.add(item.id);
+    if (item.assetDirectories !== undefined &&
+        (!Array.isArray(item.assetDirectories) ||
+          item.assetDirectories.some(dir => typeof dir !== 'string' ||
+            !directoryPattern.test(dir)))) {
+      throw new Error('Carpetas visuales inválidas: ' + file);
+    }
+    for (const dir of item.assetDirectories || []) {
+      if (assetDirectories.some(other =>
+          other === dir || other.startsWith(dir + '/') ||
+          dir.startsWith(other + '/'))) {
+        throw new Error('Carpetas visuales compartidas entre experiencias: ' + file);
+      }
+      assetDirectories.push(dir);
+    }
     const stateIds = new Set();
     for (const state of item.states) {
       if (!ID.test(state.id) || stateIds.has(state.id) ||

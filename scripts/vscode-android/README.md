@@ -150,13 +150,48 @@ debe confirmar `streaming h264` y `streaming established on attempt 1`.
 
 No uses **Stop Device**, **Boot** ni **Cold Boot** para reparar el visor.
 
-## Inspector visual reutilizable
+## Inspector visual integrado en las experiencias
 
-En cada aplicación Flutter activa con catálogo de experiencias y recursos en `assets/`, el mismo árbol muestra **Capas e imágenes**. Las carpetas y los archivos PNG, JPG y WebP se descubren automáticamente; no hay listas particulares de Auth ni de ninguna otra pantalla. Haz clic en una imagen para ocultarla o volver a mostrarla en el emulador. La herramienta no edita ni elimina recursos, y no ejecuta la IA.
+El inspector visual **no tiene una carpeta propia**. En AI-APPS Android
+cada imagen aparece directamente bajo la experiencia de UI que la utiliza:
+`Muondia → Auth → Estrellas.png`, `Muondia → Home → ...` o
+`Muondia → Primera experiencia → Loading del robot → ...`.
+Loading conserva sus estados Inicio, En curso y Finalización al mismo nivel
+que sus imágenes. Auth y Home mantienen su comando para abrir la vista previa
+y ofrecen una flecha para desplegar sus recursos. No hay carpetas
+«Capas e imágenes», «auth» ni «home» intermedias.
 
-La capacidad Flutter vive en `shared/ui/lib/src/development/visual_asset_inspector.dart` y se instala una vez por aplicación con `AiAppsVisualAssetScope` alrededor del contenido de `MaterialApp.builder` y `AiAppsVisualAssetController.connectDebugChannel()`. El host Android de esa aplicación reenvía el intent `<applicationId>.DEV_ASSET_VISIBILITY` al canal `ai_apps/visual_inspector` solo en compilaciones debug. Muondia es la primera integración. Los recursos usados con `rootBundle` explícito, plugins externos o imágenes de red no atraviesan `DefaultAssetBundle` y requieren adaptadores específicos; por eso el alcance garantizado es `Image.asset` / `AssetImage` que usan el bundle normal de Flutter. Las preferencias son temporales durante la sesión y se restablecen en un reinicio de Flutter.
+Cada aplicación declara una vez qué carpetas de recursos pertenecen a
+cada experiencia mediante el campo opcional `assetDirectories` del
+catálogo `lib/app/development/experiences.json`:
 
-Prueba del explorador: `node scripts/vscode-android/asset-inspector.test.cjs`. Prueba Flutter: `flutter test test/visual_asset_inspector_test.dart` desde `shared/ui/`.
+```json
+{
+  "id": "auth",
+  "label": "Auth",
+  "group": "Acceso",
+  "assetDirectories": ["assets/auth"],
+  "states": [{"id": "inicio", "label": "Vista inicial"}]
+}
+```
+
+Las imágenes PNG, JPG y WebP se descubren automáticamente dentro de las
+carpetas declaradas, sin mantener listas de archivos. Cada carpeta pertenece
+a una sola experiencia; el catálogo rechaza carpetas solapadas para
+evitar que una operación de UI afecte a varias pantallas. Una experiencia
+sin imágenes no muestra nodos artificiales.
+
+La capacidad Flutter vive en
+`shared/ui/lib/src/development/visual_asset_inspector.dart`, instalada una
+única vez por aplicación con `AiAppsVisualAssetScope` y
+`AiAppsVisualAssetController.connectDebugChannel()`. La orden Android
+`<applicationId>.DEV_ASSET_VISIBILITY` solo se atiende en compilaciones
+debug. Las imágenes obtenidas de `rootBundle` explícito, plugins externos
+o la red no atraviesan el `DefaultAssetBundle` y necesitan adaptadores.
+
+Pruebas: `node scripts/vscode-android/explorer.test.cjs`,
+`node scripts/vscode-android/asset-inspector.test.cjs`,
+`node scripts/vscode-android/test.cjs`.
 
 ## Ojo rápido y menú contextual de recursos
 

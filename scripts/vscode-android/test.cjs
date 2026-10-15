@@ -119,19 +119,34 @@ async function run() {
     entry => entry.experienceExplorerNode.label),
     ['Auth', 'Primera experiencia', 'Home'],
     'Singleton groups are flattened');
-  const layers = content.find(item => item.visualAssetNode);
-  assert.ok(layers, 'Shared visual inspector is present under the app');
-  assert.equal(treeProvider.getTreeItem(layers).label, 'Capas e imágenes');
-  const layerFolders = treeProvider.getChildren(layers);
-  assert.ok(layerFolders.some(item =>
-    item.visualAssetNode.folderPath === 'assets/auth'),
-    'Asset folders are discovered without screen-specific configuration');
+  assert.equal(content.some(item => item.visualAssetNode), false,
+    'Do not create a parallel layers folder under Muondia');
+  const authChildren = treeProvider.getChildren(content[0]);
+  const authImages = authChildren.filter(item => item.visualAssetNode);
+  assert.equal(authImages.length, 6,
+    'Auth displays its images directly without another container');
+  assert.ok(authImages.some(item =>
+    item.visualAssetNode.asset === 'assets/auth/Estrellas.png'));
+  assert.equal(treeProvider.getTreeItem(content[0]).collapsibleState,
+    vscode.TreeItemCollapsibleState.Collapsed,
+    'Auth stays clickable for preview while its arrow reveals images');
+  const homeChildren = treeProvider.getChildren(content[2]);
+  assert.equal(homeChildren.filter(item => item.visualAssetNode).length, 4,
+    'Home displays its own images, not Auth images');
+  assert.equal(treeProvider.getTreeItem(content[2]).collapsibleState,
+    vscode.TreeItemCollapsibleState.Collapsed,
+    'Home remains an expandable preview experience');
   const firstExperience = treeProvider.getChildren(content[1]);
   assert.deepEqual(Array.from(firstExperience, entry => entry.experienceExplorerNode.label),
     ['Loading del robot', 'Test de bienvenida']);
-  const states = treeProvider.getChildren(firstExperience[0]);
+  const loadingChildren = treeProvider.getChildren(firstExperience[0]);
+  const states = loadingChildren.filter(item => item.experienceExplorerNode);
   assert.deepEqual(Array.from(states, item => item.experienceExplorerNode.state.id),
     ['inicio', 'progreso', 'final']);
+  assert.equal(loadingChildren.filter(item => item.visualAssetNode).length, 4,
+    'Loading retains its states and shows its own images beside them');
+  assert.equal(treeProvider.getChildren(firstExperience[1]).length, 0,
+    'Test displays no invented images');
   const preview = treeProvider.getTreeItem(states[1]).command;
   await commands.get(preview.command)(...preview.arguments);
   assert.deepEqual(calls.at(-1), [
@@ -151,10 +166,7 @@ async function run() {
   assert.ok(calls.at(-1).includes('auth'),
     'Auth is a single-click destination without an extra folder');
   calls.pop();
-  const authAssets = layerFolders.find(item =>
-    item.visualAssetNode.folderPath === 'assets/auth');
-  const fileNodes = treeProvider.getChildren(authAssets);
-  const stars = fileNodes.find(item =>
+  const stars = authImages.find(item =>
     item.visualAssetNode.asset === 'assets/auth/Estrellas.png');
   assert.ok(stars, 'Auth stars are discoverable');
   const hide = treeProvider.getTreeItem(stars).command;

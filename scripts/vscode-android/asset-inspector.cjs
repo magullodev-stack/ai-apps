@@ -31,46 +31,21 @@ function listVisualAssets(projectPath) {
 function createVisualAssetInspector(vscode, service, report) {
   const hiddenBySession = new Map();
 
-  const root = session => ({ kind: 'assetsRoot', session });
-  const folder = (session, folderPath) =>
-    ({ kind: 'assetsFolder', session, folderPath });
   const image = (session, asset) =>
     ({ kind: 'visualAsset', session, asset });
 
-  function getChildren(item) {
-    const images = listVisualAssets(item.session.projectPath);
-    const prefix = item.kind === 'assetsRoot' ? 'assets/' :
-      item.folderPath + '/';
-    const directories = new Set(), resources = [];
-    for (const asset of images) {
-      if (!asset.startsWith(prefix)) continue;
-      const remaining = asset.slice(prefix.length);
-      const slash = remaining.indexOf('/');
-      if (slash !== -1) directories.add(prefix + remaining.slice(0, slash));
-      else resources.push(image(item.session, asset));
-    }
-    return [
-      ...[...directories].sort().map(p => folder(item.session, p)),
-      ...resources,
-    ];
+  // El catálogo de experiencias ya es el árbol de UI. Cada experiencia
+  // posee sus recursos: no se crea una segunda carpeta "Capas e imágenes".
+  function forExperience(session, experience) {
+    const directories = experience?.assetDirectories || [];
+    if (!directories.length) return [];
+    return listVisualAssets(session.projectPath)
+      .filter(asset => directories.some(dir => asset.startsWith(dir + '/')))
+      .map(asset => image(session, asset));
   }
 
   function getTreeItem(item) {
     const expand = vscode.TreeItemCollapsibleState;
-    if (item.kind === 'assetsRoot') {
-      const result = new vscode.TreeItem('Capas e imágenes', expand.Collapsed);
-      result.id = 'visual-assets:' + item.session.id;
-      result.iconPath = new vscode.ThemeIcon('layers');
-      result.tooltip = 'Oculta o muestra imágenes en la aplicación de desarrollo. Sin borrar PNG.';
-      return result;
-    }
-    if (item.kind === 'assetsFolder') {
-      const result = new vscode.TreeItem(
-        path.posix.basename(item.folderPath), expand.Collapsed);
-      result.id = 'visual-assets:' + item.session.id + ':' + item.folderPath;
-      result.iconPath = new vscode.ThemeIcon('folder');
-      return result;
-    }
     const hidden = hiddenBySession.get(item.session.id)?.has(item.asset) || false;
     const result = new vscode.TreeItem(
       path.posix.basename(item.asset), expand.None);
@@ -190,7 +165,7 @@ function createVisualAssetInspector(vscode, service, report) {
     return true;
   }
 
-  return { root, getChildren, getTreeItem, toggle, resolveNode,
+  return { forExperience, getTreeItem, toggle, resolveNode,
     replaceImage, deleteImage, listVisualAssets };
 }
 
