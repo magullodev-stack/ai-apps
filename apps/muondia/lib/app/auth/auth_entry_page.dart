@@ -534,16 +534,6 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                 ),
               ),
               // ai-apps:visual:end assets/auth/Background.png
-              // ai-apps:visual:start assets/auth/Estrellas.png
-              if (widget.showStars)
-                _movingLayer(
-                  name: 'stars',
-                  asset: 'assets/auth/Estrellas.png',
-                  x: math.sin(angle) * 3,
-                  y: math.cos(angle) * 4,
-                  scale: 1.005,
-                ),
-              // ai-apps:visual:end assets/auth/Estrellas.png
               // ai-apps:visual:start assets/auth/Robot.png
               _movingLayer(
                 name: 'robot',
