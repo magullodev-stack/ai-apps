@@ -23,8 +23,10 @@ class AuthEntryPage extends StatefulWidget {
   final IdentityService identity;
   final bool identityReady;
   final Object? initializationError;
+
   /// Solo se pasa durante la vista Auth de desarrollo con sesión activa.
   final VoidCallback? onResumeDevelopmentSession;
+
   /// Previsualización de Auth: continuar sin autenticación externa.
   final VoidCallback? onDevelopmentContinue;
 
@@ -48,9 +50,8 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   void initState() {
     super.initState();
     _termsRecognizer = TapGestureRecognizer()
-      ..onTap = () => _showUnavailable(
-        'Los términos de uso todavía no están disponibles.',
-      );
+      ..onTap = () =>
+          _showUnavailable('Los términos de uso todavía no están disponibles.');
     _privacyRecognizer = TapGestureRecognizer()
       ..onTap = () => _showUnavailable(
         'El contenido de privacidad todavía no está disponible.',
@@ -163,11 +164,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
   @override
   Widget build(BuildContext context) {
     const legalShadow = [
-      Shadow(
-        color: Color(0xE6000000),
-        offset: Offset(0, 1),
-        blurRadius: 3,
-      ),
+      Shadow(color: Color(0xE6000000), offset: Offset(0, 1), blurRadius: 3),
     ];
     const legalBase = TextStyle(
       color: Color(0xFFF5F2FF),
@@ -204,247 +201,256 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            // Recortar tambien las transformaciones ampliadas, no solo el Stack.
-            ClipRect(
-              child: _AuthParallaxArt(
-                showStars: !_canInspectLayers || _showStars,
-                showSpheres: !_canInspectLayers || _showSpheres,
+              // Recortar tambien las transformaciones ampliadas, no solo el Stack.
+              ClipRect(
+                child: _AuthParallaxArt(
+                  showStars: !_canInspectLayers || _showStars,
+                  showSpheres: !_canInspectLayers || _showSpheres,
+                ),
               ),
-            ),
-            // Un único mensaje, con una sola tipografía y estilo.
-            // La posición aprovecha la franja azul sin tocar el robot.
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final welcomeSize = math.min(
-                  30.0,
-                  math.max(27.0, constraints.maxWidth * 0.083),
-                );
-                final welcomeStyle = TextStyle(
-                  fontFamily: MuondiaTypography.family,
-                  fontSize: welcomeSize,
-                  fontWeight: FontWeight.w900,
-                  height: 0.96,
-                  color: Colors.white,
-                  shadows: const [
-                    Shadow(
-                      color: Color(0xDA061234),
-                      offset: Offset(0, 2),
-                      blurRadius: 5,
+              // Un único mensaje, con una sola tipografía y estilo.
+              // La posición aprovecha la franja azul sin tocar el robot.
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final welcomeSize = math.min(
+                    30.0,
+                    math.max(27.0, constraints.maxWidth * 0.083),
+                  );
+                  final welcomeStyle = TextStyle(
+                    fontFamily: MuondiaTypography.family,
+                    fontSize: welcomeSize,
+                    fontWeight: FontWeight.w900,
+                    height: 0.96,
+                    color: Colors.white,
+                    shadows: const [
+                      Shadow(
+                        color: Color(0xDA061234),
+                        offset: Offset(0, 2),
+                        blurRadius: 5,
+                      ),
+                    ],
+                  );
+
+                  final logoWidth = math.min(
+                    constraints.maxWidth * 0.64,
+                    250.0,
+                  );
+                  final logoHeight = math.min(
+                    logoWidth / 3,
+                    constraints.maxHeight * 0.10,
+                  );
+
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 410),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/auth/Logotipo_MuondIA.png',
+                              key: const Key('muondia-auth-logo'),
+                              width: logoWidth,
+                              height: logoHeight,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '¡Qué alegría\nverte por aquí!',
+                              key: const Key('muondia-auth-welcome-title'),
+                              textAlign: TextAlign.center,
+                              style: welcomeStyle,
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              '¿Empezamos?',
+                              key: const Key('muondia-auth-welcome-question'),
+                              textAlign: TextAlign.center,
+                              style: welcomeStyle,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ],
-                );
+                  );
+                },
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final buttonWidth = math.min(
+                    constraints.maxWidth * 0.86,
+                    420.0,
+                  );
+                  final buttonHeight = buttonWidth / 5.82;
 
-                final logoWidth = math.min(
-                  constraints.maxWidth * 0.64,
-                  250.0,
-                );
-                final logoHeight = math.min(
-                  logoWidth / 3,
-                  constraints.maxHeight * 0.10,
-                );
+                  Widget providerButton({
+                    required Key key,
+                    required AuthProvider provider,
+                    required VoidCallback onPressed,
+                  }) {
+                    return SizedBox(
+                      key: key,
+                      width: buttonWidth,
+                      height: buttonHeight,
+                      child: AuthProviderButton(
+                        provider: provider,
+                        onPressed: onPressed,
+                      ),
+                    );
+                  }
 
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 410),
+                  // Botones y condiciones comparten el mismo bloque inferior.
+                  // El espacio entre ambos no depende de la altura del móvil.
+                  return Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Image.asset(
-                            'assets/auth/Logotipo_MuondIA.png',
-                            key: const Key('muondia-auth-logo'),
-                            width: logoWidth,
-                            height: logoHeight,
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
+                          providerButton(
+                            key: const Key('muondia-auth-button-google'),
+                            provider: AuthProvider.google,
+                            onPressed: () =>
+                                _signInWithProvider(IdentityProvider.google),
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            '¡Qué alegría\nverte por aquí!',
-                            key: const Key('muondia-auth-welcome-title'),
-                            textAlign: TextAlign.center,
-                            style: welcomeStyle,
+                          providerButton(
+                            key: const Key('muondia-auth-button-apple'),
+                            provider: AuthProvider.apple,
+                            onPressed: () =>
+                                _signInWithProvider(IdentityProvider.apple),
                           ),
-                          const SizedBox(height: 14),
-                          Text(
-                            '¿Empezamos?',
-                            key: const Key('muondia-auth-welcome-question'),
-                            textAlign: TextAlign.center,
-                            style: welcomeStyle,
+                          const SizedBox(height: 8),
+                          providerButton(
+                            key: const Key('muondia-auth-button-email'),
+                            provider: AuthProvider.email,
+                            onPressed: _openEmail,
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text.rich(
+                                TextSpan(
+                                  style: legalBase.copyWith(
+                                    fontFamily: MuondiaTypography.family,
+                                  ),
+                                  children: [
+                                    const TextSpan(
+                                      text: 'Al continuar, aceptas los ',
+                                    ),
+                                    TextSpan(
+                                      text: 'Términos de uso',
+                                      style: legalLink.copyWith(
+                                        fontFamily: MuondiaTypography.family,
+                                      ),
+                                      recognizer: _termsRecognizer,
+                                    ),
+                                    const TextSpan(text: '\ny la '),
+                                    TextSpan(
+                                      text: 'Política de privacidad',
+                                      style: legalLink.copyWith(
+                                        fontFamily: MuondiaTypography.family,
+                                      ),
+                                      recognizer: _privacyRecognizer,
+                                    ),
+                                    const TextSpan(text: '.'),
+                                  ],
+                                ),
+                                key: const Key('muondia-auth-legal'),
+                                maxLines: 2,
+                                softWrap: false,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final buttonWidth = math.min(constraints.maxWidth * 0.86, 420.0);
-                final buttonHeight = buttonWidth / 5.82;
-
-                Widget providerButton({
-                  required Key key,
-                  required AuthProvider provider,
-                  required VoidCallback onPressed,
-                }) {
-                  return SizedBox(
-                    key: key,
-                    width: buttonWidth,
-                    height: buttonHeight,
-                    child: AuthProviderButton(
-                      provider: provider,
-                      onPressed: onPressed,
-                    ),
                   );
-                }
-
-                // Botones y condiciones comparten el mismo bloque inferior.
-                // El espacio entre ambos no depende de la altura del móvil.
-                return Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 18),
+                },
+              ),
+              if (_canInspectLayers)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Material(
+                    key: const Key('muondia-auth-development-layers'),
+                    color: const Color(0xEB120D2C),
+                    borderRadius: BorderRadius.circular(12),
+                    elevation: 5,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        providerButton(
-                          key: const Key('muondia-auth-button-google'),
-                          provider: AuthProvider.google,
-                          onPressed: () =>
-                              _signInWithProvider(IdentityProvider.google),
-                        ),
-                        const SizedBox(height: 8),
-                        providerButton(
-                          key: const Key('muondia-auth-button-apple'),
-                          provider: AuthProvider.apple,
-                          onPressed: () =>
-                              _signInWithProvider(IdentityProvider.apple),
-                        ),
-                        const SizedBox(height: 8),
-                        providerButton(
-                          key: const Key('muondia-auth-button-email'),
-                          provider: AuthProvider.email,
-                          onPressed: _openEmail,
-                        ),
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text.rich(
-                              TextSpan(
-                                style: legalBase.copyWith(
-                                  fontFamily: MuondiaTypography.family,
-                                ),
-                                children: [
-                                  const TextSpan(text: 'Al continuar, aceptas los '),
-                                  TextSpan(
-                                    text: 'Términos de uso',
-                                    style: legalLink.copyWith(
-                                      fontFamily: MuondiaTypography.family,
-                                    ),
-                                    recognizer: _termsRecognizer,
-                                  ),
-                                  const TextSpan(text: '\ny la '),
-                                  TextSpan(
-                                    text: 'Política de privacidad',
-                                    style: legalLink.copyWith(
-                                      fontFamily: MuondiaTypography.family,
-                                    ),
-                                    recognizer: _privacyRecognizer,
-                                  ),
-                                  const TextSpan(text: '.'),
-                                ],
-                              ),
-                              key: const Key('muondia-auth-legal'),
-                              maxLines: 2,
-                              softWrap: false,
-                              textAlign: TextAlign.center,
-                            ),
+                        TextButton.icon(
+                          key: const Key('muondia-auth-toggle-layers'),
+                          onPressed: () => setState(
+                            () => _layersPanelOpen = !_layersPanelOpen,
+                          ),
+                          icon: Icon(
+                            _layersPanelOpen
+                                ? Icons.close
+                                : Icons.layers_outlined,
+                            color: Colors.white,
+                            size: 17,
+                          ),
+                          label: Text(
+                            _layersPanelOpen ? 'Cerrar capas' : 'Capas',
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
+                        if (_layersPanelOpen)
+                          SizedBox(
+                            width: 212,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CheckboxListTile(
+                                  key: const Key('muondia-auth-layer-stars'),
+                                  value: _showStars,
+                                  dense: true,
+                                  visualDensity: VisualDensity.compact,
+                                  activeColor: const Color(0xFFC39AFD),
+                                  checkColor: Colors.black,
+                                  controlAffinity:
+                                      ListTileControlAffinity.trailing,
+                                  title: const Text(
+                                    'Estrellas',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  onChanged: (enabled) => setState(
+                                    () => _showStars = enabled ?? true,
+                                  ),
+                                ),
+                                CheckboxListTile(
+                                  key: const Key('muondia-auth-layer-spheres'),
+                                  value: _showSpheres,
+                                  dense: true,
+                                  visualDensity: VisualDensity.compact,
+                                  activeColor: const Color(0xFFC39AFD),
+                                  checkColor: Colors.black,
+                                  controlAffinity:
+                                      ListTileControlAffinity.trailing,
+                                  title: const Text(
+                                    'Esferas',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  onChanged: (enabled) => setState(
+                                    () => _showSpheres = enabled ?? true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                );
-              },
-            ),
-            if (_canInspectLayers)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Material(
-                  key: const Key('muondia-auth-development-layers'),
-                  color: const Color(0xEB120D2C),
-                  borderRadius: BorderRadius.circular(12),
-                  elevation: 5,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextButton.icon(
-                        key: const Key('muondia-auth-toggle-layers'),
-                        onPressed: () => setState(
-                          () => _layersPanelOpen = !_layersPanelOpen,
-                        ),
-                        icon: Icon(
-                          _layersPanelOpen ? Icons.close : Icons.layers_outlined,
-                          color: Colors.white,
-                          size: 17,
-                        ),
-                        label: Text(
-                          _layersPanelOpen ? 'Cerrar capas' : 'Capas',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      if (_layersPanelOpen)
-                        SizedBox(
-                          width: 212,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CheckboxListTile(
-                                key: const Key('muondia-auth-layer-stars'),
-                                value: _showStars,
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
-                                activeColor: const Color(0xFFC39AFD),
-                                checkColor: Colors.black,
-                                controlAffinity: ListTileControlAffinity.trailing,
-                                title: const Text(
-                                  'Estrellas',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                onChanged: (enabled) => setState(
-                                  () => _showStars = enabled ?? true,
-                                ),
-                              ),
-                              CheckboxListTile(
-                                key: const Key('muondia-auth-layer-spheres'),
-                                value: _showSpheres,
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
-                                activeColor: const Color(0xFFC39AFD),
-                                checkColor: Colors.black,
-                                controlAffinity: ListTileControlAffinity.trailing,
-                                title: const Text(
-                                  'Esferas',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                onChanged: (enabled) => setState(
-                                  () => _showSpheres = enabled ?? true,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -457,10 +463,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
 /// El fondo no se mueve: las estrellas, esferas y robot tienen distintas
 /// amplitudes y fases para dar profundidad sin alterar la composición.
 class _AuthParallaxArt extends StatefulWidget {
-  const _AuthParallaxArt({
-    required this.showStars,
-    required this.showSpheres,
-  });
+  const _AuthParallaxArt({required this.showStars, required this.showSpheres});
 
   final bool showStars;
   final bool showSpheres;
@@ -541,16 +544,6 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
                   scale: 1.005,
                 ),
               // ai-apps:visual:end assets/auth/Estrellas.png
-              // ai-apps:visual:start assets/auth/Esferas.png
-              if (widget.showSpheres)
-                _movingLayer(
-                  name: 'spheres',
-                  asset: 'assets/auth/Esferas.png',
-                  x: math.sin(angle + 0.7) * 7,
-                  y: math.cos(angle + 0.7) * 6,
-                  scale: 1.012,
-                ),
-              // ai-apps:visual:end assets/auth/Esferas.png
               // ai-apps:visual:start assets/auth/Robot.png
               _movingLayer(
                 name: 'robot',
@@ -567,4 +560,3 @@ class _AuthParallaxArtState extends State<_AuthParallaxArt>
     );
   }
 }
-
