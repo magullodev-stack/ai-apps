@@ -72,3 +72,31 @@ restauración y la recuperación de Muondia. Para verificar dos aplicaciones
 reales se dispone de `scripts/android/host-test.ps1`, que exige
 `-AppId`, `-Serial` y `-Label` de una segunda aplicación activa.
 No crea una segunda aplicación.
+
+## Recuperación de actualizaciones Flutter
+
+El propietario de las sesiones Flutter es `scripts/flutter-dev-runner.dart`,
+no VS Code. Agrupa los cambios detectados por los watchers, mantiene **una
+sola petición `app.restart` en vuelo** y utiliza Hot Reload para cambios
+normales y Hot Restart para imágenes. Ante un Hot Reload rechazado por
+Flutter, solicita automáticamente **un Hot Restart de la misma sesión**,
+sin crear un segundo `flutter run` ni intervenir en ADB.
+
+Si Hot Restart también falla, el runner **no entra en un bucle**: registra
+un código de fallo seguro y espera nuevos cambios. Si Flutter deja de
+responder a una petición durante dos minutos, el runner termina únicamente
+el árbol del Flutter que él mismo lanzó y entrega el relanzamiento al
+controlador persistente `apps/muondia/run.ps1` (salida 86). No se reinicia
+el emulador ni se eliminan datos.
+
+`scripts/start-dev-session.ps1` registra el tipo y código de error, la
+recuperación solicitada y su resultado en `.ai-apps/dev-session.log`
+sin volcar salida arbitraria de Flutter, URL ni secretos. El código de
+fallo puede permitir distinguir errores de fuentes frente a fallos de
+protocolo; no implica que todos ellos se puedan solucionar automáticamente.
+
+Prueba del protocolo sin dispositivo ni segundo Flutter:
+`dart scripts/flutter-dev-runner-machine-test.dart`.
+Simula fallo de Reload, recuperación con Restart, fallo de Restart sin
+bucle y bloqueo de respuesta con vigilancia temporal. Verificar también
+una edición real en Windows antes de dar el problema por resuelto.

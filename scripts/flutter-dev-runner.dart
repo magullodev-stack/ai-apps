@@ -19,7 +19,7 @@ Future<void> main(List<String> args) async {
     runInShell: Platform.isWindows,
   );
 
-  final controller = _FlutterMachineController(process);
+  final controller = FlutterMachineController(process);
   final watchers = <StreamSubscription<FileSystemEvent>>[];
   Timer? debounce;
   // Las sustituciones de JSON en Windows pueden perder eventos del watcher.
@@ -184,6 +184,7 @@ Future<void> main(List<String> args) async {
   _configureKeyboard(controller);
 
   final code = await process.exitCode;
+  controller.dispose();
   googleMonitor.cancel();
   debounce?.cancel();
   for (final watcher in watchers) {
@@ -203,7 +204,7 @@ Future<void> main(List<String> args) async {
   }
 }
 
-void _configureKeyboard(_FlutterMachineController controller) {
+void _configureKeyboard(FlutterMachineController controller) {
   if (!stdin.hasTerminal) return;
 
   try {
@@ -332,8 +333,10 @@ String _relativePath(String base, String path) {
   return normalizedPath;
 }
 
-final class _FlutterMachineController {
-  _FlutterMachineController(this.process) {
+final class FlutterMachineController {
+  FlutterMachineController(this.process, {
+    this.updateTimeout = const Duration(seconds: 120),
+  }) {
     process.stdout
         .transform(utf8.decoder)
         .transform(const LineSplitter())
@@ -346,14 +349,20 @@ final class _FlutterMachineController {
   }
 
   final Process process;
+  final Duration updateTimeout;
   String? _appId;
   var _started = false;
   var _lostConnection = false;
   var _stopRequested = false;
   var _relaunchRequested = false;
   var _nextRequestId = 1;
-  final _reloadRequests = <int>{};
-  final _restartRequests = <int>{};
+  // Una sola actualización en vuelo: los eventos del sistema de archivos
+  // se agrupan y un reload fallido se recupera con un único hot restart.
+  int? _inFlightId;
+  bool _inFlightRestart = false;
+  bool _queuedReload = false;
+  bool _queuedRestart = false;
+  Timer? _updateWatchdog;
   void Function()? onReady;
 
   bool get isReady => _appId != null && _started;
@@ -361,50 +370,114 @@ final class _FlutterMachineController {
   bool get stopRequested => _stopRequested;
   bool get relaunchRequested => _relaunchRequested;
 
-  Future<void> reload({String reason = 'source-change'}) async {
-    final appId = _appId;
-    if (appId == null) return;
+  void dispose() {
+    _updateWatchdog?.cancel();
+    _updateWatchdog = null;
+  }
 
-    final id = _nextRequestId++;
-    _reloadRequests.add(id);
-    _send(
-      id: id,
-      method: 'app.restart',
-      params: {
-        'appId': appId,
-        'fullRestart': false,
-        'pause': false,
-        'reason': reason,
-        'debounce': true,
-      },
-    );
+  Future<void> reload({String reason = 'source-change'}) async {
+    _queuedReload = true;
+    _dispatchUpdate();
   }
 
   Future<void> restart() async {
-    final appId = _appId;
-    if (appId == null) return;
+    _queuedRestart = true;
+    _dispatchUpdate();
+  }
 
+  void _dispatchUpdate() {
+    if (!isReady || _relaunchRequested || _stopRequested ||
+        _inFlightId != null || (!_queuedReload && !_queuedRestart)) {
+      return;
+    }
+    final fullRestart = _queuedRestart;
+    _queuedRestart = false;
+    _queuedReload = false;
     final id = _nextRequestId++;
-    _restartRequests.add(id);
+    _inFlightId = id;
+    _inFlightRestart = fullRestart;
+    // Flutter --machine puede quedarse esperando una respuesta indefinidamente.
+    // Si su canal deja de responder, relanzar exclusivamente el proceso que
+    // ESTE runner creó. run.ps1 reutiliza la misma sesión/dispositivo.
+    _updateWatchdog?.cancel();
+    _updateWatchdog = Timer(updateTimeout, () {
+      if (_inFlightId != id || _relaunchRequested) return;
+      stderr.writeln(
+        'Hot ${fullRestart ? 'restart' : 'reload'} fallo: timeout',
+      );
+      stderr.writeln('Recuperacion Flutter: canal bloqueado; relanzamiento controlado.');
+      requestRelaunch();
+    });
     _send(
       id: id,
       method: 'app.restart',
       params: {
-        'appId': appId,
-        'fullRestart': true,
+        'appId': _appId,
+        'fullRestart': fullRestart,
         'pause': false,
-        'reason': 'manual',
+        'reason': fullRestart ? 'manual' : 'source-change',
         'debounce': true,
       },
     );
   }
 
+  // Registrar solo categorías/códigos estructurados: la salida de flutter
+  // puede contener URLs o credenciales y NO debe persistirse en el log.
+  String? _updateFailure(Map<String, dynamic> message) {
+    final error = message['error'];
+    if (error != null) {
+      if (error is Map && error['code'] is int) {
+        return 'protocolo_${error['code']}';
+      }
+      return 'protocolo';
+    }
+    final result = message['result'];
+    if (result is! Map || result['code'] == null) {
+      return 'respuesta_invalida';
+    }
+    final code = result['code'];
+    if (code == 0) return null;
+    if (code is int) return 'codigo_$code';
+    return 'resultado_no_valido';
+  }
+
+  void _finishUpdate(int id, Map<String, dynamic> message) {
+    if (id != _inFlightId) return;
+    _updateWatchdog?.cancel();
+    _updateWatchdog = null;
+    final fullRestart = _inFlightRestart;
+    _inFlightId = null;
+    final failure = _updateFailure(message);
+    if (failure == null) {
+      stdout.writeln(
+        fullRestart ? 'Hot restart completado.' :
+            'Hot reload automatico completado.',
+      );
+    } else {
+      stderr.writeln(
+        'Hot ${fullRestart ? 'restart' : 'reload'} fallo: $failure',
+      );
+      if (!fullRestart) {
+        // No repetir un reload rechazado sobre la misma versión. El
+        // restart reconstruye el isolate sin parar el runner ni Android.
+        stdout.writeln('Recuperacion Flutter: Hot restart automatico solicitado.');
+        _queuedRestart = true;
+      }
+      // Si falla también el restart, no entrar en un bucle: esperar otra
+      // modificación de fuentes o una señal explícita del usuario.
+    }
+    _dispatchUpdate();
+  }
+
   void requestRelaunch() {
+    if (_relaunchRequested) return;
+    _updateWatchdog?.cancel();
     _relaunchRequested = true;
     unawaited(_terminateProcessTree());
   }
 
   void stop() {
+    _updateWatchdog?.cancel();
     _stopRequested = true;
     unawaited(_terminateProcessTree());
   }
@@ -469,12 +542,20 @@ final class _FlutterMachineController {
       if (event == 'app.started') {
         _started = true;
         onReady?.call();
+        _dispatchUpdate();
         continue;
       }
 
       if (event == 'app.stop') {
         _appId = null;
         _started = false;
+        _updateWatchdog?.cancel();
+        if (_inFlightId != null) {
+          // Una actualización interrumpida deberá reintentarse en la nueva app.
+          if (_inFlightRestart) _queuedRestart = true;
+          else _queuedReload = true;
+          _inFlightId = null;
+        }
         continue;
       }
 
@@ -500,11 +581,7 @@ final class _FlutterMachineController {
       final id = idValue is int ? idValue : int.tryParse(idValue.toString());
       if (id == null) continue;
 
-      if (_reloadRequests.remove(id)) {
-        _printRestartResult(message, fullRestart: false);
-      } else if (_restartRequests.remove(id)) {
-        _printRestartResult(message, fullRestart: true);
-      }
+      _finishUpdate(id, message);
     }
   }
 
@@ -517,36 +594,6 @@ final class _FlutterMachineController {
     }
   }
 
-  void _printRestartResult(
-    Map<String, dynamic> message, {
-    required bool fullRestart,
-  }) {
-    final error = message['error'];
-    if (error != null) {
-      stderr.writeln(
-        (fullRestart ? 'Hot restart' : 'Hot reload') +
-            ' fallo: ' +
-            error.toString(),
-      );
-      return;
-    }
-
-    final result = message['result'];
-    if (result is Map && result['code'] != null && result['code'] != 0) {
-      stderr.writeln(
-        (fullRestart ? 'Hot restart' : 'Hot reload') +
-            ' fallo: ' +
-            (result['message'] ?? result['code']).toString(),
-      );
-      return;
-    }
-
-    stdout.writeln(
-      fullRestart
-          ? 'Hot restart completado.'
-          : 'Hot reload automatico completado.',
-    );
-  }
 
   List<Map<String, dynamic>>? _tryDecode(String line) {
     final trimmed = line.trim();

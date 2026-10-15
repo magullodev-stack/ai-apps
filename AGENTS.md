@@ -90,3 +90,13 @@ que describan la imagen, se cancela el borrado antes de tocar archivos.
 Los recursos pendientes también se comprueban antes de enviarlos a papelera.
 No debe reaparecer en la UI Flutter ningún panel local «Capas»; el gestor
 de imágenes es exclusivamente el explorador de AI-APPS Android.
+
+El watcher persistente de Flutter **no abandona** una actualización tras
+un Hot Reload fallido: `scripts/flutter-dev-runner.dart` serializa las
+peticiones y prueba un único Hot Restart de la misma sesión. Un Hot Restart
+fallido se registra sin reintentos en bucle; un canal machine bloqueado
+durante 120 segundos relanza exclusivamente el Flutter hijo ya controlado
+por el runner y delega su reconstrucción en `run.ps1`, sin F5 ni reiniciar
+Android. No registrar salida arbitraria/credenciales en
+`.ai-apps/dev-session.log`. Prueba:
+`dart scripts/flutter-dev-runner-machine-test.dart`.

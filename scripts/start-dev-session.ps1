@@ -94,8 +94,32 @@ try {
                 Write-SessionLog 'Configuracion Firebase Android verificada.'
             } elseif ($line -like 'Running Gradle task*') {
                 Write-SessionLog 'Compilacion Gradle iniciada.'
+            } elseif ($line -match '^Hot (reload|restart) fallo: (codigo_-?[0-9]+|protocolo(?:_-?[0-9]+)?|respuesta_invalida|resultado_no_valido|timeout)
+        }
+    Write-SessionLog 'Sesion Flutter terminada.'
+} catch {
+    Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
+    # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
+    if ($_.Exception.Message -like '*FIREBASE_CONFIG_MISSING*') {
+        Write-SessionLog 'ERROR: falta google-services.json en Muondia.'
+    } elseif ($_.Exception.Message -like '*FIREBASE_CONFIG_INVALID*') {
+        Write-SessionLog 'ERROR: google-services.json invalido o pertenece a otra app.'
+    } elseif ($_.Exception.Message -like '*clave*') {
+        Write-SessionLog 'Comprueba la clave DPAPI del usuario con el lanzador de Muondia.'
+    } elseif ($_.Exception.Message -like '*Flutter*') {
+        Write-SessionLog 'Comprueba Flutter con el lanzador de Muondia en PowerShell.'
+    }
+    exit 1
+}
+) {
+                # Registrar una categoría segura, sin datos de app, red o secretos.
+                Write-SessionLog ("ERROR Flutter: Hot {0} fallido ({1})." -f $Matches[1], $Matches[2])
             } elseif ($line -match '^Hot (reload|restart) fallo:') {
-                Write-SessionLog 'ERROR: hot reload/restart fallido.'
+                Write-SessionLog 'ERROR Flutter: actualización fallida (tipo desconocido).'
+            } elseif ($line -eq 'Recuperacion Flutter: Hot restart automatico solicitado.') {
+                Write-SessionLog 'Recuperacion automatica: Hot Restart tras fallo de Hot Reload.'
+            } elseif ($line -eq 'Recuperacion Flutter: canal bloqueado; relanzamiento controlado.') {
+                Write-SessionLog 'Recuperacion automatica: canal Flutter bloqueado; relanzamiento del proceso propio.'
             }
         }
     Write-SessionLog 'Sesion Flutter terminada.'
