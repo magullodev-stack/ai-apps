@@ -7,7 +7,7 @@ fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
 fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Test');
 fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
-let treeProvider, taskRunning = true, onWillRenameFiles;
+let treeProvider, treeView, taskRunning = true, onWillRenameFiles;
 let entries = [
   { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100',
     projectPath: path.resolve(__dirname, '../../apps/muondia'), packageName: 'com.aiapps.muondia' }
@@ -37,7 +37,9 @@ const vscode = {
     } },
   ConfigurationTarget: { Workspace: 2 }, StatusBarAlignment: { Left: 1 },
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
-  TreeItem: class { constructor(label) { this.label = label; } }, ThemeIcon: class {},
+  TreeItem: class { constructor(label) { this.label = label; } },
+  ThemeIcon: class {constructor(id, color){this.id=id;this.color=color}},
+  ThemeColor: class {constructor(id){this.id=id}},
   Uri: {file:fsPath => ({fsPath})},
   Range: class {constructor(start, end) {this.start=start;this.end=end;}},
   WorkspaceEdit: class {
@@ -60,7 +62,11 @@ const vscode = {
   window: { createOutputChannel: () => ({ ...disposable(), appendLine() {} }),
     showErrorMessage: message => { throw new Error(message); },
     createTreeView: (id, options) => {
-      if (id === 'aiAppsAndroid.sessions') treeProvider = options.treeDataProvider;
+      if (id === 'aiAppsAndroid.sessions') {
+        treeProvider = options.treeDataProvider;
+        treeView = {...disposable(), description: ''};
+        return treeView;
+      }
       return disposable();
     },
     createStatusBarItem: () => ({ ...disposable(), show() {} }),
@@ -168,23 +174,27 @@ async function run() {
   const content = treeProvider.getChildren(roots[0]);
   assert.deepEqual(Array.from(content.filter(item => item.experienceExplorerNode),
     entry => entry.experienceExplorerNode.label),
-    ['Auth', 'Primera experiencia', 'Home'],
-    'Singleton groups are flattened');
+    ['Recorrido real', 'Acceso', 'Primera experiencia', 'Aplicación'],
+    'Clear, permanent category roots and real-flow entry');
+  assert.equal(treeProvider.getTreeItem(content[1]).label,'ACCESO');
+  assert.equal(treeProvider.getTreeItem(content[1]).iconPath.id,'folder');
+  const authEntry = treeProvider.getChildren(content[1])[0];
+  const homeEntry = treeProvider.getChildren(content[3])[0];
   assert.equal(content.some(item => item.visualAssetNode), false,
     'Do not create a parallel layers folder under Muondia');
-  const authChildren = treeProvider.getChildren(content[0]);
+  const authChildren = treeProvider.getChildren(authEntry);
   const authImages = authChildren.filter(item => item.visualAssetNode);
   assert.equal(authImages.length, 4,
     'Auth displays its images directly without another container');
   assert.ok(authImages.some(item =>
     item.visualAssetNode.asset === 'assets/auth/Robot.png'));
-  assert.equal(treeProvider.getTreeItem(content[0]).collapsibleState,
+  assert.equal(treeProvider.getTreeItem(authEntry).collapsibleState,
     vscode.TreeItemCollapsibleState.Collapsed,
     'Auth stays clickable for preview while its arrow reveals images');
-  const homeChildren = treeProvider.getChildren(content[2]);
+  const homeChildren = treeProvider.getChildren(homeEntry);
   assert.equal(homeChildren.filter(item => item.visualAssetNode).length, 4,
     'Home displays its own images, not Auth images');
-  assert.equal(treeProvider.getTreeItem(content[2]).collapsibleState,
+  assert.equal(treeProvider.getTreeItem(homeEntry).collapsibleState,
     vscode.TreeItemCollapsibleState.Collapsed,
     'Home remains an expandable preview experience');
   const firstExperience = treeProvider.getChildren(content[1]);
@@ -207,15 +217,26 @@ async function run() {
     '--es', 'experience', 'loading', '--es', 'state', 'progreso'
   ], 'Clicking a tree state changes the running emulator without Flutter restart');
   calls.pop();
-  const homeCommand = treeProvider.getTreeItem(content[2]).command;
+  const homeCommand = treeProvider.getTreeItem(homeEntry).command;
   await commands.get(homeCommand.command)(...homeCommand.arguments);
   assert.ok(calls.at(-1).includes('home'),
     'Home is a single-click destination without an extra folder');
   calls.pop();
-  const authCommand = treeProvider.getTreeItem(content[0]).command;
+  const authCommand = treeProvider.getTreeItem(authEntry).command;
   await commands.get(authCommand.command)(...authCommand.arguments);
   assert.ok(calls.at(-1).includes('auth'),
     'Auth is a single-click destination without an extra folder');
+  calls.pop();
+  const realCommand = treeProvider.getTreeItem(content[0]).command;
+  await commands.get(realCommand.command)(...realCommand.arguments);
+  assert.ok(calls.at(-1).includes('com.aiapps.muondia.DEV_OPEN_REAL_FLOW'),
+    'The clickable real-flow entry uses the same emulator and Flutter process');
+  assert.ok(treeView.description.includes('RECORRIDO REAL'),
+    'The tree header anchors the last selected mode');
+  calls.pop();
+  await commands.get('aiAppsAndroid.findExperience')();
+  assert.ok(calls.at(-1).includes('com.aiapps.muondia.DEV_OPEN_REAL_FLOW'),
+    'Quick search opens a destination without navigating the entire tree');
   calls.pop();
   const stars = authImages.find(item =>
     item.visualAssetNode.asset === 'assets/auth/Robot.png');
@@ -258,9 +279,14 @@ async function run() {
   ], 'F7 invokes Muondia development activity without keyboard or Flutter restart');
   calls.pop();
   await api.refresh();
-  assert.equal(invalidations, 0,
-    'Preview and routine polling must preserve the expanded tree');
+  assert.equal(invalidations, 1,
+    'F7 selection updates the visible breadcrumb just once');
+  assert.ok(treeView.description.includes('Acceso / Auth'),
+    'Returning to Auth updates the tree location');
   assert.equal(calls.length, 1, 'Polling does not duplicate Muondia');
+  await api.refresh();
+  assert.equal(invalidations, 1,
+    'Routine polling must not invalidate the tree again');
   panels.delete('muondia@emulator-5554');
   await api.refresh();
   assert.equal(panels.size, 0, 'Manually closed panel stays closed while its session is unchanged');

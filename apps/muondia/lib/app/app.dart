@@ -43,6 +43,8 @@ class _MuondiaAppState extends State<MuondiaApp> {
   final ValueNotifier<({String experience, String state, int revision})?>
       _selectedPreview = ValueNotifier(null);
   bool _previewAuth = false;
+  // Una elección explícita de recorrido real persiste tras Hot Reload.
+  bool _realDevelopmentFlowSelected = false;
   int _developmentRevision = 0;
 
   bool get _safeDevelopmentStartup =>
@@ -68,6 +70,8 @@ class _MuondiaAppState extends State<MuondiaApp> {
         if (!mounted) return;
         if (call.method == 'showAuth') {
           _showDevelopmentAuth();
+        } else if (call.method == 'openRealFlow') {
+          _openRealDevelopmentFlow();
         } else if (call.method == 'openExperience') {
           final args = call.arguments;
           if (args is Map &&
@@ -88,9 +92,11 @@ class _MuondiaAppState extends State<MuondiaApp> {
     super.reassemble();
     // También rescata una sesión de desarrollo ya abierta cuando el código
     // llega por Hot Reload y estaba en el onboarding real.
-    if (_safeDevelopmentStartup && _selectedPreview.value == null) {
+    if (_safeDevelopmentStartup && !_realDevelopmentFlowSelected &&
+        _selectedPreview.value == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _selectedPreview.value == null) {
+        if (mounted && !_realDevelopmentFlowSelected &&
+            _selectedPreview.value == null) {
           _openDevelopmentExperience('auth', 'inicio');
         }
       });
@@ -111,6 +117,16 @@ class _MuondiaAppState extends State<MuondiaApp> {
     _openDevelopmentExperience('auth', 'inicio');
   }
 
+  void _openRealDevelopmentFlow() {
+    if (!kDebugMode || !mounted) return;
+    // No se cierra la sesión ni se modifica el progreso. La entrada normal
+    // decide Auth, onboarding auténtico o Home según Firebase y el UID.
+    _realDevelopmentFlowSelected = true;
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (_previewAuth) setState(() => _previewAuth = false);
+    _selectedPreview.value = null;
+  }
+
   void _openDevelopmentExperience(String experience, String state) {
     const allowed = <String, Set<String>>{
       'auth': {'inicio'},
@@ -121,6 +137,7 @@ class _MuondiaAppState extends State<MuondiaApp> {
     if (!kDebugMode || !mounted || allowed[experience]?.contains(state) != true) {
       return;
     }
+    _realDevelopmentFlowSelected = false;
     _navigatorKey.currentState?.popUntil((route) => route.isFirst);
     if (_previewAuth) setState(() => _previewAuth = false);
     _selectedPreview.value = (

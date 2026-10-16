@@ -3,12 +3,17 @@
 ## Explorador de experiencias y sesiones
 
 **AI-APPS Android** muestra directamente las aplicaciones en ejecución.
-La fila «Muondia · emulator-5554» es el único nodo raíz habitual y, al
-desplegarla, aparecen sus experiencias: **Auth**, **Primera experiencia**
-(Loading del robot y Test de bienvenida) y **Home**. Loading se despliega
-en Inicio, En curso y Finalización. No se crean filas duplicadas
-«Explorador de experiencias» ni «Muondia», ni carpetas «Acceso» o
-«Aplicación» para una sola experiencia.
+La fila «Muondia · emulator-5554» es el nodo raíz habitual. Bajo ella
+aparecen el acceso clicable **Recorrido real** y las categorías troncales
+**ACCESO**, **PRIMERA EXPERIENCIA** y **APLICACIÓN**, cada una con un icono
+de carpeta de color reconocible, incluso si contiene una sola experiencia.
+Dentro de cada categoría están sus pantallas y estados; bajo cada pantalla
+permanecen sus imágenes. No se crean paneles ni árboles duplicados.
+
+Al solicitar una vista desde el explorador, la cabecera muestra la
+**última selección solicitada** y el grupo correspondiente marca su nodo.
+Esto no es seguimiento continuo de rutas tocadas dentro del emulador; en
+modo real solo se afirma que el modo real fue solicitado.
 
 Los laboratorios `offline`/`failed` permanecen registrados, pero **no
 se muestran en el árbol de trabajo**. Los comandos de administración
@@ -19,15 +24,27 @@ las aplicaciones. No se borran AVD, sesiones, archivos ni datos.
 
 El catálogo de experiencias se define en cada aplicación, en
 `lib/app/development/experiences.json`. No se infieren experiencias de
-assets o archivos Dart. Los grupos con una sola experiencia se muestran
-directamente bajo su aplicación; los que contienen varias mantienen
-su agrupación.
+assets o archivos Dart. Los grupos se mantienen siempre como categorías troncales, independientemente
+del número de pantallas, para que el árbol siga siendo reconocible con
+decenas de experiencias. El botón **Buscar pantalla…** del encabezado abre
+una búsqueda rápida por aplicación, grupo, pantalla y estado.
 
 Para evitar solapamientos de etiquetas al desplegar el árbol, el sondeo
 de sesiones cada cinco segundos actualiza los nodos **solo** si cambia
-el estado de una sesión o la revisión del catálogo; los clics y la
-navegación no invalidan innecesariamente el árbol. Esta regla se
+el estado de una sesión o la revisión del catálogo. Las selecciones
+explícitas refrescan únicamente la indicación de ubicación; el sondeo
+no cierra ni reabre ramas del árbol. Esta regla se
 comprueba en las pruebas de la extensión.
+
+El comando `aiAppsAndroid.realFlow` aparece solo cuando el catálogo declara
+`realFlowAction` con la acción propia `<package>.DEV_OPEN_REAL_FLOW`.
+En Muondia envía un intent a su `MainActivity` existente, y esta invoca
+`openRealFlow` en el canal `muondia/development`. Flutter abandona la
+previsualización y vuelve al flujo auténtico de Firebase, onboarding o
+Home, según el usuario, sin borrar sesión ni reiniciar Flutter. La elección
+**no se revierte durante Hot Reload**. El recorrido real puede llamar a IA
+y generar costes cuando el onboarding esté pendiente; se abre solamente
+por selección explícita.
 
 El comando `aiAppsAndroid.preview` valida la experiencia solicitada y envía un intent `<package>.DEV_OPEN_EXPERIENCE` al emulador asignado. No inicia sesiones Flutter, no borra datos y no dispara IA. Muondia expone Auth, Loading (inicio/en curso/finalización), Test con preguntas de prueba y Home. El arranque de Muondia en debug muestra Auth simulado para evitar peticiones IA automáticas; F7 hace lo mismo. Tras sincronizar, recargar VS Code una vez. Ejecutar las pruebas `node scripts/vscode-android/explorer.test.cjs` y `node scripts/vscode-android/test.cjs`.
 

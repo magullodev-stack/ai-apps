@@ -117,6 +117,55 @@ void main() {
     expect(store.completed, contains('user-1'));
   });
 
+  testWidgets(
+    'El explorador alterna entre vista previa y recorrido real sin perder sesión',
+    (tester) async {
+      final identity = _SignedInIdentity();
+      final store = _MemoryOnboardingStore()..completed.add('user-1');
+      await tester.pumpWidget(MuondiaApp(
+        identityService: identity,
+        onboardingStore: store,
+        developmentPreviewOnStartup: true,
+      ));
+      await tester.pump();
+      expect(find.byType(AuthEntryPage), findsOneWidget);
+      expect(find.byType(AppShell), findsNothing);
+
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      Future<void> send(String method, [Object? args]) async {
+        await messenger.handlePlatformMessage(
+          'muondia/development',
+          const StandardMethodCodec().encodeMethodCall(MethodCall(method, args)),
+          (_) {},
+        );
+        await tester.pump();
+        await tester.pump();
+      }
+
+      await send('openRealFlow');
+      expect(find.byType(AppShell), findsOneWidget);
+      expect(find.byType(AuthEntryPage), findsNothing);
+      expect(identity.signOutCalls, 0);
+      expect(store.completed, contains('user-1'));
+
+      // Un Hot Reload no debe sacar al desarrollador del modo real.
+      tester.state<State<MuondiaApp>>(find.byType(MuondiaApp)).reassemble();
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(AppShell), findsOneWidget);
+
+      await send('openExperience', {'experience': 'auth', 'state': 'inicio'});
+      expect(find.byType(AuthEntryPage), findsOneWidget);
+      expect(find.byType(AppShell), findsNothing);
+
+      await send('openRealFlow');
+      expect(find.byType(AppShell), findsOneWidget);
+      expect(identity.signOutCalls, 0);
+      expect(store.completed, contains('user-1'));
+    },
+  );
+
   test('La finalización se guarda separadamente por usuario', () async {
     final store = _MemoryOnboardingStore();
     expect(await store.hasCompleted('user-1'), false);

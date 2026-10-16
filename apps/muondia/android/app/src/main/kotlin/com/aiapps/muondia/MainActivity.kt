@@ -17,6 +17,10 @@ class MainActivity : FlutterActivity() {
                 method = "showAuth"
                 args = null
             }
+            "com.aiapps.muondia.DEV_OPEN_REAL_FLOW" -> {
+                method = "openRealFlow"
+                args = null
+            }
             "com.aiapps.muondia.DEV_OPEN_EXPERIENCE" -> {
                 method = "openExperience"
                 args = mapOf(

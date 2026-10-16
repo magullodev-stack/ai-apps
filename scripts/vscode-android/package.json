@@ -81,6 +81,18 @@
         "category": "AI-APPS Android"
       },
       {
+        "command": "aiAppsAndroid.realFlow",
+        "title": "Abrir recorrido real",
+        "category": "AI-APPS Android",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "aiAppsAndroid.findExperience",
+        "title": "Buscar pantalla…",
+        "category": "AI-APPS Android",
+        "icon": "$(search)"
+      },
+      {
         "command": "aiAppsAndroid.hideVisualAsset",
         "title": "Ocultar imagen",
         "category": "AI-APPS Android",
@@ -144,6 +156,11 @@
           "command": "aiAppsAndroid.refresh",
           "when": "view == aiAppsAndroid.sessions",
           "group": "navigation"
+        },
+        {
+          "command": "aiAppsAndroid.findExperience",
+          "when": "view == aiAppsAndroid.sessions",
+          "group": "navigation@0"
         }
       ],
       "view/item/context": [

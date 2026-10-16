@@ -64,5 +64,6 @@
         "assets/home"
       ]
     }
-  ]
+  ],
+  "realFlowAction": "com.aiapps.muondia.DEV_OPEN_REAL_FLOW"
 }

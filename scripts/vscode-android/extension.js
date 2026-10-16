@@ -282,6 +282,19 @@ async function activate(context) {
     kind: 'app',
     session,
   });
+  let experienceView;
+  function showExplorerLocation() {
+    const location = explorer.activeLocation();
+    if (!location || !experienceView) return;
+    const where = location.mode === 'real'
+      ? location.sessionLabel + ' · RECORRIDO REAL'
+      : location.sessionLabel + ' · ' + location.group + ' / ' +
+          location.experience + (location.state ? ' / ' + location.state : '');
+    // Es la última orden solicitada desde el explorador; no se atribuye
+    // una telemetría de navegación real que el dispositivo no proporciona.
+    experienceView.description = where;
+    status.tooltip = 'Última selección en el explorador: ' + where;
+  }
   const tree = {
     onDidChangeTreeData: changed.event,
     getChildren(parent) {
@@ -370,8 +383,35 @@ async function activate(context) {
   command('stop', supplied => chooseAction('stop', supplied));
   command('register', register);
   command('refresh', refresh);
-  command('preview', (sessionId, experience, state) =>
-    explorer.open(sessionId, experience, state));
+  command('preview', async (sessionId, experience, state) => {
+    await explorer.open(sessionId, experience, state);
+    changed.fire();
+    showExplorerLocation();
+  });
+  command('realFlow', async sessionId => {
+    await explorer.openReal(sessionId);
+    changed.fire();
+    showExplorerLocation();
+  });
+  command('findExperience', async () => {
+    const targets = explorer.findTargets();
+    if (!targets.length) {
+      throw new Error('No hay pantallas disponibles en los emuladores conectados.');
+    }
+    const selected = await vscode.window.showQuickPick(targets, {
+      placeHolder: 'Buscar por aplicación, categoría, pantalla o estado',
+      matchOnDescription: true,
+      matchOnDetail: true,
+    });
+    if (!selected) return;
+    if (selected.mode === 'real') {
+      await explorer.openReal(selected.sessionId);
+    } else {
+      await explorer.open(selected.sessionId, selected.experienceId, selected.stateId);
+    }
+    changed.fire();
+    showExplorerLocation();
+  });
   // El ojo es una acción inline nativa. Se mantiene también el clic de fila.
   const toggleNode = async node => {
     const entry = assets.resolveNode(node);
@@ -421,13 +461,19 @@ async function activate(context) {
       '-f', '0x20000000',
     ]);
     output.appendLine('Vista Auth solicitada a Muondia (canal de desarrollo).');
+    explorer.rememberPreview(target.id, 'auth', 'inicio');
+    changed.fire();
+    showExplorerLocation();
   });
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   status.text = '$(device-mobile) Android'; status.command = 'aiAppsAndroid.select'; status.show();
   const interval = setInterval(() => refresh().catch(error => output.appendLine(error.message)), 5000);
   context.subscriptions.push(output, changed, status,
-    vscode.window.createTreeView('aiAppsAndroid.sessions', { treeDataProvider: tree }),
     { dispose() { disposed = true; clearInterval(interval); } });
+  experienceView = vscode.window.createTreeView('aiAppsAndroid.sessions', {
+    treeDataProvider: tree,
+  });
+  context.subscriptions.push(experienceView);
   await refresh().catch(report);
   return { refresh, list: () => sessions, service };
 }

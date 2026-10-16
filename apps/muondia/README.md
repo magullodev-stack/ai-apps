@@ -6,9 +6,22 @@ La interfaz visual de Auth se gestiona desde el explorador **AI-APPS Android**
 en VS Code, sin paneles de capas duplicados en Flutter. Cada imagen tiene
 un ojo reversible y acciones de sustitución y borrado seguro.
 
-En VS Code, expande «Explorador de experiencias» dentro de la vista existente «AI-APPS Android» para abrir directamente Auth, Loading, Test de bienvenida y Home. El catálogo está en `lib/app/development/experiences.json` y las previews en `lib/app/development/experience_preview.dart`. Se reutilizan los widgets reales.
+En VS Code, expande Muondia en la vista existente «AI-APPS Android» y entra en **ACCESO → Auth**, **PRIMERA EXPERIENCIA → Loading del robot / Test de bienvenida** o **APLICACIÓN → Home**, o usa **Buscar pantalla…**. El catálogo está en `lib/app/development/experiences.json` y las previews en `lib/app/development/experience_preview.dart`. Se reutilizan los widgets reales.
 
-Loading ofrece tres estados; el test utiliza diez preguntas fijas. En la aplicación real ejecutada en modo debug, el arranque muestra Auth en previsualización, sin entrar en el onboarding y sin generar preguntas. También F7 abre esta vista segura. «Continuar con Google» en la previsualización pasa al Loading simulado, sin iniciar sesión real. El test del explorador usa diez preguntas fijas; no modifica el progreso. La navegación de usuarios en release no cambia. Después de recibir cambios de código de la extensión, puede ser necesario recargar VS Code, no Flutter.
+Loading ofrece tres estados; el test utiliza diez preguntas fijas. En la aplicación real ejecutada en modo debug, el arranque muestra Auth en previsualización, sin entrar en el onboarding y sin generar preguntas. También F7 abre esta vista segura. «Continuar con Google» en la previsualización pasa al Loading simulado, sin iniciar sesión real. El test del explorador usa diez preguntas fijas; no modifica el progreso. La navegación de usuarios en release no cambia.
+
+La entrada **Recorrido real** cambia la misma sesión del emulador a la ruta
+auténtica de Firebase: muestra Auth si no hay usuario y, si hay una sesión,
+entra al onboarding pendiente o a Home. Desde cualquier pantalla puede
+abrirse otra previsualización para regresar al modo UI. No se desconecta la
+cuenta, no se borra el progreso, no se lanza otro Flutter y Hot Reload
+conserva la elección real. **Atención:** el onboarding auténtico puede
+generar contenido con IA; las vistas previas siguen siendo seguras y
+utilizan datos de prueba. La cabecera del explorador muestra la última
+selección enviada al dispositivo, no rastrea todos los toques realizados
+dentro de Android. Después de cambiar el código de la extensión, recarga
+VS Code una vez; como el intent Android también cambia, la tarea
+persistente reconstruirá la parte nativa cuando corresponda.
 
 
 **Muondia** es la aplicación móvil interactiva de AI-APPS. Vive en
@@ -162,4 +175,4 @@ desarrollo, no como funciones del producto.
 
 ## Capas e imágenes (debug)
 
-En el explorador **AI-APPS Android**, abre **Muondia → Auth** para ver sus imágenes directamente bajo la pantalla (Background, Robot, logotipo e icono de Google). **Home** y **Loading del robot** muestran las suyas del mismo modo, sin carpeta intermedia. Usa el ojo situado a la derecha para ocultar o mostrar, o el botón derecho para sustituir o eliminar. La eliminación de código solo está disponible cuando la capa está identificada de forma segura. Las relaciones pantalla/carpeta se declaran en `lib/app/development/experiences.json` con `assetDirectories`. La visibilidad se restablece al reiniciar Flutter; el inspector no se incorpora a release ni genera llamadas a IA.
+En el explorador **AI-APPS Android**, abre **Muondia → ACCESO → Auth** para ver sus imágenes directamente bajo la pantalla (Background, Robot, logotipo e icono de Google). **Home** y **Loading del robot** muestran las suyas del mismo modo, sin carpeta intermedia. Usa el ojo situado a la derecha para ocultar o mostrar, o el botón derecho para sustituir o eliminar. La eliminación de código solo está disponible cuando la capa está identificada de forma segura. Las relaciones pantalla/carpeta se declaran en `lib/app/development/experiences.json` con `assetDirectories`. La visibilidad se restablece al reiniciar Flutter; el inspector no se incorpora a release ni genera llamadas a IA.
