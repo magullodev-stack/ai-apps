@@ -122,6 +122,20 @@ void main() {
     (tester) async {
       final identity = _SignedInIdentity();
       final store = _MemoryOnboardingStore()..completed.add('user-1');
+      final deviceLocations = <String>[];
+      final locationChannel = const MethodChannel('muondia/development_location');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(locationChannel, (call) async {
+        if (call.method == 'setActiveLocation') {
+          final args = Map<String, Object?>.from(call.arguments as Map);
+          deviceLocations.add(
+            '${args['mode']}:${args['experience']}:${args['state']}',
+          );
+        }
+        return null;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(locationChannel, null));
       await tester.pumpWidget(MuondiaApp(
         identityService: identity,
         onboardingStore: store,
@@ -131,8 +145,8 @@ void main() {
       expect(find.byType(AuthEntryPage), findsOneWidget);
       expect(find.byType(AppShell), findsNothing);
 
-      final messenger =
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      expect(deviceLocations, contains('preview:auth:inicio'),
+        reason: 'El estado inicial debe ser visible tras recargar VS Code');
       Future<void> send(String method, [Object? args]) async {
         await messenger.handlePlatformMessage(
           'muondia/development',
@@ -144,18 +158,21 @@ void main() {
       }
 
       await send('openRealFlow');
+      expect(deviceLocations, contains('real::'));
       expect(find.byType(AppShell), findsOneWidget);
       expect(find.byType(AuthEntryPage), findsNothing);
       expect(identity.signOutCalls, 0);
       expect(store.completed, contains('user-1'));
 
       // Un Hot Reload no debe sacar al desarrollador del modo real.
-      tester.state<State<MuondiaApp>>(find.byType(MuondiaApp)).reassemble();
+      await tester.binding.reassembleApplication();
       await tester.pump();
       await tester.pump();
       expect(find.byType(AppShell), findsOneWidget);
 
       await send('openExperience', {'experience': 'auth', 'state': 'inicio'});
+      expect(deviceLocations.last, 'preview:auth:inicio',
+        reason: 'Volver desde el modo real actualiza la ubicación efectiva');
       expect(find.byType(AuthEntryPage), findsOneWidget);
       expect(find.byType(AppShell), findsNothing);
 

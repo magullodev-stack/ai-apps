@@ -10,10 +10,26 @@ de carpeta de color reconocible, incluso si contiene una sola experiencia.
 Dentro de cada categoría están sus pantallas y estados; bajo cada pantalla
 permanecen sus imágenes. No se crean paneles ni árboles duplicados.
 
-Al solicitar una vista desde el explorador, la cabecera muestra la
-**última selección solicitada** y el grupo correspondiente marca su nodo.
-Esto no es seguimiento continuo de rutas tocadas dentro del emulador; en
-modo real solo se afirma que el modo real fue solicitado.
+La APK depurable escribe su pantalla activa en un archivo privado
+`files/ai_apps_active_experience.txt` mediante
+`muondia/development_location`. La extensión consulta ese estado mediante
+`adb shell run-as <package> cat files/ai_apps_active_experience.txt`
+durante su sondeo habitual, sin iniciar otro Flutter. El protocolo no
+contiene información del usuario. Al reabrir VS Code, el dispositivo vuelve
+a identificar qué experiencia y estado se muestran, incluso cuando el
+cambio de vista se realizó tocando el emulador.
+
+La **carpeta troncal activa** lleva un icono de carpeta abierta en amarillo
+y la pantalla activa un icono de ojo amarillo. La descripción del árbol
+identifica el camino `Categoría / Pantalla / Estado`; las carpetas
+inactivas permanecen azules. La lectura se actualiza cada cinco segundos
+y no modifica el árbol si no hay cambios. Si la APK aún no admite el
+protocolo, la última selección realizada desde el explorador se conserva
+como indicación provisional, pero no se inventan cambios.
+
+El **modo real** identifica con claridad la entrada «Recorrido real»,
+no cada ruta secundaria de Flutter (Perfil/Estudio). No confundir la
+selección de modo con una telemetría de rutas que aún no existe.
 
 Los laboratorios `offline`/`failed` permanecen registrados, pero **no
 se muestran en el árbol de trabajo**. Los comandos de administración

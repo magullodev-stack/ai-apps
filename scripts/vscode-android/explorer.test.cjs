@@ -8,10 +8,13 @@ async function main(){
   const source=path.resolve(__dirname,'../../apps/muondia/lib/app/development/experiences.json');
   const catalog=JSON.parse(fs.readFileSync(source,'utf8'));
   fs.copyFileSync(source,path.join(directory,'experiences.json'));
-  let ready=true,pid='42';const calls=[];
+  let ready=true,pid='42',reportedLocation='preview:auth:inicio';const calls=[];
   const session={id:'muondia@emulator-5554',label:'Muondia',serial:'emulator-5554',projectPath:temp,packageName:'com.aiapps.muondia',kind:'development-task'};
   const service={async list(){return [{...session,deviceReady:ready}]},
-   platform:{adb:'adb.exe',async appPid(){return pid},async run(...args){calls.push(args)}}};
+   platform:{adb:'adb.exe',async appPid(){return pid},async run(file,args){
+     if(args.includes('run-as')) return reportedLocation;
+     calls.push([file,args]);
+   }}};
   const vscode={EventEmitter:class{constructor(){this.event=()=>{}}fire(){}},
    TreeItem:class{constructor(label,collapsibleState){this.label=label;this.collapsibleState=collapsibleState}},
    TreeItemCollapsibleState:{None:0,Collapsed:1},
@@ -27,6 +30,25 @@ async function main(){
     'unchanged sessions do not trigger tree regeneration');
   const [app]=explorer.provider.getChildren();assert.equal(app.label,'Muondia');
   const children=explorer.provider.getChildren(app);
+  assert.equal(await explorer.syncActiveLocations(await service.list()),true,
+    'After editor reload, the device reports its current screen');
+  assert.equal(explorer.activeLocation().experienceId,'auth');
+  assert.equal(explorer.provider.getTreeItem(children[1]).iconPath.id,'folder-opened');
+  assert.equal(explorer.provider.getTreeItem(children[1]).iconPath.color.id,
+    'charts.yellow', 'The active folder must light up, not just add text');
+  const observer=createExperienceExplorer(vscode,service,()=>{});
+  observer.refresh(await service.list());
+  reportedLocation='preview:loading:final';
+  assert.equal(await observer.syncActiveLocations(await service.list()),true);
+  assert.equal(observer.activeLocation().stateId,'final',
+    'State changes inside the emulator are read back, not guessed');
+  assert.equal(observer.provider.getTreeItem(children[2]).iconPath.id,'folder-opened');
+  assert.equal(observer.provider.getTreeItem(children[2]).description,
+    '● EN EL EMULADOR · Loading del robot');
+  reportedLocation='preview:not-registered:inicio';
+  assert.equal(await observer.syncActiveLocations(await service.list()),false,
+    'Never highlight a screen that is absent from the registered catalog');
+  reportedLocation='preview:auth:inicio';
   assert.deepEqual(children.map(x=>x.label),
     ['Recorrido real','Acceso','Primera experiencia','Aplicación']);
   assert.deepEqual(children.map(x=>x.kind),['real','group','group','group']);
@@ -53,7 +75,7 @@ async function main(){
   await explorer.open(session.id,'loading','progreso');
   assert.equal(explorer.activeLocation().group,'Primera experiencia');
   assert.equal(explorer.provider.getTreeItem(children[2]).description,
-    '● ÚLTIMA SELECCIÓN', 'Active group must be unmistakable');
+    '● EN EL EMULADOR · Loading del robot', 'Active group must be unmistakable');
   assert.deepEqual(calls[0],['adb.exe',['-s','emulator-5554','shell','am','start',
     '-n','com.aiapps.muondia/.MainActivity','-a','com.aiapps.muondia.DEV_OPEN_EXPERIENCE',
     '-f','0x20000000','--es','experience','loading','--es','state','progreso']]);
@@ -65,7 +87,7 @@ async function main(){
     '-n','com.aiapps.muondia/.MainActivity',
     '-a','com.aiapps.muondia.DEV_OPEN_REAL_FLOW','-f','0x20000000']]);
   assert.equal(explorer.activeLocation().mode,'real');
-  assert.equal(explorer.provider.getTreeItem(children[0]).description,'● MODO REAL');
+  assert.equal(explorer.provider.getTreeItem(children[0]).description,'● EN EL EMULADOR');
   calls.pop(); // El resto de la prueba mantiene una única llamada inicial.
   ready=false;await assert.rejects(explorer.open(session.id,'auth','inicio'),/desconectado/);
   ready=true;pid='';await assert.rejects(explorer.open(session.id,'home','inicio'),/no está ejecutándose/);

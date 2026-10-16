@@ -208,12 +208,14 @@ async function activate(context) {
         session.projectPath, session.packageName, session.kind,
       ]));
       const catalogChanged = explorer.refresh(sessions);
+      const locationChanged = await explorer.syncActiveLocations(sessions);
       const visualChanged = assets.refresh(sessions);
       if (lastTreeSnapshot !== currentTreeSnapshot ||
-          catalogChanged || visualChanged) {
+          catalogChanged || visualChanged || locationChanged) {
         lastTreeSnapshot = currentTreeSnapshot;
         changed.fire();
       }
+      if (locationChanged) showExplorerLocation();
       const views = viewer.listSessions?.() || [];
       for (const session of sessions) {
         if (!session.deviceReady && views.some(view => view.serial === session.serial)) disconnected.add(session.id);
@@ -290,10 +292,10 @@ async function activate(context) {
       ? location.sessionLabel + ' · RECORRIDO REAL'
       : location.sessionLabel + ' · ' + location.group + ' / ' +
           location.experience + (location.state ? ' / ' + location.state : '');
-    // Es la última orden solicitada desde el explorador; no se atribuye
-    // una telemetría de navegación real que el dispositivo no proporciona.
+    // Se actualiza desde el dispositivo en cada sondeo, además del clic.
+    // Para el modo real indica el modo, no inventa subrutas Flutter.
     experienceView.description = where;
-    status.tooltip = 'Última selección en el explorador: ' + where;
+    status.tooltip = 'Ubicación observada o solicitada: ' + where;
   }
   const tree = {
     onDidChangeTreeData: changed.event,
@@ -475,6 +477,7 @@ async function activate(context) {
   });
   context.subscriptions.push(experienceView);
   await refresh().catch(report);
+  showExplorerLocation();
   return { refresh, list: () => sessions, service };
 }
 function deactivate() {}

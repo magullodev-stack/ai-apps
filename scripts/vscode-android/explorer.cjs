@@ -17,6 +17,12 @@ function readCatalog(session) {
       doc.activity !== session.packageName + '/.MainActivity') {
     throw new Error('Catálogo de experiencias inválido: ' + file);
   }
+  // El protocolo de estado se lee solo desde archivos privados de APK debug.
+  // El catálogo no puede inyectar una ruta arbitraria en adb run-as.
+  if (doc.activeLocationFile !== undefined &&
+      doc.activeLocationFile !== 'files/ai_apps_active_experience.txt') {
+    throw new Error('Archivo de estado de vista inválido: ' + file);
+  }
   // Cada aplicación declara explícitamente si admite regresar a su flujo
   // auténtico desde esta sesión debug. Nunca ejecutar intents arbitrarios.
   if (doc.realFlowAction !== undefined &&
@@ -71,6 +77,7 @@ function createExperienceExplorer(vscode, service, report) {
   let lastCatalogSnapshot;
   const active = new Map();
   let lastLocation = null;
+  const requestedAt = new Map();
   const node = (kind, label, session, item, state) => ({kind,label,session,item,state});
   function remember(session, mode, experience, state) {
     const location = {sessionId: session.id, sessionLabel: session.label,
@@ -119,43 +126,55 @@ function createExperienceExplorer(vscode, service, report) {
       const selected = active.get(item.session.id);
       const activePreview = selected?.mode === 'preview';
       if (item.kind === 'real') {
-        result.iconPath = new vscode.ThemeIcon('play-circle',
-          new vscode.ThemeColor('charts.green'));
+        result.iconPath = new vscode.ThemeIcon(selected?.mode === 'real'
+          ? 'play-circle' : 'circle-outline',
+          new vscode.ThemeColor(selected?.mode === 'real'
+            ? 'charts.yellow' : 'charts.green'));
         result.tooltip = 'Navegación auténtica: Firebase, cuenta y onboarding real. Puede utilizar IA.';
-        result.description = selected?.mode === 'real' ? '● MODO REAL' : 'Firebase + navegación';
+        result.description = selected?.mode === 'real' ? '● EN EL EMULADOR' : 'Firebase + navegación';
         result.command = {command: 'aiAppsAndroid.realFlow',
           title: 'Abrir recorrido real', arguments: [item.session.id]};
       } else if (item.kind === 'group') {
-        result.iconPath = new vscode.ThemeIcon('folder',
-          new vscode.ThemeColor('charts.blue'));
-        result.contextValue = 'experienceGroup';
+        const current = activePreview && selected.group === item.label;
+        // La carpeta abierta cambia de icono Y de color: visible incluso
+        // cuando la rama del árbol está contraída.
+        result.iconPath = new vscode.ThemeIcon(current ? 'folder-opened' : 'folder',
+          new vscode.ThemeColor(current ? 'charts.yellow' : 'charts.blue'));
+        result.contextValue = current ? 'experienceGroupActive' : 'experienceGroup';
         const count = readCatalog(item.session).experiences
           .filter(e => e.group === item.label).length;
-        result.description = activePreview && selected.group === item.label
-          ? '● ÚLTIMA SELECCIÓN' : count + (count === 1 ? ' pantalla' : ' pantallas');
+        result.description = current
+          ? '● EN EL EMULADOR · ' + selected.experience :
+            count + (count === 1 ? ' pantalla' : ' pantallas');
         result.tooltip = 'Categoría: ' + item.label;
       } else if (item.kind === 'experience') {
-        result.iconPath = new vscode.ThemeIcon('symbol-file');
+        const current = activePreview && selected.experienceId === item.item.id;
+        result.iconPath = new vscode.ThemeIcon(
+          current ? 'eye' : 'symbol-file',
+          current ? new vscode.ThemeColor('charts.yellow') : undefined);
         if (item.item.states.length === 1) {
           result.collapsibleState = state.None;
           result.command = {command: 'aiAppsAndroid.preview',
             title: 'Abrir experiencia', arguments: [item.session.id,
               item.item.id, item.item.states[0].id]};
         }
-        if (activePreview && selected.experienceId === item.item.id) {
-          result.description = '● Última vista';
+        if (current) {
+          result.description = '● PANTALLA ABIERTA';
         }
         result.tooltip = item.item.group + ' / ' + item.item.label;
       } else if (item.kind === 'state') {
         result.iconPath = new vscode.ThemeIcon(
           activePreview && selected.experienceId === item.item.id &&
-              selected.stateId === item.state.id ? 'circle-filled' : 'circle-outline');
+              selected.stateId === item.state.id ? 'circle-filled' : 'circle-outline',
+          activePreview && selected.experienceId === item.item.id &&
+              selected.stateId === item.state.id
+              ? new vscode.ThemeColor('charts.yellow') : undefined);
         result.command = {command: 'aiAppsAndroid.preview', title: 'Abrir estado',
           arguments: [item.session.id, item.item.id, item.state.id]};
         result.description = activePreview &&
             selected.experienceId === item.item.id &&
             selected.stateId === item.state.id
-          ? '● Última vista' : 'Simulación · sin IA';
+          ? '● ESTADO ACTIVO' : 'Simulación · sin IA';
         result.tooltip = item.item.group + ' / ' + item.item.label + ' / ' +
           item.state.label;
       }
@@ -184,6 +203,7 @@ function createExperienceExplorer(vscode, service, report) {
       '--es', 'experience', exp.id,
       '--es', 'state', state.id
     ]);
+    requestedAt.set(live.id, Date.now());
     remember(live, 'preview', exp, state);
     report(live.label + ': ' + exp.label + ' / ' + state.label + ' (simulación)');
   }
@@ -203,14 +223,58 @@ function createExperienceExplorer(vscode, service, report) {
       '-a', catalog.realFlowAction,
       '-f', '0x20000000',
     ]);
+    requestedAt.set(live.id, Date.now());
     remember(live, 'real');
     report(live.label + ': navegación real solicitada (sin reiniciar Flutter).');
+  }
+  async function syncActiveLocations(currentSessions) {
+    const changes = await Promise.all(currentSessions.map(async session => {
+      if (!session.deviceReady || !(session.active ||
+          session.kind === 'development-task')) return false;
+      const catalog = readCatalog(session);
+      if (!catalog?.activeLocationFile) return false;
+      // Dar tiempo a Flutter a atender el intent, para que una respuesta
+      // antigua no desmarque temporalmente la pantalla recién solicitada.
+      if (Date.now() - (requestedAt.get(session.id) || 0) < 1500) return false;
+      let raw;
+      try {
+        raw = await service.platform.run(service.platform.adb, [
+          '-s', session.serial, 'shell', 'run-as', session.packageName,
+          'cat', catalog.activeLocationFile,
+        ], {timeout: 3000});
+      } catch {
+        // APK anterior, app detenida, aún iniciando o sin reporte:
+        // conservar la última selección sin afirmar que ha cambiado.
+        return false;
+      }
+      if (typeof raw !== 'string') return false;
+      const parts = raw.trim().split(':');
+      if (parts.length !== 3) return false;
+      const [mode, expId, stateId] = parts;
+      let exp, state;
+      if (mode === 'preview') {
+        exp = catalog.experiences.find(e => e.id === expId);
+        state = exp?.states.find(e => e.id === stateId);
+        if (!state) return false;
+      } else if (mode !== 'real' || expId || stateId ||
+          !catalog.realFlowAction) return false;
+      const selected = active.get(session.id);
+      if (selected?.mode === mode &&
+          selected.experienceId === (exp?.id || null) &&
+          selected.stateId === (state?.id || null)) return false;
+      remember(session, mode, exp, state);
+      return true;
+    }));
+    return changes.some(Boolean);
   }
   function rememberPreview(sessionId, experienceId, stateId) {
     const session = sessions.find(s => s.id === sessionId);
     const exp = readCatalog(session)?.experiences.find(e => e.id === experienceId);
     const state = exp?.states.find(s => s.id === stateId);
-    if (session && state) remember(session, 'preview', exp, state);
+    if (session && state) {
+      requestedAt.set(session.id, Date.now());
+      remember(session, 'preview', exp, state);
+    }
   }
   function findTargets() {
     const targets = [];
@@ -263,6 +327,7 @@ function createExperienceExplorer(vscode, service, report) {
     },
     open,
     openReal,
+    syncActiveLocations,
     rememberPreview,
     findTargets,
     activeLocation: () => lastLocation,

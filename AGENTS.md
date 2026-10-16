@@ -48,8 +48,15 @@ aplicación puede declarar la acción debug segura `realFlowAction` para
 regresar a su navegación real desde el mismo emulador, sin una nueva
 sesión Flutter. Las vistas previas siguen simuladas; el modo real puede
 ejecutar Firebase y el generador auténtico de onboarding, y persiste
-tras Hot Reload. La cabecera del árbol señala la última selección del
-explorador, no garantiza seguimiento continuo de rutas en Android. Los demás registros siguen administrables desde la paleta de comandos. En Muondia debug (sin `identityService` inyectado) arranca Auth de previsualización y el onboarding real no se ejecuta automáticamente; el modo release conserva el recorrido de usuarios. F7 también abre Auth simulado. Los tests de widget pueden activar/desactivar este arranque con `developmentPreviewOnStartup`.
+tras Hot Reload. El explorador lee el estado debug del dispositivo mediante el archivo
+privado `files/ai_apps_active_experience.txt` y `adb run-as` en su
+sondeo habitual; la carpeta que contiene la pantalla activa muestra el
+icono amarillo de carpeta abierta, y el nodo pantalla se destaca con ojo
+amarillo. El estado se restaura tras recargar VS Code y refleja cambios de
+experiencia desde el emulador. El modo real se identifica como tal; las
+rutas internas de Flutter no están instrumentadas. No utilizar esta
+observación para inferir identidades, contenido privado o navegación
+no comunicada explícitamente por la aplicación. Los demás registros siguen administrables desde la paleta de comandos. En Muondia debug (sin `identityService` inyectado) arranca Auth de previsualización y el onboarding real no se ejecuta automáticamente; el modo release conserva el recorrido de usuarios. F7 también abre Auth simulado. Los tests de widget pueden activar/desactivar este arranque con `developmentPreviewOnStartup`.
 
 El inspector visual compartido está en `shared/ui/lib/src/development/visual_asset_inspector.dart` y `scripts/vscode-android/asset-inspector.cjs`. Cada app integra una vez el `AiAppsVisualAssetScope` en `MaterialApp.builder`, conecta su controlador al canal `ai_apps/visual_inspector` y reenvía el intent Android de debug `DEV_ASSET_VISIBILITY`; nunca incorpora interruptores por pantalla. El inspector enumera los assets visuales de forma automática y solo modifica su visibilidad temporal; excluye referencias explícitas a `rootBundle`, plugins y recursos remotos. Probar `node scripts/vscode-android/asset-inspector.test.cjs` y pruebas Flutter de `shared/ui`.
 

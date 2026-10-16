@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ai_apps_identity/ai_apps_identity.dart';
 import 'package:ai_apps_ui/ai_apps_ui.dart';
 import 'package:flutter/foundation.dart';
@@ -40,6 +42,9 @@ class _MuondiaAppState extends State<MuondiaApp> {
   final AiAppsVisualAssetController _assetInspector =
       AiAppsVisualAssetController();
   static const MethodChannel _devChannel = MethodChannel('muondia/development');
+  static const MethodChannel _locationChannel =
+      MethodChannel('muondia/development_location');
+  String? _lastReportedLocation;
   final ValueNotifier<({String experience, String state, int revision})?>
       _selectedPreview = ValueNotifier(null);
   bool _previewAuth = false;
@@ -65,6 +70,10 @@ class _MuondiaAppState extends State<MuondiaApp> {
       );
     }
     if (kDebugMode) {
+      _selectedPreview.addListener(_reportSelectedPreview);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _reportSelectedPreview();
+      });
       _assetInspector.connectDebugChannel();
       _devChannel.setMethodCallHandler((call) async {
         if (!mounted) return;
@@ -105,10 +114,38 @@ class _MuondiaAppState extends State<MuondiaApp> {
 
   @override
   void dispose() {
-    if (kDebugMode) _devChannel.setMethodCallHandler(null);
+    if (kDebugMode) {
+      _devChannel.setMethodCallHandler(null);
+      _selectedPreview.removeListener(_reportSelectedPreview);
+    }
     _selectedPreview.dispose();
     _assetInspector.dispose();
     super.dispose();
+  }
+
+  /// Una observación del dispositivo, no una conjetura del explorador.
+  /// Solo IDs de pantalla/estado; no registrar usuario, email ni credenciales.
+  void _reportSelectedPreview() {
+    final selection = _selectedPreview.value;
+    if (selection != null) {
+      _reportLocation('preview', selection.experience, selection.state);
+    } else {
+      _reportLocation('real', '', '');
+    }
+  }
+
+  void _reportLocation(String mode, String experience, String state) {
+    if (!kDebugMode || !mounted) return;
+    final location = '$mode:$experience:$state';
+    if (_lastReportedLocation == location) return;
+    _lastReportedLocation = location;
+    unawaited(_locationChannel.invokeMethod<void>('setActiveLocation', {
+      'mode': mode,
+      'experience': experience,
+      'state': state,
+    }).catchError((Object _) {
+      // El reporte de depuración no puede bloquear la navegación de Muondia.
+    }));
   }
 
   void _showDevelopmentAuth() {

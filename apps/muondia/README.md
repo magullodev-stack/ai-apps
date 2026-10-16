@@ -17,9 +17,14 @@ abrirse otra previsualización para regresar al modo UI. No se desconecta la
 cuenta, no se borra el progreso, no se lanza otro Flutter y Hot Reload
 conserva la elección real. **Atención:** el onboarding auténtico puede
 generar contenido con IA; las vistas previas siguen siendo seguras y
-utilizan datos de prueba. La cabecera del explorador muestra la última
-selección enviada al dispositivo, no rastrea todos los toques realizados
-dentro de Android. Después de cambiar el código de la extensión, recarga
+utilizan datos de prueba. En compilaciones debug el emulador comunica su ubicación efectiva
+(`preview:experiencia:estado` o `real`) a la extensión. La carpeta que
+contiene la experiencia activa se ilumina en amarillo, la pantalla activa
+muestra el ojo amarillo y la cabecera ofrece su ruta; los cambios hechos
+tocando el emulador se reflejan en el siguiente sondeo. El modo real se
+distingue claramente, aunque las rutas internas de Home todavía no se
+identifican individualmente. Este protocolo es solo debug y no expone
+identificadores de usuario ni contraseñas. Después de cambiar el código de la extensión, recarga
 VS Code una vez; como el intent Android también cambia, la tarea
 persistente reconstruirá la parte nativa cuando corresponda.
 

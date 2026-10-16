@@ -8,6 +8,7 @@ fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Test');
 fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
 let treeProvider, treeView, taskRunning = true, onWillRenameFiles;
+let deviceLocation = 'preview:auth:inicio';
 let entries = [
   { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100',
     projectPath: path.resolve(__dirname, '../../apps/muondia'), packageName: 'com.aiapps.muondia' }
@@ -81,7 +82,11 @@ const sandbox = { module: { exports: {} }, setInterval: fn => { intervals.push(f
         constructor() { this.adb = 'adb.exe'; }
         async taskRunning() { return taskRunning; }
         async appPid() { return '2345'; }
-        async run(file, args) { calls.push(['adb', file, ...args]); return ''; }
+        async run(file, args) {
+          if (args.includes('run-as')) return deviceLocation;
+          calls.push(['adb', file, ...args]);
+          return '';
+        }
       }
     };
     return require(name);
@@ -177,7 +182,18 @@ async function run() {
     ['Recorrido real', 'Acceso', 'Primera experiencia', 'Aplicación'],
     'Clear, permanent category roots and real-flow entry');
   assert.equal(treeProvider.getTreeItem(content[1]).label,'ACCESO');
-  assert.equal(treeProvider.getTreeItem(content[1]).iconPath.id,'folder');
+  assert.equal(treeProvider.getTreeItem(content[1]).iconPath.id,'folder-opened',
+    'The app reports Auth as active when the editor is reloaded');
+  assert.equal(treeProvider.getTreeItem(content[1]).iconPath.color.id,'charts.yellow',
+    'Active category has an unmistakable highlighted icon');
+  deviceLocation = 'preview:loading:progreso';
+  await api.refresh();
+  assert.equal(treeProvider.getTreeItem(content[2]).iconPath.id,'folder-opened',
+    'Navigation from inside the emulator updates the category');
+  assert.ok(treeView.description.includes('Primera experiencia / Loading del robot'));
+  deviceLocation = 'preview:auth:inicio';
+  await api.refresh();
+  assert.equal(treeProvider.getTreeItem(content[1]).iconPath.id,'folder-opened');
   const authEntry = treeProvider.getChildren(content[1])[0];
   const homeEntry = treeProvider.getChildren(content[3])[0];
   assert.equal(content.some(item => item.visualAssetNode), false,
@@ -197,7 +213,7 @@ async function run() {
   assert.equal(treeProvider.getTreeItem(homeEntry).collapsibleState,
     vscode.TreeItemCollapsibleState.Collapsed,
     'Home remains an expandable preview experience');
-  const firstExperience = treeProvider.getChildren(content[1]);
+  const firstExperience = treeProvider.getChildren(content[2]);
   assert.deepEqual(Array.from(firstExperience, entry => entry.experienceExplorerNode.label),
     ['Loading del robot', 'Test de bienvenida']);
   const loadingChildren = treeProvider.getChildren(firstExperience[0]);

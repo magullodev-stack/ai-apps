@@ -65,5 +65,6 @@
       ]
     }
   ],
-  "realFlowAction": "com.aiapps.muondia.DEV_OPEN_REAL_FLOW"
+  "realFlowAction": "com.aiapps.muondia.DEV_OPEN_REAL_FLOW",
+  "activeLocationFile": "files/ai_apps_active_experience.txt"
 }
