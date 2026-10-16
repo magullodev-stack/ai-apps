@@ -22,7 +22,7 @@ Cuando se incorpore o modifique una herramienta, actualiza su entrada en el cat�
 3. Ejecuta el encargo en el componente correspondiente.
 4. Verifica los cambios mediante las pruebas pertinentes y `git diff --check`.
 5. Actualiza la documentación afectada.
-6. Haz commit o publica en `origin/dev` únicamente cuando el usuario lo solicite expresamente.
+6. **Contrato de entrega continua:** cuando el usuario encargue implementar o corregir algo, tras las comprobaciones disponibles haz commit y publica en `origin/dev` como parte del mismo trabajo, sin solicitar una autorización adicional para cada publicación. No confundas cambios preparados con cambios entregados: verifica el SHA remoto, y distingue publicación, sincronización local, aplicación en el emulador y prueba real. No publiques modificaciones ajenas, secretos ni archivos sensibles; ante bloqueos o pruebas pendientes, informa expresamente qué no se ha verificado. Cuando el usuario solo pida análisis, revisión o diseño sin implementar, no cambies el repositorio.
 7. Comunica las verificaciones realizadas y el estado final de Git. Si se hizo un commit, comunica también su SHA completo.
 
 ## Entorno de desarrollo
