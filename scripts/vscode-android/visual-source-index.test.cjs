@@ -34,5 +34,17 @@ try {
   fs.renameSync(path.join(lib,'home.dart'),path.join(lib,'home-new.dart'));
   assert.ok(sourceSignature(root).some(([file])=>file.endsWith('home-new.dart')));
 } finally {fs.rmSync(root,{recursive:true,force:true});}
+// La ruta de la imagen en el test se selecciona dinamicamente en Flutter,
+// pero el mapa de imagenes registra cada archivo de forma literal.
+const muondia = path.resolve(__dirname, '../../apps/muondia');
+const pivots = referencedAssets(muondia);
+const pivotImageRefs = [...pivots].filter(asset =>
+  /^assets\/Pivotes\/P\d\d - .+\.png$/.test(asset));
+assert.equal(pivotImageRefs.length, 20,
+  'Los 20 PNG de pivotes deben reconocerse como colocados por el indice estatico');
+assert.ok(pivots.has('assets/Pivotes/P01 - Arquitectura.png'));
+assert.ok(pivots.has('assets/Pivotes/P08 - Física.png'));
+assert.ok(pivots.has('assets/Pivotes/P20 - Sociología.png'));
+
 console.log('PASS: detección de imágenes colocadas, comentarios y archivos Dart');
 
