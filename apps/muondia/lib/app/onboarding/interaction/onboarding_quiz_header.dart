@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../app_theme.dart';
 import '../pivot_images.dart';
 
-/// Cabecera compacta del test: identidad temática y tiempo global.
+/// Cabecera del test: el pivote domina, mientras progreso y tiempo
+/// conservan contraste incluso sobre las zonas iluminadas del PNG.
 class OnboardingQuizHeader extends StatelessWidget {
   const OnboardingQuizHeader({
     super.key,
@@ -26,8 +27,12 @@ class OnboardingQuizHeader extends StatelessWidget {
     final scale = (MediaQuery.sizeOf(context).width / 390.0)
         .clamp(0.82, 1.1)
         .toDouble();
+
     return Padding(
-      padding: EdgeInsets.fromLTRB(8 * scale, 6 * scale, 8 * scale, 14 * scale),
+      padding: EdgeInsets.symmetric(
+        horizontal: 7 * scale,
+        vertical: 5 * scale,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,11 +42,12 @@ class OnboardingQuizHeader extends StatelessWidget {
               if (imagePath != null) ...[
                 SizedBox(
                   key: const Key('muondia-pivot-icon'),
-                  width: 40 * scale,
-                  height: 40 * scale,
+                  width: 35 * scale,
+                  height: 35 * scale,
                   child: Image.asset(
                     imagePath,
                     fit: BoxFit.contain,
+                    filterQuality: FilterQuality.medium,
                     excludeFromSemantics: true,
                   ),
                 ),
@@ -55,14 +61,22 @@ class OnboardingQuizHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: MuondiaTypography.screenTitle.copyWith(
                     color: Colors.white,
-                    fontSize: 21 * scale,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 26 * scale,
                     height: 1.05,
+                    shadows: const [
+                      Shadow(
+                        color: Color(0xCC08042A),
+                        blurRadius: 7,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12 * scale),
+          SizedBox(height: 10 * scale),
           Row(
             children: [
               Text(
@@ -71,11 +85,15 @@ class OnboardingQuizHeader extends StatelessWidget {
                 semanticsLabel: 'Pregunta $questionNumber de $questionCount',
                 style: MuondiaTypography.screenTitle.copyWith(
                   color: Colors.white,
-                  fontSize: 20 * scale,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 19 * scale,
                   height: 1.15,
+                  shadows: const [
+                    Shadow(color: Color(0xB00A0630), blurRadius: 3),
+                  ],
                 ),
               ),
-              SizedBox(width: 12 * scale),
+              SizedBox(width: 11 * scale),
               Expanded(
                 child: Semantics(
                   label: 'Tiempo restante del test',
@@ -83,9 +101,9 @@ class OnboardingQuizHeader extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(100),
                     child: SizedBox(
-                      height: 11 * scale,
+                      height: 10 * scale,
                       child: ColoredBox(
-                        color: const Color(0xFF40358E),
+                        color: const Color(0xC51B165F),
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: FractionallySizedBox(
@@ -98,8 +116,8 @@ class OnboardingQuizHeader extends StatelessWidget {
                                 ),
                                 gradient: LinearGradient(
                                   colors: [
-                                    Color(0xFF8528FF),
-                                    Color(0xFF702CFA),
+                                    Color(0xFF9D48FF),
+                                    Color(0xFF7031F1),
                                   ],
                                 ),
                               ),
@@ -112,19 +130,40 @@ class OnboardingQuizHeader extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 10 * scale),
-              Icon(
-                Icons.timer_outlined,
-                color: Colors.white,
-                size: 21 * scale,
-              ),
-              SizedBox(width: 3 * scale),
-              Text(
-                secondsRemaining.toString() + 's',
-                key: const Key('muondia-test-seconds'),
-                style: MuondiaTypography.screenTitle.copyWith(
-                  color: Colors.white,
-                  fontSize: 19 * scale,
-                  height: 1.15,
+              Container(
+                key: const Key('muondia-timer-capsule'),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8 * scale,
+                  vertical: 5 * scale,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xDD0D0A36),
+                  borderRadius: BorderRadius.circular(14 * scale),
+                  border: Border.all(
+                    color: const Color(0xAAE2D8FF),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.timer_outlined,
+                      color: Colors.white,
+                      size: 19 * scale,
+                    ),
+                    SizedBox(width: 4 * scale),
+                    Text(
+                      secondsRemaining.toString() + 's',
+                      key: const Key('muondia-test-seconds'),
+                      style: MuondiaTypography.sectionTitle.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 17 * scale,
+                        height: 1.1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
