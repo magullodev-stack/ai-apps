@@ -384,6 +384,7 @@ class _FirstExperienceState extends State<_FirstExperience> {
   Widget build(BuildContext context) {
     return OnboardingQuizPage(
       loadQuestions: _dependencies.onboardingQuizPipeline.generate,
+      loadHint: _dependencies.onboardingQuizHint.generate,
       onCompleted: widget.onCompleted,
     );
   }
