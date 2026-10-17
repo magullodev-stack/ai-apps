@@ -108,25 +108,29 @@ fondo índigo-violeta continuo, sin esquinas ni marco exterior redondeado.
 `interaction/onboarding_quiz_backdrop.dart` pinta halos, órbitas luminosas
 y grano fino reproducible con CustomPainter; no incorpora una captura
 de pantalla con textos como recurso de fondo. La cabecera se integra
-sin fondo propio, con flecha de regreso, el PNG original del pivote activo,
-su nombre en Nunito blanca, el contador de preguntas, el cronómetro de 60 s
-y una barra que indica el tiempo restante de la partida completa.
+sin fondo propio, sin flecha de regreso (el onboarding es obligatorio),
+con el PNG original del pivote activo y su nombre en Nunito blanca de
+tamaño contenido. El contador de preguntas, el cronómetro de 60 s y
+la barra de tiempo usan una jerarquía tipográfica secundaria.
 Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
 respuesta blancas con sombra. Las letras A–D utilizan distintivos rectangulares
 redondeados en lila neutro y un separador vertical fino, iguales para las
 cuatro opciones; no hay códigos de color por letra. La puntuación se muestra
-al finalizar. La tarjeta
-ocupa la altura disponible; con textos largos, letra ampliada o poca altura
-se permite desplazamiento vertical, que vuelve al inicio en cada pregunta.
+al finalizar. La tarjeta ocupa únicamente el espacio vertical entre la
+cabecera y los comodines y conserva esa geometría con opciones cortas o
+largas. Cada respuesta incrementa su altura para admitir varias líneas,
+sin escalar el texto para encajarlo. Si el contenido no cabe, se desplaza
+solamente el interior de la tarjeta; los comodines y la cabecera siguen
+visibles. El desplazamiento vuelve al inicio en cada pregunta.
 La composición es particular de Muondia y no modifica el tema global ni
 los componentes compartidos. La imagen conserva su
 proporción y se carga mediante `onboardingPivotImageFor()`. El contador
 indica la pregunta visible (por ejemplo, `3/10`); la barra y el cronómetro
 reflejan el tiempo restante de una única cuenta atrás para todo el test,
 sin reiniciarse al avanzar. Empieza al aparecer la primera pregunta.
-Al agotarse, el test concluye con la puntuación alcanzada. La flecha utiliza el regreso del
-navegador, sin saltar preguntas ni completar el onboarding; en la ruta raíz
-no abandona el recorrido obligatorio.
+Al agotarse, el test concluye con la puntuación alcanzada. La pantalla
+no incluye flecha de regreso: el test es un paso obligatorio y no ofrece
+un destino de retroceso dentro del recorrido.
 
 Al pulsar una respuesta, la tarjeta elegida se cubre durante medio segundo
 con un velo semitransparente verde si es correcto o rojo si falla. Si falla,
@@ -151,8 +155,10 @@ pista de demostración.
 
 Las pruebas de `test/app/onboarding_quiz_page_test.dart` comprueban el
 contenedor de pregunta/respuestas, la visibilidad de las cuatro tarjetas en
-formato móvil, textos largos al 200 %, el regreso al principio al avanzar,
-las diez temáticas, la puntuación, la cuenta atrás global, los comodines, los distintivos neutros y la
+formato móvil, opciones de múltiples líneas con desplazamiento interno
+sin mover cabecera, tarjeta ni comodines, textos largos al 200 %,
+el reinicio del desplazamiento al avanzar, la ausencia de flecha
+de regreso, las diez temáticas, la puntuación, la cuenta atrás global, los comodines, los distintivos neutros y la
 ausencia de redondeo exterior; en particular verifican que activar 50 %
 no elimine ninguna respuesta ni modifique sus dimensiones o coordenadas,
 además del bloqueo durante los 500 ms de feedback.
