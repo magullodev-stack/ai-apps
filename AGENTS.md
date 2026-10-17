@@ -34,7 +34,13 @@ Cuando se incorpore o modifique una herramienta, actualiza su entrada en el cat�
 
 La aplicación móvil actual es `apps/muondia/`, un proyecto Flutter independiente. Consulta sus instrucciones operativas en `apps/muondia/README.md`. Su conservación es temporal; no desarrolles funcionalidades particulares de recorrido inicial como parte de la base común.
 
-La tarea de Windows `AI-APPS Development` arranca al iniciar sesión y mantiene `emulator-5554`, Muondia mediante Flutter, el servicio Dart, Hot Reload automático y la sincronización continua de `dev`, independientemente de VS Code. `scripts/start-dev-session.ps1` conserva la propiedad de la sesión Flutter; VS Code solo visualiza el emulador mediante EmbeDroid. La configuración opcional F5 `Muondia` no detiene esta tarea: rechaza el arranque si está activa o si otro Flutter ocupa `emulator-5554`. Para depurar con F5, detén antes la tarea de forma explícita y verifica que no quedan procesos Flutter del dispositivo. El registro operativo está en `.ai-apps/dev-session.log`.
+La tarea de Windows `AI-APPS Development` arranca al iniciar sesión y mantiene `emulator-5554`, Muondia mediante Flutter, el servicio Dart, Hot Reload automático y la sincronización continua de `dev`, independientemente de VS Code. `scripts/start-dev-session.ps1` conserva la propiedad de la sesión Flutter; VS Code solo visualiza el emulador mediante EmbeDroid. La configuración opcional F5 `Muondia` no detiene esta tarea: rechaza el arranque si está activa o si otro Flutter ocupa `emulator-5554`. Para depurar con F5, detén antes la tarea de forma explícita y verifica que no quedan procesos Flutter del dispositivo. El registro operativo está en `.ai-apps/dev-session.log`. Cuando la tarea se inicia y detecta un Flutter previo
+en `emulator-5554`, `scripts/android/task-control.ps1 -Action Recover`
+solo libera procesos que `flutter-ownership.ps1` verifica como propios de
+este repositorio y después reconstruye una única sesión. Nunca detiene la
+tarea que está arrancando ni interfiere con F5 u otro Flutter: una propiedad
+ajena o ambigua bloquea el arranque. Este mecanismo recupera huérfanos en
+el siguiente inicio, pero no sustituye la supervisión continua de la tarea.
 
 **Invariante del entorno:** ningún cambio de herramientas, extensiones o depuradores puede sustituir el arranque persistente de Muondia, transferir a VS Code la propiedad de Flutter ni eliminar el Hot Reload de cambios sincronizados sin autorización expresa del usuario.
 
