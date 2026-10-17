@@ -473,44 +473,83 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Regresar respeta el navegador y no completa el recorrido', (
-    tester,
-  ) async {
-    var completed = 0;
-    Widget quiz() => OnboardingQuizPage(
-      previewQuestions: previewQuestions,
-      onCompleted: () async => completed++,
-    );
-    await tester.pumpWidget(MaterialApp(theme: muondiaTheme, home: quiz()));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
-    await tester.pumpAndSettle();
-    expect(find.text('1/10'), findsOneWidget);
-    expect(completed, 0);
-
-    await tester.pumpWidget(const SizedBox());
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: muondiaTheme,
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: TextButton(
-              onPressed: () =>
-                  Navigator.of(context)
-                      .push(MaterialPageRoute<void>(builder: (_) => quiz())),
-              child: const Text('Abrir test'),
-            ),
-          ),
-        ),
+  testWidgets('El test obligatorio no presenta navegación de regreso', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: previewQuestions,
+        countdownEnabled: false,
+        onCompleted: () async {},
       ),
+    ));
+    await tester.pump();
+    expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+    expect(find.byIcon(Icons.arrow_back), findsNothing);
+    expect(find.text('1/10'), findsOneWidget);
+  });
+
+  testWidgets('Las respuestas largas desplazan solo el interior de la tarjeta', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const options = [
+      'Es la magnitud que describe cómo cambia la velocidad de un objeto a lo largo del tiempo.',
+      'Es la distancia recorrida por un cuerpo en un intervalo temporal determinado.',
+      'Es el cambio de temperatura producido por una interacción entre materiales diferentes.',
+      'Es la relación entre la cantidad de materia y el volumen ocupado por un objeto físico.',
+    ];
+    final questions = [
+      for (var i = 0; i < 10; i++)
+        (
+          pivot: 'Arquitectura',
+          question: '¿Qué magnitud permite describir el cambio de velocidad de un objeto en movimiento?',
+          correct: options[0],
+          options: options,
+        ),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: questions,
+        countdownEnabled: false,
+        onCompleted: () async {},
+      ),
+    ));
+    await tester.pump();
+
+    final card = find.byKey(const Key('muondia-question-card'));
+    final hint = find.byKey(const Key('muondia-aid-hint'));
+    final counter = find.byKey(const Key('muondia-question-counter'));
+    final cardRect = tester.getRect(card);
+    final hintRect = tester.getRect(hint);
+    final counterRect = tester.getRect(counter);
+    final firstAnswer = tester.getRect(
+      find.byKey(const Key('muondia-answer-0')),
     );
-    await tester.tap(find.text('Abrir test'));
+    expect(firstAnswer.height, greaterThan(56),
+        reason: 'Una respuesta extensa debe poder ocupar varias líneas');
+
+    final last = find.byKey(const Key('muondia-answer-3'));
+    await tester.ensureVisible(last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
-    await tester.pumpAndSettle();
-    expect(find.text('Abrir test'), findsOneWidget);
-    expect(find.byType(OnboardingQuizPage), findsNothing);
-    expect(completed, 0);
+    expect(last.hitTestable(), findsOneWidget);
+    expect(tester.getRect(card), cardRect,
+        reason: 'La tarjeta no crece al desplazarse su contenido');
+    expect(tester.getRect(hint), hintRect,
+        reason: 'Los comodines permanecen fijos');
+    expect(tester.getRect(counter), counterRect,
+        reason: 'La cabecera permanece fija');
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(last);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    expect(find.text('2/10'), findsOneWidget);
+    expect(tester.getRect(card), cardRect);
+    expect(tester.getRect(hint), hintRect);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(
