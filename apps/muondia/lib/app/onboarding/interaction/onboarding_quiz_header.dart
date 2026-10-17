@@ -10,15 +10,18 @@ class OnboardingQuizHeader extends StatelessWidget {
     required this.pivot,
     required this.questionNumber,
     required this.questionCount,
+    required this.secondsRemaining,
+    required this.timeFraction,
   });
   final String pivot;
   final int questionNumber;
   final int questionCount;
+  final int secondsRemaining;
+  final double timeFraction;
 
   @override
   Widget build(BuildContext context) {
     final imagePath = onboardingPivotImageFor(pivot);
-    final progress = questionNumber / questionCount;
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 18),
       child: Column(
@@ -79,8 +82,8 @@ class OnboardingQuizHeader extends StatelessWidget {
               const SizedBox(width: 18),
               Expanded(
                 child: Semantics(
-                  label: 'Progreso del cuestionario',
-                  value: '${(progress * 100).round()}%',
+                  label: 'Tiempo restante del test',
+                  value: '$secondsRemaining segundos',
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(100),
                     child: SizedBox(
@@ -90,7 +93,7 @@ class OnboardingQuizHeader extends StatelessWidget {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: FractionallySizedBox(
-                            widthFactor: progress,
+                            widthFactor: timeFraction.clamp(0.0, 1.0),
                             heightFactor: 1,
                             child: const DecoratedBox(
                               decoration: BoxDecoration(
@@ -110,6 +113,18 @@ class OnboardingQuizHeader extends StatelessWidget {
                       ),
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Icon(Icons.timer_outlined, color: Colors.white, size: 26),
+              const SizedBox(width: 4),
+              Text(
+                secondsRemaining.toString() + 's',
+                key: const Key('muondia-test-seconds'),
+                style: MuondiaTypography.screenTitle.copyWith(
+                  color: Colors.white,
+                  fontSize: 24,
+                  height: 1.2,
                 ),
               ),
             ],
