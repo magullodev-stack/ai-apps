@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('Check', 'Stop')][string]$Action,
+    [ValidateSet('Check', 'Stop', 'Recover')][string]$Action,
     [string]$Serial = 'emulator-5554',
     [string]$RepoRoot
 )
@@ -26,60 +26,63 @@ if ($Action -eq 'Check') {
 }
 
 if ($Serial -ne 'emulator-5554' -or -not $RepoRoot) {
-    throw 'Stop controls only AI-APPS Development.'
+    throw 'Only AI-APPS Development on emulator-5554 can be stopped or recovered.'
 }
 
-# Identificar exclusivamente la sesion persistente de ESTE repositorio.
-# Flutter lanza un segundo dart.exe mediante flutter.bat. Matar solo el
-# runner no siempre termina ese hijo, que mantiene ocupado emulator-5554.
 $repo = [IO.Path]::GetFullPath($RepoRoot).TrimEnd('\')
-$runnerPath = (Join-Path $repo 'scripts\flutter-dev-runner.dart').ToLowerInvariant()
-$nativeDefinesPath = (Join-Path $repo '.ai-apps\onboardingQuiz-defines.json').ToLowerInvariant()
+. (Join-Path $PSScriptRoot 'flutter-ownership.ps1')
 
-function Test-IsPersistentMuondiaProcess($Process) {
-    if (-not $Process.CommandLine) { return $false }
-    $command = $Process.CommandLine.Replace('/', '\').ToLowerInvariant()
-    if ($command.Contains($runnerPath)) { return $true }
-
-    # Solo el proceso Flutter de la sesion persistente usa estos defines.
-    # F5 usa muondia-flutter-defines.json y no se mata desde aqui.
-    if ($command.Contains($nativeDefinesPath) -and
-        ($command.Contains('flutter_tools.snapshot') -or
-         $command.Contains('flutter_tools') -or
-         $command.Contains('flutter run'))) {
-        return $true
+if ($Action -eq 'Stop') {
+    # Parada explicita desde el editor/F5. Nunca desde la propia tarea.
+    Stop-ScheduledTask -TaskName 'AI-APPS Development'
+} else {
+    # La recuperacion se invoca DURANTE el arranque; no debe detener al padre.
+    $ownership = Get-MuondiaFlutterOwnership -Processes @(Get-DeviceDartProcesses) -RepoRoot $repo
+    if ($ownership -eq 'free') {
+        Write-Output 'free'
+        return
     }
-    return $false
+    if ($ownership -ne 'owned') {
+        Write-Output 'foreign'
+        return
+    }
 }
 
-Stop-ScheduledTask -TaskName 'AI-APPS Development'
-
-# Releer despues de detener la tarea porque su proceso padre puede finalizar
-# antes de que se cierre el flutter run hijo.
+# Comprobar otra vez la propiedad antes de cada terminacion. Nunca terminar
+# F5 u otro Flutter en el mismo dispositivo, ni procesos cuyo PID se reutilizo.
 for ($attempt = 0; $attempt -lt 12; $attempt++) {
-    $owned = @(Get-DeviceDartProcesses | Where-Object {
-        Test-IsPersistentMuondiaProcess $_
+    $snapshot = @(Get-DeviceDartProcesses)
+    if ($snapshot.Count -eq 0) { break }
+
+    $ownership = Get-MuondiaFlutterOwnership -Processes $snapshot -RepoRoot $repo
+    if ($Action -eq 'Recover' -and $ownership -ne 'owned') {
+        Write-Output 'foreign'
+        return
+    }
+
+    $owned = @($snapshot | Where-Object {
+        Test-IsPersistentMuondiaProcess -Process $_ -RepoRoot $repo
     })
 
     foreach ($process in $owned) {
         $current = Get-CimInstance Win32_Process -Filter "ProcessId=$($process.ProcessId)"
         if ($current -and
             $current.CreationDate -eq $process.CreationDate -and
-            $current.CommandLine -eq $process.CommandLine) {
-            # El arbol pertenece al runner/Flutter persistente de Muondia.
-            # Puede desaparecer mientras se libera otro proceso del arbol.
+            $current.CommandLine -eq $process.CommandLine -and
+            (Test-IsPersistentMuondiaProcess -Process $current -RepoRoot $repo)) {
             & taskkill.exe /PID $process.ProcessId /T /F 2>$null | Out-Null
         }
     }
-
-    $remaining = @(Get-DeviceDartProcesses)
-    if ($remaining.Count -eq 0) { break }
     Start-Sleep -Milliseconds 500
 }
 
 $remaining = @(Get-DeviceDartProcesses)
 if ($remaining.Count -gt 0) {
-    # No matar Dart de otros depuradores/aplicaciones sin verificar propiedad.
+    if ($Action -eq 'Recover') {
+        # No arrancar un segundo Flutter, incluso si el proceso es propio.
+        Write-Output 'foreign'
+        return
+    }
     $pids = (@($remaining | ForEach-Object { $_.ProcessId }) -join ', ')
     throw "emulator-5554 sigue ocupado por Dart (PID: $pids). No se han detenido procesos ajenos a Muondia."
 }
@@ -89,3 +92,5 @@ if (-not $sdk) { $sdk = $env:ANDROID_SDK_ROOT }
 if (-not $sdk) { $sdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
 & (Join-Path $sdk 'platform-tools\adb.exe') -s emulator-5554 shell am force-stop com.aiapps.muondia | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Could not stop Muondia application.' }
+
+if ($Action -eq 'Recover') { Write-Output 'recovered' }
