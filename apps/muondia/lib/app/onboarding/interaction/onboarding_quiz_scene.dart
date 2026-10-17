@@ -374,7 +374,7 @@ class _AnswerCard extends StatelessWidget {
                 duration: const Duration(milliseconds: 140),
                 curve: Curves.easeOut,
                 decoration: BoxDecoration(color: color),
-                constraints: BoxConstraints(minHeight: 64 * scale),
+                constraints: const BoxConstraints(minHeight: 56),
                 padding: EdgeInsets.symmetric(
                   horizontal: 12 * scale,
                   vertical: 8 * scale,
@@ -399,12 +399,15 @@ class _AnswerCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        child: Text(
-                          letter,
-                          style: MuondiaTypography.screenTitle.copyWith(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            letter,
+                            style: MuondiaTypography.screenTitle.copyWith(
                             color: const Color(0xFF0A0A31),
                             fontSize: 27 * scale,
-                            height: 1,
+                              height: 1,
+                            ),
                           ),
                         ),
                       ),
