@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../app_theme.dart';
 import '../production/onboarding_quiz_pipeline.dart';
+import 'onboarding_quiz_backdrop.dart';
 import 'onboarding_quiz_header.dart';
 
 /// Composición propia de Muondia; la página conserva las reglas del test.
@@ -46,17 +47,17 @@ class OnboardingQuizScene extends StatelessWidget {
       backgroundColor: const Color(0xFF181442),
       body: DecoratedBox(
         key: const Key('muondia-quiz-stage'),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF39248E), width: 1.5),
-          gradient: const RadialGradient(
-            center: Alignment(0, -1.1),
-            radius: 1.6,
-            colors: [Color(0xFF5120CF), Color(0xFF201756), Color(0xFF15133D)],
-            stops: [0, 0.48, 1],
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF160D53), Color(0xFF2E10A3), Color(0xFF150E45)],
+            stops: [0.0, .51, 1.0],
           ),
         ),
-        child: SafeArea(
+        child: CustomPaint(
+          painter: const OnboardingQuizBackdrop(),
+          child: SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 640),
@@ -85,8 +86,8 @@ class OnboardingQuizScene extends StatelessWidget {
                                 key: const Key('muondia-question-card'),
                                 padding: EdgeInsets.all(14 * scale),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF7F8FF),
-                                  borderRadius: BorderRadius.circular(24),
+                                  color: const Color(0xFFFAFBFF),
+                                  borderRadius: BorderRadius.circular(28),
                                   border: Border.all(color: Colors.white),
                                   boxShadow: const [
                                     BoxShadow(
@@ -119,18 +120,18 @@ class OnboardingQuizScene extends StatelessWidget {
                                       i < question.options.length;
                                       i++
                                     )
-                                      if (!hiddenOptions.contains(i))
-                                        Padding(
-                                        padding: EdgeInsets.only(
-                                          top: 12 * scale,
-                                        ),
+                                      Padding(
+                                        padding: EdgeInsets.only(top: 12 * scale),
                                         child: _AnswerCard(
                                           index: i,
                                           text: question.options[i],
                                           scale: scale,
                                           color: feedbackColor(i),
                                           selected: selected == i,
-                                          onTap: selected == null && !hintLoading
+                                          disabled: hiddenOptions.contains(i),
+                                          onTap: selected == null &&
+                                                  !hintLoading &&
+                                                  !hiddenOptions.contains(i)
                                               ? () => onAnswer(i)
                                               : null,
                                         ),
@@ -177,6 +178,7 @@ class OnboardingQuizScene extends StatelessWidget {
               ),
             ),
           ),
+        ),
         ),
       ),
     );
@@ -270,15 +272,36 @@ class _AidButton extends StatelessWidget {
             height: 30 * scale,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFBE25),
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFFFE477)),
+              gradient: remaining > 0
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFFFE58E), Color(0xFFFFB81D)],
+                    )
+                  : const LinearGradient(
+                      colors: [Color(0xFF89759C), Color(0xFF6F5B89)],
+                    ),
+              border: Border.all(
+                color: remaining > 0
+                    ? const Color(0xFFFFF0B0)
+                    : const Color(0xFFB9A5D2),
+                width: 1.3,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x440B0635),
+                  blurRadius: 5,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: Text(
               '$remaining',
               style: MuondiaTypography.screenTitle.copyWith(
-                color: Colors.white,
+                color: const Color(0xFF201047),
                 fontSize: 20 * scale,
+                fontWeight: FontWeight.w900,
                 height: 1,
               ),
             ),
@@ -289,6 +312,7 @@ class _AidButton extends StatelessWidget {
   }
 }
 
+/// El 50 % no retira ninguna fila: solo atenúa dos alternativas y su toque.
 class _AnswerCard extends StatelessWidget {
   const _AnswerCard({
     required this.index,
@@ -296,20 +320,17 @@ class _AnswerCard extends StatelessWidget {
     required this.scale,
     required this.color,
     required this.selected,
+    required this.disabled,
     required this.onTap,
   });
+
   final int index;
   final String text;
   final double scale;
   final Color color;
   final bool selected;
+  final bool disabled;
   final VoidCallback? onTap;
-  static const _badgeColors = [
-    [Color(0xFFFFDE70), Color(0xFFFFBE22)],
-    [Color(0xFFFF8FB4), Color(0xFFFF5586)],
-    [Color(0xFFAC82FF), Color(0xFF8750FF)],
-    [Color(0xFF77FFB0), Color(0xFF26ED83)],
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -323,66 +344,85 @@ class _AnswerCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x223F4BD1),
+              color: Color(0x253F4BD1),
               blurRadius: 14,
               offset: Offset(0, 7),
             ),
           ],
         ),
-        child: Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            key: Key('muondia-answer-$index'),
-            onTap: onTap,
-            child: AnimatedContainer(
-              key: Key('muondia-answer-feedback-$index'),
-              duration: const Duration(milliseconds: 140),
-              curve: Curves.easeOut,
-              decoration: BoxDecoration(color: color),
-              constraints: BoxConstraints(minHeight: 64 * scale),
-              padding: EdgeInsets.symmetric(
-                horizontal: 12 * scale,
-                vertical: 8 * scale,
-              ),
-              child: Row(
-                children: [
-                  ExcludeSemantics(
-                    child: Container(
-                      width: 44 * scale,
-                      height: 44 * scale,
-                      alignment: Alignment.center,
+        child: AnimatedOpacity(
+          key: Key('muondia-answer-opacity-$index'),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          opacity: disabled ? 0.40 : 1.0,
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              key: Key('muondia-answer-$index'),
+              onTap: onTap,
+              child: AnimatedContainer(
+                key: Key('muondia-answer-feedback-$index'),
+                duration: const Duration(milliseconds: 140),
+                curve: Curves.easeOut,
+                decoration: BoxDecoration(color: color),
+                constraints: BoxConstraints(minHeight: 64 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * scale,
+                  vertical: 8 * scale,
+                ),
+                child: Row(
+                  children: [
+                    ExcludeSemantics(
+                      child: Container(
+                        width: 42 * scale,
+                        height: 44 * scale,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12 * scale),
+                          border: Border.all(color: const Color(0xFFE1E2F5)),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFF4F5FF),
+                              Color(0xFFE4E6FA),
+                            ],
+                          ),
+                        ),
+                        child: Text(
+                          letter,
+                          style: MuondiaTypography.screenTitle.copyWith(
+                            color: const Color(0xFF0A0A31),
+                            fontSize: 27 * scale,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Container(
+                      width: 1.5 * scale,
+                      height: 32 * scale,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: _badgeColors[index % 4],
-                        ),
+                        color: const Color(0xFFC4C3EB),
+                        borderRadius: BorderRadius.circular(1),
                       ),
-                      child: Text(
-                        letter,
-                        style: MuondiaTypography.screenTitle.copyWith(
-                          color: const Color(0xFF09071F),
-                          fontSize: 27 * scale,
-                          height: 1,
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      child: AiAppsContentText(
+                        text,
+                        style: MuondiaTypography.sectionTitle.copyWith(
+                          fontSize: 20 * scale,
+                          color: const Color(0xFF08062C),
+                          height: 1.2,
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 18 * scale),
-                  Expanded(
-                    child: AiAppsContentText(
-                      text,
-                      style: MuondiaTypography.sectionTitle.copyWith(
-                        fontSize: 20 * scale,
-                        color: const Color(0xFF08062C),
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
