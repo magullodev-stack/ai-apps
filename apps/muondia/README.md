@@ -100,35 +100,45 @@ recursos del estado `Test de bienvenida` en el explorador Android.
 `interaction/onboarding_quiz_scene.dart` compone toda la pantalla sobre un
 fondo morado oscuro con gradiente y borde redondeado. La cabecera se integra
 sin fondo propio, con flecha de regreso, el PNG original del pivote activo,
-su nombre en Nunito blanca, el contador de preguntas y una barra de progreso
-redondeada. Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
+su nombre en Nunito blanca, el contador de preguntas, el cronómetro de 60 s
+y una barra que indica el tiempo restante de la partida completa.
+Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
 respuesta blancas con sombra, identificadas mediante círculos A–D en amarillo,
 rosa, violeta y verde. La puntuación se muestra al finalizar. La tarjeta
 ocupa la altura disponible; con textos largos, letra ampliada o poca altura
 se permite desplazamiento vertical, que vuelve al inicio en cada pregunta.
 La composición es particular de Muondia y no modifica el tema global ni
 los componentes compartidos. La imagen conserva su
-proporción y se carga mediante `onboardingPivotImageFor()`. El contador y
-la barra representan la pregunta visible (por ejemplo, `3/10` y 30 %);
-al avanzar se actualizan junto con la temática y la ilustración, tanto en
-el test real como en la previsualización. La flecha utiliza el regreso del
+proporción y se carga mediante `onboardingPivotImageFor()`. El contador
+indica la pregunta visible (por ejemplo, `3/10`); la barra y el cronómetro
+reflejan el tiempo restante de una única cuenta atrás para todo el test,
+sin reiniciarse al avanzar. Empieza al aparecer la primera pregunta.
+Al agotarse, el test concluye con la puntuación alcanzada. La flecha utiliza el regreso del
 navegador, sin saltar preguntas ni completar el onboarding; en la ruta raíz
 no abandona el recorrido obligatorio.
 
 Al pulsar una respuesta, la tarjeta elegida se cubre durante medio segundo
-con un velo semitransparente verde si es correcto o rojo si falla. Cuando
-se falla, la opción correcta se señala también en verde. Las demás tarjetas
-quedan bloqueados y a los 500 ms se avanza automáticamente, sin «Siguiente».
+con un velo semitransparente verde si es correcto o rojo si falla. Si falla,
+solo se señala la respuesta elegida en rojo: no se revela la correcta.
+Las demás tarjetas quedan bloqueadas y a los 500 ms se avanza
+automáticamente, sin «Siguiente».
 La última respuesta lleva a resultados, pero **el usuario sigue pulsando
 «Entrar en Muondia»** para registrar la finalización del onboarding.
 Los temporizadores pendientes se cancelan al desmontar o reiniciar la página.
-Todavía no se incorporan cronómetro ni ayudas: quedan pendientes de definir
-sus reglas y no se presentan controles decorativos que aparenten funcionar.
+Los comodines 50 % y Pista IA disponen de un uso cada uno compartido entre las
+diez preguntas; sus contadores no se reinician entre preguntas. 50 % elimina
+dos respuestas incorrectas de la pregunta actual. Pista IA solicita al servicio
+Dart existente una orientación conceptual corta que no debe revelar la
+respuesta; un fallo de red o validación no consume el uso y permite reintentar.
+El reloj se detiene mientras se genera y se lee la pista, pero no al usar 50 %.
+Las previsualizaciones nunca contactan con IA y muestran explícitamente una
+pista de demostración.
 
 Las pruebas de `test/app/onboarding_quiz_page_test.dart` comprueban el
 contenedor de pregunta/respuestas, la visibilidad de las cuatro tarjetas en
 formato móvil, textos largos al 200 %, el regreso al principio al avanzar,
-las diez temáticas, la puntuación y el bloqueo durante los 500 ms de feedback.
+las diez temáticas, la puntuación, la cuenta atrás global, los comodines y
+el bloqueo durante los 500 ms de feedback.
 
 `MuondiaSystemSafeFrame` en `lib/app/system_safe_frame.dart` establece el
 mismo respeto a las barras de estado y navegación de Auth en todas las
