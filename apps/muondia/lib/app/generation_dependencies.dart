@@ -3,6 +3,7 @@ import 'package:ai_apps_ai/ai_apps_ai.dart';
 import '../modes/estudio/estudio_document_generation.dart';
 import '../modes/estudio/estudio_generation.dart';
 import '../app/onboarding/production/onboarding_quiz_pipeline.dart';
+import '../app/onboarding/interaction/onboarding_quiz_hint.dart';
 import '../semantic_catalog/pivot_catalog.dart';
 
 final class MuondiaGenerationDependencies {
@@ -34,6 +35,15 @@ final class MuondiaGenerationDependencies {
       defaultValue: 'gpt-5.6-luna',
     ),
   );
+
+  late final AiOnboardingQuizHintGenerator onboardingQuizHint =
+      AiOnboardingQuizHintGenerator(
+        client: _client,
+        model: const String.fromEnvironment(
+          'AI_APPS_FACTUAL_MODEL',
+          defaultValue: 'gpt-5.6-terra',
+        ),
+      );
 
   PivotCatalogGenerator get catalogGenerator => AiPivotCatalogGenerator(
     client: _client,
