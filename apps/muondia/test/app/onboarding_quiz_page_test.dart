@@ -6,6 +6,100 @@ import 'package:muondia/app/onboarding/interaction/onboarding_quiz_page.dart';
 import 'package:muondia/app/onboarding/pivot_images.dart';
 
 void main() {
+  testWidgets(
+    'Composición continua: tarjeta, cuatro respuestas A–D y fondo oscuro',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: muondiaTheme,
+          home: OnboardingQuizPage(
+            previewQuestions: [
+              for (var i = 0; i < 10; i++)
+                (
+                  pivot: 'Física',
+                  question: '¿Cuál es el valor aproximado de la aceleración de la gravedad cerca de la superficie terrestre?',
+                  correct: '9,8 m/s²',
+                  options: ['9,8 m/s²', '6,7 m/s²', '15,4 m/s²', '3,2 m/s²'],
+                ),
+            ],
+            onCompleted: () async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final stage = tester.widget<DecoratedBox>(
+        find.byKey(const Key('muondia-quiz-stage')),
+      );
+      expect((stage.decoration as BoxDecoration).gradient, isNotNull);
+      final card = tester.getRect(
+        find.byKey(const Key('muondia-question-card')),
+      );
+      expect(card.height, greaterThan(500));
+      for (var i = 0; i < 4; i++) {
+        expect(find.text(String.fromCharCode(65 + i)), findsOneWidget);
+        final answer = find.byKey(Key('muondia-answer-$i'));
+        expect(answer.hitTestable(), findsOneWidget);
+        expect(card.contains(tester.getTopLeft(answer)), isTrue);
+        expect(card.contains(tester.getBottomRight(answer)), isTrue);
+      }
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.textContaining('Aciertos:'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Texto largo a 200 %: respuestas accesibles y nueva pregunta arriba',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final questions = [
+        for (final q in previewQuestions)
+          (
+            pivot: q.pivot,
+            question: '${q.question} ${q.question}',
+            correct: 'Guardar temporalmente los datos y programas que se están utilizando',
+            options: [
+              'Guardar temporalmente los datos y programas que se están utilizando',
+              'Conservar archivos incluso cuando el equipo está apagado',
+              'Controlar la conexión del equipo con dispositivos externos',
+              'Traducir nombres de dominio a direcciones de red',
+            ],
+          ),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: muondiaTheme,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: OnboardingQuizPage(
+            previewQuestions: questions,
+            onCompleted: () async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final last = find.byKey(const Key('muondia-answer-3'));
+      await tester.ensureVisible(last);
+      await tester.pumpAndSettle();
+      expect(last.hitTestable(), findsOneWidget);
+      await tester.tap(last);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(find.text('2/10').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('La cabecera sigue las diez preguntas y conserva el resultado', (
     tester,
   ) async {
@@ -45,24 +139,25 @@ void main() {
           textDirection: TextDirection.ltr,
         ),
       );
-      expect(find.text('Aciertos: $i'), findsOneWidget);
       expect(find.text('Siguiente'), findsNothing);
 
       await tester.ensureVisible(find.text('Opción A'));
       await tester.tap(find.text('Opción A'));
       await tester.pump();
-      expect(find.text('Aciertos: ${i + 1}'), findsOneWidget);
       expect(find.text('Siguiente'), findsNothing);
       expect(find.text('Ver resultado'), findsNothing);
       expect(
-        tester.widget<OutlinedButton>(find.byType(OutlinedButton).first).onPressed,
+        tester.widget<InkWell>(find.byKey(const Key('muondia-answer-0'))).onTap,
         isNull,
         reason: 'Una sola pulsación: las demás opciones se bloquean',
       );
-      final selectedDecoration = tester
-          .widget<AnimatedContainer>(
-            find.byKey(const Key('muondia-answer-feedback-0')),
-          ).decoration as BoxDecoration;
+      final selectedDecoration =
+          tester
+                  .widget<AnimatedContainer>(
+                    find.byKey(const Key('muondia-answer-feedback-0')),
+                  )
+                  .decoration
+              as BoxDecoration;
       expect(selectedDecoration.color, MuondiaPalette.success.withAlpha(48));
       await tester.pump(const Duration(milliseconds: 499));
       expect(find.text('${i + 1}/10'), findsOneWidget);
@@ -84,57 +179,75 @@ void main() {
   testWidgets('Respuesta incorrecta: rojo, correcta verde, avance sin botón', (
     tester,
   ) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: muondiaTheme,
-      home: OnboardingQuizPage(
-        previewQuestions: previewQuestions,
-        onCompleted: () async {},
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: muondiaTheme,
+        home: OnboardingQuizPage(
+          previewQuestions: previewQuestions,
+          onCompleted: () async {},
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Opción B'));
     await tester.pump();
-    final wrong = tester
-        .widget<AnimatedContainer>(
-          find.byKey(const Key('muondia-answer-feedback-1')),
-        ).decoration as BoxDecoration;
-    final correct = tester
-        .widget<AnimatedContainer>(
-          find.byKey(const Key('muondia-answer-feedback-0')),
-        ).decoration as BoxDecoration;
+    final wrong =
+        tester
+                .widget<AnimatedContainer>(
+                  find.byKey(const Key('muondia-answer-feedback-1')),
+                )
+                .decoration
+            as BoxDecoration;
+    final correct =
+        tester
+                .widget<AnimatedContainer>(
+                  find.byKey(const Key('muondia-answer-feedback-0')),
+                )
+                .decoration
+            as BoxDecoration;
     expect(wrong.color, MuondiaPalette.error.withAlpha(48));
     expect(correct.color, MuondiaPalette.success.withAlpha(48));
-    expect(find.text('Aciertos: 0'), findsOneWidget);
     expect(find.text('Siguiente'), findsNothing);
 
     // Los siguientes toques durante el velo no pueden contar otra respuesta.
     expect(
-      tester.widget<OutlinedButton>(find.byType(OutlinedButton).last).onPressed,
+      tester.widget<InkWell>(find.byKey(const Key('muondia-answer-3'))).onTap,
       isNull,
     );
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pumpAndSettle();
     expect(find.text('2/10'), findsOneWidget);
-    expect(find.text('Aciertos: 0'), findsOneWidget);
-    final cleared = tester
-        .widget<AnimatedContainer>(
-          find.byKey(const Key('muondia-answer-feedback-0')),
-        ).decoration as BoxDecoration;
+    final cleared =
+        tester
+                .widget<AnimatedContainer>(
+                  find.byKey(const Key('muondia-answer-feedback-0')),
+                )
+                .decoration
+            as BoxDecoration;
     expect(cleared.color, Colors.transparent);
+    for (var i = 1; i < 10; i++) {
+      await tester.ensureVisible(find.text('Opción A'));
+      await tester.tap(find.text('Opción A'));
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Resultado: 9 / 10'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('Salir de la página cancela el avance automático pendiente', (
     tester,
   ) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: muondiaTheme,
-      home: OnboardingQuizPage(
-        previewQuestions: previewQuestions,
-        onCompleted: () async {},
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: muondiaTheme,
+        home: OnboardingQuizPage(
+          previewQuestions: previewQuestions,
+          onCompleted: () async {},
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Opción A'));
     await tester.pump();

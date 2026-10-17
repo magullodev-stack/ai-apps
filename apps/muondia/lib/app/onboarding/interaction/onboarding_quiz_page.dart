@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:ai_apps_ui/ai_apps_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../../app_theme.dart';
 import '../../../app/onboarding/intro_sequence.dart';
 import '../production/onboarding_quiz_pipeline.dart';
 import 'onboarding_loading_scene.dart';
-import 'onboarding_quiz_header.dart';
+import 'onboarding_quiz_scene.dart';
 
 class OnboardingQuizPage extends StatefulWidget {
   const OnboardingQuizPage({
@@ -107,8 +106,13 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
 
   void _answer(int index) {
     final questions = _questions;
-    if (questions == null || _selected != null || _finished ||
-        index < 0 || index >= questions[_index].options.length) return;
+    if (questions == null ||
+        _selected != null ||
+        _finished ||
+        index < 0 ||
+        index >= questions[_index].options.length) {
+      return;
+    }
 
     setState(() {
       _selected = index;
@@ -167,93 +171,50 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       );
     }
 
-    final isAnswering = questions != null && !_finished;
+    if (questions != null && !_finished) {
+      return OnboardingQuizScene(
+        question: questions[_index],
+        questionNumber: _index + 1,
+        questionCount: questions.length,
+        selected: _selected,
+        onAnswer: _answer,
+        feedbackColor: (option) =>
+            _answerFeedbackColor(questions[_index], option),
+      );
+    }
 
     return Scaffold(
-      appBar: isAnswering
-          ? null
-          : AppBar(title: const Text('Tu primera aventura')),
-      body: Column(
-        children: [
-          if (isAnswering)
-            OnboardingQuizHeader(
-              pivot: questions[_index].pivot,
-              questionNumber: _index + 1,
-              questionCount: questions.length,
-            ),
-          Expanded(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 640),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (widget.loadQuestions == null &&
-                          widget.previewQuestions == null)
-                        const Text('Generación no disponible.')
-                      else if (questions == null || _finished) ...[
-                        Text(
-                          _finished
-                              ? '¡Primera aventura completada!'
-                              : 'Tu primera aventura',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        if (_finished) Text('Resultado: $_score / 10'),
-                        if (_error != null) Text(_error!),
-                        const SizedBox(height: 20),
-                        FilledButton(
-                          onPressed: _finished ? widget.onCompleted : _start,
-                          child: Text(
-                            _finished ? 'Entrar en Muondia' : 'Reintentar',
-                          ),
-                        ),
-                      ] else ...[
-                        Text('Aciertos: $_score'),
-                        const SizedBox(height: 16),
-
-                        AiAppsContentText(
-                          questions[_index].question,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 20),
-
-                        for (
-                          var i = 0;
-                          i < questions[_index].options.length;
-                          i++
-                        )
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: AnimatedContainer(
-                              key: Key('muondia-answer-feedback-$i'),
-                              duration: const Duration(milliseconds: 140),
-                              curve: Curves.easeOut,
-                              decoration: BoxDecoration(
-                                color: _answerFeedbackColor(questions[_index], i),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: OutlinedButton(
-                                onPressed: _selected == null
-                                    ? () => _answer(i)
-                                    : null,
-                                child: AiAppsContentText(
-                                  questions[_index].options[i],
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                      ],
-                    ],
+      appBar: AppBar(title: const Text('Tu primera aventura')),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.loadQuestions == null &&
+                    widget.previewQuestions == null)
+                  const Text('Generación no disponible.')
+                else ...[
+                  Text(
+                    _finished
+                        ? '¡Primera aventura completada!'
+                        : 'Tu primera aventura',
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                ),
-              ),
+                  if (_finished) Text('Resultado: $_score / 10'),
+                  if (_error != null) Text(_error!),
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: _finished ? widget.onCompleted : _start,
+                    child: Text(_finished ? 'Entrar en Muondia' : 'Reintentar'),
+                  ),
+                ],
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
