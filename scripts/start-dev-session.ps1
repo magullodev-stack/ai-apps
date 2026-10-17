@@ -70,10 +70,26 @@ try {
     }
     Write-SessionLog 'Android preparado: emulator-5554.'
     $stage = 'Muondia'
-    # Evitar competir con una sesion Flutter iniciada desde VS Code o que siga viva.
-    $flutterOwner = (& (Join-Path $PSScriptRoot 'android/task-control.ps1') -Action Check -Serial emulator-5554 | Out-String).Trim()
+    # El proceso persistente puede sobrevivir a una tarea detenida. Solo
+    # recuperamos procesos verificados como propios; F5 queda intacto.
+    $control = Join-Path $PSScriptRoot 'android/task-control.ps1'
+    $flutterOwner = (& $control -Action Check -Serial emulator-5554 | Out-String).Trim()
+    if ($flutterOwner -eq 'busy') {
+        Write-SessionLog 'Flutter previo detectado; verificando propiedad.'
+        $recovery = (& $control -Action Recover -Serial emulator-5554 -RepoRoot $repo | Out-String).Trim()
+        if ($recovery -eq 'recovered') {
+            Write-SessionLog 'Flutter huerfano propio recuperado; reconstruccion solicitada.'
+        } elseif ($recovery -eq 'free') {
+            Write-SessionLog 'Flutter previo termino antes de recuperarlo.'
+        } else {
+            Write-SessionLog 'ERROR: Flutter ajeno o no recuperable; no se toca F5.'
+            throw 'Ya existe una sesion Flutter ajena o no recuperable en emulator-5554.'
+        }
+    }
+    # Revalidar siempre: nunca construir un segundo Flutter en el dispositivo.
+    $flutterOwner = (& $control -Action Check -Serial emulator-5554 | Out-String).Trim()
     if ($flutterOwner -ne 'free') {
-        Write-SessionLog 'ERROR: emulator-5554 ya tiene una sesion Flutter.'
+        Write-SessionLog 'ERROR: emulator-5554 continua ocupado tras la comprobacion.'
         throw 'Ya existe una sesion Flutter en emulator-5554.'
     }
     Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
