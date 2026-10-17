@@ -57,6 +57,9 @@ async function run() {
   await service.start('muondia@emulator-5554');
   assert.equal(calls.includes('start-task'), false, 'Starting active legacy task is a no-op');
   taskActive = false;
+  const orphaned = await service.list();
+  assert.equal(orphaned[0].status, 'orphaned',
+    'An APK still visible while AI-APPS Development is stopped is not running Flutter');
   await service.start('muondia@emulator-5554');
   await service.stop('muondia@emulator-5554');
   assert.deepEqual(calls.filter(call => typeof call === 'string'), ['start-task', 'stop-task']);
