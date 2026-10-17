@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app_theme.dart';
 import '../pivot_images.dart';
 
-/// Cabecera integrada en el escenario del test, sin fondo independiente.
+/// Cabecera compacta del test: identidad temática y tiempo global.
 class OnboardingQuizHeader extends StatelessWidget {
   const OnboardingQuizHeader({
     super.key,
@@ -13,6 +13,7 @@ class OnboardingQuizHeader extends StatelessWidget {
     required this.secondsRemaining,
     required this.timeFraction,
   });
+
   final String pivot;
   final int questionNumber;
   final int questionCount;
@@ -22,64 +23,59 @@ class OnboardingQuizHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = onboardingPivotImageFor(pivot);
+    final scale = (MediaQuery.sizeOf(context).width / 390.0)
+        .clamp(0.82, 1.1)
+        .toDouble();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 18),
+      padding: EdgeInsets.fromLTRB(8 * scale, 6 * scale, 8 * scale, 14 * scale),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              IconButton(
-                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: Colors.white,
-                  size: 28,
+              if (imagePath != null) ...[
+                SizedBox(
+                  key: const Key('muondia-pivot-icon'),
+                  width: 40 * scale,
+                  height: 40 * scale,
+                  child: Image.asset(
+                    imagePath,
+                    fit: BoxFit.contain,
+                    excludeFromSemantics: true,
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: 58,
-                height: 58,
-                child: imagePath == null
-                    ? null
-                    : Image.asset(
-                        imagePath,
-                        fit: BoxFit.contain,
-                        excludeFromSemantics: true,
-                      ),
-              ),
-              const SizedBox(width: 10),
+                SizedBox(width: 10 * scale),
+              ],
               Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    pivot,
-                    maxLines: 1,
-                    style: MuondiaTypography.screenTitle.copyWith(
-                      color: Colors.white,
-                      fontSize: 28,
-                      height: 1.1,
-                    ),
+                child: Text(
+                  pivot,
+                  key: const Key('muondia-pivot-title'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: MuondiaTypography.screenTitle.copyWith(
+                    color: Colors.white,
+                    fontSize: 21 * scale,
+                    height: 1.05,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12 * scale),
           Row(
             children: [
               Text(
                 '$questionNumber/$questionCount',
+                key: const Key('muondia-question-counter'),
                 semanticsLabel: 'Pregunta $questionNumber de $questionCount',
                 style: MuondiaTypography.screenTitle.copyWith(
                   color: Colors.white,
-                  fontSize: 26,
-                  height: 1.2,
+                  fontSize: 20 * scale,
+                  height: 1.15,
                 ),
               ),
-              const SizedBox(width: 18),
+              SizedBox(width: 12 * scale),
               Expanded(
                 child: Semantics(
                   label: 'Tiempo restante del test',
@@ -87,7 +83,7 @@ class OnboardingQuizHeader extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(100),
                     child: SizedBox(
-                      height: 14,
+                      height: 11 * scale,
                       child: ColoredBox(
                         color: const Color(0xFF40358E),
                         child: Align(
@@ -115,16 +111,20 @@ class OnboardingQuizHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              const Icon(Icons.timer_outlined, color: Colors.white, size: 26),
-              const SizedBox(width: 4),
+              SizedBox(width: 10 * scale),
+              Icon(
+                Icons.timer_outlined,
+                color: Colors.white,
+                size: 21 * scale,
+              ),
+              SizedBox(width: 3 * scale),
               Text(
                 secondsRemaining.toString() + 's',
                 key: const Key('muondia-test-seconds'),
                 style: MuondiaTypography.screenTitle.copyWith(
                   color: Colors.white,
-                  fontSize: 24,
-                  height: 1.2,
+                  fontSize: 19 * scale,
+                  height: 1.15,
                 ),
               ),
             ],
