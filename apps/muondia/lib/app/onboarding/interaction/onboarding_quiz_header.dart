@@ -98,28 +98,35 @@ class OnboardingQuizHeader extends StatelessWidget {
                 child: Semantics(
                   label: 'Tiempo restante del test',
                   value: '$secondsRemaining segundos',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(100),
-                    child: SizedBox(
-                      height: 10 * scale,
-                      child: ColoredBox(
-                        color: const Color(0xC51B165F),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: FractionallySizedBox(
-                            widthFactor: timeFraction.clamp(0.0, 1.0).toDouble(),
-                            heightFactor: 1,
-                            child: const DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(100),
-                                ),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFF9D48FF),
-                                    Color(0xFF7031F1),
-                                  ],
-                                ),
+                  child: Container(
+                    key: const Key('muondia-time-track'),
+                    height: 12 * scale,
+                    decoration: BoxDecoration(
+                      color: const Color(0xF20C0933),
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(
+                        color: const Color(0xFFB4C8FB),
+                        width: 0.8,
+                      ),
+                    ),
+                    padding: EdgeInsets.all(1 * scale),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: timeFraction.clamp(0.0, 1.0).toDouble(),
+                          heightFactor: 1,
+                          child: const DecoratedBox(
+                            key: Key('muondia-time-fill'),
+                            decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(100)),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFF8CF5FF),
+                                  Color(0xFF41B9FF),
+                                ],
                               ),
                             ),
                           ),
