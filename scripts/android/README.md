@@ -73,6 +73,43 @@ reales se dispone de `scripts/android/host-test.ps1`, que exige
 `-AppId`, `-Serial` y `-Label` de una segunda aplicación activa.
 No crea una segunda aplicación.
 
+## Recuperación de un Flutter persistente huérfano
+
+La tarea de Windows puede haber terminado mientras sigue vivo un Flutter
+anterior de Muondia. Git puede continuar sincronizando cambios, pero la tarea
+se negaba a arrancar porque el dispositivo aparecía ocupado. Esto explica
+por qué una nueva imagen podía no llegar a la aplicación aunque ya estuviese
+en dev.
+
+Al iniciarse, scripts/start-dev-session.ps1 consulta primero la ocupación
+de emulator-5554. Si hay un proceso, delega en la acción Recover de
+scripts/android/task-control.ps1, que utiliza el clasificador puro
+scripts/android/flutter-ownership.ps1:
+
+- free: no hay Flutter ocupando el emulador; arranque normal.
+- owned: TODOS los procesos que ocupan el dispositivo se identifican
+  con el runner o los defines propios de la tarea de ESTE repositorio;
+  se verifica PID, fecha y comando otra vez, se liberan esos procesos y
+  se inicia una sola sesión Flutter nueva, sin cerrar Android.
+- foreign: aparece F5, otra sesión o un proceso ambiguo; no se termina
+  ningún proceso y no se inicia un Flutter competidor.
+
+Recover no llama a Stop-ScheduledTask: es seguro invocarlo desde la
+propia tarea durante su arranque. Stop conserva la parada deliberada y
+la cesión controlada a F5. La recuperación queda reflejada en
+.ai-apps/dev-session.log sin nombres de proceso, argumentos, tokens ni
+otros datos sensibles.
+
+Prueba de clasificación sin Android ni procesos reales:
+powershell -NoProfile -File scripts/android/flutter-ownership.test.ps1.
+El contrato de arranque también la ejecuta desde
+node scripts/android/startup-contract-test.cjs en Windows.
+
+Esta reparación evita que un proceso huérfano bloquee el SIGUIENTE
+arranque. No permite determinar retrospectivamente por qué terminó la
+tarea anterior y no constituye un supervisor continuo de tareas detenidas;
+ese estado sigue siendo observable mediante Get-ScheduledTaskInfo.
+
 ## Recuperación de actualizaciones Flutter
 
 El propietario de las sesiones Flutter es `scripts/flutter-dev-runner.dart`,
