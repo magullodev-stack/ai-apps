@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:muondia/app/app_theme.dart';
 import 'package:muondia/app/development/experience_preview.dart';
+import 'package:muondia/app/onboarding/interaction/onboarding_quiz_header.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_page.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_hint.dart';
 import 'package:muondia/app/onboarding/pivot_images.dart';
@@ -65,7 +66,10 @@ void main() {
       final pivotTitle = tester.widget<Text>(
         find.byKey(const Key('muondia-pivot-title')),
       );
-      expect(pivotTitle.style!.fontSize, lessThanOrEqualTo(22));
+      expect(pivotTitle.style!.fontSize, greaterThanOrEqualTo(25));
+      expect(pivotTitle.style!.fontWeight, FontWeight.w900);
+      expect(pivotTitle.style!.shadows, isNotEmpty,
+          reason: 'El título debe destacar sobre el fondo luminoso');
       expect(
         tester.widget<Text>(
           find.byKey(const Key('muondia-question-counter')),
@@ -79,10 +83,34 @@ void main() {
         lessThanOrEqualTo(20),
       );
 
+      final timer = tester.widget<Container>(
+        find.byKey(const Key('muondia-timer-capsule')),
+      );
+      final timerDecoration = timer.decoration as BoxDecoration;
+      expect(timerDecoration.color, const Color(0xDD0D0A36));
+      expect(timerDecoration.border, isNotNull);
+      expect(timerDecoration.borderRadius, isNotNull);
+
+      final clip = tester.widget<ClipRRect>(
+        find.byKey(const Key('muondia-question-clip')),
+      );
+      expect(clip.clipBehavior, Clip.antiAlias,
+          reason: 'Esquinas limpias sobre el PNG sin clipping del fondo');
       final card = tester.getRect(
         find.byKey(const Key('muondia-question-card')),
       );
       expect(card.height, greaterThan(500));
+      final headerBottom = tester.getBottomLeft(
+        find.byType(OnboardingQuizHeader),
+      ).dy;
+      final lifelines = tester.getRect(
+        find.byKey(const Key('muondia-lifelines-row')),
+      );
+      final stage = tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
+      expect(card.top - headerBottom, closeTo(16, 0.1));
+      expect(lifelines.top - card.bottom, closeTo(16, 0.1));
+      expect(stage.bottom - lifelines.bottom, closeTo(16, 0.1),
+          reason: 'Los tres márgenes verticales siguen la misma retícula');
       for (var i = 0; i < 4; i++) {
         expect(find.text(String.fromCharCode(65 + i)), findsOneWidget);
         final answer = find.byKey(Key('muondia-answer-$i'));
@@ -592,6 +620,11 @@ void main() {
     final cardRect = tester.getRect(card);
     final hintRect = tester.getRect(hint);
     final counterRect = tester.getRect(counter);
+    final headerRect = tester.getRect(find.byType(OnboardingQuizHeader));
+    final aidRow = find.byKey(const Key('muondia-lifelines-row'));
+    final rowRect = tester.getRect(aidRow);
+    expect(cardRect.top - headerRect.bottom, closeTo(16 * (320 / 390), 0.2));
+    expect(rowRect.top - cardRect.bottom, closeTo(16 * (320 / 390), 0.2));
     final firstAnswer = tester.getRect(
       find.byKey(const Key('muondia-answer-0')),
     );
@@ -608,6 +641,8 @@ void main() {
         reason: 'Los comodines permanecen fijos');
     expect(tester.getRect(counter), counterRect,
         reason: 'La cabecera permanece fija');
+    expect(tester.getRect(aidRow), rowRect,
+        reason: 'Toda la fila de ayudas debe permanecer en su retícula');
     expect(tester.takeException(), isNull);
 
     await tester.tap(last);
