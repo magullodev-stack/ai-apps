@@ -58,7 +58,7 @@ class OnboardingQuizScene extends StatelessWidget {
         child: CustomPaint(
           painter: const OnboardingQuizBackdrop(),
           child: SafeArea(
-          child: Center(
+            child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 640),
               child: LayoutBuilder(
@@ -184,7 +184,6 @@ class OnboardingQuizScene extends StatelessWidget {
     );
   }
 }
-
 
 class _AidButton extends StatelessWidget {
   const _AidButton({
@@ -376,6 +375,7 @@ class _AnswerCard extends StatelessWidget {
                   children: [
                     ExcludeSemantics(
                       child: Container(
+                        key: Key('muondia-answer-letter-$index'),
                         width: 42 * scale,
                         height: 44 * scale,
                         alignment: Alignment.center,
@@ -403,6 +403,7 @@ class _AnswerCard extends StatelessWidget {
                     ),
                     SizedBox(width: 12 * scale),
                     Container(
+                      key: Key('muondia-answer-divider-$index'),
                       width: 1.5 * scale,
                       height: 32 * scale,
                       decoration: BoxDecoration(
