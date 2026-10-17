@@ -98,35 +98,32 @@ class OnboardingQuizHeader extends StatelessWidget {
                 child: Semantics(
                   label: 'Tiempo restante del test',
                   value: '$secondsRemaining segundos',
-                  child: Container(
+                  child: ClipRRect(
                     key: const Key('muondia-time-track'),
-                    height: 12 * scale,
-                    decoration: BoxDecoration(
-                      color: const Color(0xF20C0933),
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(
-                        color: const Color(0xFFB4C8FB),
-                        width: 0.8,
-                      ),
-                    ),
-                    padding: EdgeInsets.all(1 * scale),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(100),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: FractionallySizedBox(
-                          widthFactor: timeFraction.clamp(0.0, 1.0).toDouble(),
-                          heightFactor: 1,
-                          child: const DecoratedBox(
-                            key: Key('muondia-time-fill'),
-                            decoration: BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(100)),
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFF8CF5FF),
-                                  Color(0xFF41B9FF),
-                                ],
+                    borderRadius: BorderRadius.circular(100),
+                    clipBehavior: Clip.antiAlias,
+                    child: SizedBox(
+                      height: 14 * scale,
+                      child: ColoredBox(
+                        color: const Color(0xFF4B3C9F),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: timeFraction.clamp(0.0, 1.0).toDouble(),
+                            heightFactor: 1,
+                            child: const DecoratedBox(
+                              key: Key('muondia-time-fill'),
+                              decoration: BoxDecoration(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(100)),
+                                gradient: LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    Color(0xFFAA48FC),
+                                    Color(0xFF8840EE),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -136,42 +133,28 @@ class OnboardingQuizHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(width: 10 * scale),
-              Container(
-                key: const Key('muondia-timer-capsule'),
-                padding: EdgeInsets.symmetric(
-                  horizontal: 8 * scale,
-                  vertical: 5 * scale,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xDD0D0A36),
-                  borderRadius: BorderRadius.circular(14 * scale),
-                  border: Border.all(
-                    color: const Color(0xAAE2D8FF),
-                    width: 0.8,
+              SizedBox(width: 16 * scale),
+              Row(
+                key: const Key('muondia-timer-inline'),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.timer_outlined,
+                    color: Colors.white,
+                    size: 26 * scale,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.timer_outlined,
+                  SizedBox(width: 5 * scale),
+                  Text(
+                    secondsRemaining.toString() + 's',
+                    key: const Key('muondia-test-seconds'),
+                    style: MuondiaTypography.screenTitle.copyWith(
                       color: Colors.white,
-                      size: 19 * scale,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22 * scale,
+                      height: 1.05,
                     ),
-                    SizedBox(width: 4 * scale),
-                    Text(
-                      secondsRemaining.toString() + 's',
-                      key: const Key('muondia-test-seconds'),
-                      style: MuondiaTypography.sectionTitle.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 17 * scale,
-                        height: 1.1,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
