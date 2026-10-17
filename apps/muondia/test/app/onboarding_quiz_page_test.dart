@@ -133,6 +133,51 @@ void main() {
   );
 
 
+  testWidgets('Explorador: 60 segundos congelados incluso al navegar y usar ayudas', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: previewQuestions,
+        countdownEnabled: false,
+        onCompleted: () async {},
+      ),
+    ));
+    await tester.pump();
+
+    expect(find.text('60s'), findsOneWidget);
+    final initialProgress = tester.getSemantics(
+      find.bySemanticsLabel('Tiempo restante del test'),
+    );
+    expect(initialProgress.value, '60 segundos');
+
+    // Una previsualización abierta durante minutos no debe agotarse.
+    await tester.pump(const Duration(minutes: 3));
+    await tester.pump();
+    expect(find.text('60s'), findsOneWidget);
+    expect(find.text('1/10'), findsOneWidget);
+    expect(find.text('Tiempo agotado'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('muondia-aid-fifty')));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('60s'), findsOneWidget);
+    await tester.tap(find.text('Opción A'));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    expect(find.text('2/10'), findsOneWidget);
+    expect(find.text('60s'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('muondia-aid-hint')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Pista de demostración'), findsOneWidget);
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(minutes: 2));
+    expect(find.text('2/10'), findsOneWidget);
+    expect(find.text('60s'), findsOneWidget);
+    expect(find.text('Tiempo agotado'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Sesenta segundos compartidos y fin automático', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: muondiaTheme,
