@@ -80,31 +80,43 @@ void main() {
         tester.widget<Text>(
           find.byKey(const Key('muondia-test-seconds')),
         ).style!.fontSize,
-        lessThanOrEqualTo(20),
+        lessThanOrEqualTo(23),
       );
 
-      final timeTrack = tester.widget<Container>(
+      final timeTrack = tester.widget<ClipRRect>(
         find.byKey(const Key('muondia-time-track')),
       );
-      final trackDecoration = timeTrack.decoration as BoxDecoration;
-      expect(trackDecoration.color, const Color(0xF20C0933),
-          reason: 'El carril debe distinguirse del fondo violeta');
-      expect(trackDecoration.border, isNotNull);
+      expect(timeTrack.clipBehavior, Clip.antiAlias);
+      final coloredTrack = tester.widget<ColoredBox>(
+        find.descendant(
+          of: find.byKey(const Key('muondia-time-track')),
+          matching: find.byType(ColoredBox),
+        ).first,
+      );
+      expect(coloredTrack.color, const Color(0xFF4B3C9F),
+          reason: 'La barra de referencia tiene pista violeta sin borde');
       final fill = tester.widget<DecoratedBox>(
         find.byKey(const Key('muondia-time-fill')),
       );
-      final fillColors =
-          (fill.decoration as BoxDecoration).gradient as LinearGradient;
-      expect(fillColors.colors,
-          [const Color(0xFF8CF5FF), const Color(0xFF41B9FF)],
-          reason: 'La cuenta atrás no puede fundirse con el fondo morado');
-      final timer = tester.widget<Container>(
-        find.byKey(const Key('muondia-timer-capsule')),
+      final fillDecoration = fill.decoration as BoxDecoration;
+      final fillGradient = fillDecoration.gradient as LinearGradient;
+      expect(fillGradient.colors, [
+        const Color(0xFFAA48FC),
+        const Color(0xFF8840EE),
+      ], reason: 'El progreso es violeta, no cian');
+      expect(fillDecoration.border, isNull);
+      expect(find.byKey(const Key('muondia-timer-capsule')), findsNothing,
+          reason: 'La referencia no tiene caja negra ni borde en el tiempo');
+      final timerInline =
+          find.byKey(const Key('muondia-timer-inline'));
+      expect(timerInline, findsOneWidget);
+      expect(
+        find.descendant(
+          of: timerInline,
+          matching: find.byIcon(Icons.timer_outlined),
+        ),
+        findsOneWidget,
       );
-      final timerDecoration = timer.decoration as BoxDecoration;
-      expect(timerDecoration.color, const Color(0xDD0D0A36));
-      expect(timerDecoration.border, isNotNull);
-      expect(timerDecoration.borderRadius, isNotNull);
 
       final clip = tester.widget<ClipRRect>(
         find.byKey(const Key('muondia-question-clip')),
@@ -131,10 +143,11 @@ void main() {
       final lifelines = tester.getRect(
         find.byKey(const Key('muondia-lifelines-row')),
       );
-      final stage = tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
+      final stageRect =
+          tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
       expect(card.top - headerBottom, closeTo(16, 0.1));
       expect(lifelines.top - card.bottom, closeTo(16, 0.1));
-      expect(stage.bottom - lifelines.bottom, closeTo(16, 0.1),
+      expect(stageRect.bottom - lifelines.bottom, closeTo(16, 0.1),
           reason: 'Los tres márgenes verticales siguen la misma retícula');
       for (var i = 0; i < 4; i++) {
         expect(find.text(String.fromCharCode(65 + i)), findsOneWidget);
