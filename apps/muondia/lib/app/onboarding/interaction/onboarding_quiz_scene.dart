@@ -45,7 +45,7 @@ class OnboardingQuizScene extends StatelessWidget {
         .clamp(0.82, 1.1)
         .toDouble();
     final gutter = 16 * scale;
-    final cardRadius = 26 * scale;
+    final cardRadius = 22 * scale;
 
     return Scaffold(
       backgroundColor: const Color(0xFF181442),
@@ -64,9 +64,9 @@ class OnboardingQuizScene extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 640),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  12 * scale,
+                  gutter,
                   8 * scale,
-                  12 * scale,
+                  gutter,
                   gutter,
                 ),
                 child: Column(
