@@ -212,107 +212,114 @@ class _AidButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final available = remaining > 0;
     final enabled = onTap != null;
+    final isFifty = label == '50%';
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Material(
-          color: enabled ? const Color(0xFF211751) : const Color(0xFF231C43),
-          borderRadius: BorderRadius.circular(38 * scale),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Container(
-              height: 64 * scale,
-              alignment: Alignment.center,
-              padding: EdgeInsets.symmetric(horizontal: 10 * scale),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(38 * scale),
-                border: Border.all(
-                  color: enabled ? const Color(0xFF7B3CFF) : const Color(0xFF4A3D79),
-                  width: 2.5 * scale,
+        // Mismo velo que las respuestas descartadas: el botón permanece
+        // en su sitio, pero deja de parecer disponible tras gastar su uso.
+        AnimatedOpacity(
+          key: Key(isFifty ? 'muondia-fifty-opacity' : 'muondia-hint-opacity'),
+          opacity: available ? 1.0 : 0.40,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          child: Material(
+            color: const Color(0xFF211751),
+            borderRadius: BorderRadius.circular(38 * scale),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: enabled ? onTap : null,
+              child: Container(
+                height: 64 * scale,
+                alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: 10 * scale),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(38 * scale),
+                  border: Border.all(
+                    color: const Color(0xFF7B3CFF),
+                    width: 2.5 * scale,
+                  ),
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (loading)
-                    SizedBox(
-                      width: 22 * scale,
-                      height: 22 * scale,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  else
-                    Icon(
-                      icon,
-                      color: label == 'Pista IA'
-                          ? const Color(0xFFFFC63D)
-                          : Colors.white,
-                      size: 27 * scale,
-                    ),
-                  SizedBox(width: 8 * scale),
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        style: MuondiaTypography.sectionTitle.copyWith(
-                          color: enabled ? Colors.white : const Color(0xFFB4ABC8),
-                          fontSize: 20 * scale,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (loading)
+                      SizedBox(
+                        width: 22 * scale,
+                        height: 22 * scale,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      Icon(
+                        icon,
+                        color: label == 'Pista IA'
+                            ? const Color(0xFFFFC63D)
+                            : Colors.white,
+                        size: 27 * scale,
+                      ),
+                    SizedBox(width: 8 * scale),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          style: MuondiaTypography.sectionTitle.copyWith(
+                            color: Colors.white,
+                            fontSize: 20 * scale,
+                          ),
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // La esfera solo representa usos disponibles. Al llegar a cero
+        // desaparece, sin modificar las dimensiones del botón.
+        if (available)
+          Positioned(
+            right: 0,
+            top: -8 * scale,
+            child: Container(
+              key: Key(isFifty ? 'muondia-fifty-count' : 'muondia-hint-count'),
+              width: 30 * scale,
+              height: 30 * scale,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFFE58E), Color(0xFFFFB81D)],
+                ),
+                border: Border.all(
+                  color: const Color(0xFFFFF0B0),
+                  width: 1.3,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x440B0635),
+                    blurRadius: 5,
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 0,
-          top: -8 * scale,
-          child: Container(
-            key: Key(label == '50%' ? 'muondia-fifty-count' : 'muondia-hint-count'),
-            width: 30 * scale,
-            height: 30 * scale,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: remaining > 0
-                  ? const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFFFE58E), Color(0xFFFFB81D)],
-                    )
-                  : const LinearGradient(
-                      colors: [Color(0xFF89759C), Color(0xFF6F5B89)],
-                    ),
-              border: Border.all(
-                color: remaining > 0
-                    ? const Color(0xFFFFF0B0)
-                    : const Color(0xFFB9A5D2),
-                width: 1.3,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x440B0635),
-                  blurRadius: 5,
-                  offset: Offset(0, 2),
+              child: Text(
+                '$remaining',
+                style: MuondiaTypography.screenTitle.copyWith(
+                  color: const Color(0xFF201047),
+                  fontSize: 20 * scale,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
                 ),
-              ],
-            ),
-            child: Text(
-              '$remaining',
-              style: MuondiaTypography.screenTitle.copyWith(
-                color: const Color(0xFF201047),
-                fontSize: 20 * scale,
-                fontWeight: FontWeight.w900,
-                height: 1,
               ),
             ),
           ),
-        ),
       ],
     );
   }
