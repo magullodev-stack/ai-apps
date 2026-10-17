@@ -93,7 +93,7 @@ class OnboardingQuizHeader extends StatelessWidget {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: FractionallySizedBox(
-                            widthFactor: timeFraction.clamp(0.0, 1.0),
+                            widthFactor: timeFraction.clamp(0.0, 1.0).toDouble(),
                             heightFactor: 1,
                             child: const DecoratedBox(
                               decoration: BoxDecoration(
