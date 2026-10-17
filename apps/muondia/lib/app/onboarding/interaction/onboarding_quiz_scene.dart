@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../../app_theme.dart';
 import '../production/onboarding_quiz_pipeline.dart';
-import 'onboarding_quiz_backdrop.dart';
 import 'onboarding_quiz_header.dart';
 
 /// Composición propia de Muondia; la página conserva las reglas del test.
@@ -50,16 +49,13 @@ class OnboardingQuizScene extends StatelessWidget {
       body: DecoratedBox(
         key: const Key('muondia-quiz-stage'),
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF160D53), Color(0xFF2E10A3), Color(0xFF150E45)],
-            stops: [0.0, .51, 1.0],
+          image: DecorationImage(
+            image: AssetImage('assets/onboarding/test/quiz_background.png'),
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
           ),
         ),
-        child: CustomPaint(
-          painter: const OnboardingQuizBackdrop(),
-          child: SafeArea(
+        child: SafeArea(
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 640),
@@ -185,7 +181,6 @@ class OnboardingQuizScene extends StatelessWidget {
               ),
             ),
           ),
-        ),
       ),
     );
   }

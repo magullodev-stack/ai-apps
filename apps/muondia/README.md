@@ -105,9 +105,11 @@ preguntas de prueba.
 `OnboardingQuizPage` conserva el estado y las reglas del cuestionario;
 `interaction/onboarding_quiz_scene.dart` compone toda la pantalla sobre un
 fondo índigo-violeta continuo, sin esquinas ni marco exterior redondeado.
-`interaction/onboarding_quiz_backdrop.dart` pinta halos, órbitas luminosas
-y grano fino reproducible con CustomPainter; no incorpora una captura
-de pantalla con textos como recurso de fondo. La cabecera se integra
+La imagen real `assets/onboarding/test/quiz_background.png` ocupa
+el escenario completo con `BoxFit.cover`. Sustituye al antiguo fondo
+programático para reproducir los detalles y la textura de la referencia.
+Los recursos de Loading permanecen separados en `assets/onboarding/loading/`,
+y el Explorador de experiencias expone el fondo del test en su propia carpeta. La cabecera se integra
 sin fondo propio, sin flecha de regreso (el onboarding es obligatorio),
 con el PNG original del pivote activo y su nombre en Nunito blanca de
 tamaño contenido. El contador de preguntas, el cronómetro de 60 s y

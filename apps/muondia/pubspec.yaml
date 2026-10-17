@@ -78,6 +78,7 @@ flutter:
     - assets/auth/Logotipo_MuondIA.png
     - assets/onboarding/
     - assets/onboarding/loading/
+    - assets/onboarding/test/
     - assets/Pivotes/
     - assets/fonts/OFL.txt
 
