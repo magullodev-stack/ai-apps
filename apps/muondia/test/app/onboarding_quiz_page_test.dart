@@ -83,6 +83,21 @@ void main() {
         lessThanOrEqualTo(20),
       );
 
+      final timeTrack = tester.widget<Container>(
+        find.byKey(const Key('muondia-time-track')),
+      );
+      final trackDecoration = timeTrack.decoration as BoxDecoration;
+      expect(trackDecoration.color, const Color(0xF20C0933),
+          reason: 'El carril debe distinguirse del fondo violeta');
+      expect(trackDecoration.border, isNotNull);
+      final fill = tester.widget<DecoratedBox>(
+        find.byKey(const Key('muondia-time-fill')),
+      );
+      final fillColors =
+          (fill.decoration as BoxDecoration).gradient as LinearGradient;
+      expect(fillColors.colors,
+          [const Color(0xFF8CF5FF), const Color(0xFF41B9FF)],
+          reason: 'La cuenta atrás no puede fundirse con el fondo morado');
       final timer = tester.widget<Container>(
         find.byKey(const Key('muondia-timer-capsule')),
       );
@@ -100,6 +115,16 @@ void main() {
         find.byKey(const Key('muondia-question-card')),
       );
       expect(card.height, greaterThan(500));
+      final stageBounds =
+          tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
+      expect(card.left - stageBounds.left, closeTo(16, 0.1));
+      expect(stageBounds.right - card.right, closeTo(16, 0.1),
+          reason: 'Las esquinas deben tener margen, no cortarse con el borde');
+      expect(
+        clip.borderRadius,
+        BorderRadius.circular(22),
+        reason: 'Un único radio de esquina en el recorte antialias',
+      );
       final headerBottom = tester.getBottomLeft(
         find.byType(OnboardingQuizHeader),
       ).dy;
@@ -623,6 +648,11 @@ void main() {
     final headerRect = tester.getRect(find.byType(OnboardingQuizHeader));
     final aidRow = find.byKey(const Key('muondia-lifelines-row'));
     final rowRect = tester.getRect(aidRow);
+    final stageRect =
+        tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
+    final horizontalInset = 16 * (320 / 390);
+    expect(cardRect.left - stageRect.left, closeTo(horizontalInset, 0.2));
+    expect(stageRect.right - cardRect.right, closeTo(horizontalInset, 0.2));
     expect(cardRect.top - headerRect.bottom, closeTo(16 * (320 / 390), 0.2));
     expect(rowRect.top - cardRect.bottom, closeTo(16 * (320 / 390), 0.2));
     final firstAnswer = tester.getRect(
