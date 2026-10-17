@@ -48,7 +48,9 @@
           "label": "Preguntas de prueba"
         }
       ],
-      "assetDirectories": []
+      "assetDirectories": [
+        "assets/Pivotes"
+      ]
     },
     {
       "id": "home",

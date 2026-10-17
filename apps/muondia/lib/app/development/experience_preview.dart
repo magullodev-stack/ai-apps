@@ -9,6 +9,7 @@ import '../onboarding/interaction/onboarding_loading_scene.dart';
 import '../onboarding/interaction/onboarding_quiz_page.dart';
 import '../onboarding/intro_sequence.dart';
 import '../onboarding/production/onboarding_quiz_pipeline.dart';
+import '../onboarding/production/onboarding_dimensions.dart';
 
 /// Utiliza vistas reales con datos controlados, sin acceder a IA ni Firebase.
 class MuondiaExperiencePreview extends StatelessWidget {
@@ -70,7 +71,7 @@ final List<OnboardingQuizFinalQuestion> previewQuestions =
     List<OnboardingQuizFinalQuestion>.unmodifiable([
   for (var i = 1; i <= 10; i++)
     (
-      pivot: 'Vista previa',
+      pivot: onboardingQuizPivots[i - 1].name,
       question: 'Pregunta de prueba $i: ¿qué opción quieres seleccionar?',
       correct: 'Opción A',
       options: <String>['Opción A', 'Opción B', 'Opción C', 'Opción D'],

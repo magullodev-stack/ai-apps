@@ -80,6 +80,26 @@ El icono de lanzamiento Android utiliza el símbolo gráfico ya presente en
 `assets/branding/muondia_logo.png`, en lugar del icono predeterminado Flutter.
 Los gráficos de la secuencia inicial viven en `assets/onboarding/loading/`.
 
+## Ilustraciones de pivotes del test inicial
+
+Los veinte PNG originales transparentes están en `assets/Pivotes/` (P mayúscula),
+registrados en `pubspec.yaml`. No se duplican ni se renombran.
+La lista canónica de códigos y nombres está en
+`lib/app/onboarding/production/onboarding_dimensions.dart`.
+`lib/app/onboarding/pivot_images.dart` resuelve el recurso a partir del
+pivote que contiene cada pregunta de `OnboardingQuizFinalQuestion`.
+Por ejemplo, `Física` → `assets/Pivotes/P08 - Física.png`; los pivotes
+no registrados no reciben imágenes de otro tema.
+Tras pasar de pregunta se resuelve el recurso del nuevo pivote, sin
+modificar la generación, revisión, ordenación o historial de IA.
+
+El test de previsualización utiliza diez pivotes canónicos con preguntas
+ficticias y no realiza llamadas a IA. Sus imágenes están declaradas como
+recursos del estado `Test de bienvenida` en el explorador Android.
+**La ubicación, proporción y forma de mostrarlas dentro de la interfaz
+siguen pendientes de diseño:** esta implementación registra y resuelve
+los recursos, pero todavía no introduce una imagen en el widget.
+
 ## Arranque y sincronización
 
 La tarea programada de Windows **AI-APPS Development** inicia al entrar en
