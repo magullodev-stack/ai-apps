@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:muondia/app/app_theme.dart';
 import 'package:muondia/app/development/experience_preview.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_page.dart';
+import 'package:muondia/app/onboarding/interaction/onboarding_quiz_hint.dart';
 import 'package:muondia/app/onboarding/pivot_images.dart';
 
 void main() {
@@ -100,6 +101,109 @@ void main() {
     },
   );
 
+
+  testWidgets('Sesenta segundos compartidos y fin automático', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: previewQuestions,
+        onCompleted: () async {},
+      ),
+    ));
+    await tester.pump();
+    expect(find.text('60s'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 11));
+    await tester.pump();
+    final before = int.parse(tester.widget<Text>(
+      find.byKey(const Key('muondia-test-seconds')),
+    ).data!.replaceAll('s', ''));
+    expect(before, lessThan(60));
+    await tester.tap(find.text('Opción A'));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    expect(find.text('2/10'), findsOneWidget);
+    final after = int.parse(tester.widget<Text>(
+      find.byKey(const Key('muondia-test-seconds')),
+    ).data!.replaceAll('s', ''));
+    expect(after, lessThanOrEqualTo(before));
+    await tester.pump(const Duration(seconds: 61));
+    await tester.pump();
+    expect(find.text('Tiempo agotado'), findsOneWidget);
+    expect(find.text('Resultado: 1 / 10'), findsOneWidget);
+  });
+
+  testWidgets('50 % elimina dos errores solo una vez', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: previewQuestions,
+        onCompleted: () async {},
+      ),
+    ));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('muondia-aid-fifty')));
+    await tester.pump();
+    expect(find.text('Opción A'), findsOneWidget);
+    expect(find.text('Opción B'), findsNothing);
+    expect(find.text('Opción C'), findsNothing);
+    expect(find.text('Opción D'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('muondia-fifty-count')),
+        matching: find.text('0'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Opción A'));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    expect(find.text('Opción B'), findsOneWidget);
+    expect(find.text('Opción C'), findsOneWidget);
+    expect(tester.widget<InkWell>(
+      find.descendant(
+        of: find.byKey(const Key('muondia-aid-fifty')),
+        matching: find.byType(InkWell),
+      ),
+    ).onTap, isNull);
+  });
+
+  testWidgets('Pista simulada pausa el reloj y consume un uso', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: previewQuestions,
+        onCompleted: () async {},
+      ),
+    ));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('muondia-aid-hint')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Pista de demostración'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 8));
+    expect(find.text('60s'), findsOneWidget);
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('muondia-hint-count')),
+        matching: find.text('0'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  test('La pista rechaza la respuesta literal', () {
+    final q = previewQuestions.first;
+    expect(
+      () => validateOnboardingQuizHint('{"pista":"Opción A"}', q),
+      throwsFormatException,
+    );
+    expect(
+      validateOnboardingQuizHint('{"pista":"Identifica primero qué se pregunta."}', q),
+      'Identifica primero qué se pregunta.',
+    );
+  });
+
   testWidgets('La cabecera sigue las diez preguntas y conserva el resultado', (
     tester,
   ) async {
@@ -131,14 +235,7 @@ void main() {
         onboardingPivotImageFor(question.pivot),
       );
       expect(image.fit, BoxFit.contain);
-      expect(
-        tester.getSemantics(find.bySemanticsLabel('Progreso del cuestionario')),
-        matchesSemantics(
-          label: 'Progreso del cuestionario',
-          value: '${(i + 1) * 10}%',
-          textDirection: TextDirection.ltr,
-        ),
-      );
+      expect(find.bySemanticsLabel('Tiempo restante del test'), findsOneWidget);
       expect(find.text('Siguiente'), findsNothing);
 
       await tester.ensureVisible(find.text('Opción A'));
@@ -166,7 +263,7 @@ void main() {
     }
 
     expect(find.text('Resultado: 10 / 10'), findsOneWidget);
-    expect(find.bySemanticsLabel('Progreso del cuestionario'), findsNothing);
+    expect(find.bySemanticsLabel('Tiempo restante del test'), findsNothing);
     expect(completed, 0);
     await tester.tap(find.text('Entrar en Muondia'));
     await tester.pump();
@@ -176,7 +273,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('Respuesta incorrecta: rojo, correcta verde, avance sin botón', (
+  testWidgets('Respuesta incorrecta: solo rojo, avance sin botón', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -207,7 +304,7 @@ void main() {
                 .decoration
             as BoxDecoration;
     expect(wrong.color, MuondiaPalette.error.withAlpha(48));
-    expect(correct.color, MuondiaPalette.success.withAlpha(48));
+    expect(correct.color, Colors.transparent);
     expect(find.text('Siguiente'), findsNothing);
 
     // Los siguientes toques durante el velo no pueden contar otra respuesta.
