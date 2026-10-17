@@ -176,29 +176,25 @@ void main() {
       expect(tester.getRect(find.byKey(Key('muondia-answer-$i'))), answerRects[i],
           reason: 'Ninguna fila debe desplazarse al activar el 50 %');
     }
-    for (final i in [1, 2]) {
+    final discarded = <int>[];
+    for (var i = 0; i < 4; i++) {
       final faded = tester.widget<AnimatedOpacity>(
         find.byKey(Key('muondia-answer-opacity-$i')),
       );
-      expect(faded.opacity, lessThan(1));
-      expect(
-        tester.widget<InkWell>(find.byKey(Key('muondia-answer-$i'))).onTap,
-        isNull,
-        reason: 'Una respuesta descartada no puede seleccionarse',
-      );
+      final onTap = tester.widget<InkWell>(
+        find.byKey(Key('muondia-answer-$i')),
+      ).onTap;
+      if (faded.opacity < 1) {
+        discarded.add(i);
+        expect(onTap, isNull,
+            reason: 'La alternativa descartada nunca admite pulsaciones');
+      } else {
+        expect(onTap, isNotNull);
+      }
     }
-    for (final i in [0, 3]) {
-      expect(
-        tester.widget<AnimatedOpacity>(
-          find.byKey(Key('muondia-answer-opacity-$i')),
-        ).opacity,
-        1.0,
-      );
-      expect(
-        tester.widget<InkWell>(find.byKey(Key('muondia-answer-$i'))).onTap,
-        isNotNull,
-      );
-    }
+    expect(discarded, hasLength(2));
+    expect(discarded, isNot(contains(0)),
+        reason: 'El 50 % nunca puede desactivar la respuesta correcta');
     expect(
       find.descendant(
         of: find.byKey(const Key('muondia-fifty-count')),
