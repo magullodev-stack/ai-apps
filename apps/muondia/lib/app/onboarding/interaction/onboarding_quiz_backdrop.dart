@@ -75,7 +75,7 @@ class OnboardingQuizBackdrop extends CustomPainter {
     orbit(
       Path()
         ..moveTo(-w * .16, h * .90)
-        ..cubicTo(w * .35, h * .74, w * .60, h * 1.08, w * .91),
+        ..cubicTo(w * .35, h * .74, w * .60, h * 1.08, w * 1.18, h * .91),
       color: const Color(0x556E48FF),
     );
 
