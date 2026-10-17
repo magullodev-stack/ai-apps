@@ -23,7 +23,13 @@ La **carpeta troncal activa** lleva un icono de carpeta abierta en amarillo
 y la pantalla activa un icono de ojo amarillo. La descripción del árbol
 identifica el camino `Categoría / Pantalla / Estado`; las carpetas
 inactivas permanecen azules. La lectura se actualiza cada cinco segundos
-y no modifica el árbol si no hay cambios. Si la APK aún no admite el
+y no modifica el árbol si no hay cambios.
+
+Si Android conserva el proceso de Muondia pero AI-APPS Development
+ya no está funcionando, el Explorador indica estado orphaned con icono de
+advertencia y habilita Iniciar sesión. No confunde la APK superviviente con
+una sesión Flutter supervisada: en el siguiente arranque se recupera solo
+un proceso de la propia tarea y se bloquea si pertenece a F5 o es ambiguo. Si la APK aún no admite el
 protocolo, la última selección realizada desde el explorador se conserva
 como indicación provisional, pero no se inventan cambios.
 
