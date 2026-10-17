@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:muondia/app/app_theme.dart';
 import 'package:muondia/app/development/experience_preview.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_page.dart';
+import 'package:muondia/app/onboarding/interaction/onboarding_quiz_backdrop.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_hint.dart';
 import 'package:muondia/app/onboarding/pivot_images.dart';
 
@@ -40,6 +41,23 @@ void main() {
       expect(stageDecoration.borderRadius, isNull,
           reason: 'El fondo del test no es una tarjeta redondeada');
       expect(stageDecoration.border, isNull);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is CustomPaint && widget.painter is OnboardingQuizBackdrop,
+        ),
+        findsOneWidget,
+      );
+      for (final name in ['muondia-fifty-count', 'muondia-hint-count']) {
+        final text = tester.widget<Text>(
+          find.descendant(
+            of: find.byKey(Key(name)),
+            matching: find.text('1'),
+          ),
+        );
+        expect(text.style?.color, const Color(0xFF201047),
+            reason: 'Los contadores amarillos necesitan cifras oscuras');
+      }
 
       final card = tester.getRect(
         find.byKey(const Key('muondia-question-card')),
