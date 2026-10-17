@@ -123,6 +123,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                       Padding(
                                         padding: EdgeInsets.only(top: 12 * scale),
                                         child: _AnswerCard(
+                                          key: ValueKey('muondia-quiz-answer-$questionNumber-$i'),
                                           index: i,
                                           text: question.options[i],
                                           scale: scale,
@@ -314,6 +315,7 @@ class _AidButton extends StatelessWidget {
 /// El 50 % no retira ninguna fila: solo atenúa dos alternativas y su toque.
 class _AnswerCard extends StatelessWidget {
   const _AnswerCard({
+    super.key,
     required this.index,
     required this.text,
     required this.scale,
