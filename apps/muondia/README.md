@@ -98,13 +98,18 @@ ficticias y no realiza llamadas a IA. Sus imágenes están declaradas como
 recursos del estado `Test de bienvenida` en el explorador Android.
 `OnboardingQuizPage` conserva el estado y las reglas del cuestionario;
 `interaction/onboarding_quiz_scene.dart` compone toda la pantalla sobre un
-fondo morado oscuro con gradiente y borde redondeado. La cabecera se integra
+fondo índigo-violeta continuo, sin esquinas ni marco exterior redondeado.
+`interaction/onboarding_quiz_backdrop.dart` pinta halos, órbitas luminosas
+y grano fino reproducible con CustomPainter; no incorpora una captura
+de pantalla con textos como recurso de fondo. La cabecera se integra
 sin fondo propio, con flecha de regreso, el PNG original del pivote activo,
 su nombre en Nunito blanca, el contador de preguntas, el cronómetro de 60 s
 y una barra que indica el tiempo restante de la partida completa.
 Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
-respuesta blancas con sombra, identificadas mediante círculos A–D en amarillo,
-rosa, violeta y verde. La puntuación se muestra al finalizar. La tarjeta
+respuesta blancas con sombra. Las letras A–D utilizan distintivos rectangulares
+redondeados en lila neutro y un separador vertical fino, iguales para las
+cuatro opciones; no hay códigos de color por letra. La puntuación se muestra
+al finalizar. La tarjeta
 ocupa la altura disponible; con textos largos, letra ampliada o poca altura
 se permite desplazamiento vertical, que vuelve al inicio en cada pregunta.
 La composición es particular de Muondia y no modifica el tema global ni
@@ -126,8 +131,12 @@ La última respuesta lleva a resultados, pero **el usuario sigue pulsando
 «Entrar en Muondia»** para registrar la finalización del onboarding.
 Los temporizadores pendientes se cancelan al desmontar o reiniciar la página.
 Los comodines 50 % y Pista IA disponen de un uso cada uno compartido entre las
-diez preguntas; sus contadores no se reinician entre preguntas. 50 % elimina
-dos respuestas incorrectas de la pregunta actual. Pista IA solicita al servicio
+diez preguntas; sus contadores no se reinician entre preguntas y sus cifras
+oscuras contrastan con el amarillo de los distintivos.
+50 % desactiva dos respuestas incorrectas de la pregunta actual, pero
+mantiene las cuatro tarjetas visibles y exactamente en la misma posición;
+solo atenúa las descartadas con un velo, que impide pulsarlas. La tarjeta
+contenedora conserva su tamaño. Pista IA solicita al servicio
 Dart existente una orientación conceptual corta que no debe revelar la
 respuesta; un fallo de red o validación no consume el uso y permite reintentar.
 El reloj se detiene mientras se genera y se lee la pista, pero no al usar 50 %.
@@ -137,8 +146,10 @@ pista de demostración.
 Las pruebas de `test/app/onboarding_quiz_page_test.dart` comprueban el
 contenedor de pregunta/respuestas, la visibilidad de las cuatro tarjetas en
 formato móvil, textos largos al 200 %, el regreso al principio al avanzar,
-las diez temáticas, la puntuación, la cuenta atrás global, los comodines y
-el bloqueo durante los 500 ms de feedback.
+las diez temáticas, la puntuación, la cuenta atrás global, los comodines, los distintivos neutros y la
+ausencia de redondeo exterior; en particular verifican que activar 50 %
+no elimine ninguna respuesta ni modifique sus dimensiones o coordenadas,
+además del bloqueo durante los 500 ms de feedback.
 
 `MuondiaSystemSafeFrame` en `lib/app/system_safe_frame.dart` establece el
 mismo respeto a las barras de estado y navegación de Auth en todas las
