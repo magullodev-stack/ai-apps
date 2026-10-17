@@ -96,9 +96,17 @@ modificar la generación, revisión, ordenación o historial de IA.
 El test de previsualización utiliza diez pivotes canónicos con preguntas
 ficticias y no realiza llamadas a IA. Sus imágenes están declaradas como
 recursos del estado `Test de bienvenida` en el explorador Android.
-**La ubicación, proporción y forma de mostrarlas dentro de la interfaz
-siguen pendientes de diseño:** esta implementación registra y resuelve
-los recursos, pero todavía no introduce una imagen en el widget.
+`OnboardingQuizPage` presenta una cabecera violeta con flecha de regreso,
+el PNG original del pivote activo, su nombre en Nunito blanca, el contador
+de preguntas y una barra de progreso redondeada. La imagen conserva su
+proporción y se carga mediante `onboardingPivotImageFor()`. El contador y
+la barra representan la pregunta visible (por ejemplo, `3/10` y 30 %);
+al avanzar se actualizan junto con la temática y la ilustración, tanto en
+el test real como en la previsualización. La flecha utiliza el regreso del
+navegador, sin saltar preguntas ni completar el onboarding; en la ruta raíz
+no abandona el recorrido obligatorio. Esta unidad solo diseña la cabecera:
+las preguntas y respuestas conservan su presentación y comportamiento,
+y todavía no se incorporan cronómetro ni ayudas.
 
 ## Arranque y sincronización
 

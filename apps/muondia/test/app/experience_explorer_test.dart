@@ -58,7 +58,7 @@ void main() {
 
     await open('test', 'inicio');
     expect(find.byType(OnboardingQuizPage), findsOneWidget);
-    expect(find.text('Pregunta 1 de 10'), findsOneWidget);
+    expect(find.text('1/10'), findsOneWidget);
     await open('loading', 'progreso');
     expect(tester.widget<MuondiaStage>(find.byType(MuondiaStage)).progress, 0.58);
     await open('loading', 'final');

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../app/onboarding/intro_sequence.dart';
 import '../production/onboarding_quiz_pipeline.dart';
 import 'onboarding_loading_scene.dart';
+import 'onboarding_quiz_header.dart';
 
 class OnboardingQuizPage extends StatefulWidget {
   const OnboardingQuizPage({
@@ -14,6 +15,7 @@ class OnboardingQuizPage extends StatefulWidget {
   });
 
   final Future<List<OnboardingQuizFinalQuestion>> Function()? loadQuestions;
+
   /// Datos listos: no realiza llamadas a IA al montar esta pantalla.
   final List<OnboardingQuizFinalQuestion>? previewQuestions;
   final Future<void> Function() onCompleted;
@@ -143,81 +145,101 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       );
     }
 
+    final isAnswering = questions != null && !_finished;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Tu primera aventura')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.loadQuestions == null &&
-                    widget.previewQuestions == null)
-                  const Text('Generación no disponible.')
-                else if (questions == null || _finished) ...[
-                  Text(
-                    _finished ? '¡Primera aventura completada!' : 'Tu primera aventura',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  if (_finished) Text('Resultado: $_score / 10'),
-                  if (_error != null) Text(_error!),
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: _finished ? widget.onCompleted : _start,
-                    child: Text(_finished ? 'Entrar en Muondia' : 'Reintentar'),
-                  ),
-                ] else ...[
-                  Text('Pregunta ${_index + 1} de 10'),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(value: _index / 10),
-                  const SizedBox(height: 16),
-
-                  Text('Aciertos: $_score'),
-                  const SizedBox(height: 16),
-
-                  Text(questions[_index].pivot),
-                  const SizedBox(height: 8),
-
-                  AiAppsContentText(
-                    questions[_index].question,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 20),
-
-                  for (var i = 0; i < questions[_index].options.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: OutlinedButton(
-                        onPressed: _selected == null ? () => _answer(i) : null,
-                        child: AiAppsContentText(
-                          questions[_index].options[i],
-                          textAlign: TextAlign.center,
+      appBar: isAnswering
+          ? null
+          : AppBar(title: const Text('Tu primera aventura')),
+      body: Column(
+        children: [
+          if (isAnswering)
+            OnboardingQuizHeader(
+              pivot: questions[_index].pivot,
+              questionNumber: _index + 1,
+              questionCount: questions.length,
+            ),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.loadQuestions == null &&
+                          widget.previewQuestions == null)
+                        const Text('Generación no disponible.')
+                      else if (questions == null || _finished) ...[
+                        Text(
+                          _finished
+                              ? '¡Primera aventura completada!'
+                              : 'Tu primera aventura',
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                      ),
-                    ),
+                        if (_finished) Text('Resultado: $_score / 10'),
+                        if (_error != null) Text(_error!),
+                        const SizedBox(height: 20),
+                        FilledButton(
+                          onPressed: _finished ? widget.onCompleted : _start,
+                          child: Text(
+                            _finished ? 'Entrar en Muondia' : 'Reintentar',
+                          ),
+                        ),
+                      ] else ...[
+                        Text('Aciertos: $_score'),
+                        const SizedBox(height: 16),
 
-                  if (_selected != null) ...[
-                    const SizedBox(height: 12),
-                    AiAppsContentText(
-                      questions[_index].options[_selected!] ==
-                              questions[_index].correct
-                          ? '¡Correcto!'
-                          : 'Respuesta correcta: '
-                                '${questions[_index].correct}',
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: _next,
-                      child: Text(_index == 9 ? 'Ver resultado' : 'Siguiente'),
-                    ),
-                  ],
-                ],
-              ],
+                        AiAppsContentText(
+                          questions[_index].question,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 20),
+
+                        for (
+                          var i = 0;
+                          i < questions[_index].options.length;
+                          i++
+                        )
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: OutlinedButton(
+                              onPressed: _selected == null
+                                  ? () => _answer(i)
+                                  : null,
+                              child: AiAppsContentText(
+                                questions[_index].options[i],
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+
+                        if (_selected != null) ...[
+                          const SizedBox(height: 12),
+                          AiAppsContentText(
+                            questions[_index].options[_selected!] ==
+                                    questions[_index].correct
+                                ? '¡Correcto!'
+                                : 'Respuesta correcta: '
+                                      '${questions[_index].correct}',
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: _next,
+                            child: Text(
+                              _index == 9 ? 'Ver resultado' : 'Siguiente',
+                            ),
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
