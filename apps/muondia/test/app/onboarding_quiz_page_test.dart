@@ -59,6 +59,28 @@ void main() {
             reason: 'Los contadores amarillos necesitan cifras oscuras');
       }
 
+      final pivotIcon = tester.getSize(
+        find.byKey(const Key('muondia-pivot-icon')),
+      );
+      expect(pivotIcon.width, lessThanOrEqualTo(42),
+          reason: 'El pivote no debe dominar la cabecera');
+      final pivotTitle = tester.widget<Text>(
+        find.byKey(const Key('muondia-pivot-title')),
+      );
+      expect(pivotTitle.style!.fontSize, lessThanOrEqualTo(22));
+      expect(
+        tester.widget<Text>(
+          find.byKey(const Key('muondia-question-counter')),
+        ).style!.fontSize,
+        lessThanOrEqualTo(21),
+      );
+      expect(
+        tester.widget<Text>(
+          find.byKey(const Key('muondia-test-seconds')),
+        ).style!.fontSize,
+        lessThanOrEqualTo(20),
+      );
+
       final card = tester.getRect(
         find.byKey(const Key('muondia-question-card')),
       );
