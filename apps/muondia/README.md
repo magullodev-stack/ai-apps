@@ -113,15 +113,20 @@ y el Explorador de experiencias expone el fondo del test en su propia carpeta.
 La cabecera no tiene un panel exterior ni flecha de regreso (el onboarding
 es obligatorio): el icono del pivote acompaña a su nombre en Nunito blanca,
 con peso alto y sombra discreta para destacar sobre el PNG. El cronómetro
-de 60 s dispone de una cápsula oscura, borde claro y cifras blancas nítidas;
-el progreso y la barra temporal tienen jerarquía secundaria.
+de 60 s dispone de una cápsula oscura, borde claro y cifras blancas nítidas.
+La barra temporal (60 s globales, fija a 60 s solo en preview) utiliza un
+carril azul-negro delineado y relleno cian brillante para diferenciarse
+visualmente de los violetas del PNG, sin cambiar las reglas de tiempo.
 Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
 respuesta blancas con sombra. La tarjeta solo redondea y recorta su propio
 interior con `ClipRRect(clipBehavior: Clip.antiAlias)`: la sombra permanece
 fuera y el fondo cósmico nunca se recorta ni se redondea.
 El espacio de cabecera a tarjeta, de tarjeta a comodines y de comodines
 al borde inferior seguro es una retícula común de 16 unidades escaladas,
-sin sumar separadores inferiores redundantes. Las letras A–D utilizan distintivos rectangulares
+sin sumar separadores inferiores redundantes. Los laterales guardan esa
+misma separación para que los arcos blancos no aparezcan recortados contra
+el borde del emulador. El radio único de 22 unidades escaladas y el recorte
+antialias pertenecen solo a la tarjeta (no al PNG cósmico). Las letras A–D utilizan distintivos rectangulares
 redondeados en lila neutro y un separador vertical fino, iguales para las
 cuatro opciones; no hay códigos de color por letra. La puntuación se muestra
 al finalizar. La tarjeta ocupa únicamente el espacio vertical entre la
