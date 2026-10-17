@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -174,8 +175,10 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
         if (question.options[i] != question.correct) i,
     ];
     if (incorrect.length < 2) return;
+    incorrect.shuffle(Random());
     setState(() {
       _fiftyRemaining = 0;
+      // Dos distractores distintos, nunca la correcta; no desmonta las filas.
       _hiddenOptions = incorrect.take(2).toSet();
     });
   }
