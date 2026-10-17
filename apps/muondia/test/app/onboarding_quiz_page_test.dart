@@ -242,6 +242,14 @@ void main() {
     final cardBefore = tester.getRect(
       find.byKey(const Key('muondia-question-card')),
     );
+    final fiftyRectBefore = tester.getRect(
+      find.byKey(const Key('muondia-aid-fifty')),
+    );
+    final hintRectBefore = tester.getRect(
+      find.byKey(const Key('muondia-aid-hint')),
+    );
+    expect(find.byKey(const Key('muondia-fifty-count')), findsOneWidget);
+    expect(find.byKey(const Key('muondia-hint-count')), findsOneWidget);
     final answerRects = [
       for (var i = 0; i < 4; i++)
         tester.getRect(find.byKey(Key('muondia-answer-$i'))),
@@ -280,13 +288,32 @@ void main() {
     expect(discarded, hasLength(2));
     expect(discarded, isNot(contains(0)),
         reason: 'El 50 % nunca puede desactivar la respuesta correcta');
+    expect(find.byKey(const Key('muondia-fifty-count')), findsNothing,
+        reason: 'Un comodín agotado no muestra una esfera con 0');
     expect(
-      find.descendant(
-        of: find.byKey(const Key('muondia-fifty-count')),
-        matching: find.text('0'),
-      ),
-      findsOneWidget,
+      tester.widget<AnimatedOpacity>(
+        find.byKey(const Key('muondia-fifty-opacity')),
+      ).opacity,
+      0.40,
     );
+    expect(find.byKey(const Key('muondia-hint-count')), findsOneWidget,
+        reason: 'El otro comodín sigue disponible');
+    expect(
+      tester.widget<AnimatedOpacity>(
+        find.byKey(const Key('muondia-hint-opacity')),
+      ).opacity,
+      1.0,
+    );
+    expect(tester.getRect(find.byKey(const Key('muondia-aid-fifty'))),
+        fiftyRectBefore);
+    expect(tester.getRect(find.byKey(const Key('muondia-aid-hint'))),
+        hintRectBefore);
+    expect(tester.widget<InkWell>(
+      find.descendant(
+        of: find.byKey(const Key('muondia-aid-fifty')),
+        matching: find.byType(InkWell),
+      ),
+    ).onTap, isNull);
 
     await tester.tap(find.text('Opción A'));
     await tester.pump(const Duration(milliseconds: 500));
@@ -318,6 +345,8 @@ void main() {
       ),
     ));
     await tester.pump();
+    final fiftyRect = tester.getRect(find.byKey(const Key('muondia-aid-fifty')));
+    final hintRect = tester.getRect(find.byKey(const Key('muondia-aid-hint')));
     await tester.tap(find.byKey(const Key('muondia-aid-hint')));
     await tester.pumpAndSettle();
     expect(find.textContaining('Pista de demostración'), findsOneWidget);
@@ -325,13 +354,31 @@ void main() {
     expect(find.text('60s'), findsOneWidget);
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('muondia-hint-count')), findsNothing,
+        reason: 'La esfera desaparece tras consumir Pista IA');
     expect(
-      find.descendant(
-        of: find.byKey(const Key('muondia-hint-count')),
-        matching: find.text('0'),
-      ),
-      findsOneWidget,
+      tester.widget<AnimatedOpacity>(
+        find.byKey(const Key('muondia-hint-opacity')),
+      ).opacity,
+      0.40,
     );
+    expect(find.byKey(const Key('muondia-fifty-count')), findsOneWidget);
+    expect(
+      tester.widget<AnimatedOpacity>(
+        find.byKey(const Key('muondia-fifty-opacity')),
+      ).opacity,
+      1.0,
+    );
+    expect(tester.getRect(find.byKey(const Key('muondia-aid-fifty'))),
+        fiftyRect);
+    expect(tester.getRect(find.byKey(const Key('muondia-aid-hint'))),
+        hintRect);
+    expect(tester.widget<InkWell>(
+      find.descendant(
+        of: find.byKey(const Key('muondia-aid-hint')),
+        matching: find.byType(InkWell),
+      ),
+    ).onTap, isNull);
   });
 
   test('La pista rechaza la respuesta literal', () {
