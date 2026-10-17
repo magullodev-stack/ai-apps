@@ -96,6 +96,12 @@ modificar la generación, revisión, ordenación o historial de IA.
 El test de previsualización utiliza diez pivotes canónicos con preguntas
 ficticias y no realiza llamadas a IA. Sus imágenes están declaradas como
 recursos del estado `Test de bienvenida` en el explorador Android.
+En esta previsualización el cronómetro permanece fijo en 60 s y la barra
+llena, sin iniciar ningún temporizador: se pueden recorrer las preguntas y
+probar los comodines durante el tiempo que sea necesario. Solo el recorrido
+real activa la cuenta atrás de 60 s; esta distinción se configura
+explícitamente mediante `countdownEnabled`, sin deducirla de que existan
+preguntas de prueba.
 `OnboardingQuizPage` conserva el estado y las reglas del cuestionario;
 `interaction/onboarding_quiz_scene.dart` compone toda la pantalla sobre un
 fondo índigo-violeta continuo, sin esquinas ni marco exterior redondeado.
