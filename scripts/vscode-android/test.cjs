@@ -145,6 +145,12 @@ async function run() {
   assert.equal(panels.has('muondia@emulator-5554'), true);
   assert.equal(treeProvider.getTreeItem({ ...entries[0], active: false, status: 'starting' }).contextValue,
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
+  const orphan = treeProvider.getTreeItem({ ...entries[0], status: 'orphaned' });
+  assert.equal(orphan.description, 'orphaned');
+  assert.equal(orphan.contextValue, 'androidStopped',
+    'An orphaned Flutter exposes the recovery Start action, not Stop');
+  assert.equal(orphan.iconPath.id, 'warning',
+    'The explorer must identify a stale app distinctly from a supervised session');
   assert.equal(calls.some(call => call[0] !== 'open'), false,
     'A running development task is never started twice');
   // No duplicar la aplicación ni mostrar laboratorios inactivos en el árbol.
@@ -222,8 +228,11 @@ async function run() {
     ['inicio', 'progreso', 'final']);
   assert.equal(loadingChildren.filter(item => item.visualAssetNode).length, 4,
     'Loading retains its states and shows its own images beside them');
-  assert.equal(treeProvider.getChildren(firstExperience[1]).length, 0,
-    'Test displays no invented images');
+  const testImages = treeProvider.getChildren(firstExperience[1])
+    .filter(item => item.visualAssetNode);
+  assert.ok(testImages.some(item =>
+    item.visualAssetNode.asset === 'assets/onboarding/test/quiz_background.png'),
+    'The test background belongs to Test de bienvenida, not Loading');
   const preview = treeProvider.getTreeItem(states[1]).command;
   await commands.get(preview.command)(...preview.arguments);
   assert.deepEqual(calls.at(-1), [
