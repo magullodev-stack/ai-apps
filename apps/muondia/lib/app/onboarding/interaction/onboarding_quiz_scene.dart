@@ -404,8 +404,8 @@ class _AnswerCard extends StatelessWidget {
                           child: Text(
                             letter,
                             style: MuondiaTypography.screenTitle.copyWith(
-                            color: const Color(0xFF0A0A31),
-                            fontSize: 27 * scale,
+                              color: const Color(0xFF0A0A31),
+                              fontSize: 27 * scale,
                               height: 1,
                             ),
                           ),
