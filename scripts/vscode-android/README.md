@@ -301,6 +301,13 @@ pantalla aparece automáticamente, sin registrarlo por nombre.
 
 Los recursos con rutas generadas dinámicamente no se pueden verificar
 estáticamente: se muestran como pendientes, no como colocados sin pruebas.
+Si una pantalla selecciona entre múltiples imágenes, debe registrar las
+rutas completas como literales en su mapa Dart (como los pivotes de Muondia),
+y después seleccionar el archivo mediante ese mapa. De esta manera el
+Explorador reconoce todos los PNG vinculados y activa su inspector.
+**Una imagen vinculada no significa que esté siendo dibujada ahora**:
+el ojo indica si el recurso está habilitado, no cuál es el pivote visible
+en la pregunta actual.
 Los archivos pendientes se pueden renombrar, sustituir o eliminar sin
 modificar Dart (confirmando antes de eliminarlos).
 
