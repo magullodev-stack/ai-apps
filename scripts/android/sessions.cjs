@@ -143,6 +143,9 @@ class Sessions {
       let status = active ? 'running' : deviceReady ? 'device_ready' : 'offline';
       if (session.kind === 'flutter' && runnerAlive && state.status !== 'running') status = state.status;
       if (session.kind === 'development-task' && taskRunning && !active) status = 'starting';
+      // Un proceso Android visible no demuestra que Flutter siga supervisado.
+      // Diferenciar la APK superviviente de una sesion de desarrollo real.
+      if (session.kind === 'development-task' && !taskRunning && active) status = 'orphaned';
       if (session.kind === 'flutter' && !runnerAlive && ['failed', 'starting', 'running'].includes(state.status)) status = 'failed';
       return { ...session, id: key(session), deviceReady, active, status, appPid: pid,
         epoch: `${state.token || ''}:${pid}` };
