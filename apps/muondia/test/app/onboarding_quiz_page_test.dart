@@ -35,7 +35,12 @@ void main() {
       final stage = tester.widget<DecoratedBox>(
         find.byKey(const Key('muondia-quiz-stage')),
       );
-      expect((stage.decoration as BoxDecoration).gradient, isNotNull);
+      final stageDecoration = stage.decoration as BoxDecoration;
+      expect(stageDecoration.gradient, isNotNull);
+      expect(stageDecoration.borderRadius, isNull,
+          reason: 'El fondo del test no es una tarjeta redondeada');
+      expect(stageDecoration.border, isNull);
+
       final card = tester.getRect(
         find.byKey(const Key('muondia-question-card')),
       );
@@ -43,6 +48,14 @@ void main() {
       for (var i = 0; i < 4; i++) {
         expect(find.text(String.fromCharCode(65 + i)), findsOneWidget);
         final answer = find.byKey(Key('muondia-answer-$i'));
+        final letterBadge = tester.widget<Container>(
+          find.byKey(Key('muondia-answer-letter-$i')),
+        );
+        final letterDecoration = letterBadge.decoration as BoxDecoration;
+        expect(letterDecoration.gradient, isNotNull);
+        expect(letterDecoration.shape, BoxShape.rectangle);
+        expect(letterDecoration.borderRadius, isNotNull);
+        expect(find.byKey(Key('muondia-answer-divider-$i')), findsOneWidget);
         expect(answer.hitTestable(), findsOneWidget);
         expect(card.contains(tester.getTopLeft(answer)), isTrue);
         expect(card.contains(tester.getBottomRight(answer)), isTrue);
@@ -132,7 +145,7 @@ void main() {
     expect(find.text('Resultado: 1 / 10'), findsOneWidget);
   });
 
-  testWidgets('50 % elimina dos errores solo una vez', (tester) async {
+  testWidgets('50 % atenúa dos errores, bloquea sus toques y mantiene el layout', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: muondiaTheme,
       home: OnboardingQuizPage(
@@ -141,12 +154,51 @@ void main() {
       ),
     ));
     await tester.pump();
+    final cardBefore = tester.getRect(
+      find.byKey(const Key('muondia-question-card')),
+    );
+    final answerRects = [
+      for (var i = 0; i < 4; i++)
+        tester.getRect(find.byKey(Key('muondia-answer-$i'))),
+    ];
     await tester.tap(find.byKey(const Key('muondia-aid-fifty')));
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
     expect(find.text('Opción A'), findsOneWidget);
-    expect(find.text('Opción B'), findsNothing);
-    expect(find.text('Opción C'), findsNothing);
+    expect(find.text('Opción B'), findsOneWidget);
+    expect(find.text('Opción C'), findsOneWidget);
     expect(find.text('Opción D'), findsOneWidget);
+    expect(
+      tester.getRect(find.byKey(const Key('muondia-question-card'))),
+      cardBefore,
+    );
+    for (var i = 0; i < 4; i++) {
+      expect(tester.getRect(find.byKey(Key('muondia-answer-$i'))), answerRects[i],
+          reason: 'Ninguna fila debe desplazarse al activar el 50 %');
+    }
+    for (final i in [1, 2]) {
+      final faded = tester.widget<AnimatedOpacity>(
+        find.byKey(Key('muondia-answer-opacity-$i')),
+      );
+      expect(faded.opacity, lessThan(1));
+      expect(
+        tester.widget<InkWell>(find.byKey(Key('muondia-answer-$i'))).onTap,
+        isNull,
+        reason: 'Una respuesta descartada no puede seleccionarse',
+      );
+    }
+    for (final i in [0, 3]) {
+      expect(
+        tester.widget<AnimatedOpacity>(
+          find.byKey(Key('muondia-answer-opacity-$i')),
+        ).opacity,
+        1.0,
+      );
+      expect(
+        tester.widget<InkWell>(find.byKey(Key('muondia-answer-$i'))).onTap,
+        isNotNull,
+      );
+    }
     expect(
       find.descendant(
         of: find.byKey(const Key('muondia-fifty-count')),
@@ -154,11 +206,20 @@ void main() {
       ),
       findsOneWidget,
     );
+
     await tester.tap(find.text('Opción A'));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump();
-    expect(find.text('Opción B'), findsOneWidget);
-    expect(find.text('Opción C'), findsOneWidget);
+    expect(find.text('2/10'), findsOneWidget);
+    for (var i = 0; i < 4; i++) {
+      expect(find.byKey(Key('muondia-answer-$i')), findsOneWidget);
+      expect(
+        tester.widget<AnimatedOpacity>(
+          find.byKey(Key('muondia-answer-opacity-$i')),
+        ).opacity,
+        1.0,
+      );
+    }
     expect(tester.widget<InkWell>(
       find.descendant(
         of: find.byKey(const Key('muondia-aid-fifty')),
