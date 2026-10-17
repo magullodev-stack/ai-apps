@@ -142,7 +142,11 @@ La última respuesta lleva a resultados, pero **el usuario sigue pulsando
 Los temporizadores pendientes se cancelan al desmontar o reiniciar la página.
 Los comodines 50 % y Pista IA disponen de un uso cada uno compartido entre las
 diez preguntas; sus contadores no se reinician entre preguntas y sus cifras
-oscuras contrastan con el amarillo de los distintivos.
+oscuras contrastan con el amarillo de los distintivos. Cada esfera amarilla
+solo se dibuja mientras haya usos disponibles. Al agotarse uno, la esfera
+desaparece por completo (nunca muestra «0») y su botón permanece en el mismo
+sitio pero queda atenuado al 40 % y sin interacción, igual que una respuesta
+descartada por el 50 %. Ambos comodines se comportan de forma independiente.
 50 % desactiva dos respuestas incorrectas de la pregunta actual, pero
 mantiene las cuatro tarjetas visibles y exactamente en la misma posición;
 solo atenúa las descartadas con un velo, que impide pulsarlas. La tarjeta
