@@ -4,6 +4,8 @@ import 'package:ai_apps_identity/ai_apps_identity.dart';
 import 'package:ai_apps_ui/ai_apps_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'system_safe_frame.dart';
 import 'package:flutter/services.dart';
 
 import 'app_shell.dart';
@@ -204,15 +206,18 @@ class _MuondiaAppState extends State<MuondiaApp> {
     navigatorKey: _navigatorKey,
     builder: (context, child) {
       final content = child ?? const SizedBox.shrink();
-      if (!kDebugMode) return content;
-      return AiAppsVisualAssetScope(
-        controller: _assetInspector,
-        child: Focus(
-          autofocus: true,
-          onKeyEvent: _developmentKey,
-          child: content,
-        ),
-      );
+      final adapted = !kDebugMode
+          ? content
+          : AiAppsVisualAssetScope(
+              controller: _assetInspector,
+              child: Focus(
+                autofocus: true,
+                onKeyEvent: _developmentKey,
+                child: content,
+              ),
+            );
+      // Un único marco seguro para Auth, onboarding, Home y rutas futuras.
+      return MuondiaSystemSafeFrame(child: adapted);
     },
     title: 'Muondia',
     debugShowCheckedModeBanner: false,

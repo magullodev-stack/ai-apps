@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:ai_apps_ui/ai_apps_ui.dart';
 import 'package:flutter/material.dart';
 
+import '../../app_theme.dart';
 import '../../../app/onboarding/intro_sequence.dart';
 import '../production/onboarding_quiz_pipeline.dart';
 import 'onboarding_loading_scene.dart';
@@ -31,6 +34,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   int _index = 0;
   int _score = 0;
   int? _selected;
+  Timer? _advanceTimer;
 
   bool _loading = false;
   bool _testReady = false;
@@ -53,6 +57,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   Future<void> _start() async {
     final load = widget.loadQuestions;
     if (load == null || _loading) return;
+    _advanceTimer?.cancel();
 
     setState(() {
       _loading = true;
@@ -102,28 +107,45 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
 
   void _answer(int index) {
     final questions = _questions;
-    if (questions == null || _selected != null || _finished) return;
+    if (questions == null || _selected != null || _finished ||
+        index < 0 || index >= questions[_index].options.length) return;
 
     setState(() {
       _selected = index;
-
       if (questions[_index].options[index] == questions[_index].correct) {
         _score++;
       }
     });
+    // Una pulsación, medio segundo de información visual y avance automático.
+    _advanceTimer?.cancel();
+    _advanceTimer = Timer(const Duration(milliseconds: 500), _next);
+  }
+
+  Color _answerFeedbackColor(OnboardingQuizFinalQuestion question, int option) {
+    if (_selected == null) return Colors.transparent;
+    final answer = question.options[option];
+    if (answer == question.correct) return MuondiaPalette.success.withAlpha(48);
+    if (option == _selected) return MuondiaPalette.error.withAlpha(48);
+    return Colors.transparent;
   }
 
   void _next() {
-    if (_selected == null) return;
-
+    final questions = _questions;
+    if (!mounted || questions == null || _selected == null || _finished) return;
     setState(() {
-      if (_index == 9) {
+      if (_index == questions.length - 1) {
         _finished = true;
       } else {
         _index++;
         _selected = null;
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _advanceTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -204,34 +226,26 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
                         )
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8),
-                            child: OutlinedButton(
-                              onPressed: _selected == null
-                                  ? () => _answer(i)
-                                  : null,
-                              child: AiAppsContentText(
-                                questions[_index].options[i],
-                                textAlign: TextAlign.center,
+                            child: AnimatedContainer(
+                              key: Key('muondia-answer-feedback-$i'),
+                              duration: const Duration(milliseconds: 140),
+                              curve: Curves.easeOut,
+                              decoration: BoxDecoration(
+                                color: _answerFeedbackColor(questions[_index], i),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: OutlinedButton(
+                                onPressed: _selected == null
+                                    ? () => _answer(i)
+                                    : null,
+                                child: AiAppsContentText(
+                                  questions[_index].options[i],
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
                           ),
 
-                        if (_selected != null) ...[
-                          const SizedBox(height: 12),
-                          AiAppsContentText(
-                            questions[_index].options[_selected!] ==
-                                    questions[_index].correct
-                                ? '¡Correcto!'
-                                : 'Respuesta correcta: '
-                                      '${questions[_index].correct}',
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton(
-                            onPressed: _next,
-                            child: Text(
-                              _index == 9 ? 'Ver resultado' : 'Siguiente',
-                            ),
-                          ),
-                        ],
                       ],
                     ],
                   ),

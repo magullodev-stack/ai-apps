@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:muondia/app/app.dart';
 import 'package:muondia/app/app_shell.dart';
+import 'package:muondia/app/system_safe_frame.dart';
 import 'package:muondia/app/auth/auth_entry_page.dart';
 import 'package:muondia/app/interaction/ai_stage.dart';
 import 'package:muondia/app/onboarding/completion_store.dart';
@@ -19,6 +20,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.byType(AppShell), findsOneWidget);
+    expect(find.byType(MuondiaSystemSafeFrame), findsOneWidget);
     expect(find.byType(OnboardingQuizPage), findsNothing);
     expect(store.reads, 1);
   });
@@ -32,6 +34,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.byType(OnboardingQuizPage), findsOneWidget);
+    expect(find.byType(MuondiaSystemSafeFrame), findsOneWidget);
     expect(find.byType(AppShell), findsNothing);
     expect(store.completed, isEmpty);
   });
@@ -50,6 +53,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.f7);
     await tester.pump();
     expect(find.byType(AuthEntryPage), findsOneWidget);
+    expect(find.byType(MuondiaSystemSafeFrame), findsOneWidget);
     expect(find.byType(OnboardingQuizPage), findsNothing);
     expect(identity.signOutCalls, 0);
     expect(identity.googleSignInCalls, 0);

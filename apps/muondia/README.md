@@ -104,9 +104,23 @@ la barra representan la pregunta visible (por ejemplo, `3/10` y 30 %);
 al avanzar se actualizan junto con la temática y la ilustración, tanto en
 el test real como en la previsualización. La flecha utiliza el regreso del
 navegador, sin saltar preguntas ni completar el onboarding; en la ruta raíz
-no abandona el recorrido obligatorio. Esta unidad solo diseña la cabecera:
-las preguntas y respuestas conservan su presentación y comportamiento,
-y todavía no se incorporan cronómetro ni ayudas.
+no abandona el recorrido obligatorio.
+
+Al pulsar una respuesta, el botón elegido se cubre durante medio segundo
+con un velo semitransparente verde si es correcto o rojo si falla. Cuando
+se falla, la opción correcta se señala también en verde. Los demás botones
+quedan bloqueados y a los 500 ms se avanza automáticamente, sin «Siguiente».
+La última respuesta lleva a resultados, pero **el usuario sigue pulsando
+«Entrar en Muondia»** para registrar la finalización del onboarding.
+Los temporizadores pendientes se cancelan al desmontar o reiniciar la página.
+Todavía no se incorporan cronómetro ni ayudas.
+
+`MuondiaSystemSafeFrame` en `lib/app/system_safe_frame.dart` establece el
+mismo respeto a las barras de estado y navegación de Auth en todas las
+pantallas mediante el `builder` raíz de `MaterialApp`: fondo negro
+exterior, iconos claros y un solo `SafeArea` común, compatible con las
+zonas seguras interiores de Auth, Loading y Home. Sin una segunda sesión
+Flutter ni cambios de configuración de Android.
 
 ## Arranque y sincronización
 

@@ -50,18 +50,23 @@ void main() {
 
       await tester.ensureVisible(find.text('Opción A'));
       await tester.tap(find.text('Opción A'));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(find.text('Aciertos: ${i + 1}'), findsOneWidget);
-      // La selección sigue bloqueada hasta pasar a la siguiente pregunta.
+      expect(find.text('Siguiente'), findsNothing);
+      expect(find.text('Ver resultado'), findsNothing);
       expect(
-        tester
-            .widget<OutlinedButton>(find.byType(OutlinedButton).first)
-            .onPressed,
+        tester.widget<OutlinedButton>(find.byType(OutlinedButton).first).onPressed,
         isNull,
+        reason: 'Una sola pulsación: las demás opciones se bloquean',
       );
-      final next = find.text(i == 9 ? 'Ver resultado' : 'Siguiente');
-      await tester.ensureVisible(next);
-      await tester.tap(next);
+      final selectedDecoration = tester
+          .widget<AnimatedContainer>(
+            find.byKey(const Key('muondia-answer-feedback-0')),
+          ).decoration as BoxDecoration;
+      expect(selectedDecoration.color, MuondiaPalette.success.withAlpha(48));
+      await tester.pump(const Duration(milliseconds: 499));
+      expect(find.text('${i + 1}/10'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 1));
       await tester.pumpAndSettle();
     }
 
@@ -74,6 +79,68 @@ void main() {
     expect(loadCalls, 0, reason: 'La preview no debe generar preguntas');
     expect(tester.takeException(), isNull);
     semantics.dispose();
+  });
+
+  testWidgets('Respuesta incorrecta: rojo, correcta verde, avance sin botón', (
+    tester,
+  ) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: previewQuestions,
+        onCompleted: () async {},
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Opción B'));
+    await tester.pump();
+    final wrong = tester
+        .widget<AnimatedContainer>(
+          find.byKey(const Key('muondia-answer-feedback-1')),
+        ).decoration as BoxDecoration;
+    final correct = tester
+        .widget<AnimatedContainer>(
+          find.byKey(const Key('muondia-answer-feedback-0')),
+        ).decoration as BoxDecoration;
+    expect(wrong.color, MuondiaPalette.error.withAlpha(48));
+    expect(correct.color, MuondiaPalette.success.withAlpha(48));
+    expect(find.text('Aciertos: 0'), findsOneWidget);
+    expect(find.text('Siguiente'), findsNothing);
+
+    // Los siguientes toques durante el velo no pueden contar otra respuesta.
+    expect(
+      tester.widget<OutlinedButton>(find.byType(OutlinedButton).last).onPressed,
+      isNull,
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(find.text('2/10'), findsOneWidget);
+    expect(find.text('Aciertos: 0'), findsOneWidget);
+    final cleared = tester
+        .widget<AnimatedContainer>(
+          find.byKey(const Key('muondia-answer-feedback-0')),
+        ).decoration as BoxDecoration;
+    expect(cleared.color, Colors.transparent);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Salir de la página cancela el avance automático pendiente', (
+    tester,
+  ) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: muondiaTheme,
+      home: OnboardingQuizPage(
+        previewQuestions: previewQuestions,
+        onCompleted: () async {},
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Opción A'));
+    await tester.pump();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Regresar respeta el navegador y no completa el recorrido', (
