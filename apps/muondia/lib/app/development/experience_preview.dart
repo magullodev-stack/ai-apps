@@ -57,6 +57,7 @@ class MuondiaExperiencePreview extends StatelessWidget {
       case 'test':
         return OnboardingQuizPage(
           previewQuestions: previewQuestions,
+          countdownEnabled: false,
           onCompleted: () async => open('home', 'inicio'),
         );
       case 'home':
