@@ -50,6 +50,20 @@ async function main() {
       {id:'test',assetDirectories:[]}).length,0);
     assert.deepEqual(images.map(item=>item.kind),
       ['visualAsset','visualAsset'], 'Images belong directly to their UI screen');
+    // Un mapa de referencias literales admite selección dinámica en Flutter.
+    const pivotsDir = path.join(base, 'assets', 'Pivotes');
+    fs.mkdirSync(pivotsDir, {recursive:true});
+    fs.writeFileSync(path.join(pivotsDir, 'P01 - Arquitectura.png'), 'dummy');
+    fs.writeFileSync(path.join(base, 'lib', 'app', 'pivot_images.dart'),
+      "const paths = {'P01': 'assets/Pivotes/P01 - Arquitectura.png'};\n");
+    const pivotEntries = inspector.forExperience(session,
+      {id:'test',assetDirectories:['assets/Pivotes']});
+    assert.equal(pivotEntries.length, 1);
+    assert.equal(inspector.getTreeItem(pivotEntries[0]).contextValue,
+      'visualAssetVisible',
+      'La imagen dinamica usada por la pregunta no debe figurar Pendiente');
+    assert.equal(inspector.getTreeItem(pivotEntries[0]).description, '',
+      'La imagen esta vinculada, sin afirmar que siempre esta en pantalla');
     const stars = images.find(i=>i.asset.endsWith('Layer.png'));
     assert.equal(inspector.getTreeItem(stars).contextValue,'visualAssetVisible');
     await inspector.toggle(session.id,stars.asset);
