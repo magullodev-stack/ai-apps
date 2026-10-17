@@ -348,8 +348,11 @@ async function activate(context) {
       item.description = session.status;
       item.tooltip = `${session.appId} · ${session.serial}\n${session.projectPath || 'Sesión externa'}`;
       item.contextValue = session.kind === 'external' ? 'androidExternal' :
+        session.status === 'orphaned' ? 'androidStopped' :
         session.active || ['starting', 'stopping'].includes(session.status) ? 'androidRunning' : 'androidStopped';
-      item.iconPath = new vscode.ThemeIcon(session.active ? 'device-mobile' : 'circle-outline');
+      item.iconPath = new vscode.ThemeIcon(
+        session.status === 'orphaned' ? 'warning' :
+        session.active ? 'device-mobile' : 'circle-outline');
       if (!hasExperiences) {
         item.command = {
           command: 'aiAppsAndroid.open',
