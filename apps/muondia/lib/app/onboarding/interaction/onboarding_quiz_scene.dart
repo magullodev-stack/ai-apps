@@ -44,6 +44,9 @@ class OnboardingQuizScene extends StatelessWidget {
     final scale = (MediaQuery.sizeOf(context).width / 390.0)
         .clamp(0.82, 1.1)
         .toDouble();
+    final gutter = 16 * scale;
+    final cardRadius = 26 * scale;
+
     return Scaffold(
       backgroundColor: const Color(0xFF181442),
       body: DecoratedBox(
@@ -56,90 +59,117 @@ class OnboardingQuizScene extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 640),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    10 * scale, 6 * scale, 10 * scale, 14 * scale,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      OnboardingQuizHeader(
-                        pivot: question.pivot,
-                        questionNumber: questionNumber,
-                        questionCount: questionCount,
-                        secondsRemaining: secondsRemaining,
-                        timeFraction: timeFraction,
-                      ),
-                      Expanded(
-                        child: Container(
-                          key: const Key('muondia-question-card'),
-                          padding: EdgeInsets.all(14 * scale),
-                          decoration: BoxDecoration(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  12 * scale,
+                  8 * scale,
+                  12 * scale,
+                  gutter,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    OnboardingQuizHeader(
+                      pivot: question.pivot,
+                      questionNumber: questionNumber,
+                      questionCount: questionCount,
+                      secondsRemaining: secondsRemaining,
+                      timeFraction: timeFraction,
+                    ),
+                    // Una única retícula, sin márgenes acumulados ni
+                    // espacios diferentes entre panel, ayudas y zona inferior.
+                    SizedBox(
+                      key: const Key('muondia-header-card-gap'),
+                      height: gutter,
+                    ),
+                    Expanded(
+                      child: Container(
+                        key: const Key('muondia-question-card'),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(cardRadius),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x554A1FFF),
+                              blurRadius: 18,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        // Solo este plano se recorta con antialias. La sombra
+                        // queda fuera y el fondo cósmico nunca se redondea.
+                        child: ClipRRect(
+                          key: const Key('muondia-question-clip'),
+                          borderRadius: BorderRadius.circular(cardRadius),
+                          clipBehavior: Clip.antiAlias,
+                          child: ColoredBox(
                             color: const Color(0xFFFAFBFF),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: Colors.white),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x554A1FFF),
-                                blurRadius: 22,
-                                offset: Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          // El panel y los comodines conservan siempre su
-                          // geometría: solo desplaza su contenido si hace falta.
-                          child: LayoutBuilder(
-                            builder: (context, viewport) => SingleChildScrollView(
-                              key: ValueKey('quiz-question-$questionNumber'),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minHeight: viewport.maxHeight,
-                                ),
-                                child: IntrinsicHeight(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.fromLTRB(
-                                          8 * scale,
-                                          12 * scale,
-                                          8 * scale,
-                                          18 * scale,
-                                        ),
-                                        child: AiAppsContentText(
-                                          question.question,
-                                          style: MuondiaTypography.screenTitle.copyWith(
-                                            fontSize: 23 * scale,
-                                            color: const Color(0xFF08062C),
-                                            height: 1.2,
+                            child: Padding(
+                              padding: EdgeInsets.all(14 * scale),
+                              child: LayoutBuilder(
+                                builder: (context, viewport) =>
+                                    SingleChildScrollView(
+                                  key: ValueKey('quiz-question-$questionNumber'),
+                                  physics: const ClampingScrollPhysics(),
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minHeight: viewport.maxHeight,
+                                    ),
+                                    child: IntrinsicHeight(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.fromLTRB(
+                                              8 * scale,
+                                              12 * scale,
+                                              8 * scale,
+                                              18 * scale,
+                                            ),
+                                            child: AiAppsContentText(
+                                              question.question,
+                                              style: MuondiaTypography
+                                                  .screenTitle
+                                                  .copyWith(
+                                                fontSize: 23 * scale,
+                                                color: const Color(0xFF08062C),
+                                                height: 1.2,
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                          const Spacer(),
+                                          for (var i = 0;
+                                              i < question.options.length;
+                                              i++)
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                top: 10 * scale,
+                                              ),
+                                              child: _AnswerCard(
+                                                key: ValueKey(
+                                                  'muondia-quiz-answer-$questionNumber-$i',
+                                                ),
+                                                index: i,
+                                                text: question.options[i],
+                                                scale: scale,
+                                                color: feedbackColor(i),
+                                                selected: selected == i,
+                                                disabled:
+                                                    hiddenOptions.contains(i),
+                                                onTap: selected == null &&
+                                                        !hintLoading &&
+                                                        !hiddenOptions.contains(i)
+                                                    ? () => onAnswer(i)
+                                                    : null,
+                                              ),
+                                            ),
+                                          SizedBox(height: 8 * scale),
+                                        ],
                                       ),
-                                      const Spacer(),
-                                      for (var i = 0; i < question.options.length; i++)
-                                        Padding(
-                                          padding: EdgeInsets.only(top: 10 * scale),
-                                          child: _AnswerCard(
-                                            key: ValueKey('muondia-quiz-answer-$questionNumber-$i'),
-                                            index: i,
-                                            text: question.options[i],
-                                            scale: scale,
-                                            color: feedbackColor(i),
-                                            selected: selected == i,
-                                            disabled: hiddenOptions.contains(i),
-                                            onTap: selected == null &&
-                                                    !hintLoading &&
-                                                    !hiddenOptions.contains(i)
-                                                ? () => onAnswer(i)
-                                                : null,
-                                          ),
-                                        ),
-                                      SizedBox(height: 8 * scale),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -147,45 +177,48 @@ class OnboardingQuizScene extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(height: 16 * scale),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _AidButton(
-                              key: const Key('muondia-aid-fifty'),
-                              label: '50%',
-                              icon: Icons.visibility_off_outlined,
-                              remaining: fiftyRemaining,
-                              scale: scale,
-                              onTap: onUseFifty,
-                            ),
+                    ),
+                    SizedBox(
+                      key: const Key('muondia-card-aids-gap'),
+                      height: gutter,
+                    ),
+                    Row(
+                      key: const Key('muondia-lifelines-row'),
+                      children: [
+                        Expanded(
+                          child: _AidButton(
+                            key: const Key('muondia-aid-fifty'),
+                            label: '50%',
+                            icon: Icons.visibility_off_outlined,
+                            remaining: fiftyRemaining,
+                            scale: scale,
+                            onTap: onUseFifty,
                           ),
-                          SizedBox(width: 16 * scale),
-                          Expanded(
-                            child: _AidButton(
-                              key: const Key('muondia-aid-hint'),
-                              label: 'Pista IA',
-                              icon: Icons.lightbulb,
-                              remaining: hintRemaining,
-                              scale: scale,
-                              loading: hintLoading,
-                              onTap: onUseHint,
-                            ),
+                        ),
+                        SizedBox(width: 16 * scale),
+                        Expanded(
+                          child: _AidButton(
+                            key: const Key('muondia-aid-hint'),
+                            label: 'Pista IA',
+                            icon: Icons.lightbulb,
+                            remaining: hintRemaining,
+                            scale: scale,
+                            loading: hintLoading,
+                            onTap: onUseHint,
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 6 * scale),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+        ),
       ),
     );
   }
 }
-
 
 class _AidButton extends StatelessWidget {
   const _AidButton({
