@@ -112,11 +112,13 @@ Los recursos de Loading permanecen separados en `assets/onboarding/loading/`,
 y el Explorador de experiencias expone el fondo del test en su propia carpeta.
 La cabecera no tiene un panel exterior ni flecha de regreso (el onboarding
 es obligatorio): el icono del pivote acompaña a su nombre en Nunito blanca,
-con peso alto y sombra discreta para destacar sobre el PNG. El cronómetro
-de 60 s dispone de una cápsula oscura, borde claro y cifras blancas nítidas.
-La barra temporal (60 s globales, fija a 60 s solo en preview) utiliza un
-carril azul-negro delineado y relleno cian brillante para diferenciarse
-visualmente de los violetas del PNG, sin cambiar las reglas de tiempo.
+con peso alto y sombra discreta para destacar sobre el PNG.
+El cronómetro es un icono blanco y segundos blancos sin cápsula, contorno
+ni superficie adicional, siguiendo la maqueta aprobada.
+La barra temporal (60 s globales, fija a 60 s solo en preview) consta de
+una pista violeta y un único relleno con gradiente violeta más luminoso,
+con extremos redondos y SIN borde, línea interior, fondo negro ni cian.
+La fracción temporal y las reglas de funcionamiento no cambian.
 Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
 respuesta blancas con sombra. La tarjeta solo redondea y recorta su propio
 interior con `ClipRRect(clipBehavior: Clip.antiAlias)`: la sombra permanece
