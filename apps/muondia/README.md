@@ -109,13 +109,19 @@ La imagen real `assets/onboarding/test/quiz_background.png` ocupa
 el escenario completo con `BoxFit.cover`. Sustituye al antiguo fondo
 programático para reproducir los detalles y la textura de la referencia.
 Los recursos de Loading permanecen separados en `assets/onboarding/loading/`,
-y el Explorador de experiencias expone el fondo del test en su propia carpeta. La cabecera se integra
-sin fondo propio, sin flecha de regreso (el onboarding es obligatorio),
-con el PNG original del pivote activo y su nombre en Nunito blanca de
-tamaño contenido. El contador de preguntas, el cronómetro de 60 s y
-la barra de tiempo usan una jerarquía tipográfica secundaria.
+y el Explorador de experiencias expone el fondo del test en su propia carpeta.
+La cabecera no tiene un panel exterior ni flecha de regreso (el onboarding
+es obligatorio): el icono del pivote acompaña a su nombre en Nunito blanca,
+con peso alto y sombra discreta para destacar sobre el PNG. El cronómetro
+de 60 s dispone de una cápsula oscura, borde claro y cifras blancas nítidas;
+el progreso y la barra temporal tienen jerarquía secundaria.
 Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
-respuesta blancas con sombra. Las letras A–D utilizan distintivos rectangulares
+respuesta blancas con sombra. La tarjeta solo redondea y recorta su propio
+interior con `ClipRRect(clipBehavior: Clip.antiAlias)`: la sombra permanece
+fuera y el fondo cósmico nunca se recorta ni se redondea.
+El espacio de cabecera a tarjeta, de tarjeta a comodines y de comodines
+al borde inferior seguro es una retícula común de 16 unidades escaladas,
+sin sumar separadores inferiores redundantes. Las letras A–D utilizan distintivos rectangulares
 redondeados en lila neutro y un separador vertical fino, iguales para las
 cuatro opciones; no hay códigos de color por letra. La puntuación se muestra
 al finalizar. La tarjeta ocupa únicamente el espacio vertical entre la
