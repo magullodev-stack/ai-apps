@@ -12,6 +12,14 @@ class OnboardingQuizScene extends StatelessWidget {
     required this.question,
     required this.questionNumber,
     required this.questionCount,
+    required this.secondsRemaining,
+    required this.timeFraction,
+    required this.fiftyRemaining,
+    required this.hintRemaining,
+    required this.hintLoading,
+    required this.hiddenOptions,
+    required this.onUseFifty,
+    required this.onUseHint,
     required this.selected,
     required this.onAnswer,
     required this.feedbackColor,
@@ -19,6 +27,14 @@ class OnboardingQuizScene extends StatelessWidget {
   final OnboardingQuizFinalQuestion question;
   final int questionNumber;
   final int questionCount;
+  final int secondsRemaining;
+  final double timeFraction;
+  final int fiftyRemaining;
+  final int hintRemaining;
+  final bool hintLoading;
+  final Set<int> hiddenOptions;
+  final VoidCallback? onUseFifty;
+  final VoidCallback? onUseHint;
   final int? selected;
   final ValueChanged<int> onAnswer;
   final Color Function(int) feedbackColor;
@@ -61,6 +77,8 @@ class OnboardingQuizScene extends StatelessWidget {
                               pivot: question.pivot,
                               questionNumber: questionNumber,
                               questionCount: questionCount,
+                              secondsRemaining: secondsRemaining,
+                              timeFraction: timeFraction,
                             ),
                             Expanded(
                               child: Container(
@@ -82,40 +100,27 @@ class OnboardingQuizScene extends StatelessWidget {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    Expanded(
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          minHeight: 118 * scale,
-                                        ),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Padding(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 8 * scale,
-                                              vertical: 18 * scale,
-                                            ),
-                                            child: AiAppsContentText(
-                                              question.question,
-                                              style: MuondiaTypography
-                                                  .screenTitle
-                                                  .copyWith(
-                                                    fontSize: 25 * scale,
-                                                    color: const Color(
-                                                      0xFF08062C,
-                                                    ),
-                                                    height: 1.2,
-                                                  ),
-                                            ),
-                                          ),
+                                    Padding(
+                                      padding: EdgeInsets.fromLTRB(
+                                        8 * scale, 12 * scale, 8 * scale, 18 * scale,
+                                      ),
+                                      child: AiAppsContentText(
+                                        question.question,
+                                        style: MuondiaTypography.screenTitle.copyWith(
+                                          fontSize: 25 * scale,
+                                          color: const Color(0xFF08062C),
+                                          height: 1.2,
                                         ),
                                       ),
                                     ),
+                                    const Spacer(),
                                     for (
                                       var i = 0;
                                       i < question.options.length;
                                       i++
                                     )
-                                      Padding(
+                                      if (!hiddenOptions.contains(i))
+                                        Padding(
                                         padding: EdgeInsets.only(
                                           top: 12 * scale,
                                         ),
@@ -125,7 +130,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                           scale: scale,
                                           color: feedbackColor(i),
                                           selected: selected == i,
-                                          onTap: selected == null
+                                          onTap: selected == null && !hintLoading
                                               ? () => onAnswer(i)
                                               : null,
                                         ),
@@ -135,6 +140,34 @@ class OnboardingQuizScene extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            SizedBox(height: 18 * scale),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _AidButton(
+                                    key: const Key('muondia-aid-fifty'),
+                                    label: '50%',
+                                    icon: Icons.visibility_off_outlined,
+                                    remaining: fiftyRemaining,
+                                    scale: scale,
+                                    onTap: onUseFifty,
+                                  ),
+                                ),
+                                SizedBox(width: 16 * scale),
+                                Expanded(
+                                  child: _AidButton(
+                                    key: const Key('muondia-aid-hint'),
+                                    label: 'Pista IA',
+                                    icon: Icons.lightbulb,
+                                    remaining: hintRemaining,
+                                    scale: scale,
+                                    loading: hintLoading,
+                                    onTap: onUseHint,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 6 * scale),
                           ],
                         ),
                       ),
@@ -146,6 +179,112 @@ class OnboardingQuizScene extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+
+class _AidButton extends StatelessWidget {
+  const _AidButton({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.remaining,
+    required this.scale,
+    required this.onTap,
+    this.loading = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final int remaining;
+  final double scale;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: enabled ? const Color(0xFF211751) : const Color(0xFF231C43),
+          borderRadius: BorderRadius.circular(38 * scale),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              height: 64 * scale,
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(horizontal: 10 * scale),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(38 * scale),
+                border: Border.all(
+                  color: enabled ? const Color(0xFF7B3CFF) : const Color(0xFF4A3D79),
+                  width: 2.5 * scale,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (loading)
+                    SizedBox(
+                      width: 22 * scale,
+                      height: 22 * scale,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(
+                      icon,
+                      color: label == 'Pista IA'
+                          ? const Color(0xFFFFC63D)
+                          : Colors.white,
+                      size: 27 * scale,
+                    ),
+                  SizedBox(width: 8 * scale),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: MuondiaTypography.sectionTitle.copyWith(
+                          color: enabled ? Colors.white : const Color(0xFFB4ABC8),
+                          fontSize: 20 * scale,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 0,
+          top: -8 * scale,
+          child: Container(
+            key: Key(label == '50%' ? 'muondia-fifty-count' : 'muondia-hint-count'),
+            width: 30 * scale,
+            height: 30 * scale,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFBE25),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFFFE477)),
+            ),
+            child: Text(
+              '$remaining',
+              style: MuondiaTypography.screenTitle.copyWith(
+                color: Colors.white,
+                fontSize: 20 * scale,
+                height: 1,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
