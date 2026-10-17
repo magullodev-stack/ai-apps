@@ -15,6 +15,7 @@ class OnboardingQuizPage extends StatefulWidget {
     this.loadQuestions,
     this.previewQuestions,
     this.loadHint,
+    this.countdownEnabled = true,
     required this.onCompleted,
   });
 
@@ -24,6 +25,9 @@ class OnboardingQuizPage extends StatefulWidget {
   final List<OnboardingQuizFinalQuestion>? previewQuestions;
   /// Servicio real en producción; la previsualización nunca llama a IA.
   final Future<String> Function(OnboardingQuizFinalQuestion question)? loadHint;
+  /// Solo el explorador de experiencias desactiva la cuenta atrás.
+  /// El recorrido real mantiene los 60 segundos compartidos.
+  final bool countdownEnabled;
   final Future<void> Function() onCompleted;
 
   @override
@@ -133,6 +137,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
     _clock.stop();
     _clock.reset();
     _remainingMillis = _testDurationMillis;
+    if (!widget.countdownEnabled) return;
     _clock.start();
     _clockTicker = Timer.periodic(
       const Duration(milliseconds: 250),
@@ -141,7 +146,8 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   }
 
   void _syncClock() {
-    if (!mounted || _finished || _questions == null || !_clock.isRunning) return;
+    if (!widget.countdownEnabled || !mounted || _finished ||
+        _questions == null || !_clock.isRunning) return;
     final remaining = (_testDurationMillis - _clock.elapsedMilliseconds)
         .clamp(0, _testDurationMillis).toInt();
     if (remaining == 0) {
@@ -221,7 +227,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       }
     } finally {
       if (mounted && !_finished) {
-        _clock.start();
+        if (widget.countdownEnabled) _clock.start();
         setState(() => _hintLoading = false);
       }
     }
