@@ -91,13 +91,14 @@ class OnboardingQuizScene extends StatelessWidget {
                             'assets/onboarding/test/Caja Test.png',
                             key: const Key('muondia-question-panel-image'),
                             fit: BoxFit.fill,
+                            centerSlice: const Rect.fromLTWH(80, 90, 240, 400),
                             filterQuality: FilterQuality.high,
                             excludeFromSemantics: true,
                           ),
                           Padding(
                             padding: EdgeInsets.fromLTRB(
-                              18 * scale, 40 * scale,
-                              18 * scale, 35 * scale,
+                              18 * scale, 42 * scale,
+                              18 * scale, 28 * scale,
                             ),
                             child: LayoutBuilder(
                               builder: (context, viewport) =>
@@ -115,8 +116,8 @@ class OnboardingQuizScene extends StatelessWidget {
                                       children: [
                                         Padding(
                                           padding: EdgeInsets.fromLTRB(
-                                            4 * scale, 4 * scale,
-                                            4 * scale, 14 * scale,
+                                            18 * scale, 4 * scale,
+                                            18 * scale, 14 * scale,
                                           ),
                                           child: AiAppsContentText(
                                             question.question,
@@ -133,7 +134,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                             i < question.options.length; i++)
                                           Padding(
                                             padding: EdgeInsets.only(
-                                              top: 6 * scale,
+                                              top: 8 * scale,
                                             ),
                                             child: _AnswerCard(
                                               key: ValueKey(
@@ -252,6 +253,7 @@ class _AidButton extends StatelessWidget {
                       key: Key(isFifty
                           ? 'muondia-fifty-image' : 'muondia-hint-image'),
                       fit: BoxFit.fill,
+                      centerSlice: const Rect.fromLTWH(60, 23, 80, 17),
                       filterQuality: FilterQuality.high,
                       excludeFromSemantics: true,
                     ),
@@ -375,7 +377,7 @@ class _AnswerCard extends StatelessWidget {
             key: Key('muondia-answer-$index'),
             onTap: onTap,
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: 76 * scale),
+              constraints: BoxConstraints(minHeight: 88 * scale),
               child: Stack(
                 fit: StackFit.passthrough,
                 children: [
@@ -383,7 +385,8 @@ class _AnswerCard extends StatelessWidget {
                     child: Image.asset(
                       'assets/onboarding/test/Caja Respuesta.png',
                       key: Key('muondia-answer-image-$index'),
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fill,
+                      centerSlice: const Rect.fromLTWH(114, 30, 205, 63),
                       filterQuality: FilterQuality.high,
                       excludeFromSemantics: true,
                     ),
@@ -402,7 +405,7 @@ class _AnswerCard extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 22 * scale,
-                      vertical: 18 * scale,
+                      vertical: 24 * scale,
                     ),
                     child: Row(
                       children: [
