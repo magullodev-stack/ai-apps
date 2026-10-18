@@ -77,6 +77,30 @@ function Get-WorkingState {
         }
     }
 
+    # git diff no ve el contenido de ficheros nuevos (untracked).
+    # Su hash debe cambiar mientras se estan escribiendo, para no guardar
+    # automaticamente un fichero a medio copiar.
+    $untracked = Invoke-Git -GitArgs @(
+        '-c', 'core.quotepath=false',
+        'ls-files', '--others', '--exclude-standard'
+    )
+    $newFileHashes = @(
+        foreach ($path in @($untracked.Output)) {
+            $relative = [string]$path
+            if ([string]::IsNullOrWhiteSpace($relative)) { continue }
+            $fullPath = Join-Path $script:Repo $relative
+            try {
+                $fileHash = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256 -ErrorAction Stop).Hash
+                "$relative $fileHash"
+            }
+            catch {
+                # Si se esta creando/borrando durante la lectura, el estado
+                # no es estable y no debe desencadenar un commit.
+                "$relative INCOMPLETE:$([Guid]::NewGuid().ToString('N'))"
+            }
+        }
+    )
+
     $separator = [Environment]::NewLine + '---' + [Environment]::NewLine
     $parts = @(
         $status,
@@ -85,7 +109,8 @@ function Get-WorkingState {
         )).Output),
         (Get-Text (Invoke-Git -GitArgs @(
             'diff', '--cached', '--no-ext-diff', '--binary'
-        )).Output)
+        )).Output),
+        ($newFileHashes -join [Environment]::NewLine)
     ) -join $separator
 
     $sha = [Security.Cryptography.SHA256]::Create()
@@ -123,6 +148,8 @@ function Commit-LocalChanges {
 }
 
 function Sync-Remote {
+    param([bool]$WorkingDirty = $false)
+
     $fetch = Invoke-Git -GitArgs @(
         'fetch', '--no-tags', 'origin', 'dev'
     ) -AllowFailure
@@ -151,7 +178,16 @@ function Sync-Remote {
         ) -AllowFailure
 
         if ($merge.Code -eq 0) {
+            $script:DeferredRemote = $null
             Write-Log "Remote changes applied automatically: $($remote.Substring(0, 7))."
+        }
+        elseif ($WorkingDirty) {
+            # Git preserva los cambios locales y rechaza el avance si chocan.
+            # Registrar una sola vez por revision; reintentar en el siguiente ciclo.
+            if ($script:DeferredRemote -ne $remote) {
+                Write-Log "Remote revision $($remote.Substring(0, 7)) waiting: local changes prevent fast-forward."
+                $script:DeferredRemote = $remote
+            }
         }
         else {
             Write-Log ("Fast-forward failed: " + (Get-Text $merge.Output))
@@ -159,6 +195,17 @@ function Sync-Remote {
         return
     }
 
+    if ($WorkingDirty) {
+        # No hacer rebase ni push automatico de un arbol de trabajo que
+        # sigue cambiando. El fetch ya ha recibido la revision remota.
+        if ($script:DeferredRemote -ne $remote) {
+            Write-Log "Remote revision $($remote.Substring(0, 7)) fetched; waiting for clean local changes."
+            $script:DeferredRemote = $remote
+        }
+        return
+    }
+
+    $script:DeferredRemote = $null
     $remoteBehind = Invoke-Git -GitArgs @(
         'merge-base', '--is-ancestor', $remote, $local
     ) -AllowFailure
@@ -257,6 +304,7 @@ try {
 
         $lastFingerprint = $null
         $dirtySince = $null
+        $script:DeferredRemote = $null
         $nextRemoteCheck = [DateTime]::UtcNow
 
         while ($true) {
@@ -275,33 +323,44 @@ try {
                 elseif ($null -ne $dirtySince -and
                     ([DateTime]::UtcNow - $dirtySince).TotalSeconds -ge $LocalIdleSeconds) {
                     try {
-                        if (Commit-LocalChanges) {
-                            Sync-Remote
+                        # Revalidar justo antes de guardar para no publicar
+                        # un fichero que ha vuelto a modificarse.
+                        $confirmed = Get-WorkingState
+                        if ($confirmed.Dirty -and $confirmed.Fingerprint -eq $state.Fingerprint) {
+                            if (Commit-LocalChanges) {
+                                Write-Log 'Local worktree stable; checking remote changes.'
+                            }
+                            $lastFingerprint = $null
+                            $dirtySince = $null
+                            $nextRemoteCheck = [DateTime]::UtcNow
+                        } else {
+                            $lastFingerprint = $confirmed.Fingerprint
+                            $dirtySince = [DateTime]::UtcNow
                         }
                     }
                     catch {
                         Write-Log ("Local auto-sync failed: " + $_.Exception.Message)
+                        $lastFingerprint = $null
+                        $dirtySince = $null
                     }
-
-                    $lastFingerprint = $null
-                    $dirtySince = $null
-                    $nextRemoteCheck = [DateTime]::UtcNow.AddSeconds($RemotePollSeconds)
                 }
             }
             else {
                 $lastFingerprint = $null
                 $dirtySince = $null
+            }
 
-                if ([DateTime]::UtcNow -ge $nextRemoteCheck) {
-                    try {
-                        Sync-Remote
-                    }
-                    catch {
-                        Write-Log ("Remote auto-sync failed: " + $_.Exception.Message)
-                    }
-
-                    $nextRemoteCheck = [DateTime]::UtcNow.AddSeconds($RemotePollSeconds)
+            # Nunca suspender el fetch solo porque existan cambios locales.
+            # Git solo aplica fast-forward si puede conservarlos intactos.
+            if ([DateTime]::UtcNow -ge $nextRemoteCheck) {
+                try {
+                    $workingDirty = (Get-WorkingState).Dirty
+                    Sync-Remote -WorkingDirty $workingDirty
                 }
+                catch {
+                    Write-Log ("Remote auto-sync failed: " + $_.Exception.Message)
+                }
+                $nextRemoteCheck = [DateTime]::UtcNow.AddSeconds($RemotePollSeconds)
             }
 
             Start-Sleep -Seconds 1
