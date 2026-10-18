@@ -129,21 +129,32 @@ código de supervisión solo porque Git sincronice los archivos.
 ## Recuperación del AVD cuando ADB pierde emulator-5554
 
 La tarea persistente de Windows conserva la propiedad de Muondia incluso
-sin VS Code abierto. `flutter-dev-runner.dart` comprueba ADB cada cinco
-segundos; únicamente después de **tres ausencias consecutivas** termina
-el Flutter que él mismo inició y devuelve a `run.ps1` el código 88.
+sin VS Code abierto. Una VM Flutter conectada no se termina por consultas
+ADB. Cuando Flutter comunica la pérdida de la VM, el runner distingue el
+fallo del canal Flutter del fallo de Android: si ADB confirma que el
+dispositivo sigue conectado, relanza únicamente su Flutter (código 86).
+Si el proceso Flutter ya terminó y ADB confirma la ausencia del dispositivo,
+devuelve el código 88. Cuando Flutter queda bloqueado tras perder la VM,
+el sondeo existente cada cinco segundos requiere **tres ausencias consecutivas**
+antes de devolver 88; una consulta ADB desconocida rompe esa secuencia.
 `run.ps1` no intenta `adb connect emulator-5554` (no es un dispositivo TCP):
 devuelve el control a `start-dev-session.ps1`, que prepara de nuevo Android.
 
-`start-ai-apps-android.ps1` espera primero una ventana breve por cortes
-transitorios. Si detecta el AVD reservado detenido o offline, comprueba que
-el proceso sea un `emulator.exe`/QEMU correspondiente **simultáneamente**
-a `AI_APPS_Dev` y al puerto 5554. Antes de terminarlo verifica de nuevo
-su identidad, PID y fecha de creación; espera su salida antes de arrancar
-otro. Un proceso de propiedad desconocida que ocupe el puerto bloquea el
-arranque: **no** se mata ningún otro AVD, no se reinicia el servidor ADB
-global y no se toca F5. Si el proceso ya no existe, inicia el AVD reservado
-incluso si ADB conserva momentáneamente la fila `offline`.
+`start-ai-apps-android.ps1` comprueba los procesos correspondientes
+**simultáneamente** a `AI_APPS_Dev` y al puerto 5554, incluidas las variantes
+QEMU `-headless.exe`. Si QEMU sigue vivo, espera la reconexión de ADB y el
+arranque durante hasta 180 segundos, sin terminarlo ni iniciar otro AVD.
+Una fila `missing` u `offline` de ADB no demuestra un fallo de QEMU.
+
+Después de un crash real puede sobrevivir el wrapper `emulator.exe`. Solo
+ese wrapper propio puede liberarse, tras diez segundos adicionales sin
+QEMU propio ni hijo QEMU, y comprobando otra vez PID, comando, fecha de
+creación y exclusión de F5. Su terminación no utiliza `/T` ni afecta a
+árboles de procesos. Antes de iniciar otro emulador se comprueba que ya no
+queda proceso propio ni proceso ajeno ocupando el puerto. Si no quedan
+procesos, una fila ADB `offline` obsoleta no impide el arranque.
+Un proceso de propiedad desconocida bloquea la operación; nunca se reinicia
+el servidor ADB global ni se modifica un QEMU vivo para reparar el visor.
 
 La extensión AI-APPS Android detecta la desconexión y reconecta el visor
 en su sondeo habitual cuando reaparecen dispositivo y aplicación. La
@@ -151,6 +162,14 @@ recuperación no necesita cerrar/reabrir VS Code ni pulsar «Try again».
 La detección requiere que la tarea de Flutter cargue la versión nueva del
 runner y los scripts actualizados; no puede darse por validada sin probar
 una desconexión real en Windows.
+
+Pruebas de comportamiento sin procesos ni dispositivo reales:
+`powershell -NoProfile -File scripts/android/avd-startup.test.ps1`.
+Ejecutan las funciones del preparador con fixtures de ADB y Windows y
+comprueban cortes transitorios, QEMU vivo offline, variantes headless,
+arranque lento, wrapper huérfano, PID reutilizado, cesión F5 durante la
+espera y puerto ajeno. `node scripts/android/startup-contract-test.cjs`
+incluye estas pruebas en Windows además del contrato de arranque.
 
 ## Recuperación de actualizaciones Flutter
 
