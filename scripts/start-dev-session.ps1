@@ -99,8 +99,13 @@ try {
     Write-SessionLog 'Android preparado: emulator-5554.'
     $stage = 'Muondia'
     Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
-    & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 *>&1 |
-        ForEach-Object {
+    # PowerShell 5.1 puede tratar stderr nativo como error terminante.
+    # Tolerar avisos ADB/Gradle; los throw explicitos siguen propagandose.
+    $sessionErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 *>&1 |
+            ForEach-Object {
             $line = $_.ToString().Trim()
             if ($line -eq 'Hot reload automatico completado.' -or
                 $line -eq 'Hot restart completado.') {
@@ -129,12 +134,37 @@ try {
                 Write-SessionLog 'Recuperacion automatica: Hot Restart tras fallo de Hot Reload.'
             } elseif ($line -eq 'Recuperacion Flutter: canal bloqueado; relanzamiento controlado.') {
                 Write-SessionLog 'Recuperacion automatica: canal Flutter bloqueado; relanzamiento del proceso propio.'
+            } elseif ($line -match '^MUONDIA_RUNNER_EXIT: (-?[0-9]+)$') {
+                Write-SessionLog ("ERROR Flutter: proceso terminado (codigo_{0})." -f $Matches[1])
+            } elseif ($line -match '^Error: Gradle task [a-zA-Z0-9_-]+ failed with exit code (-?[0-9]+)') {
+                Write-SessionLog ("ERROR Flutter: compilacion Gradle fallida (codigo_{0})." -f $Matches[1])
+            } elseif ($line -match '^FAILURE: Build failed with an exception') {
+                Write-SessionLog 'ERROR Flutter: Gradle informa de un fallo de compilacion.'
+            } elseif ($line -match '^Lost connection to device') {
+                Write-SessionLog 'ERROR Flutter: conexion con Android perdida.'
             }
         }
+    } finally {
+        $ErrorActionPreference = $sessionErrorAction
+    }
     Write-SessionLog 'Sesion Flutter terminada.'
     $retryDelaySeconds = 15
 } catch {
     Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
+    # Diagnosticar sin guardar mensajes arbitrarios que puedan contener secretos.
+    $failureMessage = [string]$_.Exception.Message
+    if ($failureMessage -match 'Flutter terminó con un error \\(código (-?[0-9]+)\\)') {
+        Write-SessionLog ("ERROR Flutter: proceso salio con codigo_{0}." -f $Matches[1])
+    } elseif ($failureMessage -like '*No se pudo establecer adb reverse*' -or
+              $failureMessage -like '*No se pudo conectar Android al servicio Dart*') {
+        Write-SessionLog 'ERROR Android: fallo adb reverse con el backend.'
+    } elseif ($failureMessage -like '*Android no terminó de arrancar*') {
+        Write-SessionLog 'ERROR Android: AVD no completo el arranque.'
+    } elseif ($failureMessage -like '*El dispositivo solicitado no está conectado*') {
+        Write-SessionLog 'ERROR Android: dispositivo solicitado no conectado.'
+    } elseif ($failureMessage -like '*Falló flutter pub get*') {
+        Write-SessionLog 'ERROR Flutter: resolucion de dependencias fallida.'
+    }
     # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
     if ($_.Exception.Message -like '*FIREBASE_CONFIG_MISSING*') {
         Write-SessionLog 'ERROR: falta google-services.json en Muondia.'
