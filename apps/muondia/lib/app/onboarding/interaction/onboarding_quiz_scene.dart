@@ -305,18 +305,21 @@ class _AidButton extends StatelessWidget {
                 child: CustomPaint(
                   foregroundPainter: _AidNeonOutline(active: active),
                   child: Container(
-                    height: 70 * scale,
+                    height: 76 * scale,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xE70D0640),
+                      // La luz está en el borde, no en un relleno cian.
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        stops: [0, 0.52, 1],
+                        colors: [
+                          Color(0xFF150750),
+                          Color(0xFF0B0635),
+                          Color(0xFF1D0750),
+                        ],
+                      ),
                       borderRadius: radius,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x883D0ACC),
-                          blurRadius: 12,
-                          spreadRadius: 0.3,
-                        ),
-                      ],
                     ),
                     child: loading
                         ? SizedBox(
@@ -328,7 +331,7 @@ class _AidButton extends StatelessWidget {
                             ),
                           )
                         : Padding(
-                            padding: EdgeInsets.all(3 * scale),
+                            padding: EdgeInsets.all(1 * scale),
                             child: Image.asset(
                               asset,
                               key: Key('muondia-$kind-image'),
@@ -379,8 +382,9 @@ class _AidButton extends StatelessWidget {
 }
 
 
-/// Contorno neón vectorial: trazo fino y resplandor exterior difuso,
-/// con reflejos localizados en las curvas, sin un segundo aro opaco.
+/// Contorno violeta-magenta inspirado en la referencia visual.
+/// La penumbra, el halo próximo, el núcleo y los reflejos se dibujan
+/// por separado. El cian pertenece al PNG del reloj, nunca al borde.
 class _AidNeonOutline extends CustomPainter {
   const _AidNeonOutline({required this.active});
 
@@ -390,69 +394,113 @@ class _AidNeonOutline extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
 
-    final rect = (Offset.zero & size).deflate(2.5);
+    // El aro queda dentro del botón; únicamente la luz difusa se extiende.
+    final rect = (Offset.zero & size).deflate(3.5);
     final radius = rect.height / 2;
-    final capsule = RRect.fromRectAndRadius(
-      rect, Radius.circular(radius),
-    );
-    final shader = LinearGradient(
+    final capsule = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final rimShader = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
+      stops: const [0, 0.27, 0.72, 1],
       colors: active
           ? const [
-              Color(0xFF75FFFF),
-              Color(0xFFB450FF),
-              Color(0xFFFA6BF5),
+              Color(0xFFF38AFF),
+              Color(0xFFC43AFF),
+              Color(0xFFAB2AFF),
+              Color(0xFFF177FF),
             ]
           : const [
-              Color(0xFF62DFFF),
-              Color(0xFFBE48F5),
-              Color(0xFFE946EA),
+              Color(0xFFE575FF),
+              Color(0xFFAC2CF5),
+              Color(0xFF9920EF),
+              Color(0xFFE966F6),
             ],
-      stops: const [0.0, 0.47, 1.0],
     ).createShader(rect);
 
-    // Halo exterior borroso independiente del trazo nítido.
+    // Luz interior violeta muy tenue; no blanquea el icono.
+    final inner = capsule.deflate(2.0);
+    canvas.save();
+    canvas.clipRRect(inner);
     canvas.drawRRect(
-      capsule,
+      inner,
       Paint()
-        ..isAntiAlias = true
-        ..shader = shader
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.6
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5),
+        ..shader = const RadialGradient(
+          center: Alignment(-0.9, -0.9),
+          radius: 0.83,
+          colors: [Color(0x447F36D6), Color(0x006F20CE)],
+        ).createShader(rect),
     );
     canvas.drawRRect(
+      inner,
+      Paint()
+        ..shader = const RadialGradient(
+          center: Alignment(1.0, 1.0),
+          radius: 0.86,
+          colors: [Color(0x40551CBA), Color(0x00551CBA)],
+        ).createShader(rect),
+    );
+    canvas.restore();
+
+    // Penumbra amplia fundida con el fondo cósmico.
+    canvas.drawRRect(
       capsule,
       Paint()
         ..isAntiAlias = true
-        ..shader = shader
+        ..color = const Color(0xA58A18EE)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.15,
+        ..strokeWidth = 8.0
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.2),
     );
 
-    // Destellos en las esquinas, no un borde uniformemente blanco.
-    final upperHighlight = Path()
+    // Halo inmediato y saturado.
+    canvas.drawRRect(
+      capsule,
+      Paint()
+        ..isAntiAlias = true
+        ..shader = rimShader
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5.2
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.3),
+    );
+
+    // Núcleo luminoso más ancho y definido que el anterior.
+    canvas.drawRRect(
+      capsule,
+      Paint()
+        ..isAntiAlias = true
+        ..shader = rimShader
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.0,
+    );
+    canvas.drawRRect(
+      capsule.deflate(2.05),
+      Paint()
+        ..isAntiAlias = true
+        ..color = const Color(0x446E20E3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // Destellos cortos rosados, no arcos cian ni líneas blancas.
+    final upperLeft = Path()
       ..moveTo(rect.left, rect.top + radius)
-      ..quadraticBezierTo(
-        rect.left, rect.top,
-        rect.left + radius, rect.top,
+      ..arcToPoint(
+        Offset(rect.left + radius, rect.top),
+        radius: Radius.circular(radius),
+        clockwise: true,
       )
-      ..lineTo(rect.left + radius + 11, rect.top);
-    _paintHighlight(
-      canvas, upperHighlight, const Color(0xFF93EFFF),
-    );
+      ..lineTo(rect.left + radius + 9, rect.top);
+    _paintHighlight(canvas, upperLeft, const Color(0xFFF192FF));
 
-    final lowerHighlight = Path()
-      ..moveTo(rect.right - radius - 11, rect.bottom)
+    final lowerRight = Path()
+      ..moveTo(rect.right - radius - 9, rect.bottom)
       ..lineTo(rect.right - radius, rect.bottom)
-      ..quadraticBezierTo(
-        rect.right, rect.bottom,
-        rect.right, rect.bottom - radius,
+      ..arcToPoint(
+        Offset(rect.right, rect.bottom - radius),
+        radius: Radius.circular(radius),
+        clockwise: false,
       );
-    _paintHighlight(
-      canvas, lowerHighlight, const Color(0xFFFF86F4),
-    );
+    _paintHighlight(canvas, lowerRight, const Color(0xFFF17AFF));
   }
 
   void _paintHighlight(Canvas canvas, Path path, Color color) {
@@ -460,18 +508,18 @@ class _AidNeonOutline extends CustomPainter {
       path,
       Paint()
         ..isAntiAlias = true
-        ..color = color.withAlpha(135)
-        ..strokeWidth = 3
+        ..color = color.withAlpha(160)
+        ..strokeWidth = 3.4
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.6),
     );
     canvas.drawPath(
       path,
       Paint()
         ..isAntiAlias = true
-        ..color = color.withAlpha(210)
-        ..strokeWidth = 0.8
+        ..color = color.withAlpha(155)
+        ..strokeWidth = 1.05
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
