@@ -130,6 +130,7 @@ try {
             }
         }
     Write-SessionLog 'Sesion Flutter terminada.'
+    $retryDelaySeconds = 15
 } catch {
     Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
     # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
