@@ -110,13 +110,16 @@ recursos PNG del propio test. El fondo `quiz_background.png` se coloca con
 gradientes superpuestos. Las superficies de `Caja Test.png`,
 `Caja Respuesta.png` (reutilizada cuatro veces) y `Caja comodines.png`
 se dibujan mediante `Image.asset`, sin `BoxDecoration` que replique sus
-curvas, marcos o sombras. El panel, las respuestas y los comodines usan
-`centerSlice` (escalado de nueve regiones) en vez de estirar todo el PNG:
-sus extremos, radios y sombras mantienen la geometría mientras se adapta
-el centro. El enunciado dispone de una sangría adicional propia, separada
-de la alineación de las tarjetas; las respuestas tienen altura mínima y
-aumentan según las líneas reales de texto. En pantallas compactas se desplaza
-solo el contenido interno del panel, conservando cabecera y comodines.
+curvas, marcos o sombras. Se ha retirado `centerSlice`: en los PNG originales dividía y
+estiraba tanto los distintivos de respuesta como las curvas de los
+comodines, generando puntas y bandas anómalas. El panel conserva su
+superficie completa con `BoxFit.fill`; las respuestas utilizan
+`BoxFit.cover` a partir del PNG original para conservar las curvas en
+respuestas de una o varias líneas, y los comodines usan `BoxFit.contain`
+para no deformar sus extremos. El enunciado se separa del contorno
+visible del panel; las tarjetas se compactan y admiten varias líneas.
+Cuando el contenido supera el alto útil de un móvil compacto, solo se
+desplaza el interior del panel; la cabecera y los comodines quedan fijos.
 Los tamaños concretos de los PNG originales son 400×580 para el panel,
 370×123 para cada respuesta y 190×63 para cada comodín. `Esfera.png` aparece con el número de usos
 restantes y desaparece al agotarse, sin cambiar las dimensiones del botón.
