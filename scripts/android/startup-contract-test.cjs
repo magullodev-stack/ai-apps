@@ -103,6 +103,17 @@ assert.match(sync, /'merge', '--ff-only'/,
 // El AVD debe recuperarse cuando la tarea está viva y Flutter perdió ADB.
 const avd = file('scripts/start-ai-apps-android.ps1');
 const muondia = file('apps/muondia/run.ps1');
+assert.match(startup, /\$sessionErrorAction = \$ErrorActionPreference[\s\S]*?finally \{\s*\$ErrorActionPreference = \$sessionErrorAction/,
+  'Advertencias de stderr nativo no deben provocar errores falsos o perder la preferencia original');
+assert.match(startup, /MUONDIA_RUNNER_EXIT: \(-\?\[0-9\]\+\)/,
+  'Registrar el codigo de salida del runner sin capturar secretos');
+assert.match(startup, /ERROR Flutter: compilacion Gradle fallida/,
+  'Distinguir errores Gradle de perdidas ADB');
+assert.match(startup, /\$failureMessage -match 'Flutter terminó con un error/,
+  'Clasificar RuntimeException mediante motivo Flutter sin escribir mensajes arbitrarios');
+assert.match(muondia, /Write-Host "MUONDIA_RUNNER_EXIT: \$runnerExitCode"/,
+  'La sesion debe comunicar solo el codigo de salida y nunca stderr completo');
+
 assert.match(runner, /Timer\.periodic\(const Duration\(seconds: 5\)/,
   'El runner persistente comprueba ADB sin depender de VS Code');
 assert.match(runner, /missingDeviceChecks >= 3/,
