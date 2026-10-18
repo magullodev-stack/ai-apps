@@ -592,6 +592,9 @@ try {
                 }
 
                 if ($runnerExitCode -ne 0) {
+                    # Solo el codigo de salida: nunca volcar stderr de la
+                    # aplicacion ni sus argumentos (pueden contener secrets).
+                    Write-Host "MUONDIA_RUNNER_EXIT: $runnerExitCode"
                     throw "Flutter terminó con un error (código $runnerExitCode)."
                 }
 
