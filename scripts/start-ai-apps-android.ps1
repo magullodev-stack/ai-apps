@@ -107,6 +107,13 @@ if (-not (Test-EmulatorReady)) {
     # Un AVD que ADB todavía ve como online puede seguir arrancando.
     # No hay motivo para matarlo cuando simplemente no terminó boot.
     if ($state -eq 'missing' -or $state -eq 'offline') {
+        # Además del detector de procesos, respetar la cesión explícita F5
+        # del propio proyecto (puede no incluir --device en su Dart).
+        $repo = Split-Path $PSScriptRoot -Parent
+        $f5Marker = Join-Path $repo '.ai-apps/muondia-f5-takeover.txt'
+        if (Test-Path -LiteralPath $f5Marker) {
+            throw 'F5 tiene cedido emulator-5554; no se reinicia su AVD.'
+        }
         # Comprobación final antes de tocar un emulador: F5 podría haber
         # iniciado una sesión después de la validación del supervisor.
         $control = Join-Path $PSScriptRoot 'android/task-control.ps1'
