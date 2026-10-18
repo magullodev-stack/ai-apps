@@ -587,14 +587,10 @@ try {
                 }
 
                 if ($runnerExitCode -eq 88) {
-                    $consecutiveConnectionFailures++
-                    if ($consecutiveConnectionFailures -ge 3) {
-                        throw "Flutter perdio la conexion con $Device tres veces."
-                    }
-                    Write-Warning "Se perdió la conexión con $Device. Reintentando Flutter..."
-                    & $adb connect $Device 2>$null | Out-Null
-                    Start-Sleep -Seconds 2
-                    continue
+                    # emulator-5554 es un emulador local, NO una dirección TCP.
+                    # adb connect no lo inicia y repetir Flutter deja el visor
+                    # atrapado. La tarea persistente prepara de nuevo Android.
+                    throw "ANDROID_DEVICE_LOST: $Device desconectado; devolver control al supervisor."
                 }
 
                 if ($runnerExitCode -ne 0) {
