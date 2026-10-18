@@ -140,10 +140,13 @@ Future<void> main(List<String> args) async {
         return;
       case FlutterChangeAction.reload:
         scheduleReload(path);
+        return;
       case FlutterChangeAction.restart:
         scheduleReload(path, forceRestart: true);
+        return;
       case FlutterChangeAction.rebuild:
         scheduleRelaunch(path);
+        return;
     }
   }
 
