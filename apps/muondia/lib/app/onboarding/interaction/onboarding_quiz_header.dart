@@ -44,7 +44,7 @@ class OnboardingQuizHeader extends StatelessWidget {
         .clamp(0.82, 1.1).toDouble();
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 3 * scale, vertical: 4 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 3 * scale, vertical: 5 * scale),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -80,7 +80,7 @@ class OnboardingQuizHeader extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12 * scale),
+          SizedBox(height: 15 * scale),
           Row(
             key: const Key('muondia-quiz-status'),
             children: [
@@ -95,8 +95,8 @@ class OnboardingQuizHeader extends StatelessWidget {
                         Expanded(
                           child: Center(
                             child: SizedBox(
-                              width: 14 * scale,
-                              height: 14 * scale,
+                              width: 15 * scale,
+                              height: 15 * scale,
                               child: DecoratedBox(
                                 key: Key('muondia-progress-orb-$i'),
                                 decoration: _orbDecoration(progress[i]),
@@ -172,12 +172,12 @@ class OnboardingQuizHeader extends StatelessWidget {
 
   BoxDecoration _orbDecoration(QuizOutcome result) {
     final colors = switch (result) {
-      QuizOutcome.correct => const [Color(0xFFE2FFE9), Color(0xFF2AFF97),
-          Color(0xFF00C882)],
-      QuizOutcome.incorrect => const [Color(0xFFFFE1E1), Color(0xFFFF476C),
+      QuizOutcome.correct => const [Color(0xFF64FFD4), Color(0xFF1AE58A),
+          Color(0xFF00BA76)],
+      QuizOutcome.incorrect => const [Color(0xFFFF8299), Color(0xFFFF416A),
           Color(0xFFD80C45)],
-      QuizOutcome.pending => const [Color(0xAA7F55DF), Color(0xAA340E93),
-          Color(0x88301065)],
+      QuizOutcome.pending => const [Color(0xAA8554E6), Color(0x99340E93),
+          Color(0x66301065)],
     };
     return BoxDecoration(
       shape: BoxShape.circle,
@@ -189,10 +189,10 @@ class OnboardingQuizHeader extends StatelessWidget {
       border: Border.all(
         color: switch (result) {
           QuizOutcome.pending => const Color(0x997E3DD2),
-          QuizOutcome.correct => const Color(0xAA2BEF9D),
-          QuizOutcome.incorrect => const Color(0xAAFF4D80),
+          QuizOutcome.correct => const Color(0x772BEF9D),
+          QuizOutcome.incorrect => const Color(0x77FF4D80),
         },
-        width: 0.85,
+        width: 0.6,
       ),
       boxShadow: [
         BoxShadow(
@@ -201,7 +201,7 @@ class OnboardingQuizHeader extends StatelessWidget {
               : result == QuizOutcome.incorrect
                   ? const Color(0x66F21254)
                   : const Color(0x663E08B8),
-          blurRadius: 6,
+          blurRadius: 4,
         ),
       ],
     );
@@ -217,17 +217,17 @@ class _CountdownPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bounds = Offset.zero & size;
-    final arc = bounds.deflate(3.5);
+    final arc = bounds.deflate(3.0);
     final track = Paint()
       ..color = const Color(0x775E47B6)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.8;
+      ..strokeWidth = 2.6;
     final color = quizTimerColor(seconds);
     final active = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 4.4;
+      ..strokeWidth = 3.2;
     canvas.drawArc(arc, 0, 2 * math.pi, false, track);
     if (fraction > 0) {
       canvas.drawArc(
