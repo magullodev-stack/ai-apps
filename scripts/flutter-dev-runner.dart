@@ -52,7 +52,7 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  void rebuild(String path) {
+  void rebuild(String path, {String? revision}) {
     if (relaunching) return;
     relaunching = true;
     debounce?.cancel();
@@ -70,6 +70,7 @@ Future<void> main(List<String> args) async {
         );
         if (result.exitCode != 0) {
           stderr.writeln('ERROR: flutter pub get fallo; se conserva Flutter.');
+          blockedRevision = revision;
           relaunching = false;
           return;
         }
@@ -103,12 +104,12 @@ Future<void> main(List<String> args) async {
   void queue(FlutterChangeAction action, String path, {String? revision}) {
     if (action == FlutterChangeAction.none || relaunching) return;
     // Una edición más reciente desatasca un commit cuyo Flutter falló.
-    if (revision != null && revision != blockedRevision) {
+    if (revision == null || revision != blockedRevision) {
       blockedRevision = null;
       failures = 0;
     }
     if (action == FlutterChangeAction.rebuild) {
-      rebuild(path);
+      rebuild(path, revision: revision);
       return;
     }
     if (action.index > pendingAction.index) pendingAction = action;
@@ -141,6 +142,13 @@ Future<void> main(List<String> args) async {
       if (pendingAction != FlutterChangeAction.none) dispatch();
       return;
     }
+    if (pendingAction != FlutterChangeAction.none &&
+        queuedRevision != revision) {
+      // Una versión posterior espera en la cola: intentar esa, no la fallida.
+      failures = 0;
+      dispatch();
+      return;
+    }
     failures++;
     // No consumir la revisión fallida, pero evitar intentos infinitos sobre
     // el mismo código incorrecto. Otro cambio desencadena un nuevo intento.
@@ -149,6 +157,7 @@ Future<void> main(List<String> args) async {
       stderr.writeln(
         'ERROR: Flutter no pudo actualizar los cambios tras dos intentos.',
       );
+      if (pendingAction != FlutterChangeAction.none) dispatch();
       return;
     }
     stderr.writeln('Hot Restart fallo; reintentando en 10 segundos.');
