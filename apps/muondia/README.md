@@ -123,8 +123,12 @@ comodines permanecen fijos.
 
 La tarjeta principal tiene una superficie clara única, borde redondeado con
 antialiasing y sombra sutil. Las respuestas son blancas con sombras suaves y
-distintivos neutros. Los comodines agotados se atenúan y pierden su esfera
-amarilla, sin mover el resto del diseño. La barra temporal se vuelve a
+distintivos neutros. Los comodines tienen cápsulas oscuras con contorno violeta-magenta
+formado por un núcleo definido, dos halos de distinta difusión, reflejos
+rosados localizados y una iluminación interior tenue. Los PNG originales
+ocupan el espacio central disponible sin añadirles filtros de color. Los
+comodines agotados se atenúan y pierden su esfera amarilla, sin mover el
+resto del diseño. La barra temporal se vuelve a
 componer en Flutter con pista y relleno violeta, y conserva el porcentaje
 controlado por la cuenta atrás de 60 segundos del recorrido real.
 En el explorador de experiencias, los 60 segundos siguen congelados.
