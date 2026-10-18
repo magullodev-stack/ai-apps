@@ -327,15 +327,32 @@ async function run() {
   await api.refresh();
   assert.deepEqual(calls.at(-1), ['open', 'muondia@emulator-5554', true],
     'ADB disconnect/reconnect recovers the existing Muondia panel');
+  // Una sesión que se cayó tras arrancar debe recuperarse sin reiniciar
+  // VS Code, pero nunca lanzar múltiples intentos en el mismo sondeo.
+  taskRunning = false;
+  const beforeRecovery = calls.filter(call => call[0] === 'start').length;
+  await api.refresh();
+  assert.equal(calls.filter(call => call[0] === 'start').length,
+    beforeRecovery + 1, 'El sondeo debe recuperar una sesión Flutter caída');
+  await api.refresh();
+  assert.equal(calls.filter(call => call[0] === 'start').length,
+    beforeRecovery + 1, 'La recuperación respeta el cooldown y no se duplica');
+  taskRunning = true;
+  await api.refresh();
   await commands.get('aiAppsAndroid.stop')(entries[0]);
+  taskRunning = false;
+  await api.refresh();
+  assert.equal(calls.filter(call => call[0] === 'start').length,
+    beforeRecovery + 1, 'Parada explícita: nunca reactivar automáticamente');
+
   assert.ok(calls.some(call => call[0] === 'stop' && call[1] === entries[0].id));
   // Un paquete Android antiguo puede seguir en primer plano aunque Flutter
   // y la tarea ya hayan terminado: debe recuperarse la tarea, no el APK.
   taskRunning = false;
   await sandbox.module.exports.activate({ subscriptions: [] });
   assert.deepEqual(calls.filter(call => call[0] === 'start'),
-    [['start', 'muondia@emulator-5554']],
-    'VS Code reopens the stopped Flutter development task even with a stale Android PID');
+    [['start', 'muondia@emulator-5554'], ['start', 'muondia@emulator-5554']],
+    'La recuperación durante el sondeo y al reabrir respetan un único intento cada una');
   assert.equal(panels.size, 1, 'Reactivation reuses the existing Muondia panel');
   // Stress-test the generic registry without simulating a named second app.
   entries = Array.from({ length: 150 }, (_, i) => ({
