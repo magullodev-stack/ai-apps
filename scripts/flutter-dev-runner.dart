@@ -675,7 +675,9 @@ final class FlutterMachineController {
 
   void _handleStdout(String line) {
     if (line.contains('Lost connection to device.')) {
-      _lostConnection = true;
+      // Flutter puede emitir esta línea y quedarse abierto; no esperar
+      // eternamente al cierre del canal --machine.
+      requestDeviceRecovery();
     }
 
     final decoded = _tryDecode(line);
@@ -747,7 +749,9 @@ final class FlutterMachineController {
 
   void _handleStderr(String line) {
     if (line.contains('Lost connection to device.')) {
-      _lostConnection = true;
+      // Flutter puede emitir esta línea y quedarse abierto; no esperar
+      // eternamente al cierre del canal --machine.
+      requestDeviceRecovery();
     }
     if (line.trim().isNotEmpty) {
       stderr.writeln(line);
