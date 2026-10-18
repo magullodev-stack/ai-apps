@@ -123,8 +123,8 @@ void main() {
       expect((cardImage.image as AssetImage).assetName,
           'assets/onboarding/test/Caja Test.png');
       expect(cardImage.fit, BoxFit.fill);
-      expect(cardImage.centerSlice, const Rect.fromLTWH(80, 90, 240, 400),
-          reason: 'Las esquinas del panel PNG no deben estirarse');
+      expect(cardImage.centerSlice, isNull,
+          reason: 'La sección 9-slice anterior deformaba el panel original');
       expect(find.byKey(const Key('muondia-question-clip')), findsNothing,
           reason: 'Las esquinas proceden del PNG, no de ClipRRect');
       final card = tester.getRect(
@@ -133,8 +133,8 @@ void main() {
       expect(card.height, greaterThan(500));
       final stageBounds =
           tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
-      expect(card.left - stageBounds.left, closeTo(16, 0.1));
-      expect(stageBounds.right - card.right, closeTo(16, 0.1));
+      expect(card.left - stageBounds.left, closeTo(4, 0.1));
+      expect(stageBounds.right - card.right, closeTo(4, 0.1));
       final headerBottom = tester.getBottomLeft(
         find.byType(OnboardingQuizHeader),
       ).dy;
@@ -143,10 +143,10 @@ void main() {
       );
       final stageRect =
           tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
-      expect(card.top - headerBottom, closeTo(16, 0.1));
-      expect(lifelines.top - card.bottom, closeTo(16, 0.1));
-      expect(stageRect.bottom - lifelines.bottom, closeTo(16, 0.1),
-          reason: 'Los tres márgenes verticales siguen la misma retícula');
+      expect(card.top - headerBottom, closeTo(10, 0.1));
+      expect(lifelines.top - card.bottom, closeTo(5, 0.1));
+      expect(stageRect.bottom - lifelines.bottom, closeTo(8, 0.1),
+          reason: 'Márgenes compactos alrededor de los PNG');
       for (var i = 0; i < 4; i++) {
         expect(find.text(String.fromCharCode(65 + i)), findsOneWidget);
         final answer = find.byKey(Key('muondia-answer-$i'));
@@ -156,8 +156,10 @@ void main() {
         );
         expect((answerImage.image as AssetImage).assetName,
             'assets/onboarding/test/Caja Respuesta.png');
-        expect(answerImage.centerSlice, const Rect.fromLTWH(114, 30, 205, 63),
-            reason: 'El distintivo y los extremos conservan su geometría');
+        expect(answerImage.centerSlice, isNull,
+            reason: 'El recorte 9-slice deformaba el distintivo original');
+        expect(answerImage.fit, BoxFit.cover,
+            reason: 'El PNG conserva las curvas y la escala uniforme');
         expect(find.byKey(Key('muondia-answer-divider-$i')), findsNothing,
             reason: 'El distintivo y el separador ya están en el PNG');
         expect(answer.hitTestable(), findsOneWidget);
@@ -668,11 +670,12 @@ void main() {
     final rowRect = tester.getRect(aidRow);
     final stageRect =
         tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
-    final horizontalInset = 16 * (320 / 390);
+    final scale = (320 / 390).clamp(0.82, 1.1);
+    final horizontalInset = 4 * scale;
     expect(cardRect.left - stageRect.left, closeTo(horizontalInset, 0.2));
     expect(stageRect.right - cardRect.right, closeTo(horizontalInset, 0.2));
-    expect(cardRect.top - headerRect.bottom, closeTo(16 * (320 / 390), 0.2));
-    expect(rowRect.top - cardRect.bottom, closeTo(16 * (320 / 390), 0.2));
+    expect(cardRect.top - headerRect.bottom, closeTo(10 * scale, 0.2));
+    expect(rowRect.top - cardRect.bottom, closeTo(5 * scale, 0.2));
     final firstAnswer = tester.getRect(
       find.byKey(const Key('muondia-answer-0')),
     );
@@ -754,12 +757,14 @@ void main() {
             reason: 'El texto no puede tocar el borde visible del PNG');
         expect(panel.right - title.right, greaterThan(30 * scale));
         expect(answer.width, lessThan(panel.width));
-        expect(answer.height, greaterThan(88 * scale),
-            reason: 'La respuesta extensa necesita varias líneas');
+        expect(answer.height, greaterThan(74 * scale),
+            reason: 'La respuesta extensa puede crecer sin deformar su PNG');
         final img = tester.widget<Image>(
           find.byKey(const Key('muondia-answer-image-0')),
         );
-        expect(img.centerSlice, isNotNull);
+        expect(img.centerSlice, isNull);
+        expect(img.fit, BoxFit.cover,
+            reason: 'Una respuesta de altura variable nunca se divide en 9');
         expect(find.byKey(const Key('muondia-lifelines-row')), findsOneWidget);
         expect(tester.takeException(), isNull,
             reason: 'Los PNG adaptables no deben provocar overflow');
