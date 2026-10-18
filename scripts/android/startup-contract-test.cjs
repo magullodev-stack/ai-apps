@@ -11,6 +11,7 @@ if (process.platform === 'win32') {
   const {execFileSync} = require('node:child_process');
   const parsed = [
     'scripts/start-dev-session.ps1',
+    'scripts/auto-sync-dev.ps1',
     'scripts/android/task-control.ps1',
     'scripts/android/flutter-ownership.ps1',
     'scripts/android/flutter-ownership.test.ps1',
@@ -65,7 +66,7 @@ assert.match(startup, /Revision dev detectada/,
 const runner = file('scripts/flutter-dev-runner.dart');
 assert.match(runner, /final gitMonitor = Timer\.periodic/,
   'La detección de Git debe funcionar incluso sin FileSystemWatcher');
-assert.match(runner, /_readGitChanges\(root, previous, next, appPath\)/,
+assert.match(runner, /_readGitChanges\(root, old, current, appPath\)/,
   'Evitar actualizaciones por commits no relacionados con la aplicación');
 assert.match(runner, /enum FlutterChangeAction \{ none, reload, restart, rebuild \}/,
   'Clasificación única para el flujo de actualización');
@@ -81,6 +82,19 @@ assert.match(runner, /case FlutterChangeAction\.rebuild:[\s\S]*?scheduleRelaunch
   'Cambios de bundle/native deben recompilar');
 assert.match(runner, /gitMonitor\.cancel\(\)/,
   'No dejar sondeos de Git vivos tras finalizar Flutter');
+
+// Comprobar la sincronización bidireccional existente, sin añadir otro worker.
+const sync = file('scripts/auto-sync-dev.ps1');
+assert.match(sync, /Get-FileHash -LiteralPath \$fullPath -Algorithm SHA256/,
+  'Los archivos nuevos deben participar en la comprobación de estabilidad');
+assert.match(sync, /if \(\$confirmed\.Dirty -and \$confirmed\.Fingerprint -eq \$state\.Fingerprint\)/,
+  'Revalidar el contenido antes de publicar un commit automático');
+assert.match(sync, /Sync-Remote -WorkingDirty \$workingDirty/,
+  'Consultar GitHub también con archivos locales modificados');
+assert.match(sync, /if \(\$WorkingDirty\) \{[\s\S]*?waiting for clean local changes/,
+  'Nunca rebasar ni publicar cambios inestables');
+assert.match(sync, /'merge', '--ff-only'/,
+  'Recibir cambios mediante un avance seguro, sin forzar pérdidas locales');
 
 const control = file('scripts/android/task-control.ps1');
 assert.match(control, /ValidateSet\('Check', 'Stop', 'Recover'\)/,
