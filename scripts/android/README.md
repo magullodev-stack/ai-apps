@@ -48,16 +48,26 @@ fuera de Git.
 
 ## Visores y recuperación
 
-VS Code recupera Muondia al abrir el repositorio. Un visor cerrado
-manualmente permanece cerrado hasta que se elige desde el selector;
-otras sesiones se abren bajo demanda. EmbeDroid guarda únicamente el
-serial del dispositivo y consulta la identidad actual de la aplicación
-en el registro. No persiste nombres antiguos.
+La tarea `AI-APPS Development`, instalada por
+`scripts/install-dev-session.ps1`, se dispara **al iniciar sesión en
+Windows**. Es la única encargada de iniciar Android y Muondia.
+VS Code no necesita estar abierto para que se ejecute la aplicación.
 
-El visor se reconecta sin reiniciar Android ni Flutter. Si está detenida,
-la tarea de desarrollo se solicita al Programador de tareas; la extensión
-no abre APK antiguas ni inicia otro `flutter run` por su cuenta.
-El sondeo cada cinco segundos detecta cambios de estado.
+Al abrir VS Code, una pestaña restaurada de Muondia espera sin abrir
+scrcpy. El Explorador solo inicia el visor cuando la tarea de Windows
+está `Running`, el emulador está conectado y Muondia tiene un PID.
+Una APK huérfana no cuenta como aplicación activa ni se abre como si
+fuera una sesión Flutter vigente. Si la tarea no está ejecutándose,
+AI-APPS Android puede solicitar su inicio, sin bloquearlo por un
+proceso anterior: la propia tarea decide si ese proceso es suyo o de F5.
+Una pestaña cerrada manualmente permanece cerrada hasta elegirla
+desde el selector; otras sesiones se abren bajo demanda.
+
+El visor puede reconectarse manualmente sin reiniciar Android ni Flutter.
+El sondeo existente de AI-APPS Android cada cinco segundos detecta
+cuándo termina el arranque de la tarea e inicia el visor una sola vez.
+EmbeDroid no duplica el sondeo ni añade reintentos automáticos propios
+a los que trae scrcpy.
 
 ## Verificación
 
