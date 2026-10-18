@@ -129,12 +129,12 @@ código de supervisión solo porque Git sincronice los archivos.
 ## Recuperación de actualizaciones Flutter
 
 Las modificaciones sincronizadas por Git se detectan además mediante
-una revisión periódica del commit HEAD. Si Windows pierde eventos de
-archivos, el supervisor compara los archivos de Flutter afectados por
-ese commit y solicita Hot Restart. Las imágenes nuevas/eliminadas, cambios
-en pubspec y cambios nativos requieren relanzamiento del Flutter propio
-para que el bundle recoja esos recursos. La comprobación ignora commits
-ajenos a la aplicación y no modifica otros procesos.
+una revisión periódica del commit HEAD. El monitor de archivos y ese respaldo
+de Git utilizan el mismo clasificador de cambios: Dart de interfaz pide
+Hot Reload; main.dart o recursos existentes piden Hot Restart; recursos
+añadidos/eliminados, pubspec o código nativo piden recompilación. Se aplica
+la acción más fuerte del conjunto, sin duplicar los eventos ya procesados
+por el monitor. Los archivos ajenos a la aplicación no la actualizan.
 
 El propietario de las sesiones Flutter es `scripts/flutter-dev-runner.dart`,
 no VS Code. Agrupa los cambios detectados por los watchers, mantiene **una
