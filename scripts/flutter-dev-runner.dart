@@ -4,285 +4,261 @@ import 'dart:io';
 
 Future<void> main(List<String> args) async {
   final options = _Options.parse(args);
-  // FileSystemWatcher en Windows puede perder los eventos de un merge Git.
-  // Vigilar HEAD garantiza una segunda señal de actualización.
   final root = Directory(options.workingDirectory).parent.parent.path;
-  final projectName = options.workingDirectory
+  final appName = options.workingDirectory
       .split(RegExp(r'[\\/]'))
       .where((part) => part.isNotEmpty)
       .last;
-  final appPath = 'apps/$projectName/';
-  String? knownRevision = await _readGitRevision(root);
+  final appPath = 'apps/$appName/';
 
-  final process = await Process.start(
+  // Una revisión solo se considera aplicada tras la respuesta de Flutter.
+  // Si el runner termina, flutter run vuelve a compilar el checkout actual.
+  String? appliedRevision = await _readGitRevision(root);
+  String? queuedRevision;
+  String? activeRevision;
+  String? blockedRevision;
+  var pendingAction = FlutterChangeAction.none;
+  var activeAction = FlutterChangeAction.none;
+  var pendingPath = '';
+  var activePath = '';
+  var updating = false;
+  var relaunching = false;
+  var failures = 0;
+  Timer? debounce;
+
+  final flutter = await Process.start(
     options.flutter,
     [
-      'run',
-      '--machine',
+      'run', '--machine',
       if (options.noDds) '--no-dds',
-      '-d',
-      options.device,
+      '-d', options.device,
       '--dart-define-from-file=' + options.definesFile,
     ],
     workingDirectory: options.workingDirectory,
     runInShell: Platform.isWindows,
   );
-
-  final controller = FlutterMachineController(process);
+  final controller = FlutterMachineController(flutter);
   final watchers = <StreamSubscription<FileSystemEvent>>[];
-  Timer? debounce;
-  // Las sustituciones de JSON en Windows pueden perder eventos del watcher.
-  // Comparar contenido, no solo fechas, sin exponer credenciales.
-  final googleConfig = File(
-    options.workingDirectory +
-        Platform.pathSeparator +
-        'android' +
-        Platform.pathSeparator +
-        'app' +
-        Platform.pathSeparator +
-        'google-services.json',
-  );
-  var googleConfigSignature = _configurationSignature(googleConfig);
-  String? pendingSignature;
-  var stableChecks = 0;
-  var pendingReload = false;
-  var pendingImageRestart = false;
-  final observedSinceRevision = <String>{};
-  var relaunchRequested = false;
-  // Evita que una sustitución atómica de un PNG ya existente se confunda
-  // con un recurso nuevo que exige reempaquetado.
-  final knownBundledAssets = <String>{};
-  final assetDirectory = Directory(
+
+  // Los assets presentes antes de una edición no requieren reempaquetarse
+  // si solo se sustituye su contenido. Un alta/baja sí exige recompilar.
+  final existingAssets = <String>{};
+  final assets = Directory(
     options.workingDirectory + Platform.pathSeparator + 'assets',
   );
-  if (assetDirectory.existsSync()) {
-    for (final entity in assetDirectory.listSync(
-      recursive: true,
-      followLinks: false,
-    )) {
-      if (entity is File) {
-        knownBundledAssets.add(_normalizedPath(entity.path));
-      }
+  if (assets.existsSync()) {
+    for (final entity in assets.listSync(recursive: true, followLinks: false)) {
+      if (entity is File) existingAssets.add(_normalizedPath(entity.path));
     }
   }
 
-  void scheduleRelaunch(String path) {
-    if (relaunchRequested) return;
-    relaunchRequested = true;
+  void rebuild(String path) {
+    if (relaunching) return;
+    relaunching = true;
     debounce?.cancel();
-    stdout.writeln(
-      'Cambio nativo/dependencias detectado: ' +
-          _relativePath(options.workingDirectory, path) +
-          '. Preparando reinicio completo...',
-    );
-
+    stdout.writeln('Reconstruccion Flutter solicitada: ' +
+        _relativePath(options.workingDirectory, path));
     unawaited(() async {
-      final normalized = path.replaceAll('\\', '/').toLowerCase();
-      if (normalized.endsWith('/pubspec.yaml') ||
-          normalized.endsWith('/pubspec.lock')) {
+      // pubspec exige actualizar primero el grafo de dependencias.
+      final name = _normalizedPath(path);
+      if (name.endsWith('/pubspec.yaml') ||
+          name.endsWith('/pubspec.lock')) {
         final result = await Process.run(
-          options.flutter,
-          ['pub', 'get'],
+          options.flutter, ['pub', 'get'],
           workingDirectory: options.workingDirectory,
           runInShell: Platform.isWindows,
         );
-
-        if (result.stdout.toString().trim().isNotEmpty) {
-          stdout.write(result.stdout);
-        }
-        if (result.stderr.toString().trim().isNotEmpty) {
-          stderr.write(result.stderr);
-        }
         if (result.exitCode != 0) {
-          stderr.writeln('flutter pub get fallo; no se reinicia la app.');
-          relaunchRequested = false;
+          stderr.writeln('ERROR: flutter pub get fallo; se conserva Flutter.');
+          relaunching = false;
           return;
         }
       }
-
       controller.requestRelaunch();
     }());
   }
 
-  void scheduleReload(String path, {bool forceRestart = false}) {
-    // Las imágenes conservan su ImageCache tras Hot Reload. Requerir un
-    // Hot Restart del isolate, no un relanzamiento nativo/Gradle.
-    pendingImageRestart |= _isImageAsset(path) || forceRestart;
-    debounce?.cancel();
-    debounce = Timer(
-      Duration(milliseconds: pendingImageRestart ? 1200 : 650),
-      () {
-        if (!controller.isReady) {
-          pendingReload = true;
-          return;
-        }
-        pendingReload = false;
-        final restartImages = pendingImageRestart;
-        pendingImageRestart = false;
-        stdout.writeln(
-          'Cambio detectado: ' +
-              _relativePath(options.workingDirectory, path),
-        );
-        if (restartImages) {
-          unawaited(controller.restart());
-        } else {
-          unawaited(controller.reload());
-        }
-      },
-    );
-  }
-
-  // El evento de archivo y el sondeo Git usan la MISMA clasificación.
-  // Si el watcher ya vio un cambio, el respaldo Git no lo ejecuta dos veces.
-  void applyChange(FlutterChangeAction action, String path) {
-    switch (action) {
-      case FlutterChangeAction.none:
-        return;
-      case FlutterChangeAction.reload:
-        scheduleReload(path);
-        return;
-      case FlutterChangeAction.restart:
-        scheduleReload(path, forceRestart: true);
-        return;
-      case FlutterChangeAction.rebuild:
-        scheduleRelaunch(path);
-        return;
+  // Una sola actualización activa y como máximo una acción pendiente.
+  // Una operación más fuerte (restart) nunca se rebaja a reload.
+  void dispatch() {
+    if (relaunching || updating || !controller.isReady ||
+        pendingAction == FlutterChangeAction.none) return;
+    updating = true;
+    activeAction = pendingAction;
+    activePath = pendingPath;
+    activeRevision = queuedRevision;
+    pendingAction = FlutterChangeAction.none;
+    pendingPath = '';
+    queuedRevision = null;
+    stdout.writeln(activeAction == FlutterChangeAction.reload
+        ? 'Actualizando Flutter: Hot Reload.'
+        : 'Actualizando Flutter: Hot Restart.');
+    if (activeAction == FlutterChangeAction.restart) {
+      unawaited(controller.restart());
+    } else {
+      unawaited(controller.reload());
     }
   }
 
-  for (final watchRoot in options.watchRoots) {
-    final directory = Directory(watchRoot);
-    if (!directory.existsSync()) continue;
-
-    watchers.add(
-      directory.watch(recursive: true).listen((event) {
-        final normalized = _normalizedPath(event.path);
-        final isAsset = normalized.contains('/assets/');
-        var status = 'M';
-        if (event is FileSystemDeleteEvent) {
-          status = 'D';
-          knownBundledAssets.remove(normalized);
-        } else if (event is FileSystemCreateEvent && isAsset) {
-          // Sustituir atómicamente un archivo ya registrado no añade asset.
-          status = knownBundledAssets.add(normalized) ? 'A' : 'M';
-        }
-        final action = classifyFlutterChange(event.path, status: status);
-        if (action == FlutterChangeAction.none) return;
-        final repoPrefix = _normalizedPath(root) + '/';
-        if (normalized.startsWith(repoPrefix)) {
-          observedSinceRevision.add(normalized.substring(repoPrefix.length));
-        }
-        applyChange(action, event.path);
-      }),
-    );
-  }
-
-  // Comprobar commits nuevos de dev aunque no haya eventos de archivos.
-  // Cambios ajenos a la aplicación no reinician Flutter.
-  var gitCheckRunning = false;
-  final gitMonitor = Timer.periodic(const Duration(seconds: 4), (_) async {
-    if (gitCheckRunning || relaunchRequested) return;
-    gitCheckRunning = true;
-    try {
-      final next = await _readGitRevision(root);
-      if (next == null || next == knownRevision) return;
-      final previous = knownRevision;
-      if (previous == null) {
-        knownRevision = next;
-        return;
-      }
-      final changes = await _readGitChanges(root, previous, next, appPath);
-      if (changes == null) return;
-      knownRevision = next;
-      if (changes.isEmpty) {
-        observedSinceRevision.clear();
-        return;
-      }
-      stdout.writeln('Revision dev detectada: ${next.substring(0, 7)}.');
-      var strongest = FlutterChangeAction.none;
-      String? changedPath;
-      for (final change in changes) {
-        if (observedSinceRevision.contains(_normalizedPath(change.path))) {
-          continue;
-        }
-        final action = classifyFlutterChange(
-          change.path, status: change.status,
-        );
-        if (action.index > strongest.index) {
-          strongest = action;
-          changedPath = change.path;
-        }
-      }
-      observedSinceRevision.clear();
-      if (changedPath != null) {
-        // El respaldo actúa solo sobre archivos cuyos eventos se perdieron.
-        // Un commit Dart se recarga; recursos, reinicio; cambios nativos, build.
-        final localPath = root + Platform.pathSeparator +
-            changedPath.replaceAll('/', Platform.pathSeparator);
-        applyChange(strongest, localPath);
-      }
-
-    } catch (_) {
-      // Git actualizando índice: la revisión se reintenta en el ciclo siguiente.
-    } finally {
-      gitCheckRunning = false;
+  void queue(FlutterChangeAction action, String path, {String? revision}) {
+    if (action == FlutterChangeAction.none || relaunching) return;
+    // Una edición más reciente desatasca un commit cuyo Flutter falló.
+    if (revision != null && revision != blockedRevision) {
+      blockedRevision = null;
+      failures = 0;
     }
-  });
-
-  final googleMonitor = Timer.periodic(const Duration(seconds: 2), (_) {
-    final current = _configurationSignature(googleConfig);
-    if (current == googleConfigSignature) {
-      pendingSignature = null;
-      stableChecks = 0;
+    if (action == FlutterChangeAction.rebuild) {
+      rebuild(path);
       return;
     }
-    if (pendingSignature == current) {
-      stableChecks++;
-    } else {
-      pendingSignature = current;
-      stableChecks = 1;
+    if (action.index > pendingAction.index) pendingAction = action;
+    pendingPath = path;
+    if (revision != null) queuedRevision = revision;
+    debounce?.cancel();
+    debounce = Timer(
+      Duration(milliseconds: pendingAction == FlutterChangeAction.restart
+          ? 1100 : 650),
+      dispatch,
+    );
+  }
+
+  // El callback se ejecuta al terminar la operación real, incluido el
+  // fallback reload -> restart. Detectar archivos NO equivale a aplicarlos.
+  controller.onUpdateSettled = (success, fullRestart) {
+    if (!updating) return;
+    final revision = activeRevision;
+    final path = activePath;
+    updating = false;
+    activeRevision = null;
+    if (success) {
+      failures = 0;
+      blockedRevision = null;
+      if (revision != null) {
+        appliedRevision = revision;
+        stdout.writeln('Revision dev aplicada: ' +
+            revision.substring(0, 7) + '.');
+      }
+      if (pendingAction != FlutterChangeAction.none) dispatch();
+      return;
     }
-    // No relanzar mientras se copia parcialmente el archivo.
-    if (stableChecks >= 2) {
-      googleConfigSignature = current;
-      pendingSignature = null;
-      stableChecks = 0;
-      if (!relaunchRequested) scheduleRelaunch(googleConfig.path);
+    failures++;
+    // No consumir la revisión fallida, pero evitar intentos infinitos sobre
+    // el mismo código incorrecto. Otro cambio desencadena un nuevo intento.
+    if (failures >= 2) {
+      blockedRevision = revision;
+      stderr.writeln(
+        'ERROR: Flutter no pudo actualizar los cambios tras dos intentos.',
+      );
+      return;
+    }
+    stderr.writeln('Hot Restart fallo; reintentando en 10 segundos.');
+    if (revision != null) queuedRevision = revision;
+    pendingAction = FlutterChangeAction.restart;
+    pendingPath = path;
+    debounce?.cancel();
+    debounce = Timer(const Duration(seconds: 10), dispatch);
+  };
+
+  controller.onReady = () {
+    stdout.writeln('Hot reload automatico activo.');
+    dispatch();
+  };
+
+  // Primer detector: modificaciones locales, incluidas las no confirmadas
+  // por Git. Evitar duplicados corresponde a la cola, no a descartar commits.
+  for (final watched in options.watchRoots) {
+    final directory = Directory(watched);
+    if (!directory.existsSync()) continue;
+    watchers.add(directory.watch(recursive: true).listen((event) {
+      final path = _normalizedPath(event.path);
+      var status = 'M';
+      if (event is FileSystemDeleteEvent) {
+        status = 'D';
+        existingAssets.remove(path);
+      } else if (event is FileSystemCreateEvent &&
+          path.contains('/assets/')) {
+        status = existingAssets.add(path) ? 'A' : 'M';
+      }
+      final action = classifyFlutterChange(event.path, status: status);
+      queue(action, event.path);
+    }));
+  }
+
+  // Respaldo: un merge de Git puede no producir eventos fiables en Windows.
+  // Comparar SIEMPRE desde la última revisión aplicada, no desde la detectada.
+  var gitChecking = false;
+  final gitMonitor = Timer.periodic(const Duration(seconds: 4), (_) async {
+    if (gitChecking || relaunching) return;
+    gitChecking = true;
+    try {
+      final current = await _readGitRevision(root);
+      if (current == null || current == appliedRevision ||
+          current == activeRevision || current == queuedRevision ||
+          current == blockedRevision) return;
+      final old = appliedRevision;
+      if (old == null) {
+        appliedRevision = current;
+        return;
+      }
+      final changes = await _readGitChanges(root, old, current, appPath);
+      if (changes == null) return;
+      var action = FlutterChangeAction.none;
+      String? path;
+      for (final change in changes) {
+        final next = classifyFlutterChange(change.path, status: change.status);
+        if (next.index > action.index) {
+          action = next;
+          path = change.path;
+        }
+      }
+      if (action == FlutterChangeAction.none) {
+        // Un commit de documentación no necesita actualizar Flutter.
+        appliedRevision = current;
+      } else {
+        stdout.writeln('Revision dev detectada: ' +
+            current.substring(0, 7) + '.');
+        queue(action, root + Platform.pathSeparator +
+            path!.replaceAll('/', Platform.pathSeparator),
+            revision: current);
+      }
+    } catch (_) {
+      // Git puede estar trabajando: conservar la revisión para reintentar.
+    } finally {
+      gitChecking = false;
     }
   });
 
-  controller.onReady = () {
-    stdout.writeln(
-      'Hot reload automatico activo: los cambios sincronizados se '
-      'reflejaran en el dispositivo.',
-    );
-    if (pendingReload) {
-      pendingReload = false;
-      final restartImages = pendingImageRestart;
-      pendingImageRestart = false;
-      if (restartImages) {
-        unawaited(controller.restart());
-      } else {
-        unawaited(controller.reload());
-      }
+  // Configuración Firebase ignorada por Git: cambios externos al monitor
+  // también necesitan reconstrucción; exigir dos lecturas iguales.
+  final firebase = File(options.workingDirectory +
+      Platform.pathSeparator + 'android' + Platform.pathSeparator +
+      'app' + Platform.pathSeparator + 'google-services.json');
+  var firebaseSignature = _configurationSignature(firebase);
+  String? proposedSignature;
+  final firebaseMonitor = Timer.periodic(const Duration(seconds: 2), (_) {
+    final now = _configurationSignature(firebase);
+    if (now == firebaseSignature) {
+      proposedSignature = null;
+    } else if (now == proposedSignature) {
+      firebaseSignature = now;
+      proposedSignature = null;
+      rebuild(firebase.path);
+    } else {
+      proposedSignature = now;
     }
-  };
+  });
 
   _configureKeyboard(controller);
-
-  final code = await process.exitCode;
-  controller.dispose();
-  googleMonitor.cancel();
-  gitMonitor.cancel();
+  final code = await flutter.exitCode;
   debounce?.cancel();
+  gitMonitor.cancel();
+  firebaseMonitor.cancel();
+  controller.dispose();
   for (final watcher in watchers) {
     await watcher.cancel();
   }
-
   if (controller.relaunchRequested) {
-    // Mantener compatibilidad con el lanzador persistente anterior que
-    // todavía puede estar ejecutándose durante la sincronización de dev.
-    exitCode = 86;
+    exitCode = 86; // run.ps1 vuelve a ejecutar Flutter y carga este archivo.
   } else if (controller.stopRequested) {
     exitCode = 0;
   } else if (controller.lostConnection) {
