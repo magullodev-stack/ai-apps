@@ -194,7 +194,10 @@ Future<void> main(List<String> args) async {
       final changes = await _readGitChanges(root, previous, next, appPath);
       if (changes == null) return;
       knownRevision = next;
-      if (changes.isEmpty) return;
+      if (changes.isEmpty) {
+        observedSinceRevision.clear();
+        return;
+      }
       stdout.writeln('Revision dev detectada: ${next.substring(0, 7)}.');
       var strongest = FlutterChangeAction.none;
       String? changedPath;
