@@ -48,16 +48,19 @@ class OnboardingQuizScene extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFF181442),
-      body: DecoratedBox(
+      body: Stack(
         key: const Key('muondia-quiz-stage'),
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/onboarding/test/quiz_background.png'),
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/onboarding/test/quiz_background.png',
+            key: const Key('muondia-quiz-background-image'),
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
+            filterQuality: FilterQuality.high,
+            excludeFromSemantics: true,
           ),
-        ),
-        child: SafeArea(
+          SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 640),
@@ -198,6 +201,7 @@ class OnboardingQuizScene extends StatelessWidget {
             ),
           ),
         ),
+        ],
       ),
     );
   }
