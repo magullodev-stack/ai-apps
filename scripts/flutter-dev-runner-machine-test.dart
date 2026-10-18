@@ -116,6 +116,11 @@ void verifyUpdateClassification() {
       expected: runner.FlutterChangeAction.none,
     ),
     (
+      path: 'scripts/flutter-dev-runner.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
       path: 'apps/muondia/build/generated/test.dart',
       status: 'M',
       expected: runner.FlutterChangeAction.none,
@@ -155,6 +160,9 @@ Future<void> main(List<String> args) async {
     final controller = runner.FlutterMachineController(
       process, updateTimeout: const Duration(seconds: 1),
     );
+    final settled = <String>[];
+    controller.onUpdateSettled = (success, fullRestart) =>
+        settled.add('$success:$fullRestart');
     final ready = Completer<void>();
     controller.onReady = () {
       if (!ready.isCompleted) ready.complete();
@@ -170,6 +178,9 @@ Future<void> main(List<String> args) async {
       'First source edit uses hot reload');
     require(requests[1]['fullRestart'] == true,
       'Failed hot reload must trigger automatic hot restart');
+    await Future<void>.delayed(const Duration(milliseconds: 260));
+    require(settled.join(',') == 'true:true',
+      'Only a successful fallback restart may acknowledge the update');
 
     await Future<void>.delayed(const Duration(milliseconds: 240));
     requests = await waitRequests(trace, 2);
@@ -184,12 +195,17 @@ Future<void> main(List<String> args) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     require((await waitRequests(trace, 3)).length == 3,
       'Failed restart must not cause a restart loop');
+    require(settled.join(',') == 'true:true,false:true',
+      'A failed Hot Restart must not be acknowledged');
 
     // Una nueva edición permite volver a actualizar la sesión.
     await controller.reload();
     requests = await waitRequests(trace, 4);
     require(requests[3]['fullRestart'] == false,
       'A new source change can retry after failed restart');
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    require(settled.join(',') == 'true:true,false:true,true:false',
+      'A subsequent successful edit should be acknowledged');
 
     // Tras agotar el plazo de respuesta se relanza solo el proceso propiedad
     // del runner, sin manipular los demás dispositivos ni Flutter.
