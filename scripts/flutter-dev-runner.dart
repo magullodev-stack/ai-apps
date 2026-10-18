@@ -537,7 +537,7 @@ final class FlutterMachineController {
   }
 
   void _dispatchUpdate() {
-    if (!isReady || _relaunchRequested || _stopRequested ||
+    if (!isReady || _lostConnection || _relaunchRequested || _stopRequested ||
         _inFlightId != null || (!_queuedReload && !_queuedRestart)) {
       return;
     }
