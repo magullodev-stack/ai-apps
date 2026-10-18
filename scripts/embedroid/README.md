@@ -1,6 +1,6 @@
 # EmbeDroid mantenido por AI-APPS
 
-Distribución `magullodev.ai-apps-embedroid` 1.1.0, basada en
+Distribución `magullodev.ai-apps-embedroid` 1.1.1, basada en
 `utpalbarman.embedroid` 1.0.2. Conserva sus comandos, ajustes, interfaz y
 servidor scrcpy 3.2. Corrige los dos generadores de `scid`
 del transporte: `scid.cjs` elimina el bit de signo y mantiene ocho dígitos
@@ -8,8 +8,18 @@ hexadecimales. Tanto `adb forward` como `scrcpy.Server` reciben el mismo valor.
 `sessions.cjs` amplía el manager original con identidad por app/dispositivo,
 deduplicación concurrente, cierre y reconexión independientes y serialización
 de webviews. Reutiliza su HTML y transporte. Las vistas nuevas se abren en
-grupos contiguos; las existentes conservan su posición. No añade reintentos
-al transporte. Consulta [la operación multiemulador](../android/README.md).
+grupos contiguos; las existentes conservan su posición.
+`boot-ready.cjs` impide abrir scrcpy antes de que `sys.boot_completed=1`:
+espera hasta tres minutos con comprobaciones ADB **solo de lectura**. Si se
+cierra el visor, cancela la espera y nunca reinicia Android ni Flutter.
+Si la transmisión falla antes de dibujar el primer fotograma, EmbeDroid
+reintenta únicamente su propio puente de vídeo hasta tres veces (1,5 s,
+3 s y 6 s); los eventos repetidos no crean conexiones duplicadas y
+los temporizadores se cancelan al cerrar el visor. Un fallo persistente
+permanece visible con el botón «Try again», sin bucles indefinidos.
+El código 134 del servidor scrcpy indica un cierre anormal del transporte,
+pero por sí solo no identifica la causa original.
+Consulta [la operación multiemulador](../android/README.md).
 
 ## Procedencia y mantenimiento
 
@@ -69,8 +79,11 @@ AI-APPS Android; no seguir aplicando la sustitución a un bundle desconocido.
 
 ## Verificación
 
-`test.ps1` usa Node instalado o el runtime Node de VS Code. Comprueba los
-límites de entropía, los ocho dígitos y 100.000 valores aleatorios. Ejecuta
+`test.ps1` usa Node instalado o el runtime Node de VS Code. Ejecuta
+primero las pruebas del arranque Android cancelable y de las sesiones
+restauradas, reconexiones acotadas y cancelación, sin necesitar emulador.
+Después comprueba los límites de entropía, los ocho dígitos y
+100.000 valores aleatorios. Ejecuta
 además la clase `ScrcpyStream` del bundle construido con ADB simulado para
 verificar que constructor y arranque usan el generador corregido y que el
 socket y el argumento `scid` coinciden.
