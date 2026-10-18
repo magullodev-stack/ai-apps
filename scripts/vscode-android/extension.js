@@ -20,6 +20,8 @@ async function activate(context) {
   const changed = new vscode.EventEmitter();
   const shown = new Map();
   const disconnected = new Set();
+  const viewerRetryAt = new Map();
+  const viewerRetryCooldownMs = 15000;
   let sessions = [], refreshing, disposed = false, firstRefresh = true;
   let developmentWasRunning = false;
   let autoRecoverySuppressed = false;
@@ -234,6 +236,19 @@ async function activate(context) {
         if (!session.deviceReady && views.some(view => view.serial === session.serial)) disconnected.add(session.id);
       }
       for (const session of sessions.filter(item => item.active)) {
+        const view = views.find(item => item.serial === session.serial);
+        // ADB puede volver online sin cambiar PID/epoch mientras scrcpy
+        // sigue mostrando su error. El visor comunica su propio fallo:
+        // recuperarlo con el mismo sondeo, sin reiniciar Flutter.
+        const streamFailed = view?.transportFailed === true;
+        if (streamFailed) {
+          disconnected.add(session.id);
+          const previous = viewerRetryAt.get(session.id) || 0;
+          if (previous && Date.now() - previous < viewerRetryCooldownMs) continue;
+          viewerRetryAt.set(session.id, Date.now());
+        } else {
+          viewerRetryAt.delete(session.id);
+        }
         // Restore Muondia first. Other registered applications can be opened explicitly.
         if (initial && session.kind !== 'development-task') {
           shown.set(session.id, session.epoch);
