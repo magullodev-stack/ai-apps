@@ -103,6 +103,7 @@ if (-not (Test-EmulatorReady)) {
     if ($state -eq 'unknown') {
         throw 'ADB no responde; se reintentará sin terminar otros dispositivos.'
     }
+    $terminatedReservedAvd = $false
     # Un AVD que ADB todavía ve como online puede seguir arrancando.
     # No hay motivo para matarlo cuando simplemente no terminó boot.
     if ($state -eq 'missing' -or $state -eq 'offline') {
@@ -127,10 +128,24 @@ if (-not (Test-EmulatorReady)) {
             if (@(Get-ManagedAvdProcesses).Count -gt 0) {
                 throw 'El AVD reservado sigue activo; no se inicia otro emulador.'
             }
+            $terminatedReservedAvd = $true
         } elseif ($state -eq 'offline') {
             # No hay proceso de propiedad demostrada: evitar un kill global
             # de ADB o de emuladores ajenos. La tarea reintentará.
             throw 'emulator-5554 offline sin proceso AVD verificable.'
+        } else {
+            # Si hay un proceso de emulador ocupando el puerto pero NO
+            # podemos demostrar que es AI_APPS_Dev, no crear otro AVD.
+            $portArg = '(?i)(^|\s)-port(?:\s+|=)"?' +
+                [regex]::Escape([string]$port) + '"?(?=\s|$)'
+            $portOwner = @(Get-CimInstance Win32_Process | Where-Object {
+                $_.Name -in @('emulator.exe', 'qemu-system-x86_64.exe',
+                    'qemu-system-aarch64.exe') -and
+                $_.CommandLine -match $portArg
+            })
+            if ($portOwner.Count -gt 0) {
+                throw 'Puerto AVD ocupado por proceso de propiedad no verificada.'
+            }
         }
     }
 
@@ -153,7 +168,7 @@ if (-not (Test-EmulatorReady)) {
     # debe iniciarse otra instancia, aunque ADB aún conserve esa fila.
     $alreadyConnected = (Get-SerialState) -eq 'device'
 
-    if (-not $alreadyConnected) {
+    if ($terminatedReservedAvd -or -not $alreadyConnected) {
         Write-Host "Arrancando $AvdName..."
         Start-Process -FilePath $emulator -ArgumentList @(
             '-avd', $AvdName,
