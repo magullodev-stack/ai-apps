@@ -122,6 +122,8 @@ assert.match(startup, /ANDROID_DEVICE_LOST/,
 assert.ok(startup.indexOf('-Action Check -Serial emulator-5554') <
   startup.indexOf("Write-SessionLog 'Preparando Android.'"),
   'Verificar Flutter propio/F5 antes de intentar reiniciar el emulador');
+assert.match(avd, /muondia-f5-takeover\.txt/,
+  'Un F5 con cesion explicita debe impedir el cierre del AVD');
 assert.match(avd, /if \(\$flutterState -ne 'free'\)/,
   'Revalidar que F5 no ocupa el emulador justo antes de cerrarlo');
 assert.match(avd, /\$terminatedReservedAvd -or -not \$alreadyConnected/,
