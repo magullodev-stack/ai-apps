@@ -579,8 +579,8 @@ try {
                 }
 
                 if ($runnerExitCode -eq 86) {
-                    # Nueva compilacion Gradle para cambios Android/pubspec.
-                    Write-Host 'Cambio nativo detectado; recompilando Muondia...'
+                    # Cambios nativos o recuperación del canal Flutter propio.
+                    Write-Host 'Relanzamiento Flutter solicitado; recompilando Muondia...'
                     continue
                 }
 

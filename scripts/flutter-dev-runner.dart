@@ -229,23 +229,32 @@ Future<void> main(List<String> args) async {
       'app' + Platform.pathSeparator + 'google-services.json');
   var firebaseSignature = _configurationSignature(firebase);
   String? proposedSignature;
-  // Flutter puede seguir abierto aunque Android desaparezca de ADB.
-  // Tres comprobaciones seguidas entregan la recuperación a Windows.
+  // ADB no gobierna una VM que sigue conectada: una consulta transitoria
+  // nunca debe cerrar Flutter. El sondeo solo respalda una VM ya perdida.
   var adbChecking = false;
-  var missingDeviceChecks = 0;
+  var deviceMonitoring = true;
+  final deviceRecovery = FlutterDeviceRecoveryPolicy();
   final deviceMonitor = Timer.periodic(const Duration(seconds: 5), (_) async {
     if (adbChecking || controller.relaunchRequested ||
-        controller.stopRequested || controller.lostConnection) return;
+        controller.stopRequested || !controller.lostConnection) return;
     adbChecking = true;
     try {
       final online = await _isAndroidDeviceOnline(options.device);
-      if (online == true) {
-        missingDeviceChecks = 0;
-      } else if (online == false && ++missingDeviceChecks >= 3) {
-        stderr.writeln('Dispositivo Android perdido: recuperacion del AVD solicitada.');
-        controller.requestDeviceRecovery();
+      if (!deviceMonitoring) return;
+      switch (deviceRecovery.observe(
+        vmDisconnected: controller.lostConnection, androidOnline: online,
+      )) {
+        case FlutterDeviceRecoveryAction.none:
+          break;
+        case FlutterDeviceRecoveryAction.relaunchFlutter:
+          stdout.writeln('Recuperacion Flutter: conexion VM perdida; relanzamiento del proceso propio.');
+          controller.requestRelaunch();
+          break;
+        case FlutterDeviceRecoveryAction.recoverDevice:
+          stderr.writeln('Dispositivo Android perdido: recuperacion del dispositivo solicitada.');
+          controller.requestDeviceRecovery();
+          break;
       }
-      // null: ADB no disponible/bloqueado. No declarar desconexión.
     } catch (_) {
       // Una consulta fallida no debe interrumpir una sesión válida.
     } finally {
@@ -268,6 +277,7 @@ Future<void> main(List<String> args) async {
 
   _configureKeyboard(controller);
   final code = await flutter.exitCode;
+  deviceMonitoring = false;
   debounce?.cancel();
   gitMonitor.cancel();
   deviceMonitor.cancel();
@@ -280,10 +290,44 @@ Future<void> main(List<String> args) async {
     exitCode = 86; // run.ps1 vuelve a ejecutar Flutter y carga este archivo.
   } else if (controller.stopRequested) {
     exitCode = 0;
-  } else if (controller.lostConnection) {
+  } else if (controller.deviceRecoveryRequested) {
     exitCode = 88;
+  } else if (controller.lostConnection) {
+    // Perder el servicio VM no demuestra que el AVD haya fallado.
+    final online = await _isAndroidDeviceOnline(options.device);
+    if (online == false) {
+      exitCode = 88;
+    } else {
+      stdout.writeln('Recuperacion Flutter: conexion VM perdida; relanzamiento del proceso propio.');
+      exitCode = 86;
+    }
   } else {
     exitCode = code;
+  }
+}
+
+enum FlutterDeviceRecoveryAction { none, relaunchFlutter, recoverDevice }
+
+/// Solo una VM desconectada puede necesitar recuperación. La falta de una
+/// respuesta ADB interrumpe la secuencia de ausencias confirmadas.
+final class FlutterDeviceRecoveryPolicy {
+  var _missingChecks = 0;
+
+  FlutterDeviceRecoveryAction observe({
+    required bool vmDisconnected,
+    required bool? androidOnline,
+  }) {
+    if (!vmDisconnected || androidOnline == null) {
+      _missingChecks = 0;
+      return FlutterDeviceRecoveryAction.none;
+    }
+    if (androidOnline) {
+      _missingChecks = 0;
+      return FlutterDeviceRecoveryAction.relaunchFlutter;
+    }
+    return ++_missingChecks >= 3
+        ? FlutterDeviceRecoveryAction.recoverDevice
+        : FlutterDeviceRecoveryAction.none;
   }
 }
 
@@ -373,12 +417,15 @@ FlutterChangeAction classifyFlutterChange(
   String path, {
   String status = 'M',
 }) {
-  final normalized = _normalizedPath(path);
+  // Git entrega rutas relativas; los eventos Windows entregan absolutas.
+  // El prefijo permite aplicar las mismas reglas a ambas representaciones.
+  final normalized = '/' + _normalizedPath(path);
   if (normalized.contains('/build/') ||
       normalized.contains('/.dart_tool/') ||
       normalized.contains('/.git/') ||
       normalized.contains('/node_modules/') ||
-      normalized.contains('/android/.gradle/')) {
+      normalized.contains('/android/.gradle/') ||
+      normalized.endsWith('/generatedpluginregistrant.java')) {
     return FlutterChangeAction.none;
   }
   if (normalized.endsWith('/scripts/flutter-dev-runner.dart')) {
@@ -503,6 +550,7 @@ final class FlutterMachineController {
   String? _appId;
   var _started = false;
   var _lostConnection = false;
+  var _deviceRecoveryRequested = false;
   var _stopRequested = false;
   var _relaunchRequested = false;
   var _nextRequestId = 1;
@@ -518,6 +566,7 @@ final class FlutterMachineController {
 
   bool get isReady => _appId != null && _started;
   bool get lostConnection => _lostConnection;
+  bool get deviceRecoveryRequested => _deviceRecoveryRequested;
   bool get stopRequested => _stopRequested;
   bool get relaunchRequested => _relaunchRequested;
 
@@ -623,10 +672,16 @@ final class FlutterMachineController {
   }
 
   void requestDeviceRecovery() {
-    if (_lostConnection || _stopRequested || _relaunchRequested) return;
+    if (_deviceRecoveryRequested || _stopRequested || _relaunchRequested) return;
     _lostConnection = true;
+    _deviceRecoveryRequested = true;
     _updateWatchdog?.cancel();
     unawaited(_terminateProcessTree());
+  }
+
+  void _connectionLost() {
+    _lostConnection = true;
+    _updateWatchdog?.cancel();
   }
 
   void requestRelaunch() {
@@ -674,14 +729,9 @@ final class FlutterMachineController {
   }
 
   void _handleStdout(String line) {
-    if (line.contains('Lost connection to device.')) {
-      // Flutter puede emitir esta línea y quedarse abierto; no esperar
-      // eternamente al cierre del canal --machine.
-      requestDeviceRecovery();
-    }
-
     final decoded = _tryDecode(line);
     if (decoded == null) {
+      if (line.trim() == 'Lost connection to device.') _connectionLost();
       if (line.trim().isNotEmpty) stdout.writeln(line);
       return;
     }
@@ -689,6 +739,11 @@ final class FlutterMachineController {
     for (final message in decoded) {
       final event = message['event'];
       final params = message['params'];
+
+      if (event == 'daemon.logMessage' && params is Map &&
+          params['message'] == 'Lost connection to device.') {
+        _connectionLost();
+      }
 
       if (event == 'app.start' && params is Map) {
         _appId = params['appId']?.toString();
@@ -748,11 +803,7 @@ final class FlutterMachineController {
   }
 
   void _handleStderr(String line) {
-    if (line.contains('Lost connection to device.')) {
-      // Flutter puede emitir esta línea y quedarse abierto; no esperar
-      // eternamente al cierre del canal --machine.
-      requestDeviceRecovery();
-    }
+    if (line.trim() == 'Lost connection to device.') _connectionLost();
     if (line.trim().isNotEmpty) {
       stderr.writeln(line);
     }
