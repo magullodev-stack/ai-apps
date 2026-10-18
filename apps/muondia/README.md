@@ -97,46 +97,32 @@ El test de previsualización utiliza diez pivotes canónicos con preguntas
 ficticias y no realiza llamadas a IA. Sus imágenes están declaradas como
 recursos del estado `Test de bienvenida` en el explorador Android.
 En esta previsualización el cronómetro permanece fijo en 60 s y la barra
-llena, sin iniciar ningún temporizador: se pueden recorrer las preguntas y
-probar los comodines durante el tiempo que sea necesario. Solo el recorrido
+mantiene el estado inicial de 60 s, sin iniciar ningún temporizador: se pueden
+recorrer las preguntas y probar los comodines durante el tiempo que sea
+necesario. Solo el recorrido
 real activa la cuenta atrás de 60 s; esta distinción se configura
 explícitamente mediante `countdownEnabled`, sin deducirla de que existan
 preguntas de prueba.
 `OnboardingQuizPage` conserva el estado y las reglas del cuestionario;
-`interaction/onboarding_quiz_scene.dart` compone toda la pantalla sobre un
-fondo índigo-violeta continuo, sin esquinas ni marco exterior redondeado.
-La imagen real `assets/onboarding/test/quiz_background.png` ocupa
-el escenario completo con `BoxFit.cover`. Sustituye al antiguo fondo
-programático para reproducir los detalles y la textura de la referencia.
-Los recursos de Loading permanecen separados en `assets/onboarding/loading/`,
-y el Explorador de experiencias expone el fondo del test en su propia carpeta.
-La cabecera no tiene un panel exterior ni flecha de regreso (el onboarding
-es obligatorio): el icono del pivote acompaña a su nombre en Nunito blanca,
-con peso alto y sombra discreta para destacar sobre el PNG.
-El cronómetro es un icono blanco y segundos blancos sin cápsula, contorno
-ni superficie adicional, siguiendo la maqueta aprobada.
-La barra temporal (60 s globales, fija a 60 s solo en preview) consta de
-una pista violeta y un único relleno con gradiente violeta más luminoso,
-con extremos redondos y SIN borde, línea interior, fondo negro ni cian.
-La fracción temporal y las reglas de funcionamiento no cambian.
-Una gran tarjeta clara reúne el enunciado y cuatro tarjetas de
-respuesta blancas con sombra. La tarjeta solo redondea y recorta su propio
-interior con `ClipRRect(clipBehavior: Clip.antiAlias)`: la sombra permanece
-fuera y el fondo cósmico nunca se recorta ni se redondea.
-El espacio de cabecera a tarjeta, de tarjeta a comodines y de comodines
-al borde inferior seguro es una retícula común de 16 unidades escaladas,
-sin sumar separadores inferiores redundantes. Los laterales guardan esa
-misma separación para que los arcos blancos no aparezcan recortados contra
-el borde del emulador. El radio único de 22 unidades escaladas y el recorte
-antialias pertenecen solo a la tarjeta (no al PNG cósmico). Las letras A–D utilizan distintivos rectangulares
-redondeados en lila neutro y un separador vertical fino, iguales para las
-cuatro opciones; no hay códigos de color por letra. La puntuación se muestra
-al finalizar. La tarjeta ocupa únicamente el espacio vertical entre la
-cabecera y los comodines y conserva esa geometría con opciones cortas o
-largas. Cada respuesta incrementa su altura para admitir varias líneas,
-sin escalar el texto para encajarlo. Si el contenido no cabe, se desplaza
-solamente el interior de la tarjeta; los comodines y la cabecera siguen
-visibles. El desplazamiento vuelve al inicio en cada pregunta.
+`interaction/onboarding_quiz_scene.dart` compone la escena sobre los
+recursos PNG del propio test. El fondo `quiz_background.png` se coloca con
+`Image.asset` y `BoxFit.cover` a pantalla completa, sin redondeos ni
+gradientes superpuestos. Las superficies de `Caja Test.png`,
+`Caja Respuesta.png` (reutilizada cuatro veces) y `Caja comodines.png`
+se dibujan mediante `Image.asset`, sin `BoxDecoration` que replique sus
+curvas, marcos o sombras. `Esfera.png` aparece con el número de usos
+restantes y desaparece al agotarse, sin cambiar las dimensiones del botón.
+`Barra tiempo.png` aporta tanto la pista atenuada como la apariencia
+del relleno visible, cuyo ancho cambia según la fracción temporal que
+calcula el test. El cronómetro permanece como icono y texto sin cápsula.
+
+Los PNG de las superficies están en `assets/onboarding/test/`. Flutter
+mantiene el texto, el pivote, los toques, el feedback, las respuestas
+desactivadas al utilizar 50 %, el cronómetro y la pista IA. El feedback
+se muestra solo sobre la opción elegida; las otras opciones permanecen
+en el mismo sitio y las respuestas largas pueden desplazar el interior
+de la caja grande, sin mover la cabecera ni los comodines.
+
 La composición es particular de Muondia y no modifica el tema global ni
 los componentes compartidos. La imagen conserva su
 proporción y se carga mediante `onboardingPivotImageFor()`. El contador
