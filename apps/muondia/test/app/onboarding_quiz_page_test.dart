@@ -83,30 +83,22 @@ void main() {
         lessThanOrEqualTo(23),
       );
 
-      final timeTrack = tester.widget<ClipRRect>(
+      final timeTrack = tester.widget<SizedBox>(
         find.byKey(const Key('muondia-time-track')),
       );
-      expect(timeTrack.clipBehavior, Clip.antiAlias);
-      final coloredTrack = tester.widget<ColoredBox>(
-        find.descendant(
-          of: find.byKey(const Key('muondia-time-track')),
-          matching: find.byType(ColoredBox),
-        ).first,
+      expect(timeTrack.height, greaterThan(0));
+      final base = tester.widget<Image>(
+        find.byKey(const Key('muondia-time-track-image')),
       );
-      expect(coloredTrack.color, const Color(0xFF4B3C9F),
-          reason: 'La barra de referencia tiene pista violeta sin borde');
-      final fill = tester.widget<DecoratedBox>(
+      final fill = tester.widget<Image>(
         find.byKey(const Key('muondia-time-fill')),
       );
-      final fillDecoration = fill.decoration as BoxDecoration;
-      final fillGradient = fillDecoration.gradient as LinearGradient;
-      expect(fillGradient.colors, [
-        const Color(0xFFAA48FC),
-        const Color(0xFF8840EE),
-      ], reason: 'El progreso es violeta, no cian');
-      expect(fillDecoration.border, isNull);
-      expect(find.byKey(const Key('muondia-timer-capsule')), findsNothing,
-          reason: 'La referencia no tiene caja negra ni borde en el tiempo');
+      expect((base.image as AssetImage).assetName,
+          'assets/onboarding/test/Barra tiempo.png');
+      expect((fill.image as AssetImage).assetName,
+          'assets/onboarding/test/Barra tiempo.png',
+          reason: 'El relleno se dimensiona con la fracción temporal');
+      expect(find.byKey(const Key('muondia-timer-capsule')), findsNothing);
       final timerInline =
           find.byKey(const Key('muondia-timer-inline'));
       expect(timerInline, findsOneWidget);
@@ -118,11 +110,14 @@ void main() {
         findsOneWidget,
       );
 
-      final clip = tester.widget<ClipRRect>(
-        find.byKey(const Key('muondia-question-clip')),
+      final cardImage = tester.widget<Image>(
+        find.byKey(const Key('muondia-question-panel-image')),
       );
-      expect(clip.clipBehavior, Clip.antiAlias,
-          reason: 'Esquinas limpias sobre el PNG sin clipping del fondo');
+      expect((cardImage.image as AssetImage).assetName,
+          'assets/onboarding/test/Caja Test.png');
+      expect(cardImage.fit, BoxFit.fill);
+      expect(find.byKey(const Key('muondia-question-clip')), findsNothing,
+          reason: 'Las esquinas proceden del PNG, no de ClipRRect');
       final card = tester.getRect(
         find.byKey(const Key('muondia-question-card')),
       );
@@ -130,13 +125,7 @@ void main() {
       final stageBounds =
           tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
       expect(card.left - stageBounds.left, closeTo(16, 0.1));
-      expect(stageBounds.right - card.right, closeTo(16, 0.1),
-          reason: 'Las esquinas deben tener margen, no cortarse con el borde');
-      expect(
-        clip.borderRadius,
-        BorderRadius.circular(22),
-        reason: 'Un único radio de esquina en el recorte antialias',
-      );
+      expect(stageBounds.right - card.right, closeTo(16, 0.1));
       final headerBottom = tester.getBottomLeft(
         find.byType(OnboardingQuizHeader),
       ).dy;
@@ -152,14 +141,14 @@ void main() {
       for (var i = 0; i < 4; i++) {
         expect(find.text(String.fromCharCode(65 + i)), findsOneWidget);
         final answer = find.byKey(Key('muondia-answer-$i'));
-        final letterBadge = tester.widget<Container>(
-          find.byKey(Key('muondia-answer-letter-$i')),
+        expect(find.byKey(Key('muondia-answer-letter-$i')), findsOneWidget);
+        final answerImage = tester.widget<Image>(
+          find.byKey(Key('muondia-answer-image-$i')),
         );
-        final letterDecoration = letterBadge.decoration as BoxDecoration;
-        expect(letterDecoration.gradient, isNotNull);
-        expect(letterDecoration.shape, BoxShape.rectangle);
-        expect(letterDecoration.borderRadius, isNotNull);
-        expect(find.byKey(Key('muondia-answer-divider-$i')), findsOneWidget);
+        expect((answerImage.image as AssetImage).assetName,
+            'assets/onboarding/test/Caja Respuesta.png');
+        expect(find.byKey(Key('muondia-answer-divider-$i')), findsNothing,
+            reason: 'El distintivo y el separador ya están en el PNG');
         expect(answer.hitTestable(), findsOneWidget);
         expect(card.contains(tester.getTopLeft(answer)), isTrue);
         expect(card.contains(tester.getBottomRight(answer)), isTrue);
@@ -482,7 +471,12 @@ void main() {
       final question = previewQuestions[i];
       expect(find.text(question.pivot), findsOneWidget);
       expect(find.text('${i + 1}/10'), findsOneWidget);
-      final image = tester.widget<Image>(find.byType(Image));
+      final image = tester.widget<Image>(
+        find.descendant(
+          of: find.byKey(const Key('muondia-pivot-icon')),
+          matching: find.byType(Image),
+        ),
+      );
       expect(
         (image.image as AssetImage).assetName,
         onboardingPivotImageFor(question.pivot),
@@ -735,9 +729,9 @@ void main() {
         expect(find.text(pivot), findsOneWidget);
         expect(find.text('1/10'), findsOneWidget);
         expect(
-          find.byType(Image),
+          find.byKey(const Key('muondia-pivot-icon')),
           findsNothing,
-          reason: 'No se inventa una imagen para temáticas sin PNG',
+          reason: 'No se inventa una imagen del pivote desconocido',
         );
         expect(tester.takeException(), isNull);
       }
