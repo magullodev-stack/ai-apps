@@ -107,6 +107,16 @@ if (-not (Test-EmulatorReady)) {
     # Un AVD que ADB todavía ve como online puede seguir arrancando.
     # No hay motivo para matarlo cuando simplemente no terminó boot.
     if ($state -eq 'missing' -or $state -eq 'offline') {
+        # Comprobación final antes de tocar un emulador: F5 podría haber
+        # iniciado una sesión después de la validación del supervisor.
+        $control = Join-Path $PSScriptRoot 'android/task-control.ps1'
+        if (Test-Path -LiteralPath $control) {
+            $flutterState = (& $control -Action Check -Serial $Serial |
+                Out-String).Trim()
+            if ($flutterState -ne 'free') {
+                throw 'Flutter ocupa emulator-5554; no se cierra el AVD.'
+            }
+        }
         $owned = @(Get-ManagedAvdProcesses)
         if ($owned.Count -gt 0) {
             foreach ($process in $owned) {
