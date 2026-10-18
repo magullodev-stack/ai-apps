@@ -74,12 +74,14 @@ assert.match(runner, /classifyFlutterChange\(event\.path, status: status\)/,
   'FileSystemWatcher debe clasificar los cambios locales');
 assert.match(runner, /classifyFlutterChange\(\s*change\.path, status: change\.status/,
   'La comprobación Git debe usar la misma clasificación');
-assert.match(runner, /case FlutterChangeAction\.reload:[\s\S]*?scheduleReload\(path\)/,
-  'Los cambios de Dart normales deben usar Hot Reload');
-assert.match(runner, /case FlutterChangeAction\.restart:[\s\S]*?forceRestart: true/,
-  'Los recursos existentes deben usar Hot Restart');
-assert.match(runner, /case FlutterChangeAction\.rebuild:[\s\S]*?scheduleRelaunch\(path\)/,
-  'Cambios de bundle/native deben recompilar');
+assert.match(runner, /if \(activeAction == FlutterChangeAction\.restart\) \{\s*unawaited\(controller\.restart\(\)\)/,
+  'Hot Restart debe enviarse al protocolo Flutter');
+assert.match(runner, /unawaited\(controller\.reload\(\)\)/,
+  'Hot Reload debe enviarse al protocolo Flutter');
+assert.match(runner, /if \(action == FlutterChangeAction\.rebuild\) \{\s*rebuild\(path, revision: revision\)/,
+  'Cambios nativos o nuevos assets deben reconstruir la aplicación');
+assert.match(runner, /onUpdateSettled = \(success, fullRestart\)/,
+  'La revisión Git solo se confirma después de que Flutter responda');
 assert.match(runner, /gitMonitor\.cancel\(\)/,
   'No dejar sondeos de Git vivos tras finalizar Flutter');
 
