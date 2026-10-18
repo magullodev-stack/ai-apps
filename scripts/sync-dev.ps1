@@ -35,7 +35,7 @@ function Get-Text {
     return (($Value | Out-String).Trim())
 }
 
-function Stage-SyncContent {
+function Add-SyncContent {
     Invoke-Git -GitArgs @('add', '-A') | Out-Null
 
     $experimentsRoot = Join-Path $script:Repo '.ai-apps'
@@ -48,7 +48,7 @@ function Stage-SyncContent {
     }
 }
 
-function Commit-StagedChanges {
+function Save-StagedChanges {
     $staged = Get-Text (Invoke-Git -GitArgs @(
         'diff', '--cached', '--name-only'
     )).Output
@@ -92,9 +92,9 @@ try {
         Write-Host "SYNC DEV - attempt $attempt/3" -ForegroundColor Cyan
 
         Write-Host '1/5 Staging local changes...'
-        Stage-SyncContent
+        Add-SyncContent
 
-        if (Commit-StagedChanges) {
+        if (Save-StagedChanges) {
             Write-Host '    Local commit created.'
         }
         else {
@@ -151,7 +151,7 @@ try {
             'rev-parse', 'refs/remotes/origin/dev'
         )).Output
 
-        Stage-SyncContent
+        Add-SyncContent
         $newStaged = Get-Text (Invoke-Git -GitArgs @(
             'diff', '--cached', '--name-only'
         )).Output
