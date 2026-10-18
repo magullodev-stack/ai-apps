@@ -110,18 +110,26 @@ recursos PNG del propio test. El fondo `quiz_background.png` se coloca con
 gradientes superpuestos. Las superficies de `Caja Test.png`,
 `Caja Respuesta.png` (reutilizada cuatro veces) y `Caja comodines.png`
 se dibujan mediante `Image.asset`, sin `BoxDecoration` que replique sus
-curvas, marcos o sombras. Se ha retirado `centerSlice`: en los PNG originales dividía y
-estiraba tanto los distintivos de respuesta como las curvas de los
-comodines, generando puntas y bandas anómalas. El panel conserva su
-superficie completa con `BoxFit.fill`; las respuestas utilizan
-`BoxFit.cover` a partir del PNG original para conservar las curvas en
-respuestas de una o varias líneas, y los comodines usan `BoxFit.contain`
-para no deformar sus extremos. El enunciado se separa del contorno
-visible del panel; las tarjetas se compactan y admiten varias líneas.
-Cuando el contenido supera el alto útil de un móvil compacto, solo se
-desplaza el interior del panel; la cabecera y los comodines quedan fijos.
-Los tamaños concretos de los PNG originales son 400×580 para el panel,
-370×123 para cada respuesta y 190×63 para cada comodín. `Esfera.png` aparece con el número de usos
+curvas, marcos o sombras. Se ha retirado `centerSlice` porque deformaba
+los distintivos y extremos. Para las dos superficies mayores se usa
+`_CroppedQuizPng`: presenta únicamente el rectángulo útil del PNG
+original, conserva su acabado y recorta el margen transparente fuera
+del tamaño del componente. Esto evita hitboxes invisibles y huecos
+grandes entre respuestas. Los límites de contenido se han medido en
+los archivos originales: la respuesta mide 370×123, pero el recorte útil
+es x=15..355, y=26..95 (340×69); el panel mide 400×580, con recorte
+útil aproximado x=18..383, y=26..560 (365×534). El widget adapta
+estos rectángulos al espacio disponible y el texto determina la altura
+de cada opción. El `InkWell` no añade resaltados por encima de la
+transparencia: el feedback se aplica solo al componente visible y
+el hueco entre opciones no responde a pulsaciones.
+
+El panel y las respuestas mantienen un espacio interior independiente
+del margen transparente, y solo el interior del panel se desplaza
+cuando hay preguntas u opciones largas. `Caja comodines.png` conserva
+su proporción original con `BoxFit.contain` para no deformar sus extremos.
+Los PNG originales miden 400×580 (panel), 370×123 (respuesta)
+y 190×63 (comodín). `Esfera.png` aparece con el número de usos
 restantes y desaparece al agotarse, sin cambiar las dimensiones del botón.
 `Barra tiempo.png` aporta tanto la pista atenuada como la apariencia
 del relleno visible, cuyo ancho cambia según la fracción temporal que
