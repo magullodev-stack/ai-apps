@@ -12,6 +12,8 @@ if (process.platform === 'win32') {
   const parsed = [
     'scripts/start-dev-session.ps1',
     'scripts/auto-sync-dev.ps1',
+    'scripts/start-ai-apps-android.ps1',
+    'apps/muondia/run.ps1',
     'scripts/android/task-control.ps1',
     'scripts/android/flutter-ownership.ps1',
     'scripts/android/flutter-ownership.test.ps1',
@@ -97,6 +99,38 @@ assert.match(sync, /if \(\$WorkingDirty\) \{[\s\S]*?waiting for clean local chan
   'Nunca rebasar ni publicar cambios inestables');
 assert.match(sync, /'merge', '--ff-only'/,
   'Recibir cambios mediante un avance seguro, sin forzar pérdidas locales');
+
+// El AVD debe recuperarse cuando la tarea está viva y Flutter perdió ADB.
+const avd = file('scripts/start-ai-apps-android.ps1');
+const muondia = file('apps/muondia/run.ps1');
+assert.match(runner, /Timer\.periodic\(const Duration\(seconds: 5\)/,
+  'El runner persistente comprueba ADB sin depender de VS Code');
+assert.match(runner, /missingDeviceChecks >= 3/,
+  'Una desconexión transitoria no debe detener el emulador');
+assert.match(runner, /controller\.requestDeviceRecovery\(\)/,
+  'Flutter debe devolver control al supervisor tras pérdida sostenida');
+assert.match(runner, /void requestDeviceRecovery\(\)/,
+  'Se termina solo el Flutter propiedad del runner');
+assert.match(runner, /deviceMonitor\.cancel\(\)/,
+  'El detector de ADB no debe sobrevivir al proceso Flutter');
+assert.match(muondia, /if \(\$runnerExitCode -eq 88\) \{[\s\S]*?ANDROID_DEVICE_LOST/,
+  'La pérdida de ADB sale de run.ps1 para reiniciar el AVD');
+assert.doesNotMatch(muondia, /& \$adb connect \$Device/,
+  'adb connect emulator-5554 no puede recuperar un AVD local');
+assert.match(startup, /ANDROID_DEVICE_LOST/,
+  'La tarea debe distinguir la pérdida ADB de los errores de Flutter');
+assert.match(avd, /function Get-ManagedAvdProcesses/,
+  'Recuperación de AVD identifica los procesos propios');
+assert.match(avd, /-avd[\s\S]*-port/,
+  'La propiedad requiere nombre de AVD y puerto');
+assert.match(avd, /\$current\.CreationDate -eq \$process\.CreationDate/,
+  'No matar un PID reutilizado por otro proceso');
+assert.match(avd, /if \(\$state -eq 'missing' -or \$state -eq 'offline'\)/,
+  'Tanto la desaparición como el estado offline deben recuperarse');
+assert.match(avd, /\(Get-SerialState\) -eq 'device'/,
+  'offline no puede considerarse un AVD conectado');
+assert.doesNotMatch(avd, /adb\s+(?:kill-server|reconnect\s+offline)/,
+  'Nunca afectar globalmente otros emuladores o sesiones');
 
 const control = file('scripts/android/task-control.ps1');
 assert.match(control, /ValidateSet\('Check', 'Stop', 'Recover'\)/,
