@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:muondia/app/app_theme.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_page.dart';
+import 'package:muondia/app/onboarding/interaction/onboarding_quiz_header.dart';
 import 'package:muondia/app/onboarding/interaction/onboarding_quiz_hint.dart';
 import 'package:muondia/app/onboarding/production/onboarding_quiz_pipeline.dart';
 
@@ -60,6 +61,18 @@ Color orbColor(WidgetTester tester, int index) {
 }
 
 void main() {
+  test('Anillo: verde 60–21, amarillo 20–6 y rojo 5–0', () {
+    for (final seconds in [60, 34, 21]) {
+      expect(quizTimerColor(seconds), const Color(0xFF00E8A1));
+    }
+    for (final seconds in [20, 12, 6]) {
+      expect(quizTimerColor(seconds), const Color(0xFFFFD439));
+    }
+    for (final seconds in [5, 1, 0]) {
+      expect(quizTimerColor(seconds), const Color(0xFFFF355C));
+    }
+  });
+
   testWidgets('Cabecera de referencia y tres comodines con PNG originales',
       (tester) async {
     await openQuiz(tester);
