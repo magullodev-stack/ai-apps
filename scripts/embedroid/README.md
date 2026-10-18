@@ -1,26 +1,21 @@
 # EmbeDroid mantenido por AI-APPS
 
-Distribución `magullodev.ai-apps-embedroid` 1.1.1, basada en
-`utpalbarman.embedroid` 1.0.2. Conserva sus comandos, ajustes, interfaz y
-servidor scrcpy 3.2. Corrige los dos generadores de `scid`
-del transporte: `scid.cjs` elimina el bit de signo y mantiene ocho dígitos
-hexadecimales. Tanto `adb forward` como `scrcpy.Server` reciben el mismo valor.
-`sessions.cjs` amplía el manager original con identidad por app/dispositivo,
-deduplicación concurrente, cierre y reconexión independientes y serialización
-de webviews. Reutiliza su HTML y transporte. Las vistas nuevas se abren en
-grupos contiguos; las existentes conservan su posición.
-`boot-ready.cjs` impide abrir scrcpy antes de que `sys.boot_completed=1`:
-espera hasta tres minutos con comprobaciones ADB **solo de lectura**. Si se
-cierra el visor, cancela la espera y nunca reinicia Android ni Flutter.
-Si la transmisión falla antes de dibujar el primer fotograma, EmbeDroid
-reintenta únicamente su propio puente de vídeo hasta tres veces (1,5 s,
-3 s y 6 s); los eventos repetidos no crean conexiones duplicadas y
-los temporizadores se cancelan al cerrar el visor. Un fallo persistente
-permanece visible con el botón «Try again», sin bucles indefinidos.
-El código 134 del servidor scrcpy indica un cierre anormal del transporte,
-pero por sí solo no identifica la causa original.
-Consulta [la operación multiemulador](../android/README.md).
+Distribución `magullodev.ai-apps-embedroid` 1.1.2, basada en
+`utpalbarman.embedroid` 1.0.2. Conserva el servidor scrcpy 3.2, su
+transporte y sus cuatro intentos internos de conexión. Corrige el `scid`
+mediante `scid.cjs` y conserva la identidad y deduplicación de las pestañas
+de diferentes dispositivos en `sessions.cjs`.
 
+**Muondia arranca una sola vez desde la tarea de Windows `AI-APPS Development`,
+al iniciar sesión.** El visor de VS Code no inicia Android ni Flutter:
+al restaurar una pestaña recupera su identidad, pero **no abre el
+transporte de vídeo** hasta que AI-APPS Android informa que la tarea está
+en ejecución y Muondia tiene proceso Android. Después abre un único
+puente de vídeo para la pestaña existente. El visor no incorpora sondeos
+ADB propios ni reintentos superpuestos a los de scrcpy. Un problema real
+de scrcpy (por ejemplo, código 134) permanece visible y requiere sus
+registros para identificar la causa. Consulta
+[el responsable único del arranque](../android/README.md).
 ## Procedencia y mantenimiento
 
 `upstream/` conserva los archivos del paquete 1.0.2 instalado el 9 de octubre
@@ -79,12 +74,12 @@ AI-APPS Android; no seguir aplicando la sustitución a un bundle desconocido.
 
 ## Verificación
 
-`test.ps1` usa Node instalado o el runtime Node de VS Code. Ejecuta
-primero las pruebas del arranque Android cancelable y de las sesiones
-restauradas, reconexiones acotadas y cancelación, sin necesitar emulador.
-Después comprueba los límites de entropía, los ocho dígitos y
-100.000 valores aleatorios. Ejecuta
-además la clase `ScrcpyStream` del bundle construido con ADB simulado para
+`test.ps1` usa Node instalado o el runtime Node de VS Code.
+Comprueba que las pestañas restauradas esperan a que AI-APPS confirme
+Muondia, que no arrancan un segundo puente y que abrir repetidamente la
+misma sesión no crea duplicados. También comprueba los límites de entropía,
+los ocho dígitos y 100.000 valores aleatorios. Ejecuta además
+la clase `ScrcpyStream` del bundle construido con ADB simulado para
 verificar que constructor y arranque usan el generador corregido y que el
 socket y el argumento `scid` coinciden.
 
