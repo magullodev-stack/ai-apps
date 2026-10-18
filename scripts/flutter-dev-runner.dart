@@ -326,6 +326,9 @@ FlutterChangeAction classifyFlutterChange(
       normalized.contains('/android/.gradle/')) {
     return FlutterChangeAction.none;
   }
+  if (normalized.endsWith('/scripts/flutter-dev-runner.dart')) {
+    return FlutterChangeAction.rebuild; // Autoactualizar el runner.
+  }
   if (_requiresRelaunch(normalized)) return FlutterChangeAction.rebuild;
 
   // Los recursos eliminados o nuevos cambian el bundle Flutter.
@@ -415,14 +418,6 @@ bool _isImageAsset(String path) {
 String _normalizedPath(String path) =>
     path.replaceAll('\\', '/').toLowerCase();
 
-bool _isNewBundledImage(String path) {
-  final normalized = _normalizedPath(path);
-  return normalized.contains('/assets/') &&
-      !normalized.contains('/build/') &&
-      !normalized.contains('/.dart_tool/') &&
-      _isImageAsset(path);
-}
-
 String _relativePath(String base, String path) {
   final normalizedBase = base.replaceAll('\\', '/');
   final normalizedPath = path.replaceAll('\\', '/');
@@ -464,6 +459,7 @@ final class FlutterMachineController {
   bool _queuedRestart = false;
   Timer? _updateWatchdog;
   void Function()? onReady;
+  void Function(bool success, bool fullRestart)? onUpdateSettled;
 
   bool get isReady => _appId != null && _started;
   bool get lostConnection => _lostConnection;
@@ -553,6 +549,7 @@ final class FlutterMachineController {
         fullRestart ? 'Hot restart completado.' :
             'Hot reload automatico completado.',
       );
+      onUpdateSettled?.call(true, fullRestart);
     } else {
       stderr.writeln(
         'Hot ${fullRestart ? 'restart' : 'reload'} fallo: $failure',
@@ -563,8 +560,9 @@ final class FlutterMachineController {
         stdout.writeln('Recuperacion Flutter: Hot restart automatico solicitado.');
         _queuedRestart = true;
       }
-      // Si falla también el restart, no entrar en un bucle: esperar otra
-      // modificación de fuentes o una señal explícita del usuario.
+      // El fallo solo se confirma si también ha fallado Hot Restart.
+      // Quien solicitó el cambio mantiene entonces la revisión pendiente.
+      if (fullRestart) onUpdateSettled?.call(false, true);
     }
     _dispatchUpdate();
   }
@@ -798,7 +796,7 @@ Future<List<_GitChange>?> _readGitChanges(
     '-C', root, 'diff', '--name-status', before, after, '--',
     '${appPath}lib/', '${appPath}assets/', '${appPath}pubspec.yaml',
     '${appPath}pubspec.lock', '${appPath}android/', '${appPath}ios/',
-    'shared/', 'ai/flutter_client/',
+    'shared/', 'ai/flutter_client/', 'scripts/flutter-dev-runner.dart',
   ]);
   if (result.exitCode != 0) return null;
   final changes = <_GitChange>[];
