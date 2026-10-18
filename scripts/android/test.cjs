@@ -60,7 +60,11 @@ async function run() {
   const orphaned = await service.list();
   assert.equal(orphaned[0].status, 'orphaned',
     'An APK still visible while AI-APPS Development is stopped is not running Flutter');
+  assert.equal(orphaned[0].active, false,
+    'An orphaned APK cannot trigger EmbeDroid before the Windows task starts');
+  busy = true; // Own prior process or F5: the task controls that decision.
   await service.start('muondia@emulator-5554');
+  busy = false;
   await service.stop('muondia@emulator-5554');
   assert.deepEqual(calls.filter(call => typeof call === 'string'), ['start-task', 'stop-task']);
   const external = { appId: 'external', label: 'External', serial: 'emulator-5558', packageName: 'com.example.external', kind: 'external' };
