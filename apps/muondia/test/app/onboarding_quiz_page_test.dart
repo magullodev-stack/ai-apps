@@ -123,6 +123,8 @@ void main() {
       expect((cardImage.image as AssetImage).assetName,
           'assets/onboarding/test/Caja Test.png');
       expect(cardImage.fit, BoxFit.fill);
+      expect(cardImage.centerSlice, const Rect.fromLTWH(80, 90, 240, 400),
+          reason: 'Las esquinas del panel PNG no deben estirarse');
       expect(find.byKey(const Key('muondia-question-clip')), findsNothing,
           reason: 'Las esquinas proceden del PNG, no de ClipRRect');
       final card = tester.getRect(
@@ -154,6 +156,8 @@ void main() {
         );
         expect((answerImage.image as AssetImage).assetName,
             'assets/onboarding/test/Caja Respuesta.png');
+        expect(answerImage.centerSlice, const Rect.fromLTWH(114, 30, 205, 63),
+            reason: 'El distintivo y los extremos conservan su geometría');
         expect(find.byKey(Key('muondia-answer-divider-$i')), findsNothing,
             reason: 'El distintivo y el separador ya están en el PNG');
         expect(answer.hitTestable(), findsOneWidget);
@@ -697,6 +701,73 @@ void main() {
     expect(tester.getRect(hint), hintRect);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'PNG adaptables: enunciado con margen y respuestas multilinea',
+    (tester) async {
+      final initial = [
+        for (var i = 0; i < 10; i++)
+          (
+            pivot: 'Arquitectura',
+            question: '¿Qué función desempeña la memoria RAM en un '
+                'ordenador y por qué es importante durante su uso?',
+            correct: 'Almacenar temporalmente datos y programas que '
+                'el procesador necesita mientras el ordenador funciona',
+            options: <String>[
+              'Almacenar temporalmente datos y programas que '
+                  'el procesador necesita mientras el ordenador funciona',
+              'Conservar permanentemente todos los archivos personales '
+                  'aunque el ordenador permanezca apagado',
+              'Traducir las direcciones de las páginas web para '
+                  'establecer una conexión con servidores externos',
+              'Gestionar exclusivamente los dispositivos conectados '
+                  'a través de los puertos físicos del ordenador',
+            ],
+          ),
+      ];
+      for (final size in const [
+        Size(320, 640),
+        Size(390, 844),
+        Size(430, 932),
+      ]) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpWidget(MaterialApp(
+          theme: muondiaTheme,
+          home: OnboardingQuizPage(
+            previewQuestions: initial,
+            countdownEnabled: false,
+            onCompleted: () async {},
+          ),
+        ));
+        await tester.pump();
+        final panel = tester.getRect(
+          find.byKey(const Key('muondia-question-card')),
+        );
+        final title = tester.getRect(find.text(initial.first.question));
+        final answer = tester.getRect(
+          find.byKey(const Key('muondia-answer-0')),
+        );
+        final scale = (size.width / 390).clamp(0.82, 1.1);
+        expect(title.left - panel.left, greaterThan(30 * scale),
+            reason: 'El texto no puede tocar el borde visible del PNG');
+        expect(panel.right - title.right, greaterThan(30 * scale));
+        expect(answer.width, lessThan(panel.width));
+        expect(answer.height, greaterThan(88 * scale),
+            reason: 'La respuesta extensa necesita varias líneas');
+        final img = tester.widget<Image>(
+          find.byKey(const Key('muondia-answer-image-0')),
+        );
+        expect(img.centerSlice, isNotNull);
+        expect(find.byKey(const Key('muondia-lifelines-row')), findsOneWidget);
+        expect(tester.takeException(), isNull,
+            reason: 'Los PNG adaptables no deben provocar overflow');
+      }
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    },
+  );
 
   testWidgets(
     'Temáticas largas y desconocidas caben en una pantalla estrecha',
