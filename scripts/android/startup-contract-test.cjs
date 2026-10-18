@@ -67,8 +67,18 @@ assert.match(runner, /final gitMonitor = Timer\.periodic/,
   'La detección de Git debe funcionar incluso sin FileSystemWatcher');
 assert.match(runner, /_readGitChanges\(root, previous, next, appPath\)/,
   'Evitar actualizaciones por commits no relacionados con la aplicación');
-assert.match(runner, /forceRestart: true/,
-  'Los commits relevantes deben reconstruir la aplicación Flutter');
+assert.match(runner, /enum FlutterChangeAction \{ none, reload, restart, rebuild \}/,
+  'Clasificación única para el flujo de actualización');
+assert.match(runner, /classifyFlutterChange\(event\.path, status: status\)/,
+  'FileSystemWatcher debe clasificar los cambios locales');
+assert.match(runner, /classifyFlutterChange\(\s*change\.path, status: change\.status/,
+  'La comprobación Git debe usar la misma clasificación');
+assert.match(runner, /case FlutterChangeAction\.reload:[\s\S]*?scheduleReload\(path\)/,
+  'Los cambios de Dart normales deben usar Hot Reload');
+assert.match(runner, /case FlutterChangeAction\.restart:[\s\S]*?forceRestart: true/,
+  'Los recursos existentes deben usar Hot Restart');
+assert.match(runner, /case FlutterChangeAction\.rebuild:[\s\S]*?scheduleRelaunch\(path\)/,
+  'Cambios de bundle/native deben recompilar');
 assert.match(runner, /gitMonitor\.cancel\(\)/,
   'No dejar sondeos de Git vivos tras finalizar Flutter');
 
