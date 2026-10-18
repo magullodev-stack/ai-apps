@@ -34,6 +34,10 @@ $bundle = Replace-ExactlyOnce $bundle 'e.info("Embedded Android Emulator activat
 
 $output = [IO.Path]::GetFullPath($OutputDirectory)
 $extension = Join-Path $output 'extension'
+# Always build from the tracked source, not files left by an older VSIX.
+if (Test-Path -LiteralPath $extension) {
+    Remove-Item -LiteralPath $extension -Recurse -Force
+}
 New-Item -ItemType Directory -Force -Path (Join-Path $extension 'dist') | Out-Null
 Copy-Item -LiteralPath (Join-Path $upstream 'media') -Destination $extension -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $upstream 'LICENSE.txt') -Destination $extension -Force
