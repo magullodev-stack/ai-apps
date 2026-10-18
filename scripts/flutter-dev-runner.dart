@@ -47,10 +47,11 @@ Future<void> main(List<String> args) async {
   var stableChecks = 0;
   var pendingReload = false;
   var pendingImageRestart = false;
+  final observedSinceRevision = <String>{};
   var relaunchRequested = false;
   // Evita que una sustitución atómica de un PNG ya existente se confunda
   // con un recurso nuevo que exige reempaquetado.
-  final knownImageAssets = <String>{};
+  final knownBundledAssets = <String>{};
   final assetDirectory = Directory(
     options.workingDirectory + Platform.pathSeparator + 'assets',
   );
@@ -59,8 +60,8 @@ Future<void> main(List<String> args) async {
       recursive: true,
       followLinks: false,
     )) {
-      if (entity is File && _isImageAsset(entity.path)) {
-        knownImageAssets.add(_normalizedPath(entity.path));
+      if (entity is File) {
+        knownBundledAssets.add(_normalizedPath(entity.path));
       }
     }
   }
@@ -131,22 +132,44 @@ Future<void> main(List<String> args) async {
     );
   }
 
-  for (final root in options.watchRoots) {
-    final directory = Directory(root);
+  // El evento de archivo y el sondeo Git usan la MISMA clasificación.
+  // Si el watcher ya vio un cambio, el respaldo Git no lo ejecuta dos veces.
+  void applyChange(FlutterChangeAction action, String path) {
+    switch (action) {
+      case FlutterChangeAction.none:
+        return;
+      case FlutterChangeAction.reload:
+        scheduleReload(path);
+      case FlutterChangeAction.restart:
+        scheduleReload(path, forceRestart: true);
+      case FlutterChangeAction.rebuild:
+        scheduleRelaunch(path);
+    }
+  }
+
+  for (final watchRoot in options.watchRoots) {
+    final directory = Directory(watchRoot);
     if (!directory.existsSync()) continue;
 
     watchers.add(
       directory.watch(recursive: true).listen((event) {
-        // La primera incorporación de una imagen requiere empaquetarla.
-        // Los cambios de imágenes existentes solo precisan Hot Restart.
-        final isNewImage = event is FileSystemCreateEvent &&
-            _isNewBundledImage(event.path) &&
-            knownImageAssets.add(_normalizedPath(event.path));
-        if (_requiresRelaunch(event.path) || isNewImage) {
-          scheduleRelaunch(event.path);
-        } else if (_shouldReload(event.path)) {
-          scheduleReload(event.path);
+        final normalized = _normalizedPath(event.path);
+        final isAsset = normalized.contains('/assets/');
+        var status = 'M';
+        if (event is FileSystemDeleteEvent) {
+          status = 'D';
+          knownBundledAssets.remove(normalized);
+        } else if (event is FileSystemCreateEvent && isAsset) {
+          // Sustituir atómicamente un archivo ya registrado no añade asset.
+          status = knownBundledAssets.add(normalized) ? 'A' : 'M';
         }
+        final action = classifyFlutterChange(event.path, status: status);
+        if (action == FlutterChangeAction.none) return;
+        final repoPrefix = _normalizedPath(root) + '/';
+        if (normalized.startsWith(repoPrefix)) {
+          observedSinceRevision.add(normalized.substring(repoPrefix.length));
+        }
+        applyChange(action, event.path);
       }),
     );
   }
@@ -170,26 +193,29 @@ Future<void> main(List<String> args) async {
       knownRevision = next;
       if (changes.isEmpty) return;
       stdout.writeln('Revision dev detectada: ${next.substring(0, 7)}.');
-      final needsNewBundle = changes.any((change) {
-        final name = change.path;
-        return name == '${appPath}pubspec.yaml' ||
-            name == '${appPath}pubspec.lock' ||
-            name.startsWith('${appPath}android/') ||
-            name.startsWith('${appPath}ios/') ||
-            (name.startsWith('${appPath}assets/') && change.status != 'M');
-      });
-      if (needsNewBundle) {
-        scheduleRelaunch(
-          options.workingDirectory + Platform.pathSeparator + 'pubspec.yaml',
+      var strongest = FlutterChangeAction.none;
+      String? changedPath;
+      for (final change in changes) {
+        if (observedSinceRevision.contains(_normalizedPath(change.path))) {
+          continue;
+        }
+        final action = classifyFlutterChange(
+          change.path, status: change.status,
         );
-      } else {
-        // Git puede modificar varios widgets a la vez; el restart reconstruye
-        // el isolate y no conserva una pantalla anterior.
-        scheduleReload(
-          options.workingDirectory + Platform.pathSeparator + 'lib',
-          forceRestart: true,
-        );
+        if (action.index > strongest.index) {
+          strongest = action;
+          changedPath = change.path;
+        }
       }
+      observedSinceRevision.clear();
+      if (changedPath != null) {
+        // El respaldo actúa solo sobre archivos cuyos eventos se perdieron.
+        // Un commit Dart se recarga; recursos, reinicio; cambios nativos, build.
+        final localPath = root + Platform.pathSeparator +
+            changedPath.replaceAll('/', Platform.pathSeparator);
+        applyChange(strongest, localPath);
+      }
+
     } catch (_) {
       // Git actualizando índice: la revisión se reintenta en el ciclo siguiente.
     } finally {
@@ -300,6 +326,42 @@ String _configurationSignature(File file) {
   } on FileSystemException {
     return 'unreadable';
   }
+}
+
+/// Orden de precedencia: un conjunto de cambios usa la acción más fuerte.
+/// El clasificador es único para eventos locales y diferencias de Git.
+enum FlutterChangeAction { none, reload, restart, rebuild }
+
+FlutterChangeAction classifyFlutterChange(
+  String path, {
+  String status = 'M',
+}) {
+  final normalized = _normalizedPath(path);
+  if (normalized.contains('/build/') ||
+      normalized.contains('/.dart_tool/') ||
+      normalized.contains('/.git/') ||
+      normalized.contains('/node_modules/') ||
+      normalized.contains('/android/.gradle/')) {
+    return FlutterChangeAction.none;
+  }
+  if (_requiresRelaunch(normalized)) return FlutterChangeAction.rebuild;
+
+  // Los recursos eliminados o nuevos cambian el bundle Flutter.
+  // Los PNG, fuentes y JSON existentes necesitan limpiar el estado/cache.
+  if (normalized.contains('/assets/')) {
+    if (status != 'M') return FlutterChangeAction.rebuild;
+    return FlutterChangeAction.restart;
+  }
+  if (normalized.endsWith('/lib/main.dart')) {
+    return FlutterChangeAction.restart;
+  }
+  if (normalized.endsWith('.dart')) {
+    return FlutterChangeAction.reload;
+  }
+  if (_shouldReload(normalized)) {
+    return FlutterChangeAction.restart;
+  }
+  return FlutterChangeAction.none;
 }
 
 bool _requiresRelaunch(String path) {
