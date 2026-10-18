@@ -119,6 +119,15 @@ assert.doesNotMatch(muondia, /& \$adb connect \$Device/,
   'adb connect emulator-5554 no puede recuperar un AVD local');
 assert.match(startup, /ANDROID_DEVICE_LOST/,
   'La tarea debe distinguir la pérdida ADB de los errores de Flutter');
+assert.ok(startup.indexOf('-Action Check -Serial emulator-5554') <
+  startup.indexOf("Write-SessionLog 'Preparando Android.'"),
+  'Verificar Flutter propio/F5 antes de intentar reiniciar el emulador');
+assert.match(avd, /if \(\$flutterState -ne 'free'\)/,
+  'Revalidar que F5 no ocupa el emulador justo antes de cerrarlo');
+assert.match(avd, /\$terminatedReservedAvd -or -not \$alreadyConnected/,
+  'Un serial ADB obsoleto no puede impedir el relanzamiento del AVD');
+assert.match(avd, /Puerto AVD ocupado por proceso de propiedad no verificada/,
+  'Un proceso ajeno que ocupe el puerto bloquea el arranque seguro');
 assert.match(avd, /function Get-ManagedAvdProcesses/,
   'Recuperación de AVD identifica los procesos propios');
 assert.match(avd, /-avd[\s\S]*-port/,
