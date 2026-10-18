@@ -212,6 +212,44 @@ void main() {
     expect(find.text('Resultado: 9 / 10'), findsOneWidget);
   });
 
+  testWidgets('Pregunta breve: D visible sin desplazar el panel',
+      (tester) async {
+    final data = [
+      for (var i = 0; i < 10; i++)
+        (
+          pivot: 'Astronomía',
+          question: 'Pregunta de prueba 1: ¿qué opción quieres seleccionar?',
+          correct: 'Opción A',
+          options: <String>['Opción A', 'Opción B', 'Opción C', 'Opción D'],
+        ),
+    ];
+    await openQuiz(tester, data: data, size: const Size(390, 700));
+    final panel = tester.getRect(
+      find.byKey(const Key('muondia-question-card')));
+    final optionD = tester.getRect(answer(3));
+    expect(optionD.bottom, lessThanOrEqualTo(panel.bottom - 6),
+        reason: 'La respuesta D debe verse completa en un quiz corto');
+    expect(optionD.top, greaterThanOrEqualTo(panel.top));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Progreso sin contorno blanco y anillo compacto',
+      (tester) async {
+    await openQuiz(tester);
+    final orb = tester.widget<DecoratedBox>(
+        find.byKey(const Key('muondia-progress-orb-0')));
+    final border = (orb.decoration as BoxDecoration).border! as Border;
+    expect(border.top.width, lessThan(1.1));
+    expect(border.top.color, isNot(const Color(0xFFA5FFF5)));
+    expect(tester.getSize(
+        find.byKey(const Key('muondia-timer-ring'))).width, 58);
+    for (final kind in ['fifty', 'hint', 'pause']) {
+      final target = find.byKey(Key('muondia-aid-$kind'));
+      expect(tester.getSize(target).height, greaterThan(60));
+      expect(tester.getSize(target).height, lessThan(80));
+    }
+  });
+
   testWidgets('Pantalla estrecha: scroll solo dentro de tarjeta',
       (tester) async {
     final data = [
