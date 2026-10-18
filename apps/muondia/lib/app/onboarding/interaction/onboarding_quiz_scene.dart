@@ -229,59 +229,64 @@ class _AidButton extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Mismo velo que las respuestas descartadas: el botón permanece
-        // en su sitio, pero deja de parecer disponible tras gastar su uso.
         AnimatedOpacity(
           key: Key(isFifty ? 'muondia-fifty-opacity' : 'muondia-hint-opacity'),
           opacity: available ? 1.0 : 0.40,
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           child: Material(
-            color: const Color(0xFF211751),
-            borderRadius: BorderRadius.circular(38 * scale),
-            clipBehavior: Clip.antiAlias,
+            type: MaterialType.transparency,
             child: InkWell(
               onTap: enabled ? onTap : null,
-              child: Container(
+              child: SizedBox(
                 height: 64 * scale,
-                alignment: Alignment.center,
-                padding: EdgeInsets.symmetric(horizontal: 10 * scale),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(38 * scale),
-                  border: Border.all(
-                    color: const Color(0xFF7B3CFF),
-                    width: 2.5 * scale,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    if (loading)
-                      SizedBox(
-                        width: 22 * scale,
-                        height: 22 * scale,
-                        child: const CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    else
-                      Icon(
-                        icon,
-                        color: label == 'Pista IA'
-                            ? const Color(0xFFFFC63D)
-                            : Colors.white,
-                        size: 27 * scale,
-                      ),
-                    SizedBox(width: 8 * scale),
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          style: MuondiaTypography.sectionTitle.copyWith(
-                            color: Colors.white,
-                            fontSize: 20 * scale,
+                    Image.asset(
+                      'assets/onboarding/test/Caja comodines.png',
+                      key: Key(isFifty
+                          ? 'muondia-fifty-image' : 'muondia-hint-image'),
+                      fit: BoxFit.fill,
+                      filterQuality: FilterQuality.high,
+                      excludeFromSemantics: true,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12 * scale),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (loading)
+                            SizedBox(
+                              width: 22 * scale,
+                              height: 22 * scale,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          else
+                            Icon(
+                              icon,
+                              color: isFifty
+                                  ? Colors.white
+                                  : const Color(0xFFFFC63D),
+                              size: 25 * scale,
+                            ),
+                          SizedBox(width: 8 * scale),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                style: MuondiaTypography.sectionTitle.copyWith(
+                                  color: Colors.white,
+                                  fontSize: 20 * scale,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
@@ -290,44 +295,35 @@ class _AidButton extends StatelessWidget {
             ),
           ),
         ),
-        // La esfera solo representa usos disponibles. Al llegar a cero
-        // desaparece, sin modificar las dimensiones del botón.
         if (available)
           Positioned(
             right: 0,
             top: -8 * scale,
-            child: Container(
+            child: SizedBox(
               key: Key(isFifty ? 'muondia-fifty-count' : 'muondia-hint-count'),
               width: 30 * scale,
               height: 30 * scale,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFFFE58E), Color(0xFFFFB81D)],
-                ),
-                border: Border.all(
-                  color: const Color(0xFFFFF0B0),
-                  width: 1.3,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x440B0635),
-                    blurRadius: 5,
-                    offset: Offset(0, 2),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/onboarding/test/Esfera.png',
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                    excludeFromSemantics: true,
+                  ),
+                  Center(
+                    child: Text(
+                      '$remaining',
+                      style: MuondiaTypography.screenTitle.copyWith(
+                        color: const Color(0xFF201047),
+                        fontSize: 20 * scale,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
                   ),
                 ],
-              ),
-              child: Text(
-                '$remaining',
-                style: MuondiaTypography.screenTitle.copyWith(
-                  color: const Color(0xFF201047),
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
               ),
             ),
           ),
