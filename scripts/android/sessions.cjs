@@ -139,13 +139,17 @@ class Sessions {
       const lease = readJson(this.leaseFile(session), null);
       const runnerAlive = !!lease && alive(lease.pid);
       const taskRunning = session.kind === 'development-task' && await this.platform.taskRunning();
-      const active = deviceReady && !!pid && (session.kind !== 'flutter' || runnerAlive);
+      // El APK vivo no basta: Muondia solo está supervisada si su tarea de
+      // Windows sigue activa. Evita abrir una pantalla vieja antes del arranque.
+      const active = deviceReady && !!pid &&
+        (session.kind === 'development-task' ? taskRunning :
+          session.kind !== 'flutter' || runnerAlive);
       let status = active ? 'running' : deviceReady ? 'device_ready' : 'offline';
       if (session.kind === 'flutter' && runnerAlive && state.status !== 'running') status = state.status;
       if (session.kind === 'development-task' && taskRunning && !active) status = 'starting';
       // Un proceso Android visible no demuestra que Flutter siga supervisado.
       // Diferenciar la APK superviviente de una sesion de desarrollo real.
-      if (session.kind === 'development-task' && !taskRunning && active) status = 'orphaned';
+      if (session.kind === 'development-task' && !taskRunning && deviceReady && !!pid) status = 'orphaned';
       if (session.kind === 'flutter' && !runnerAlive && ['failed', 'starting', 'running'].includes(state.status)) status = 'failed';
       return { ...session, id: key(session), deviceReady, active, status, appPid: pid,
         epoch: `${state.token || ''}:${pid}` };
@@ -155,7 +159,8 @@ class Sessions {
     const session = this.find(id);
     if (session.kind === 'development-task') {
       if (await this.platform.taskRunning()) return;
-      if (await this.platform.hasFlutter(session)) throw new Error('Muondia already has a Flutter runner outside the task; recover it before starting');
+      // La tarea persistente ya valida si Flutter pertenece a AI-APPS,
+      // lo recupera si es propio y rechaza F5. No duplicar esa decisión aquí.
       await this.platform.startTask(); return;
     }
     if (session.kind === 'external') throw new Error('External sessions are controlled by their owner; only visualization is managed here');
