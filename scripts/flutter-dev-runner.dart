@@ -445,6 +445,80 @@ String _configurationSignature(File file) {
   }
 }
 
+enum FlutterContentStatus { applied, scheduled, changed }
+
+/// Distingue versiones de archivo, no eventos de Windows ni commits. Git
+/// puede confirmar después los mismos bytes que el watcher ya ha aplicado.
+final class FlutterContentTracker {
+  final _applied = <String, String>{};
+  final _pending = <String, String>{};
+  final _active = <String, String>{};
+
+  void seed(File file) {
+    _applied[_normalizedPath(file.path)] = _configurationSignature(file);
+  }
+
+  void seedDirectory(Directory directory) {
+    if (!directory.existsSync()) return;
+    for (final entity in directory.listSync(followLinks: false)) {
+      if (_isGeneratedFlutterPath('/' + _normalizedPath(entity.path) + '/')) {
+        continue;
+      }
+      if (entity is Directory) {
+        seedDirectory(entity);
+      } else if (entity is File &&
+          classifyFlutterChange(entity.path) != FlutterChangeAction.none) {
+        seed(entity);
+      }
+    }
+  }
+
+  FlutterContentStatus status(String path) {
+    final key = _normalizedPath(path);
+    final signature = _configurationSignature(File(path));
+    if (_pending[key] == signature || _active[key] == signature) {
+      return FlutterContentStatus.scheduled;
+    }
+    if (_applied[key] == signature && !_active.containsKey(key)) {
+      return FlutterContentStatus.applied;
+    }
+    return FlutterContentStatus.changed;
+  }
+
+  bool queue(String path) {
+    final key = _normalizedPath(path);
+    switch (status(path)) {
+      case FlutterContentStatus.applied:
+        _pending.remove(key);
+        return false;
+      case FlutterContentStatus.scheduled:
+        return false;
+      case FlutterContentStatus.changed:
+        _pending[key] = _configurationSignature(File(path));
+        return true;
+    }
+  }
+
+  bool beginUpdate() {
+    if (_pending.isEmpty) return false;
+    _active.addAll(_pending);
+    _pending.clear();
+    return true;
+  }
+
+  void settle(bool success) {
+    if (success) _applied.addAll(_active);
+    _active.clear();
+  }
+}
+
+bool _isGeneratedFlutterPath(String path) =>
+    path.contains('/build/') ||
+    path.contains('/.dart_tool/') ||
+    path.contains('/.git/') ||
+    path.contains('/node_modules/') ||
+    path.contains('/android/.gradle/');
+
 /// Orden de precedencia: un conjunto de cambios usa la acción más fuerte.
 /// El clasificador es único para eventos locales y diferencias de Git.
 enum FlutterChangeAction { none, reload, restart, rebuild }
@@ -456,11 +530,7 @@ FlutterChangeAction classifyFlutterChange(
   // Git entrega rutas relativas; los eventos Windows entregan absolutas.
   // El prefijo permite aplicar las mismas reglas a ambas representaciones.
   final normalized = '/' + _normalizedPath(path);
-  if (normalized.contains('/build/') ||
-      normalized.contains('/.dart_tool/') ||
-      normalized.contains('/.git/') ||
-      normalized.contains('/node_modules/') ||
-      normalized.contains('/android/.gradle/') ||
+  if (_isGeneratedFlutterPath(normalized) ||
       normalized.endsWith('/android/app/src/main/java/io/flutter/plugins/generatedpluginregistrant.java')) {
     return FlutterChangeAction.none;
   }

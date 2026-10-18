@@ -187,7 +187,9 @@ assert.match(startup, /Hot reload automatico activo/,
   'The persistent startup retains its Hot Reload monitoring');
 
 const debug = file('apps/muondia/prepare-debug.ps1');
-assert.match(debug, /Get-ScheduledTask -TaskName 'AI-APPS Development'/,
+assert.match(debug, /\$taskName = 'AI-APPS Development'/,
+  'F5 must target the persistent Muondia task');
+assert.match(debug, /Get-ScheduledTask -TaskName \$taskName/,
   'F5 must check the persistent task before launching');
 assert.match(debug, /-Action Check -Serial emulator-5554/,
   'F5 must check the device owner');
