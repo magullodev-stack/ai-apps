@@ -284,7 +284,8 @@ class _AidButton extends StatelessWidget {
     final isFifty = label == '50/50';
     final isHint = label == 'Pista IA';
     final kind = isFifty ? 'fifty' : isHint ? 'hint' : 'pause';
-    final radius = BorderRadius.circular(42 * scale);
+    // La referencia utiliza esquinas redondeadas, no extremos semicirculares.
+    final radius = BorderRadius.circular(25 * scale);
 
     return Semantics(
       label: label,
@@ -302,44 +303,67 @@ class _AidButton extends StatelessWidget {
               child: InkWell(
                 onTap: onTap,
                 borderRadius: radius,
-                child: CustomPaint(
-                  foregroundPainter: _AidNeonOutline(active: active),
-                  child: Container(
-                    height: 76 * scale,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      // La luz está en el borde, no en un relleno cian.
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        stops: [0, 0.52, 1],
-                        colors: [
-                          Color(0xFF150750),
-                          Color(0xFF0B0635),
-                          Color(0xFF1D0750),
-                        ],
-                      ),
-                      borderRadius: radius,
-                    ),
-                    child: loading
-                        ? SizedBox(
-                            width: 28 * scale,
-                            height: 28 * scale,
-                            child: const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 3,
-                            ),
-                          )
-                        : Padding(
-                            padding: EdgeInsets.all(1 * scale),
-                            child: Image.asset(
-                              asset,
-                              key: Key('muondia-$kind-image'),
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
-                              excludeFromSemantics: true,
+                child: SizedBox(
+                  height: 70 * scale,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Fondo oscuro separado del marco transparente, para
+                      // conservar el cielo cósmico fuera de las esquinas.
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 7 * scale,
+                          vertical: 5.3 * scale,
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(23 * scale),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xFF1B065A),
+                                Color(0xFF090342),
+                                Color(0xFF12034E),
+                              ],
                             ),
                           ),
+                        ),
+                      ),
+                      // Marco obtenido del contorno de la referencia: no se
+                      // reconstruye el neón con trazos ni blur en Flutter.
+                      // El corte central estira solo tramos rectos.
+                      Image.asset(
+                        'assets/onboarding/test/lifeline_frame.png',
+                        key: Key('muondia-$kind-frame'),
+                        fit: BoxFit.fill,
+                        scale: 1.5 / scale,
+                        centerSlice: const Rect.fromLTRB(53, 52, 123, 54),
+                        filterQuality: FilterQuality.high,
+                        excludeFromSemantics: true,
+                      ),
+                      Center(
+                        child: loading
+                            ? SizedBox(
+                                width: 28 * scale,
+                                height: 28 * scale,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 3,
+                                ),
+                              )
+                            : Padding(
+                                padding: EdgeInsets.all(1 * scale),
+                                child: Image.asset(
+                                  asset,
+                                  key: Key('muondia-$kind-image'),
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality.high,
+                                  excludeFromSemantics: true,
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -359,7 +383,10 @@ class _AidButton extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFFFF94), Color(0xFFFFC51A)],
                   ),
-                  border: Border.all(color: const Color(0xFFFFF7B7), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFFFFF7B7),
+                    width: 1.5,
+                  ),
                   boxShadow: const [
                     BoxShadow(color: Color(0x66F8AB1C), blurRadius: 6),
                   ],
@@ -379,155 +406,6 @@ class _AidButton extends StatelessWidget {
       ),
     );
   }
-}
-
-
-/// Contorno violeta-magenta inspirado en la referencia visual.
-/// La penumbra, el halo próximo, el núcleo y los reflejos se dibujan
-/// por separado. El cian pertenece al PNG del reloj, nunca al borde.
-class _AidNeonOutline extends CustomPainter {
-  const _AidNeonOutline({required this.active});
-
-  final bool active;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-
-    // El aro queda dentro del botón; únicamente la luz difusa se extiende.
-    final rect = (Offset.zero & size).deflate(3.5);
-    final radius = rect.height / 2;
-    final capsule = RRect.fromRectAndRadius(rect, Radius.circular(radius));
-    final rimShader = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      stops: const [0, 0.27, 0.72, 1],
-      colors: active
-          ? const [
-              Color(0xFFF38AFF),
-              Color(0xFFC43AFF),
-              Color(0xFFAB2AFF),
-              Color(0xFFF177FF),
-            ]
-          : const [
-              Color(0xFFE575FF),
-              Color(0xFFAC2CF5),
-              Color(0xFF9920EF),
-              Color(0xFFE966F6),
-            ],
-    ).createShader(rect);
-
-    // Luz interior violeta muy tenue; no blanquea el icono.
-    final inner = capsule.deflate(2.0);
-    canvas.save();
-    canvas.clipRRect(inner);
-    canvas.drawRRect(
-      inner,
-      Paint()
-        ..shader = const RadialGradient(
-          center: Alignment(-0.9, -0.9),
-          radius: 0.83,
-          colors: [Color(0x447F36D6), Color(0x006F20CE)],
-        ).createShader(rect),
-    );
-    canvas.drawRRect(
-      inner,
-      Paint()
-        ..shader = const RadialGradient(
-          center: Alignment(1.0, 1.0),
-          radius: 0.86,
-          colors: [Color(0x40551CBA), Color(0x00551CBA)],
-        ).createShader(rect),
-    );
-    canvas.restore();
-
-    // Penumbra amplia fundida con el fondo cósmico.
-    canvas.drawRRect(
-      capsule,
-      Paint()
-        ..isAntiAlias = true
-        ..color = const Color(0xA58A18EE)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 8.0
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.2),
-    );
-
-    // Halo inmediato y saturado.
-    canvas.drawRRect(
-      capsule,
-      Paint()
-        ..isAntiAlias = true
-        ..shader = rimShader
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 5.2
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.3),
-    );
-
-    // Núcleo luminoso más ancho y definido que el anterior.
-    canvas.drawRRect(
-      capsule,
-      Paint()
-        ..isAntiAlias = true
-        ..shader = rimShader
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0,
-    );
-    canvas.drawRRect(
-      capsule.deflate(2.05),
-      Paint()
-        ..isAntiAlias = true
-        ..color = const Color(0x446E20E3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    // Destellos cortos rosados, no arcos cian ni líneas blancas.
-    final upperLeft = Path()
-      ..moveTo(rect.left, rect.top + radius)
-      ..arcToPoint(
-        Offset(rect.left + radius, rect.top),
-        radius: Radius.circular(radius),
-        clockwise: true,
-      )
-      ..lineTo(rect.left + radius + 9, rect.top);
-    _paintHighlight(canvas, upperLeft, const Color(0xFFF192FF));
-
-    final lowerRight = Path()
-      ..moveTo(rect.right - radius - 9, rect.bottom)
-      ..lineTo(rect.right - radius, rect.bottom)
-      ..arcToPoint(
-        Offset(rect.right, rect.bottom - radius),
-        radius: Radius.circular(radius),
-        clockwise: false,
-      );
-    _paintHighlight(canvas, lowerRight, const Color(0xFFF17AFF));
-  }
-
-  void _paintHighlight(Canvas canvas, Path path, Color color) {
-    canvas.drawPath(
-      path,
-      Paint()
-        ..isAntiAlias = true
-        ..color = color.withAlpha(160)
-        ..strokeWidth = 3.4
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.6),
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..isAntiAlias = true
-        ..color = color.withAlpha(155)
-        ..strokeWidth = 1.05
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _AidNeonOutline oldDelegate) =>
-      oldDelegate.active != active;
 }
 
 /// Superficie, letra, texto y área táctil comparten la misma geometría.

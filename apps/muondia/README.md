@@ -123,10 +123,11 @@ comodines permanecen fijos.
 
 La tarjeta principal tiene una superficie clara única, borde redondeado con
 antialiasing y sombra sutil. Las respuestas son blancas con sombras suaves y
-distintivos neutros. Los comodines tienen cápsulas oscuras con contorno violeta-magenta
-formado por un núcleo definido, dos halos de distinta difusión, reflejos
-rosados localizados y una iluminación interior tenue. Los PNG originales
-ocupan el espacio central disponible sin añadirles filtros de color. Los
+distintivos neutros. Los comodines usan un marco PNG transparente, extraído del contorno de la
+referencia visual y completado en la esquina tapada por el contador. El marco
+se escala mediante nueve segmentos (`centerSlice`) para mantener las curvas y el
+grosor del trazo; Flutter dibuja únicamente el fondo oscuro, los PNG de
+iconos originales, el estado de disponibilidad y los contadores. Los
 comodines agotados se atenúan y pierden su esfera amarilla, sin mover el
 resto del diseño. La barra temporal se vuelve a
 componer en Flutter con pista y relleno violeta, y conserva el porcentaje

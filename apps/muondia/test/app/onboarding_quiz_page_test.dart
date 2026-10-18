@@ -95,9 +95,31 @@ void main() {
           find.byKey(Key('muondia-${entry.key}-image')));
       expect((image.image as AssetImage).assetName,
           'assets/onboarding/test/' + entry.value);
+      final frame = tester.widget<Image>(
+          find.byKey(Key('muondia-${entry.key}-frame')));
+      expect((frame.image as AssetImage).assetName,
+          'assets/onboarding/test/lifeline_frame.png');
+      expect(frame.fit, BoxFit.fill);
+      expect(frame.centerSlice, const Rect.fromLTRB(53, 52, 123, 54));
       expect(find.byKey(Key('muondia-${entry.key}-count')), findsOneWidget);
     }
     expect(find.byKey(const Key('muondia-hearts')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Marco de comodines: proporción y estado al agotar',
+      (tester) async {
+    await openQuiz(tester);
+    for (final kind in ['fifty', 'hint', 'pause']) {
+      expect(tester.getSize(find.byKey(Key('muondia-$kind-frame'))).height,
+          70);
+    }
+    await tester.tap(find.byKey(const Key('muondia-aid-fifty')));
+    await tester.pump(const Duration(milliseconds: 220));
+    expect(tester.widget<AnimatedOpacity>(
+        find.byKey(const Key('muondia-fifty-opacity'))).opacity, 0.42);
+    expect(find.byKey(const Key('muondia-fifty-frame')), findsOneWidget);
+    expect(find.byKey(const Key('muondia-fifty-count')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
