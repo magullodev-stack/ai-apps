@@ -62,10 +62,6 @@ class OnboardingQuizScene extends StatelessWidget {
             alignment: Alignment.topCenter,
             filterQuality: FilterQuality.high,
             excludeFromSemantics: true,
-            // El fondo es opcional: si el usuario borra el PNG durante
-            // desarrollo, el quiz sigue funcionando sobre color sólido.
-            errorBuilder: (context, error, stackTrace) =>
-                const ColoredBox(color: Color(0xFF181442)),
           ),
           SafeArea(
             child: Center(
