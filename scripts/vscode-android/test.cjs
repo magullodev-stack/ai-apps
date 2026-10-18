@@ -344,32 +344,37 @@ async function run() {
   transportBroken = false;
   await api.refresh();
 
-  // Una sesión que se cayó tras arrancar debe recuperarse sin reiniciar
-  // VS Code, pero nunca lanzar múltiples intentos en el mismo sondeo.
+  // Windows es el único supervisor. Un fallo o una parada de la tarea
+  // nunca convierte el sondeo del visor en otro mecanismo de arranque.
   taskRunning = false;
-  const beforeRecovery = calls.filter(call => call[0] === 'start').length;
+  const startsBeforeStop = calls.filter(call => call[0] === 'start').length;
+  await api.refresh();
   await api.refresh();
   assert.equal(calls.filter(call => call[0] === 'start').length,
-    beforeRecovery + 1, 'El sondeo debe recuperar una sesión Flutter caída');
-  await api.refresh();
-  assert.equal(calls.filter(call => call[0] === 'start').length,
-    beforeRecovery + 1, 'La recuperación respeta el cooldown y no se duplica');
+    startsBeforeStop, 'El sondeo nunca supervisa ni arranca la tarea de Windows');
+  // Ni un estado Running transitorio habilita reinicios desde el editor.
   taskRunning = true;
   await api.refresh();
-  await commands.get('aiAppsAndroid.stop')(entries[0]);
   taskRunning = false;
   await api.refresh();
   assert.equal(calls.filter(call => call[0] === 'start').length,
-    beforeRecovery + 1, 'Parada explícita: nunca reactivar automáticamente');
+    startsBeforeStop, 'Una caída tras Running sigue perteneciendo a Windows');
+
+  await commands.get('aiAppsAndroid.start')(entries[0]);
+  assert.deepEqual(calls.at(-1), ['start', 'muondia@emulator-5554'],
+    'El comando explícito de inicio sigue disponible');
+  await commands.get('aiAppsAndroid.stop')(entries[0]);
+  await api.refresh();
+  assert.equal(calls.filter(call => call[0] === 'start').length,
+    startsBeforeStop + 1, 'Parada explícita: nunca reactivar automáticamente');
 
   assert.ok(calls.some(call => call[0] === 'stop' && call[1] === entries[0].id));
-  // Un paquete Android antiguo puede seguir en primer plano aunque Flutter
-  // y la tarea ya hayan terminado: debe recuperarse la tarea, no el APK.
+  // Un paquete Android antiguo puede sobrevivir a la tarea. Reabrir VS Code
+  // conserva el visor sin iniciar Flutter ni una APK antigua.
   taskRunning = false;
   await sandbox.module.exports.activate({ subscriptions: [] });
-  assert.deepEqual(calls.filter(call => call[0] === 'start'),
-    [['start', 'muondia@emulator-5554'], ['start', 'muondia@emulator-5554']],
-    'La recuperación durante el sondeo y al reabrir respetan un único intento cada una');
+  assert.equal(calls.filter(call => call[0] === 'start').length,
+    startsBeforeStop + 1, 'Reabrir el editor no inicia una tarea detenida');
   assert.equal(panels.size, 1, 'Reactivation reuses the existing Muondia panel');
   // Stress-test the generic registry without simulating a named second app.
   entries = Array.from({ length: 150 }, (_, i) => ({
@@ -380,6 +385,6 @@ async function run() {
   assert.equal(panels.size, 151, 'No fixed maximum of tabs; existing Muondia panel untouched');
   vscode.workspace.isTrusted = false;
   assert.equal(await sandbox.module.exports.activate({ subscriptions: [] }), undefined);
-  console.log('PASS: F7 dev Auth, Muondia startup/recovery, no duplicate Flutter, viewer reopening, reconnect/stop, stress registry and workspace trust.');
+  console.log('PASS: F7 dev Auth, Windows owns startup, explicit session control, viewer reopening, reconnect/stop, stress registry and workspace trust.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

@@ -23,10 +23,6 @@ async function activate(context) {
   const viewerRetryAt = new Map();
   const viewerRetryCooldownMs = 15000;
   let sessions = [], refreshing, disposed = false, firstRefresh = true;
-  let developmentWasRunning = false;
-  let autoRecoverySuppressed = false;
-  let lastAutoRecovery = 0;
-  const autoRecoveryCooldownMs = 30000;
   let lastTreeSnapshot;
   const extension = vscode.extensions.getExtension(EMBEDROID_ID);
   if (!extension) throw new Error('Instala EmbeDroid con scripts/install-embedroid.ps1.');
@@ -191,30 +187,9 @@ async function activate(context) {
       if (disposed) return sessions;
       const initial = firstRefresh;
       firstRefresh = false;
-      // Git puede estar actualizado mientras la tarea Flutter se ha parado.
-      // Recuperarla durante el sondeo, no solamente al abrir VS Code.
-      // Respetar una parada manual y una depuración F5; el Programador de
-      // tareas aplica exclusividad y no se inicia ningún segundo Flutter.
-      const developmentSession = sessions.find(
-        item => item.kind === 'development-task');
-      if (developmentSession) {
-        try {
-          const running = await service.platform.taskRunning();
-          if (running) {
-            developmentWasRunning = true;
-            lastAutoRecovery = 0;
-          } else if ((initial || developmentWasRunning) &&
-              !autoRecoverySuppressed && !activeMuondia() &&
-              (lastAutoRecovery === 0 ||
-                Date.now() - lastAutoRecovery >= autoRecoveryCooldownMs)) {
-            lastAutoRecovery = Date.now();
-            await service.start(developmentSession.id);
-            output.appendLine('Recuperación automática de Flutter solicitada.');
-          }
-        } catch (error) {
-          output.appendLine('Recuperación Flutter pendiente: ' + error.message);
-        }
-      }
+      // La tarea de Windows conserva el arranque y la recuperación de
+      // Flutter/Android. El sondeo del visor solo observa su estado y
+      // recupera vídeo; nunca inicia una tarea caída o detenida.
       // El sondeo de dispositivos se ejecuta cada 5 segundos, pero el
       // árbol no debe reconstruirse mientras el usuario lo despliega.
       const currentTreeSnapshot = JSON.stringify(sessions.map(session => [
@@ -278,13 +253,6 @@ async function activate(context) {
       (await pick(sessions.filter(item => item.kind !== 'external'), `${action === 'start' ? 'Iniciar' : 'Detener'} sesión Android`))?.session;
     if (!session) return;
     const id = session.id || `${session.appId}@${session.serial}`;
-    if (session.kind === 'development-task') {
-      if (action === 'stop') autoRecoverySuppressed = true;
-      if (action === 'start') {
-        autoRecoverySuppressed = false;
-        lastAutoRecovery = Date.now();
-      }
-    }
     await service[action](id);
     if (action === 'start') shown.delete(id);
     await refresh();
