@@ -232,7 +232,31 @@ Future<void> main(List<String> args) async {
       'A blocked machine triggers a bounded, owned-process relaunch');
     controller.dispose();
 
-    stdout.writeln('PASS: clasificación de cambios, serialización, fallback y watchdog seguro.');
+    // La pérdida de ADB debe solicitar recuperación del dispositivo (88),
+    // no una reconstrucción ordinaria (86) ni matar un proceso ajeno.
+    final lostProcess = await Process.start(
+      Platform.resolvedExecutable,
+      [Platform.script.toFilePath(), '--fake-machine', trace.path],
+    );
+    try {
+      final lostController = runner.FlutterMachineController(lostProcess);
+      final started = Completer<void>();
+      lostController.onReady = () {
+        if (!started.isCompleted) started.complete();
+      };
+      await started.future.timeout(const Duration(seconds: 20));
+      lostController.requestDeviceRecovery();
+      require(lostController.lostConnection &&
+          !lostController.relaunchRequested &&
+          !lostController.stopRequested,
+        'Pérdida ADB debe distinguirse de rebuild y parada manual');
+      await lostProcess.exitCode.timeout(const Duration(seconds: 15));
+      lostController.dispose();
+    } finally {
+      lostProcess.kill();
+    }
+
+    stdout.writeln('PASS: clasificación, fallback, ADB offline y recuperación de proceso propio.');
   } finally {
     process.kill();
     await directory.delete(recursive: true);
