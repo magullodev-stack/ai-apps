@@ -33,29 +33,36 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      final stage = tester.widget<DecoratedBox>(
+      final stage = tester.widget<Stack>(
         find.byKey(const Key('muondia-quiz-stage')),
       );
-      final stageDecoration = stage.decoration as BoxDecoration;
-      expect(stageDecoration.gradient, isNull);
-      expect(stageDecoration.image, isNotNull);
-      expect(
-        (stageDecoration.image!.image as AssetImage).assetName,
-        'assets/onboarding/test/quiz_background.png',
+      expect(stage.fit, StackFit.expand);
+      final backgroundImage = tester.widget<Image>(
+        find.byKey(const Key('muondia-quiz-background-image')),
       );
-      expect(stageDecoration.image!.fit, BoxFit.cover);
-      expect(stageDecoration.borderRadius, isNull,
-          reason: 'El fondo del test no es una tarjeta redondeada');
-      expect(stageDecoration.border, isNull);
-      for (final name in ['muondia-fifty-count', 'muondia-hint-count']) {
-        final text = tester.widget<Text>(
-          find.descendant(
-            of: find.byKey(Key(name)),
-            matching: find.text('1'),
-          ),
+      expect((backgroundImage.image as AssetImage).assetName,
+          'assets/onboarding/test/quiz_background.png');
+      expect(backgroundImage.fit, BoxFit.cover);
+      expect(find.byKey(const Key('muondia-question-panel-image')),
+          findsOneWidget);
+      for (final name in ['muondia-fifty-image', 'muondia-hint-image']) {
+        expect(
+          (tester.widget<Image>(find.byKey(Key(name))).image as AssetImage)
+              .assetName,
+          'assets/onboarding/test/Caja comodines.png',
         );
-        expect(text.style?.color, const Color(0xFF201047),
-            reason: 'Los contadores amarillos necesitan cifras oscuras');
+      }
+      for (final name in ['muondia-fifty-count', 'muondia-hint-count']) {
+        final count = find.byKey(Key(name));
+        final text = tester.widget<Text>(
+          find.descendant(of: count, matching: find.text('1')),
+        );
+        expect(text.style?.color, const Color(0xFF201047));
+        final image = tester.widget<Image>(
+          find.descendant(of: count, matching: find.byType(Image)),
+        );
+        expect((image.image as AssetImage).assetName,
+            'assets/onboarding/test/Esfera.png');
       }
 
       final pivotIcon = tester.getSize(
