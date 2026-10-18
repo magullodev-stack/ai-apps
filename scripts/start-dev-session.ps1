@@ -141,7 +141,14 @@ try {
     } elseif ($_.Exception.Message -like '*Flutter*') {
         Write-SessionLog 'Comprueba Flutter con el lanzador de Muondia en PowerShell.'
     }
-    $retryDelaySeconds = [Math]::Min(60, $retryDelaySeconds * 2)
+    if ($_.Exception.Message -like '*ANDROID_DEVICE_LOST*') {
+        # El runner ya confirmó que el dispositivo desapareció de ADB.
+        # No esperar el backoff de un error de Gradle o credenciales.
+        Write-SessionLog 'ADB perdio emulator-5554; recuperando AVD reservado.'
+        $retryDelaySeconds = 3
+    } else {
+        $retryDelaySeconds = [Math]::Min(60, $retryDelaySeconds * 2)
+    }
 }
 # Reintento limitado; Recover nunca cierra sesiones ajenas ni F5.
 Start-Sleep -Seconds $retryDelaySeconds
