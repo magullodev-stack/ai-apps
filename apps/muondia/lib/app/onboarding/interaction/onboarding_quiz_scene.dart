@@ -56,7 +56,7 @@ class OnboardingQuizScene extends StatelessWidget {
     final scale = (MediaQuery.sizeOf(context).width / 390.0)
         .clamp(0.82, 1.1)
         .toDouble();
-    final spacing = 16 * scale;
+    final spacing = 12 * scale;
     final panelRadius = BorderRadius.circular(28 * scale);
 
     return Scaffold(
@@ -80,7 +80,7 @@ class OnboardingQuizScene extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
                     spacing,
-                    8 * scale,
+                    17 * scale,
                     spacing,
                     spacing,
                   ),
@@ -128,21 +128,19 @@ class OnboardingQuizScene extends StatelessWidget {
                             clipBehavior: Clip.antiAlias,
                             child: LayoutBuilder(
                               builder: (context, viewport) {
-                                // Crece el alto útil de las respuestas, nunca
-                                // se estiran las curvas ni el texto.
-                                final minAnswerHeight =
-                                    (viewport.maxHeight / 6.2)
-                                        .clamp(64 * scale, 94 * scale)
-                                        .toDouble();
+                                // No ampliar cada respuesta según la altura total del panel:
+                                // la última quedaba cortada. Preguntas largas
+                                // siguen teniendo scroll interior.
+                                final minAnswerHeight = 68 * scale;
                                 return SingleChildScrollView(
                                   key: ValueKey('quiz-question-$questionNumber'),
                                   physics: const ClampingScrollPhysics(),
                                   child: Padding(
                                     padding: EdgeInsets.fromLTRB(
                                       20 * scale,
-                                      26 * scale,
+                                      24 * scale,
                                       20 * scale,
-                                      20 * scale,
+                                      24 * scale,
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
@@ -163,7 +161,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                             ),
                                           ),
                                         ),
-                                        SizedBox(height: 30 * scale),
+                                        SizedBox(height: 20 * scale),
                                         for (var i = 0;
                                             i < question.options.length;
                                             i++)
@@ -172,7 +170,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                               bottom: i ==
                                                       question.options.length - 1
                                                   ? 0
-                                                  : 10 * scale,
+                                                  : 12 * scale,
                                             ),
                                             child: _AnswerCard(
                                               key: ValueKey(
@@ -301,23 +299,19 @@ class _AidButton extends StatelessWidget {
               child: InkWell(
                 onTap: onTap,
                 borderRadius: radius,
-                child: Container(
-                  height: 76 * scale,
+                child: CustomPaint(
+                  foregroundPainter: _AidNeonOutline(active: active),
+                  child: Container(
+                    height: 70 * scale,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xC80B0442),
+                    color: const Color(0xD80B0442),
                     borderRadius: radius,
-                    border: Border.all(
-                      color: active
-                          ? const Color(0xFF2DF7F1)
-                          : const Color(0xFFAD40FA),
-                      width: 3 * scale,
-                    ),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x884D05D8),
-                        blurRadius: 12,
-                        spreadRadius: 1,
+                        color: Color(0x664D05D8),
+                        blurRadius: 9,
+                        spreadRadius: 0.5,
                       ),
                     ],
                   ),
@@ -338,6 +332,7 @@ class _AidButton extends StatelessWidget {
                             excludeFromSemantics: true,
                           ),
                         ),
+                  ),
                 ),
               ),
             ),
@@ -376,6 +371,69 @@ class _AidButton extends StatelessWidget {
       ),
     );
   }
+}
+
+
+class _AidNeonOutline extends CustomPainter {
+  const _AidNeonOutline({required this.active});
+  final bool active;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final rect = (Offset.zero & size).deflate(1.2);
+    final radius = rect.height / 2;
+    final outline = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+
+    canvas.drawRRect(
+      outline,
+      Paint()
+        ..color = const Color(0x556F2CDD)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
+    canvas.drawRRect(
+      outline,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: active
+              ? const [Color(0xFF60FFF3), Color(0xFFA84AF8), Color(0xFF50DDFF)]
+              : const [Color(0xFF6ECAFF), Color(0xFF963EF1), Color(0xFFF063FF)],
+        ).createShader(rect)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.35,
+    );
+    final topLeft = Path()
+      ..moveTo(rect.left + radius + 20, rect.top)
+      ..lineTo(rect.left + radius, rect.top)
+      ..quadraticBezierTo(rect.left, rect.top, rect.left, rect.top + radius);
+    canvas.drawPath(
+      topLeft,
+      Paint()
+        ..color = const Color(0xD7A0F5FF)
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 1.8,
+    );
+    final bottomRight = Path()
+      ..moveTo(rect.right - radius - 16, rect.bottom)
+      ..lineTo(rect.right - radius, rect.bottom)
+      ..quadraticBezierTo(rect.right, rect.bottom, rect.right, rect.bottom - radius);
+    canvas.drawPath(
+      bottomRight,
+      Paint()
+        ..color = const Color(0xBFFF89FB)
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 1.7,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _AidNeonOutline oldDelegate) =>
+      oldDelegate.active != active;
 }
 
 /// Superficie, letra, texto y área táctil comparten la misma geometría.
