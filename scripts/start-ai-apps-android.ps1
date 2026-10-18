@@ -55,7 +55,85 @@ function Test-EmulatorReady {
     }
 }
 
+# Solo el AVD reservado, verificado por nombre de proceso, nombre del AVD
+# Y puerto, puede cerrarse. Nunca reiniciar globalmente el servidor ADB.
+function Get-ManagedAvdProcesses {
+    $avdArg = '(?i)(^|\s)-avd(?:\s+|=)"?' + [regex]::Escape($AvdName) + '"?(?=\s|$)'
+    $portArg = '(?i)(^|\s)-port(?:\s+|=)"?' + [regex]::Escape([string]$port) + '"?(?=\s|$)'
+    @(
+        Get-CimInstance Win32_Process | Where-Object {
+            $_.Name -in @('emulator.exe', 'qemu-system-x86_64.exe',
+                'qemu-system-aarch64.exe') -and
+            $_.CommandLine -match $avdArg -and
+            $_.CommandLine -match $portArg
+        }
+    )
+}
+
+function Get-SerialState {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = & $adb devices 2>$null
+        if ($LASTEXITCODE -ne 0) { return 'unknown' }
+        foreach ($line in @($lines)) {
+            if ($line -match ('^' + [regex]::Escape($Serial) + '\s+(\S+)')) {
+                return $Matches[1]
+            }
+        }
+        return 'missing'
+    } catch {
+        return 'unknown'
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+}
+
 if (-not (Test-EmulatorReady)) {
+    # Un reinicio de ADB puede provocar una ausencia momentánea. No
+    # terminar el AVD de inmediato; observar tres veces antes de intervenir.
+    for ($attempt = 0; $attempt -lt 3; $attempt++) {
+        Start-Sleep -Seconds 2
+        if (Test-EmulatorReady) { break }
+    }
+}
+
+if (-not (Test-EmulatorReady)) {
+    $state = Get-SerialState
+    if ($state -eq 'unknown') {
+        throw 'ADB no responde; se reintentará sin terminar otros dispositivos.'
+    }
+    # Un AVD que ADB todavía ve como online puede seguir arrancando.
+    # No hay motivo para matarlo cuando simplemente no terminó boot.
+    if ($state -eq 'missing' -or $state -eq 'offline') {
+        $owned = @(Get-ManagedAvdProcesses)
+        if ($owned.Count -gt 0) {
+            foreach ($process in $owned) {
+                $current = Get-CimInstance Win32_Process -Filter "ProcessId=$($process.ProcessId)"
+                if ($current -and $current.CreationDate -eq $process.CreationDate -and
+                    $current.CommandLine -eq $process.CommandLine -and
+                    @(Get-ManagedAvdProcesses | Where-Object {
+                        $_.ProcessId -eq $current.ProcessId
+                    }).Count -eq 1) {
+                    & taskkill.exe /PID $process.ProcessId /T /F 2>$null | Out-Null
+                }
+            }
+            # Nunca arrancar un segundo AVD hasta comprobar que el antiguo
+            # ha terminado realmente.
+            for ($attempt = 0; $attempt -lt 10; $attempt++) {
+                if (@(Get-ManagedAvdProcesses).Count -eq 0) { break }
+                Start-Sleep -Seconds 1
+            }
+            if (@(Get-ManagedAvdProcesses).Count -gt 0) {
+                throw 'El AVD reservado sigue activo; no se inicia otro emulador.'
+            }
+        } elseif ($state -eq 'offline') {
+            # No hay proceso de propiedad demostrada: evitar un kill global
+            # de ADB o de emuladores ajenos. La tarea reintentará.
+            throw 'emulator-5554 offline sin proceso AVD verificable.'
+        }
+    }
+
     $avds = @(
         & $emulator -list-avds |
             Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
@@ -71,10 +149,9 @@ if (-not (Test-EmulatorReady)) {
         }
     }
 
-    $alreadyConnected = @(
-        & $adb devices |
-            Where-Object { $_ -match "^$([regex]::Escape($Serial))\s+(device|offline)\s*$" }
-    ).Count -gt 0
+    # 'offline' no significa conectado: tras cerrar nuestro AVD
+    # debe iniciarse otra instancia, aunque ADB aún conserve esa fila.
+    $alreadyConnected = (Get-SerialState) -eq 'device'
 
     if (-not $alreadyConnected) {
         Write-Host "Arrancando $AvdName..."
