@@ -360,95 +360,79 @@ class _AnswerCard extends StatelessWidget {
       button: true,
       enabled: onTap != null,
       selected: selected,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x253F4BD1),
-              blurRadius: 14,
-              offset: Offset(0, 7),
-            ),
-          ],
-        ),
-        child: AnimatedOpacity(
-          key: Key('muondia-answer-opacity-$index'),
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          opacity: disabled ? 0.40 : 1.0,
-          child: Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              key: Key('muondia-answer-$index'),
-              onTap: onTap,
-              child: AnimatedContainer(
-                key: Key('muondia-answer-feedback-$index'),
-                duration: const Duration(milliseconds: 140),
-                curve: Curves.easeOut,
-                decoration: BoxDecoration(color: color),
-                constraints: const BoxConstraints(minHeight: 56),
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12 * scale,
-                  vertical: 8 * scale,
-                ),
-                child: Row(
-                  children: [
-                    ExcludeSemantics(
-                      child: Container(
-                        key: Key('muondia-answer-letter-$index'),
-                        width: 42 * scale,
-                        height: 44 * scale,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12 * scale),
-                          border: Border.all(color: const Color(0xFFE1E2F5)),
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFFF4F5FF),
-                              Color(0xFFE4E6FA),
-                            ],
-                          ),
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            letter,
-                            style: MuondiaTypography.screenTitle.copyWith(
-                              color: const Color(0xFF0A0A31),
-                              fontSize: 27 * scale,
-                              height: 1,
+      child: AnimatedOpacity(
+        key: Key('muondia-answer-opacity-$index'),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        opacity: disabled ? 0.40 : 1.0,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            key: Key('muondia-answer-$index'),
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: 76 * scale),
+              child: Stack(
+                fit: StackFit.passthrough,
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/onboarding/test/Caja Respuesta.png',
+                      key: Key('muondia-answer-image-$index'),
+                      fit: BoxFit.fill,
+                      filterQuality: FilterQuality.high,
+                      excludeFromSemantics: true,
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: AnimatedContainer(
+                      key: Key('muondia-answer-feedback-$index'),
+                      duration: const Duration(milliseconds: 140),
+                      curve: Curves.easeOut,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(24 * scale),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 22 * scale,
+                      vertical: 18 * scale,
+                    ),
+                    child: Row(
+                      children: [
+                        ExcludeSemantics(
+                          child: SizedBox(
+                            key: Key('muondia-answer-letter-$index'),
+                            width: 42 * scale,
+                            child: Center(
+                              child: Text(
+                                letter,
+                                style: MuondiaTypography.screenTitle.copyWith(
+                                  color: const Color(0xFF0A0A31),
+                                  fontSize: 25 * scale,
+                                  height: 1,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(width: 12 * scale),
-                    Container(
-                      key: Key('muondia-answer-divider-$index'),
-                      width: 1.5 * scale,
-                      height: 32 * scale,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC4C3EB),
-                        borderRadius: BorderRadius.circular(1),
-                      ),
-                    ),
-                    SizedBox(width: 12 * scale),
-                    Expanded(
-                      child: AiAppsContentText(
-                        text,
-                        style: MuondiaTypography.sectionTitle.copyWith(
-                          fontSize: 20 * scale,
-                          color: const Color(0xFF08062C),
-                          height: 1.2,
+                        SizedBox(width: 19 * scale),
+                        Expanded(
+                          child: AiAppsContentText(
+                            text,
+                            style: MuondiaTypography.sectionTitle.copyWith(
+                              fontSize: 20 * scale,
+                              color: const Color(0xFF08062C),
+                              height: 1.2,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
