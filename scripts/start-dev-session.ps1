@@ -14,6 +14,10 @@ function Write-SessionLog([string]$Message) {
     )
 }
 
+# La tarea de desarrollo no debe finalizar silenciosamente ante una caída
+# temporal de Flutter. Reintentar sin tocar procesos ajenos ni F5.
+$retryDelaySeconds = 15
+while ($true) {
 $stage = 'Sincronizacion'
 try {
     # Complete the ignored application's one-time cleanup before starting sync.
@@ -106,7 +110,7 @@ try {
             } elseif ($line -like 'Cambio nativo/dependencias detectado:*' -or
                       $line -like 'Cambio nativo detectado; recompilando*') {
                 Write-SessionLog 'Cambio nativo detectado; reconstruccion solicitada.'
-            } elseif ($line -like 'FIREBASE_CONFIG_OK:*') {
+            } elseif ($line -match '^Revision dev detectada: [a-f0-9]{7}\.
                 Write-SessionLog 'Configuracion Firebase Android verificada.'
             } elseif ($line -like 'Running Gradle task*') {
                 Write-SessionLog 'Compilacion Gradle iniciada.'
@@ -137,4 +141,42 @@ try {
         Write-SessionLog 'Comprueba Flutter con el lanzador de Muondia en PowerShell.'
     }
     exit 1
+}
+) {
+                Write-SessionLog $line
+            } elseif ($line -like 'FIREBASE_CONFIG_OK:*') {
+                Write-SessionLog 'Configuracion Firebase Android verificada.'
+            } elseif ($line -like 'Running Gradle task*') {
+                Write-SessionLog 'Compilacion Gradle iniciada.'
+            } elseif ($line -match '^Hot (reload|restart) fallo:') {
+                # Retener el código de fallo sin persistir detalles sensibles.
+                if ($line -match '^Hot (reload|restart) fallo: (codigo_-?[0-9]+|protocolo(?:_-?[0-9]+)?|respuesta_invalida|resultado_no_valido|timeout)$') {
+                    Write-SessionLog ("ERROR Flutter: Hot {0} fallido ({1})." -f $Matches[1], $Matches[2])
+                } else {
+                    Write-SessionLog 'ERROR Flutter: actualización fallida (tipo desconocido).'
+                }
+            } elseif ($line -eq 'Recuperacion Flutter: Hot restart automatico solicitado.') {
+                Write-SessionLog 'Recuperacion automatica: Hot Restart tras fallo de Hot Reload.'
+            } elseif ($line -eq 'Recuperacion Flutter: canal bloqueado; relanzamiento controlado.') {
+                Write-SessionLog 'Recuperacion automatica: canal Flutter bloqueado; relanzamiento del proceso propio.'
+            }
+        }
+    Write-SessionLog 'Sesion Flutter terminada.'
+} catch {
+    Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
+    # Categorias fijas para errores operativos, sin incluir datos de la excepcion.
+    if ($_.Exception.Message -like '*FIREBASE_CONFIG_MISSING*') {
+        Write-SessionLog 'ERROR: falta google-services.json en Muondia.'
+    } elseif ($_.Exception.Message -like '*FIREBASE_CONFIG_INVALID*') {
+        Write-SessionLog 'ERROR: google-services.json invalido o pertenece a otra app.'
+    } elseif ($_.Exception.Message -like '*clave*') {
+        Write-SessionLog 'Comprueba la clave DPAPI del usuario con el lanzador de Muondia.'
+    } elseif ($_.Exception.Message -like '*Flutter*') {
+        Write-SessionLog 'Comprueba Flutter con el lanzador de Muondia en PowerShell.'
+    }
+    $retryDelaySeconds = [Math]::Min(60, $retryDelaySeconds * 2)
+}
+# Una sesión que terminó o falló se vuelve a preparar automáticamente.
+# Si el emulador pertenece a F5, Recover no lo altera: esperar y reintentar.
+Start-Sleep -Seconds $retryDelaySeconds
 }
