@@ -52,6 +52,26 @@ assert.match(startup, /-Action Recover -Serial emulator-5554 -RepoRoot \$repo/,
   'Scheduled startup must recover only recognized orphaned Flutter processes');
 assert.match(startup, /Flutter ajeno o no recuperable; no se toca F5/,
   'Unknown or F5 owners must still block the startup');
+assert.match(startup, /while \(\$true\) \{\s*\$stage = 'Sincronizacion'/,
+  'La tarea de desarrollo debe permanecer viva para reintentar tras fallos');
+assert.match(startup, /Start-Sleep -Seconds \$retryDelaySeconds/,
+  'Los reintentos de Flutter no deben requerir PowerShell manual');
+assert.match(startup, /\[Math\]::Min\(60, \$retryDelaySeconds \* 2\)/,
+  'Un fallo persistente no debe provocar bucles de arranque sin límite');
+assert.doesNotMatch(startup, /exit 1\s*\}\s*$/,
+  'Un Flutter fallido no debe dejar la tarea permanentemente detenida');
+assert.match(startup, /Revision dev detectada/,
+  'La tarea debe registrar revisiones recibidas del runner');
+const runner = file('scripts/flutter-dev-runner.dart');
+assert.match(runner, /final gitMonitor = Timer\.periodic/,
+  'La detección de Git debe funcionar incluso sin FileSystemWatcher');
+assert.match(runner, /_readGitChanges\(root, previous, next, appPath\)/,
+  'Evitar actualizaciones por commits no relacionados con la aplicación');
+assert.match(runner, /forceRestart: true/,
+  'Los commits relevantes deben reconstruir la aplicación Flutter');
+assert.match(runner, /gitMonitor\.cancel\(\)/,
+  'No dejar sondeos de Git vivos tras finalizar Flutter');
+
 const control = file('scripts/android/task-control.ps1');
 assert.match(control, /ValidateSet\('Check', 'Stop', 'Recover'\)/,
   'Recovery is an explicit action, distinct from stopping the task');
