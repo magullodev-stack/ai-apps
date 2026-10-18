@@ -54,6 +54,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   bool _pauseActive = false;
   Timer? _pauseTimer;
   bool _hintLoading = false;
+  bool _hintDialogOpen = false;
   bool _timedOut = false;
   final List<QuizOutcome> _progress =
       List<QuizOutcome>.filled(10, QuizOutcome.pending);
@@ -180,6 +181,12 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
     _pauseTimer?.cancel();
     _pauseActive = false;
     _clock.stop();
+    // El tiempo termina aunque haya una pista visible: cerrar únicamente
+    // el diálogo de esta pantalla, sin dejar el resultado bloqueado detrás.
+    if (_hintDialogOpen) {
+      _hintDialogOpen = false;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
     setState(() {
       _finished = true;
       _timedOut = timeExpired;
@@ -244,6 +251,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       if (!mounted || _finished) return;
       if (result.trim().isEmpty) throw const FormatException('Pista vacía');
       setState(() => _hintRemaining = 0);
+      _hintDialogOpen = true;
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
@@ -265,6 +273,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
         );
       }
     } finally {
+      _hintDialogOpen = false;
       if (mounted && !_finished) {
         setState(() => _hintLoading = false);
       }
