@@ -39,12 +39,10 @@ Copy-Item -LiteralPath (Join-Path $upstream 'media') -Destination $extension -Re
 Copy-Item -LiteralPath (Join-Path $upstream 'LICENSE.txt') -Destination $extension -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'scid.cjs') -Destination $extension -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'sessions.cjs') -Destination $extension -Force
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'boot-ready.cjs') -Destination $extension -Force
 $webviewPath = Join-Path $extension 'media/webview.js'
 $webview = [IO.File]::ReadAllText($webviewPath)
 $webview = Replace-ExactlyOnce $webview 'case"config":' 'case"session":x.setState({serial:t.session.serial});break;case"config":'
 $webview = Replace-ExactlyOnce $webview 'case"config":w=t.wsUrl' 'case"config":if(v){v.onclose=null;v.close()}try{d?.close()}catch{}d=void 0;h=!1;g&&(clearTimeout(g),g=void 0);w=t.wsUrl'
-$webview = Replace-ExactlyOnce $webview 'function u(e){' 'function u(e){x.postMessage({type:"streamError"});'
 $webview = Replace-ExactlyOnce $webview 'function N(e){' 'var renderedFrames=0,lastFrameReport=0;function N(e){renderedFrames++;if(Date.now()-lastFrameReport>=1000){lastFrameReport=Date.now();x.postMessage({type:"frame",frames:renderedFrames})}'
 [IO.File]::WriteAllText($webviewPath, $webview, $utf8)
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'README.md') -Destination (Join-Path $extension 'readme.md') -Force
@@ -53,7 +51,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'README.md') -Destination (Join-
 $manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $upstream 'package.json') | ConvertFrom-Json
 $manifest.name = 'ai-apps-embedroid'
 $manifest.publisher = 'magullodev'
-$manifest.version = '1.1.1'
+$manifest.version = '1.1.2'
 $manifest.displayName = 'EmbeDroid - AI-APPS maintained'
 $manifest.description = 'EmbeDroid con sesiones multiemulador restaurables e identificadores scrcpy de 31 bits.'
 $manifest.activationEvents += 'onWebviewPanel:embedroid.embedded'
@@ -69,7 +67,7 @@ $vsixManifest = @'
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
   <Metadata>
-    <Identity Language="en-US" Id="ai-apps-embedroid" Version="1.1.1" Publisher="magullodev" />
+    <Identity Language="en-US" Id="ai-apps-embedroid" Version="1.1.2" Publisher="magullodev" />
     <DisplayName>EmbeDroid - AI-APPS maintained</DisplayName>
     <Description xml:space="preserve">Multi-emulator EmbeDroid with restored sessions and 31-bit scrcpy identifiers.</Description>
     <Tags>android,emulator,scrcpy</Tags><Categories>Other</Categories><GalleryFlags>Public</GalleryFlags>
@@ -103,7 +101,7 @@ $contentTypes = @'
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$vsix = Join-Path $output 'ai-apps-embedroid-1.1.1.vsix'
+$vsix = Join-Path $output 'ai-apps-embedroid-1.1.2.vsix'
 $stream = [IO.File]::Open($vsix, [IO.FileMode]::Create)
 $zip = New-Object IO.Compression.ZipArchive($stream, [IO.Compression.ZipArchiveMode]::Create)
 $fixedTimestamp = [DateTimeOffset]'2000-01-01T00:00:00+00:00'
