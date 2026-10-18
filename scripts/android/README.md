@@ -187,6 +187,12 @@ o un segundo Restart. Los eventos sin cambio de bytes también se ignoran.
 Si una actualización falla, el mismo contenido no se reintenta hasta recibir
 una edición nueva; entonces se recupera también el lote de assets pendiente.
 
+Antes de una reconstrucción completa se invalida únicamente el
+`AssetManifest.bin` generado de Android debug. La ausencia de ese output
+obliga a Flutter/Gradle a recalcular el inventario, incluso si solo se añadió
+un PNG y no cambió Dart. Se conservan los depfiles y stamps que Flutter usa
+para retirar outputs antiguos; no se ejecuta `flutter clean` ni se toca el AVD.
+
 El propietario de las sesiones Flutter es `scripts/flutter-dev-runner.dart`,
 no VS Code. Agrupa los cambios detectados por los watchers, mantiene **una
 sola petición `app.restart` en vuelo** y utiliza Hot Reload para cambios

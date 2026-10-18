@@ -29,6 +29,15 @@
    instalada no recibe cambios por Git. La integración AI-APPS Android sí
    está enlazada al repositorio, pero el JavaScript ya cargado permanece
    en memoria hasta una nueva activación del editor.
+6. **La recompilación podía reutilizar un inventario de assets antiguo.**
+   El alta aislada del PNG local a las 19:11:54 lanzó Gradle y terminó a las
+   19:12:11, pero el archivo no figuraba en la APK ni en `flutter_build.d`.
+   El SDK instalado calcula `FlutterTask.sourceFiles` desde el depfile previo
+   y `pubspec.yaml`, sin observar altas en los directorios de assets. Una
+   recompilación solicitada podía quedar incrementalmente al día para Gradle.
+   El runner invalida únicamente el `AssetManifest.bin` generado antes de
+   reconstruir. Se conservan depfiles y stamps para que Flutter retire los
+   outputs que ya no pertenecen al inventario.
 
 `RuntimeException` era una categoría PowerShell, no el diagnóstico del crash
 QEMU. Los eventos de Windows permiten establecer el orden causal.

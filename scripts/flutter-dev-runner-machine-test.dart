@@ -87,6 +87,7 @@ Future<void> verifyRunnerLifecycle(Directory directory) async {
   if (!Platform.isWindows) return;
   final fixture = Directory('${directory.path}/runner-fixture')..createSync();
   final app = Directory('${fixture.path}/apps/fixture')..createSync(recursive: true);
+  File('${app.path}/.gitignore').writeAsStringSync('build/\n.dart_tool/\n');
   final lib = Directory('${app.path}/lib')..createSync();
   final source = File('${lib.path}/widget.dart')..writeAsStringSync('initial');
   final assets = Directory('${app.path}/assets')..createSync();
@@ -110,6 +111,19 @@ Future<void> verifyRunnerLifecycle(Directory directory) async {
   }
   await git(['init', '-b', 'dev']);
   await commit();
+  final generatedBundle = Directory(
+    '${app.path}/build/app/intermediates/flutter/debug/flutter_assets',
+  )..createSync(recursive: true);
+  final generatedManifest = File('${generatedBundle.path}/AssetManifest.bin')
+      ..writeAsStringSync('previous asset inventory');
+  final generatedKernel = File('${generatedBundle.path}/kernel_blob.bin')
+      ..writeAsStringSync('preserve kernel');
+  final cache = Directory('${app.path}/.dart_tool/flutter_build/fixture')
+      ..createSync(recursive: true);
+  final generatedStamp = File('${cache.path}/debug_android_application.stamp')
+      ..writeAsStringSync('preserve previous outputs');
+  final generatedDepfile = File('${cache.path}/flutter_assets.d')
+      ..writeAsStringSync('preserve dependencies');
   final runnerScript = File.fromUri(Platform.script.resolve('flutter-dev-runner.dart'));
   final runnerArgs = [
     runnerScript.path, '--flutter', wrapper.path, '--device', 'fake',
@@ -172,6 +186,13 @@ Future<void> verifyRunnerLifecycle(Directory directory) async {
     require(await process.exitCode.timeout(const Duration(seconds: 12)) == 86 &&
         (await waitRequests(trace, 4)).length == 4,
       'Un alta real de PNG exige reconstrucción en vez de Hot Restart');
+    require(!generatedManifest.existsSync() &&
+        generatedKernel.readAsStringSync() == 'preserve kernel' &&
+        generatedStamp.readAsStringSync() == 'preserve previous outputs' &&
+        generatedDepfile.readAsStringSync() == 'preserve dependencies' &&
+        existingAsset.readAsBytesSync().join(',') == '4,5,6' &&
+        addedAsset.readAsBytesSync().join(',') == '7,8,9',
+      'Reconstruir invalida solo AssetManifest.bin y conserva kernel, stamps, depfiles y assets fuente');
     await commit();
 
     final deletionProcess = await Process.start(Platform.resolvedExecutable, runnerArgs);

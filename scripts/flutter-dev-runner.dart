@@ -82,6 +82,9 @@ Future<void> main(List<String> args) async {
           return;
         }
       }
+      // Gradle solo conoce las entradas del bundle anterior. Un asset nuevo
+      // no figura en su depfile; un output ausente fuerza a rehacer el bundle.
+      invalidateFlutterAssetBundle(options.workingDirectory);
       controller.requestRelaunch();
     }());
   }
@@ -486,6 +489,18 @@ String _configurationSignature(File file) {
   } on FileSystemException {
     return 'unreadable';
   }
+}
+
+/// Invalidar solo un output declarado de Gradle/Flutter. Conservar stamps y
+/// depfiles permite que Flutter retire también los assets que se eliminaron.
+bool invalidateFlutterAssetBundle(String workingDirectory) {
+  final manifest = File([
+    workingDirectory, 'build', 'app', 'intermediates', 'flutter', 'debug',
+    'flutter_assets', 'AssetManifest.bin',
+  ].join(Platform.pathSeparator));
+  if (!manifest.existsSync()) return false;
+  manifest.deleteSync();
+  return true;
 }
 
 enum FlutterContentStatus { applied, scheduled, rejected, changed }
