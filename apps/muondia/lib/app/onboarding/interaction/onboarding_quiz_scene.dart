@@ -424,6 +424,10 @@ class _AnswerCard extends StatelessWidget {
           child: InkWell(
             key: Key('muondia-answer-$index'),
             onTap: onTap,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            focusColor: Colors.transparent,
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: 70 * scale),
               child: Stack(
