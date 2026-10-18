@@ -131,19 +131,19 @@ class OnboardingQuizScene extends StatelessWidget {
                                 // No ampliar cada respuesta según la altura total del panel:
                                 // la última quedaba cortada. Preguntas largas
                                 // siguen teniendo scroll interior.
-                                final compact = viewport.maxHeight < 460 * scale;
+                                final compact = viewport.maxHeight < 510 * scale;
                                 final minAnswerHeight =
-                                    (compact ? 60 : 68) * scale;
-                                final answerGap = (compact ? 8 : 12) * scale;
+                                    (compact ? 58 : 68) * scale;
+                                final answerGap = (compact ? 9 : 12) * scale;
                                 return SingleChildScrollView(
                                   key: ValueKey('quiz-question-$questionNumber'),
                                   physics: const ClampingScrollPhysics(),
                                   child: Padding(
                                     padding: EdgeInsets.fromLTRB(
                                       20 * scale,
-                                      (compact ? 18 : 24) * scale,
+                                      (compact ? 16 : 24) * scale,
                                       20 * scale,
-                                      (compact ? 18 : 24) * scale,
+                                      (compact ? 19 : 24) * scale,
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
@@ -158,13 +158,13 @@ class OnboardingQuizScene extends StatelessWidget {
                                             question.question,
                                             style: MuondiaTypography.screenTitle
                                                 .copyWith(
-                                              fontSize: 23 * scale,
+                                              fontSize: (compact ? 21 : 23) * scale,
                                               color: const Color(0xFF08062C),
                                               height: 1.2,
                                             ),
                                           ),
                                         ),
-                                        SizedBox(height: (compact ? 14 : 20) * scale),
+                                        SizedBox(height: (compact ? 12 : 20) * scale),
                                         for (var i = 0;
                                             i < question.options.length;
                                             i++)
@@ -306,17 +306,17 @@ class _AidButton extends StatelessWidget {
                   foregroundPainter: _AidNeonOutline(active: active),
                   child: Container(
                     height: 70 * scale,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: const Color(0xD80B0442),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xE70D0640),
                     borderRadius: radius,
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x664D05D8),
-                        blurRadius: 9,
-                        spreadRadius: 0.5,
-                      ),
-                    ],
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x883D0ACC),
+                          blurRadius: 12,
+                          spreadRadius: 0.3,
+                        ),
+                      ],
                   ),
                   child: loading
                       ? SizedBox(
@@ -326,7 +326,7 @@ class _AidButton extends StatelessWidget {
                               color: Colors.white, strokeWidth: 3),
                         )
                       : Padding(
-                          padding: EdgeInsets.all(7 * scale),
+                          padding: EdgeInsets.all(3 * scale),
                           child: Image.asset(
                             asset,
                             key: Key('muondia-$kind-image'),
@@ -377,60 +377,101 @@ class _AidButton extends StatelessWidget {
 }
 
 
+/// Contorno neón vectorial: trazo fino y resplandor exterior difuso,
+/// con reflejos localizados en las curvas, sin un segundo aro opaco.
 class _AidNeonOutline extends CustomPainter {
   const _AidNeonOutline({required this.active});
+
   final bool active;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
-    final rect = (Offset.zero & size).deflate(1.2);
-    final radius = rect.height / 2;
-    final outline = RRect.fromRectAndRadius(rect, Radius.circular(radius));
 
+    final rect = (Offset.zero & size).deflate(2.5);
+    final radius = rect.height / 2;
+    final capsule = RRect.fromRectAndRadius(
+      rect, Radius.circular(radius),
+    );
+    final shader = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: active
+          ? const [
+              Color(0xFF75FFFF),
+              Color(0xFFB450FF),
+              Color(0xFFFA6BF5),
+            ]
+          : const [
+              Color(0xFF62DFFF),
+              Color(0xFFBE48F5),
+              Color(0xFFE946EA),
+            ],
+      stops: const [0.0, 0.47, 1.0],
+    ).createShader(rect);
+
+    // Halo exterior borroso independiente del trazo nítido.
     canvas.drawRRect(
-      outline,
+      capsule,
       Paint()
-        ..color = const Color(0x556F2CDD)
+        ..isAntiAlias = true
+        ..shader = shader
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
+        ..strokeWidth = 3.6
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5),
     );
     canvas.drawRRect(
-      outline,
+      capsule,
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: active
-              ? const [Color(0xFF60FFF3), Color(0xFFA84AF8), Color(0xFF50DDFF)]
-              : const [Color(0xFF6ECAFF), Color(0xFF963EF1), Color(0xFFF063FF)],
-        ).createShader(rect)
+        ..isAntiAlias = true
+        ..shader = shader
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.35,
+        ..strokeWidth = 1.15,
     );
-    final topLeft = Path()
-      ..moveTo(rect.left + radius + 20, rect.top)
-      ..lineTo(rect.left + radius, rect.top)
-      ..quadraticBezierTo(rect.left, rect.top, rect.left, rect.top + radius);
-    canvas.drawPath(
-      topLeft,
-      Paint()
-        ..color = const Color(0xD7A0F5FF)
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = 1.8,
+
+    // Destellos en las esquinas, no un borde uniformemente blanco.
+    final upperHighlight = Path()
+      ..moveTo(rect.left, rect.top + radius)
+      ..quadraticBezierTo(
+        rect.left, rect.top,
+        rect.left + radius, rect.top,
+      )
+      ..lineTo(rect.left + radius + 11, rect.top);
+    _paintHighlight(
+      canvas, upperHighlight, const Color(0xFF93EFFF),
     );
-    final bottomRight = Path()
-      ..moveTo(rect.right - radius - 16, rect.bottom)
+
+    final lowerHighlight = Path()
+      ..moveTo(rect.right - radius - 11, rect.bottom)
       ..lineTo(rect.right - radius, rect.bottom)
-      ..quadraticBezierTo(rect.right, rect.bottom, rect.right, rect.bottom - radius);
+      ..quadraticBezierTo(
+        rect.right, rect.bottom,
+        rect.right, rect.bottom - radius,
+      );
+    _paintHighlight(
+      canvas, lowerHighlight, const Color(0xFFFF86F4),
+    );
+  }
+
+  void _paintHighlight(Canvas canvas, Path path, Color color) {
     canvas.drawPath(
-      bottomRight,
+      path,
       Paint()
-        ..color = const Color(0xBFFF89FB)
+        ..isAntiAlias = true
+        ..color = color.withAlpha(135)
+        ..strokeWidth = 3
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = 1.7,
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..isAntiAlias = true
+        ..color = color.withAlpha(210)
+        ..strokeWidth = 0.8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
     );
   }
 
