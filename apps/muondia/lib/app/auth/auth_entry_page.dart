@@ -255,7 +255,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                             ),
                             const SizedBox(height: 14),
                             Text(
-                              '¿Empezamos?',
+                              'Windows · OK',
                               key: const Key('muondia-auth-welcome-question'),
                               textAlign: TextAlign.center,
                               style: welcomeStyle,
