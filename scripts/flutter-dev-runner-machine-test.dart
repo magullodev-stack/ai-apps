@@ -58,6 +58,21 @@ void require(bool condition, String description) {
   if (!condition) throw StateError('FAIL: $description');
 }
 
+void verifyAdbDeviceRecognition() {
+  require(runner.adbListsOnlineDevice(
+    'List of devices attached\nemulator-5554\tdevice\nemulator-5556\toffline\n',
+    'emulator-5554'), 'Solo el dispositivo online cuenta como recuperado');
+  require(!runner.adbListsOnlineDevice(
+    'List of devices attached\nemulator-5554\toffline\n',
+    'emulator-5554'), 'Un emulador offline debe tratarse como ausente');
+  require(!runner.adbListsOnlineDevice(
+    'List of devices attached\nemulator-5556\tdevice\n',
+    'emulator-5554'), 'Otro emulador online no sustituye a Muondia');
+  require(!runner.adbListsOnlineDevice(
+    'List of devices attached\n',
+    'emulator-5554'), 'Un AVD desaparecido no está conectado');
+}
+
 void verifyUpdateClassification() {
   final cases = <({String path, String status, runner.FlutterChangeAction expected})>[
     (
@@ -150,6 +165,7 @@ Future<void> main(List<String> args) async {
     return;
   }
   verifyUpdateClassification();
+  verifyAdbDeviceRecognition();
   final directory = await Directory.systemTemp.createTemp('ai-apps-flutter-machine-');
   final trace = File('${directory.path}${Platform.pathSeparator}requests.jsonl');
   final process = await Process.start(
