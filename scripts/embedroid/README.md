@@ -12,9 +12,12 @@ al restaurar una pestaña recupera su identidad, pero **no abre el
 transporte de vídeo** hasta que AI-APPS Android informa que la tarea está
 en ejecución y Muondia tiene proceso Android. Después abre un único
 puente de vídeo para la pestaña existente. El visor no incorpora sondeos
-ADB propios ni reintentos superpuestos a los de scrcpy. Un problema real
-de scrcpy (por ejemplo, código 134) permanece visible y requiere sus
-registros para identificar la causa. Consulta
+ADB propios ni reintentos superpuestos a los de scrcpy. Comunica los fallos
+de transporte a AI-APPS Android, que reconecta solo el vídeo desde su sondeo
+existente, con una espera mínima de 15 segundos entre intentos. Un problema
+real de scrcpy (por ejemplo, código 134) queda en sus registros para
+identificar la causa. Ese sondeo nunca inicia ni reinicia Flutter, Android
+o la tarea de Windows. Consulta
 [el responsable único del arranque](../android/README.md).
 ## Procedencia y mantenimiento
 
@@ -58,6 +61,14 @@ propia y desinstala la distribución original para evitar comandos duplicados.
 Después actualiza el enlace de AI-APPS Android. Recarga VS Code para cargar
 la nueva extensión; el emulador y Flutter continúan fuera del editor.
 Si se reinstala EmbeDroid desde Marketplace, vuelve a ejecutar el instalador.
+
+La instalación de EmbeDroid es una copia: sincronizar `dev` no sustituye el
+VSIX instalado. Comprueba `code --list-extensions --show-versions` después
+de instalar; la identidad vigente es
+`magullodev.ai-apps-embedroid@1.1.2`. La versión 1.1.0 aún abre transporte
+durante la restauración y no expone `transportFailed`; conservarla instalada
+impide aplicar ambas correcciones aunque sus fuentes ya estén en Git.
+La instalación y la recarga efectiva del editor son comprobaciones distintas.
 
 La identidad propia evita que una actualización de `utpalbarman.embedroid`
 sobrescriba la corrección. El código, el paquete original, los hashes y las

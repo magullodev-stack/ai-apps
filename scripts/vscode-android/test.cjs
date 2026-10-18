@@ -41,7 +41,9 @@ const vscode = {
     } },
   ConfigurationTarget: { Workspace: 2 }, StatusBarAlignment: { Left: 1 },
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
-  TreeItem: class { constructor(label) { this.label = label; } },
+  TreeItem: class { constructor(label, collapsibleState) {
+    this.label = label; this.collapsibleState = collapsibleState;
+  } },
   ThemeIcon: class {constructor(id, color){this.id=id;this.color=color}},
   ThemeColor: class {constructor(id){this.id=id}},
   Uri: {file:fsPath => ({fsPath})},
@@ -361,7 +363,8 @@ async function run() {
     startsBeforeStop, 'Una caída tras Running sigue perteneciendo a Windows');
 
   await commands.get('aiAppsAndroid.start')(entries[0]);
-  assert.deepEqual(calls.at(-1), ['start', 'muondia@emulator-5554'],
+  assert.equal(calls.filter(call => call[0] === 'start' &&
+    call[1] === 'muondia@emulator-5554').length, startsBeforeStop + 1,
     'El comando explícito de inicio sigue disponible');
   await commands.get('aiAppsAndroid.stop')(entries[0]);
   await api.refresh();

@@ -72,13 +72,15 @@ El comando `aiAppsAndroid.preview` valida la experiencia solicitada y envía un 
 
 
 AI-APPS Android gestiona un visor por aplicación y dispositivo mediante
-EmbeDroid mantenido 1.1.0. Incluye selección múltiple; la vista de Muondia se
+EmbeDroid mantenido 1.1.2. Incluye selección múltiple; la vista de Muondia se
 recupera al abrir VS Code. Otras aplicaciones registradas pueden abrirse
 desde el selector. Consulta [sesiones, configuración y pruebas](../android/README.md).
 La tarea **AI-APPS Development** mantiene Android, Dart y Flutter fuera del
-editor. Al abrir VS Code se solicita la tarea si estaba detenida, incluso si
-Android conserva una APK antigua abierta; abrir o cerrar un visor no ejecuta
-directamente Flutter ni una APK instalada.
+editor. Abrir VS Code o sondear el estado no inicia ni recupera esa tarea,
+incluso si Android conserva una APK antigua abierta. Windows es el único
+supervisor de Flutter y Android. Los comandos explícitos Iniciar/Detener
+sesión permanecen disponibles; el visor recupera únicamente su transporte
+de vídeo cuando falla.
 
 ## F7: volver a Auth en desarrollo
 
@@ -130,6 +132,17 @@ sin modificar el transporte scrcpy ni los archivos upstream.
 retira la extensión original para evitar comandos duplicados y actualiza el
 enlace de AI-APPS Android. Después recarga o reabre VS Code. No detiene Android
 ni Flutter.
+
+AI-APPS Android se instala mediante un enlace al repositorio; EmbeDroid es
+una copia del VSIX. Un `git pull` actualiza el primero, pero no instala el
+segundo ni recarga código ya cargado en VS Code. La versión 1.1.2 añade la
+restauración pasiva y comunica `transportFailed` a AI-APPS Android para
+reconectar vídeo aunque el PID de Muondia y el estado de ADB no cambien.
+Comprueba la versión efectiva con
+`code --list-extensions --show-versions`: debe aparecer
+`magullodev.ai-apps-embedroid@1.1.2`. Tras instalarla, recarga VS Code y
+comprueba vídeo y el canal Android Emulator; un VSIX construido o un commit
+descargado por sí solos no acreditan que el editor utilice esa versión.
 
 `scripts/install-vscode-android.ps1` instala solo el enlace de la integración;
 para preparar ambos componentes utiliza:
