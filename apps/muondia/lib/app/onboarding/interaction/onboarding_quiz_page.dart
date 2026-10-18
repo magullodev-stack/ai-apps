@@ -399,6 +399,18 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       );
     }
 
+    if (_finished) {
+      return _QuizResults(
+        correct: _score,
+        incorrect: _progress
+            .where((result) => result == QuizOutcome.incorrect).length,
+        unanswered: _progress
+            .where((result) => result == QuizOutcome.pending).length,
+        timeExpired: _timedOut,
+        onCompleted: widget.onCompleted,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Tu primera aventura')),
       body: Center(
@@ -440,4 +452,149 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       ),
     );
   }
+}
+
+class _QuizResults extends StatelessWidget {
+  const _QuizResults({
+    required this.correct,
+    required this.incorrect,
+    required this.unanswered,
+    required this.timeExpired,
+    required this.onCompleted,
+  });
+
+  final int correct;
+  final int incorrect;
+  final int unanswered;
+  final bool timeExpired;
+  final Future<void> Function() onCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF130A47),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF31107E),
+              Color(0xFF140A46),
+              Color(0xFF09052C),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.auto_awesome,
+                        color: Color(0xFFFFD44F), size: 54),
+                    const SizedBox(height: 18),
+                    Text(
+                      timeExpired ? 'Tiempo agotado' : 'Partida terminada',
+                      textAlign: TextAlign.center,
+                      style: MuondiaTypography.screenTitle.copyWith(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(26),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFBFF),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0xBB832CF4),
+                            blurRadius: 30,
+                            spreadRadius: 3,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Resultado: $correct / 10',
+                            style: MuondiaTypography.screenTitle.copyWith(
+                              fontSize: 29,
+                              color: const Color(0xFF161040),
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _ResultLine(label: 'Aciertos', value: correct,
+                              icon: Icons.check_circle_rounded,
+                              color: const Color(0xFF00BE86)),
+                          const SizedBox(height: 14),
+                          _ResultLine(label: 'Fallos definitivos',
+                              value: incorrect, icon: Icons.cancel_rounded,
+                              color: const Color(0xFFE83566)),
+                          const SizedBox(height: 14),
+                          _ResultLine(label: 'Sin responder', value: unanswered,
+                              icon: Icons.radio_button_unchecked_rounded,
+                              color: const Color(0xFF8D4ADF)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    FilledButton(
+                      onPressed: onCompleted,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF9140E9),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 34, vertical: 18),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const Text('Entrar en Muondia'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultLine extends StatelessWidget {
+  const _ResultLine({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, color: color, size: 27),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Text(
+          '$label: $value',
+          style: MuondiaTypography.sectionTitle.copyWith(
+            fontSize: 20, color: const Color(0xFF191343),
+          ),
+        ),
+      ),
+    ],
+  );
 }
