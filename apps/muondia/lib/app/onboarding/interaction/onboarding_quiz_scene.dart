@@ -5,6 +5,54 @@ import '../../app_theme.dart';
 import '../production/onboarding_quiz_pipeline.dart';
 import 'onboarding_quiz_header.dart';
 
+/// Presenta solo el rectángulo con contenido de un PNG. Los píxeles
+/// transparentes externos nunca participan en el layout ni en el hit test.
+/// Se conserva íntegra la imagen original: no se dibujan curvas con Flutter.
+class _CroppedQuizPng extends StatelessWidget {
+  const _CroppedQuizPng({
+    required this.path,
+    required this.sourceSize,
+    required this.contentRect,
+    required this.imageKey,
+  });
+
+  final String path;
+  final Size sourceSize;
+  final Rect contentRect;
+  final Key imageKey;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final height = constraints.maxHeight;
+          final factorX = width / contentRect.width;
+          final factorY = height / contentRect.height;
+          return ClipRect(
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              fit: StackFit.expand,
+              children: [
+                Positioned(
+                  left: -contentRect.left * factorX,
+                  top: -contentRect.top * factorY,
+                  width: sourceSize.width * factorX,
+                  height: sourceSize.height * factorY,
+                  child: Image.asset(
+                    path,
+                    key: imageKey,
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.high,
+                    excludeFromSemantics: true,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+}
+
 /// Composición propia de Muondia; la página conserva las reglas del test.
 class OnboardingQuizScene extends StatelessWidget {
   const OnboardingQuizScene({
@@ -66,7 +114,7 @@ class OnboardingQuizScene extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 640),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  4 * scale, 6 * scale, 4 * scale, 8 * scale,
+                  10 * scale, 6 * scale, 10 * scale, 8 * scale,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,17 +135,16 @@ class OnboardingQuizScene extends StatelessWidget {
                         key: const Key('muondia-question-card'),
                         fit: StackFit.expand,
                         children: [
-                          Image.asset(
-                            'assets/onboarding/test/Caja Test.png',
-                            key: const Key('muondia-question-panel-image'),
-                            fit: BoxFit.fill,
-                            filterQuality: FilterQuality.high,
-                            excludeFromSemantics: true,
+                          const _CroppedQuizPng(
+                            path: 'assets/onboarding/test/Caja Test.png',
+                            sourceSize: Size(400, 580),
+                            contentRect: Rect.fromLTWH(18, 26, 365, 534),
+                            imageKey: Key('muondia-question-panel-image'),
                           ),
                           Padding(
                             padding: EdgeInsets.fromLTRB(
-                              20 * scale, 50 * scale,
-                              20 * scale, 42 * scale,
+                              16 * scale, 24 * scale,
+                              16 * scale, 18 * scale,
                             ),
                             child: LayoutBuilder(
                               builder: (context, viewport) =>
@@ -115,8 +162,8 @@ class OnboardingQuizScene extends StatelessWidget {
                                       children: [
                                         Padding(
                                           padding: EdgeInsets.fromLTRB(
-                                            22 * scale, 0,
-                                            22 * scale, 10 * scale,
+                                            8 * scale, 6 * scale,
+                                            8 * scale, 12 * scale,
                                           ),
                                           child: AiAppsContentText(
                                             question.question,
@@ -133,7 +180,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                             i < question.options.length; i++)
                                           Padding(
                                             padding: EdgeInsets.only(
-                                              top: 4 * scale,
+                                              top: 6 * scale,
                                             ),
                                             child: _AnswerCard(
                                               key: ValueKey(
@@ -246,7 +293,7 @@ class _AidButton extends StatelessWidget {
             child: InkWell(
               onTap: enabled ? onTap : null,
               child: SizedBox(
-                height: 64 * scale,
+                height: 54 * scale,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -378,18 +425,16 @@ class _AnswerCard extends StatelessWidget {
             key: Key('muondia-answer-$index'),
             onTap: onTap,
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: 74 * scale),
+              constraints: BoxConstraints(minHeight: 70 * scale),
               child: Stack(
                 fit: StackFit.passthrough,
                 children: [
                   Positioned.fill(
-                    child: Image.asset(
-                      'assets/onboarding/test/Caja Respuesta.png',
-                      key: Key('muondia-answer-image-$index'),
-                      fit: BoxFit.cover,
-                      alignment: Alignment.center,
-                      filterQuality: FilterQuality.high,
-                      excludeFromSemantics: true,
+                    child: _CroppedQuizPng(
+                      path: 'assets/onboarding/test/Caja Respuesta.png',
+                      sourceSize: const Size(370, 123),
+                      contentRect: const Rect.fromLTWH(15, 26, 340, 69),
+                      imageKey: Key('muondia-answer-image-$index'),
                     ),
                   ),
                   Positioned.fill(
@@ -406,7 +451,7 @@ class _AnswerCard extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 22 * scale,
-                      vertical: 13 * scale,
+                      vertical: 9 * scale,
                     ),
                     child: Row(
                       children: [
