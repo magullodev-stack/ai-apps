@@ -30,7 +30,7 @@ function createViews(Base, context, sdk, devices, log) {
       panel.webview.options = { enableScripts: true,
         localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')] };
       panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'activitybar-icon.svg');
-      const view = { key, panel, ready: false, queue: [] };
+      const view = { key, panel, ready: false, queue: [], transportFailed: false };
       this.views.set(key, view);
       panel.webview.onDidReceiveMessage(message => {
         if (message?.type === 'ready') {
@@ -38,6 +38,7 @@ function createViews(Base, context, sdk, devices, log) {
           for (const item of view.queue.splice(0)) panel.webview.postMessage(item);
         } else if (message?.type === 'retry') this.retry(view);
         else if (message?.type === 'frame' && Number.isInteger(message.frames) && message.frames > 0) {
+          view.transportFailed = false;
           view.videoFrames = message.frames;
           view.lastFrameAt = Date.now();
         }
@@ -51,6 +52,11 @@ function createViews(Base, context, sdk, devices, log) {
       panel.webview.html = this.html(panel.webview, title);
       return view;
     }
+    fail(key, error) {
+      const view = this.views.get(key);
+      if (view && !view.closed) view.transportFailed = true;
+      return super.fail(key, error);
+    }
     async attachStream(key, serial) {
       const view = this.views.get(key);
       if (!view || view.closed) return;
@@ -59,6 +65,7 @@ function createViews(Base, context, sdk, devices, log) {
       try {
         await super.attachStream(key, serial);
         if (view.closed) { await view.bridge?.dispose(); return; }
+        view.transportFailed = false;
         const session = this.identity(serial);
         view.panel.title = this.title(session);
         this.send(view, { type: 'session', session });
@@ -118,7 +125,8 @@ function createViews(Base, context, sdk, devices, log) {
     listSessions() {
       return [...this.views.values()].filter(view => view.serial).map(view => ({
         ...this.identity(view.serial), title: view.panel.title,
-        videoFrames: view.videoFrames || 0, lastFrameAt: view.lastFrameAt || 0
+        videoFrames: view.videoFrames || 0, lastFrameAt: view.lastFrameAt || 0,
+        transportFailed: view.transportFailed === true
       }));
     }
   }
