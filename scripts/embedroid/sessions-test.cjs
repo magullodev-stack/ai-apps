@@ -44,13 +44,13 @@ const context = { subscriptions: [], extensionUri: 'extension', extensionPath: '
 const log = { debug() {}, warn() {} };
 const a = { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554' };
 function createTestViews() {
-  const views = createTestViews();
+  const views = createViews(Base, context, {}, { find() {} }, log);
   views.waitForDeviceBoot = async () => true;
   return views;
 }
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function run() {
-  const views = createViews(Base, context, {}, { find() {} }, log);
+  const views = createTestViews();
   await Promise.all([views.openSession(a), views.openSession(a)]);
   assert.equal(views.views.size, 1); assert.equal(panels.length, 1);
   for (const item of panels) item.ready();
