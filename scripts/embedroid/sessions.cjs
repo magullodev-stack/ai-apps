@@ -1,5 +1,6 @@
 // Maintain the upstream transport and HTML; add session identity and restoration.
 const vscode = require('vscode');
+const { probeAndroidBoot, waitForBoot } = require('./boot-ready.cjs');
 
 function createViews(Base, context, sdk, devices, log) {
   class SessionViews extends Base {
@@ -8,6 +9,8 @@ function createViews(Base, context, sdk, devices, log) {
       this.sessions = new Map();
       this.pending = new Map();
       this.restoredCount = 0;
+      // Finite startup recovery, never an endless scrcpy retry loop.
+      this.retryDelays = [1500, 3000, 6000];
       context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('embedroid.embedded', {
         deserializeWebviewPanel: (panel, state) => this.restore(panel, state)
       }));
@@ -30,13 +33,20 @@ function createViews(Base, context, sdk, devices, log) {
       panel.webview.options = { enableScripts: true,
         localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')] };
       panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'activitybar-icon.svg');
-      const view = { key, panel, ready: false, queue: [] };
+      const view = {
+        key, panel, ready: false, queue: [], closed: false,
+        retryCount: 0, retryTimer: null, attachPromise: null
+      };
       this.views.set(key, view);
       panel.webview.onDidReceiveMessage(message => {
         if (message?.type === 'ready') {
           view.ready = true;
           for (const item of view.queue.splice(0)) panel.webview.postMessage(item);
-        } else if (message?.type === 'retry') this.retry(view);
+        } else if (message?.type === 'retry') {
+          this.cancelRetry(view);
+          view.retryCount = 0;
+          void this.retry(view);
+        } else if (message?.type === 'streamError') this.scheduleRetry(view);
         else if (message?.type === 'frame' && Number.isInteger(message.frames) && message.frames > 0) {
           view.videoFrames = message.frames;
           view.lastFrameAt = Date.now();
@@ -44,6 +54,7 @@ function createViews(Base, context, sdk, devices, log) {
       });
       panel.onDidDispose(() => {
         view.closed = true;
+        this.cancelRetry(view);
         view.bridge?.dispose().catch(error => log.warn(String(error)));
         if (this.views.get(view.key) === view) this.views.delete(view.key);
         log.debug(`Embedded view disposed (${view.key})`);
@@ -51,21 +62,57 @@ function createViews(Base, context, sdk, devices, log) {
       panel.webview.html = this.html(panel.webview, title);
       return view;
     }
+    cancelRetry(view) {
+      if (view.retryTimer) clearTimeout(view.retryTimer);
+      view.retryTimer = null;
+    }
+    scheduleRetry(view) {
+      // Recovery is only automatic before the first video frame, e.g. after
+      // a restored tab races Android cold boot. Later errors remain actionable.
+      if (view.closed || view.videoFrames > 0 || view.retryTimer ||
+          view.retryCount >= this.retryDelays.length) return;
+      const delay = this.retryDelays[view.retryCount++];
+      this.send(view, { type: 'status',
+        message: 'Reconectando vídeo (' + view.retryCount + '/' +
+          this.retryDelays.length + ')…' });
+      view.retryTimer = setTimeout(() => {
+        view.retryTimer = null;
+        if (view.closed || this.views.get(view.key) !== view) return;
+        void this.retry(view);
+      }, delay);
+    }
+    async waitForDeviceBoot(view, serial) {
+      const { adb } = await this.sdk.resolve();
+      this.send(view, { type: 'status', message: 'Esperando a que Android arranque…' });
+      return waitForBoot({
+        probe: () => probeAndroidBoot(adb, serial),
+        isClosed: () => view.closed || this.views.get(view.key) !== view
+      });
+    }
     async attachStream(key, serial) {
       const view = this.views.get(key);
       if (!view || view.closed) return;
-      view.videoFrames = 0;
-      view.lastFrameAt = 0;
-      try {
-        await super.attachStream(key, serial);
-        if (view.closed) { await view.bridge?.dispose(); return; }
-        const session = this.identity(serial);
-        view.panel.title = this.title(session);
-        this.send(view, { type: 'session', session });
-      } catch (error) {
-        if (!view.closed) this.fail(serial, String(error.message || error));
-        throw error;
-      }
+      if (view.attachPromise) return view.attachPromise;
+      this.cancelRetry(view);
+      const operation = (async () => {
+        try {
+          const ready = await this.waitForDeviceBoot(view, serial);
+          if (!ready || view.closed || this.views.get(key) !== view) return;
+          view.videoFrames = 0;
+          view.lastFrameAt = 0;
+          await super.attachStream(key, serial);
+          if (view.closed) { await view.bridge?.dispose(); return; }
+          const session = this.identity(serial);
+          view.panel.title = this.title(session);
+          this.send(view, { type: 'session', session });
+        } catch (error) {
+          if (!view.closed) this.fail(serial, String(error.message || error));
+          throw error;
+        }
+      })();
+      view.attachPromise = operation;
+      try { await operation; }
+      finally { if (view.attachPromise === operation) view.attachPromise = null; }
     }
     async openSession(session, reconnect = false) {
       if (!session || typeof session.serial !== 'string' || !session.serial ||
