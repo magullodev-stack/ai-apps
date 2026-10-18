@@ -4,6 +4,15 @@ import 'dart:io';
 
 Future<void> main(List<String> args) async {
   final options = _Options.parse(args);
+  // FileSystemWatcher en Windows puede perder los eventos de un merge Git.
+  // Vigilar HEAD garantiza una segunda señal de actualización.
+  final root = Directory(options.workingDirectory).parent.parent.path;
+  final projectName = options.workingDirectory
+      .split(RegExp(r'[\\/]'))
+      .where((part) => part.isNotEmpty)
+      .last;
+  final appPath = 'apps/$projectName/';
+  String? knownRevision = await _readGitRevision(root);
 
   final process = await Process.start(
     options.flutter,
@@ -94,10 +103,10 @@ Future<void> main(List<String> args) async {
     }());
   }
 
-  void scheduleReload(String path) {
+  void scheduleReload(String path, {bool forceRestart = false}) {
     // Las imágenes conservan su ImageCache tras Hot Reload. Requerir un
     // Hot Restart del isolate, no un relanzamiento nativo/Gradle.
-    pendingImageRestart |= _isImageAsset(path);
+    pendingImageRestart |= _isImageAsset(path) || forceRestart;
     debounce?.cancel();
     debounce = Timer(
       Duration(milliseconds: pendingImageRestart ? 1200 : 650),
@@ -141,6 +150,52 @@ Future<void> main(List<String> args) async {
       }),
     );
   }
+
+  // Comprobar commits nuevos de dev aunque no haya eventos de archivos.
+  // Cambios ajenos a la aplicación no reinician Flutter.
+  var gitCheckRunning = false;
+  final gitMonitor = Timer.periodic(const Duration(seconds: 4), (_) async {
+    if (gitCheckRunning || relaunchRequested) return;
+    gitCheckRunning = true;
+    try {
+      final next = await _readGitRevision(root);
+      if (next == null || next == knownRevision) return;
+      final previous = knownRevision;
+      if (previous == null) {
+        knownRevision = next;
+        return;
+      }
+      final changes = await _readGitChanges(root, previous, next, appPath);
+      if (changes == null) return;
+      knownRevision = next;
+      if (changes.isEmpty) return;
+      stdout.writeln('Revision dev detectada: ${next.substring(0, 7)}.');
+      final needsNewBundle = changes.any((change) {
+        final name = change.path;
+        return name == '${appPath}pubspec.yaml' ||
+            name == '${appPath}pubspec.lock' ||
+            name.startsWith('${appPath}android/') ||
+            name.startsWith('${appPath}ios/') ||
+            (name.startsWith('${appPath}assets/') && change.status != 'M');
+      });
+      if (needsNewBundle) {
+        scheduleRelaunch(
+          options.workingDirectory + Platform.pathSeparator + 'pubspec.yaml',
+        );
+      } else {
+        // Git puede modificar varios widgets a la vez; el restart reconstruye
+        // el isolate y no conserva una pantalla anterior.
+        scheduleReload(
+          options.workingDirectory + Platform.pathSeparator + 'lib',
+          forceRestart: true,
+        );
+      }
+    } catch (_) {
+      // Git actualizando índice: la revisión se reintenta en el ciclo siguiente.
+    } finally {
+      gitCheckRunning = false;
+    }
+  });
 
   final googleMonitor = Timer.periodic(const Duration(seconds: 2), (_) {
     final current = _configurationSignature(googleConfig);
@@ -186,6 +241,7 @@ Future<void> main(List<String> args) async {
   final code = await process.exitCode;
   controller.dispose();
   googleMonitor.cancel();
+  gitMonitor.cancel();
   debounce?.cancel();
   for (final watcher in watchers) {
     await watcher.cancel();
@@ -672,4 +728,42 @@ final class _Options {
       noDds: noDds,
     );
   }
+}
+
+
+/// Leer el commit actual; no publicar mensajes ni argumentos de Git.
+Future<String?> _readGitRevision(String root) async {
+  final result = await Process.run(
+    'git', ['-C', root, 'rev-parse', '--verify', 'HEAD'],
+  );
+  if (result.exitCode != 0) return null;
+  final hash = result.stdout.toString().trim();
+  return RegExp(r'^[a-f0-9]{40}$').hasMatch(hash) ? hash : null;
+}
+
+typedef _GitChange = ({String status, String path});
+
+/// Obtener los archivos que han cambiado en la app desde el último commit.
+Future<List<_GitChange>?> _readGitChanges(
+  String root,
+  String before,
+  String after,
+  String appPath,
+) async {
+  final result = await Process.run('git', [
+    '-C', root, 'diff', '--name-status', before, after, '--',
+    '${appPath}lib/', '${appPath}assets/', '${appPath}pubspec.yaml',
+    '${appPath}pubspec.lock', '${appPath}android/', '${appPath}ios/',
+    'shared/', 'ai/flutter_client/',
+  ]);
+  if (result.exitCode != 0) return null;
+  final changes = <_GitChange>[];
+  for (final line in result.stdout.toString().split('\n')) {
+    final fields = line.trim().split('\t');
+    if (fields.length < 2) continue;
+    // R/C: el último campo es el destino nuevo.
+    final path = fields.last.replaceAll('\\', '/');
+    changes.add((status: fields.first.substring(0, 1), path: path));
+  }
+  return changes;
 }
