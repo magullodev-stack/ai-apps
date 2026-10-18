@@ -5,17 +5,58 @@ import 'package:flutter/material.dart';
 import '../../app_theme.dart';
 import '../pivot_images.dart';
 
-/// Resultado DEFINITIVO de una pregunta. Un fallo con corazón todavía
-/// disponible no cambia la esfera hasta acertar o agotar los reintentos.
+/// Solo se marca una pregunta al obtener un resultado definitivo.
 enum QuizOutcome { pending, correct, incorrect }
 
-/// Umbrales del anillo: 60–21 verde, 20–6 amarillo y 5–0 rojo.
-Color quizTimerColor(int seconds) =>
-    seconds >= 21
-        ? const Color(0xFF00E8A1)
-        : seconds >= 6
-            ? const Color(0xFFFFD439)
-            : const Color(0xFFFF355C);
+/// La referencia usa anillo magenta; cuando quedan cinco segundos alerta rojo.
+Color quizTimerColor(int seconds) => seconds > 5
+    ? const Color(0xFFCC64ED)
+    : const Color(0xFFFF5277);
+
+/// Las esferas de progreso pertenecen al panel, no a la cabecera.
+BoxDecoration quizOrbDecoration(QuizOutcome result) {
+  final colors = switch (result) {
+    QuizOutcome.correct => const [
+        Color(0xFF12F38E),
+        Color(0xFF00E77C),
+        Color(0xFF00C96D),
+      ],
+    QuizOutcome.incorrect => const [
+        Color(0xFFFF6476),
+        Color(0xFFFF4B64),
+        Color(0xFFE92F51),
+      ],
+    QuizOutcome.pending => const [
+        Color(0xFF081936),
+        Color(0xFF172E51),
+        Color(0xFF0B1D3D),
+      ],
+  };
+  return BoxDecoration(
+    shape: BoxShape.circle,
+    gradient: RadialGradient(
+      center: const Alignment(-0.25, -0.3),
+      radius: 0.85,
+      colors: colors,
+    ),
+    border: Border.all(
+      color: result == QuizOutcome.pending
+          ? const Color(0xFF305586)
+          : Colors.transparent,
+      width: 1.2,
+    ),
+    boxShadow: result == QuizOutcome.pending
+        ? const []
+        : [
+            BoxShadow(
+              color: result == QuizOutcome.correct
+                  ? const Color(0x3500EA7F)
+                  : const Color(0x40FF4D70),
+              blurRadius: 6,
+            ),
+          ],
+  );
+}
 
 class OnboardingQuizHeader extends StatelessWidget {
   const OnboardingQuizHeader({
@@ -40,172 +81,204 @@ class OnboardingQuizHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = onboardingPivotImageFor(pivot);
-    final scale = (MediaQuery.sizeOf(context).width / 390.0)
-        .clamp(0.82, 1.1).toDouble();
+    final scale =
+        (MediaQuery.sizeOf(context).width / 390).clamp(0.82, 1.1).toDouble();
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 3 * scale, vertical: 5 * scale),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
+    return SizedBox(
+      key: const Key('muondia-quiz-status'),
+      height: 109 * scale,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Row(
-            children: [
-              if (imagePath != null) ...[
-                SizedBox(
-                  key: const Key('muondia-pivot-icon'),
-                  width: 44 * scale,
-                  height: 44 * scale,
-                  child: Image.asset(imagePath, fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high),
-                ),
-                SizedBox(width: 12 * scale),
-              ],
-              Expanded(
-                child: Text(
-                  pivot,
-                  key: const Key('muondia-pivot-title'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: MuondiaTypography.screenTitle.copyWith(
-                    color: Colors.white,
-                    fontSize: 28 * scale,
-                    fontWeight: FontWeight.w900,
-                    shadows: const [
-                      Shadow(color: Color(0xE5160A55), blurRadius: 9,
-                          offset: Offset(0, 2)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 15 * scale),
-          Row(
-            key: const Key('muondia-quiz-status'),
-            children: [
-              Expanded(
-                child: Semantics(
-                  label: 'Progreso de preguntas',
-                  value: 'Pregunta $questionNumber de $questionCount',
-                  child: Row(
-                    key: const Key('muondia-progress-orbs'),
-                    children: [
-                      for (var i = 0; i < progress.length; i++)
-                        Expanded(
-                          child: Center(
-                            child: SizedBox(
-                              width: 15 * scale,
-                              height: 15 * scale,
-                              child: DecoratedBox(
-                                key: Key('muondia-progress-orb-$i'),
-                                decoration: _orbDecoration(progress[i]),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 9 * scale),
-                height: 31 * scale,
-                width: 1 * scale,
-                color: const Color(0x887E61D8),
-              ),
-              Semantics(
-                label: 'Corazones disponibles',
-                value: hearts.toString(),
-                child: Row(
-                  key: const Key('muondia-hearts'),
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/onboarding/test/Reintento.png',
-                      width: 32 * scale,
-                      height: 32 * scale,
-                      fit: BoxFit.contain,
-                    ),
-                    SizedBox(width: 2 * scale),
-                    Text(
-                      '$hearts',
-                      key: const Key('muondia-hearts-count'),
-                      style: MuondiaTypography.sectionTitle.copyWith(
-                        color: Colors.white, fontSize: 23 * scale,
-                        fontWeight: FontWeight.w900,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Semantics(
+              label: 'Corazones disponibles',
+              value: hearts.toString(),
+              child: Row(
+                key: const Key('muondia-hearts'),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < 3; i++) ...[
+                    if (i != 0) SizedBox(width: 3 * scale),
+                    SizedBox(
+                      key: Key('muondia-heart-$i'),
+                      width: 27 * scale,
+                      height: 27 * scale,
+                      child: CustomPaint(
+                        painter: _HeartPainter(filled: i < hearts),
                       ),
                     ),
                   ],
-                ),
+                  // Conserva un nodo legible en las pruebas sin dibujar
+                  // una cifra que no existe en el diseño.
+                  SizedBox(
+                    key: const Key('muondia-hearts-count'),
+                    width: 0,
+                    height: 0,
+                    child: Text('$hearts', style: const TextStyle(fontSize: 1)),
+                  ),
+                ],
               ),
-              SizedBox(width: 9 * scale),
-              Semantics(
-                label: 'Tiempo restante del test',
-                value: '$secondsRemaining segundos',
-                child: SizedBox(
-                  key: const Key('muondia-timer-ring'),
-                  width: 58 * scale,
-                  height: 58 * scale,
-                  child: CustomPaint(
-                    painter: _CountdownPainter(timeFraction, secondsRemaining),
-                    child: Center(
-                      child: Text(
-                        secondsRemaining.toString() + 's',
-                        key: const Key('muondia-test-seconds'),
-                        style: MuondiaTypography.screenTitle.copyWith(
-                          color: Colors.white,
-                          fontSize: 20 * scale,
-                          fontWeight: FontWeight.w900,
-                        ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  key: const Key('muondia-pivot-icon'),
+                  width: 56 * scale,
+                  height: 56 * scale,
+                  child: pivot.toLowerCase() == 'física'
+                      ? const CustomPaint(painter: _AtomPainter())
+                      : imagePath != null
+                          ? Image.asset(
+                              imagePath,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            )
+                          : const Icon(
+                              Icons.auto_awesome_outlined,
+                              color: Color(0xFFB9D5FF),
+                            ),
+                ),
+                SizedBox(height: 5 * scale),
+                SizedBox(
+                  width: 126 * scale,
+                  child: Text(
+                    pivot,
+                    key: const Key('muondia-pivot-title'),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: MuondiaTypography.sectionTitle.copyWith(
+                      color: const Color(0xFFEAF3FF),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 19 * scale,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Semantics(
+              label: 'Tiempo restante del test',
+              value: '$secondsRemaining segundos',
+              child: SizedBox(
+                key: const Key('muondia-timer-ring'),
+                width: 64 * scale,
+                height: 64 * scale,
+                child: CustomPaint(
+                  painter: _CountdownPainter(timeFraction, secondsRemaining),
+                  child: Center(
+                    child: Text(
+                      secondsRemaining.toString() + 's',
+                      key: const Key('muondia-test-seconds'),
+                      style: MuondiaTypography.screenTitle.copyWith(
+                        color: const Color(0xFFF7F9FF),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18 * scale,
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  BoxDecoration _orbDecoration(QuizOutcome result) {
-    final colors = switch (result) {
-      QuizOutcome.correct => const [Color(0xFF64FFD4), Color(0xFF1AE58A),
-          Color(0xFF00BA76)],
-      QuizOutcome.incorrect => const [Color(0xFFFF8299), Color(0xFFFF416A),
-          Color(0xFFD80C45)],
-      QuizOutcome.pending => const [Color(0xAA8554E6), Color(0x99340E93),
-          Color(0x66301065)],
-    };
-    return BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: RadialGradient(
-        center: const Alignment(-0.35, -0.45),
-        radius: 0.87,
-        colors: colors,
-      ),
-      border: Border.all(
-        color: switch (result) {
-          QuizOutcome.pending => const Color(0x997E3DD2),
-          QuizOutcome.correct => const Color(0x772BEF9D),
-          QuizOutcome.incorrect => const Color(0x77FF4D80),
-        },
-        width: 0.6,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: result == QuizOutcome.correct
-              ? const Color(0x6600FF99)
-              : result == QuizOutcome.incorrect
-                  ? const Color(0x66F21254)
-                  : const Color(0x663E08B8),
-          blurRadius: 4,
+class _AtomPainter extends CustomPainter {
+  const _AtomPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.translate(size.width / 2, size.height / 2);
+    final stroke = Paint()
+      ..color = const Color(0xFFD0E0FF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..isAntiAlias = true;
+    for (final degrees in [0.0, 60.0, -60.0]) {
+      canvas.save();
+      canvas.rotate(degrees * math.pi / 180);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: 52 * size.width / 56,
+          height: 21 * size.height / 56,
         ),
-      ],
+        stroke,
+      );
+      canvas.restore();
+    }
+    canvas.drawCircle(
+      Offset.zero,
+      4.5 * size.width / 56,
+      Paint()..color = const Color(0xFF19DDF4),
     );
+    canvas.restore();
   }
+
+  @override
+  bool shouldRepaint(covariant _AtomPainter oldDelegate) => false;
+}
+
+class _HeartPainter extends CustomPainter {
+  const _HeartPainter({required this.filled});
+
+  final bool filled;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final path = Path()
+      ..moveTo(w * .5, h * .88)
+      ..cubicTo(w * .40, h * .77, w * .08, h * .55, w * .08, h * .33)
+      ..cubicTo(w * .08, h * .09, w * .39, h * .07, w * .5, h * .27)
+      ..cubicTo(w * .65, h * .07, w * .92, h * .09, w * .92, h * .33)
+      ..cubicTo(w * .92, h * .55, w * .60, h * .77, w * .5, h * .88)
+      ..close();
+    if (filled) {
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = const Color(0x7747E7FF)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF4FEBFF), Color(0xFF13BDEC)],
+          ).createShader(Offset.zero & size),
+      );
+    } else {
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = const Color(0xFF304A7C)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeartPainter oldDelegate) =>
+      oldDelegate.filled != filled;
 }
 
 class _CountdownPainter extends CustomPainter {
@@ -216,24 +289,23 @@ class _CountdownPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bounds = Offset.zero & size;
-    final arc = bounds.deflate(3.0);
+    final bounds = (Offset.zero & size).deflate(6);
     final track = Paint()
-      ..color = const Color(0x775E47B6)
+      ..color = const Color(0xFF273D71)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.6;
-    final color = quizTimerColor(seconds);
+      ..strokeWidth = 6.4
+      ..strokeCap = StrokeCap.round;
     final active = Paint()
-      ..color = color
+      ..color = quizTimerColor(seconds)
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 3.2;
-    canvas.drawArc(arc, 0, 2 * math.pi, false, track);
+      ..strokeWidth = 6.4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(bounds, 0, math.pi * 2, false, track);
     if (fraction > 0) {
       canvas.drawArc(
-        arc,
+        bounds,
         -math.pi / 2,
-        2 * math.pi * fraction.clamp(0.0, 1.0),
+        math.pi * 2 * fraction.clamp(0.0, 1.0),
         false,
         active,
       );

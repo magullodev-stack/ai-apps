@@ -61,115 +61,104 @@ Color orbColor(WidgetTester tester, int index) {
 }
 
 void main() {
-  test('Anillo: verde 60–21, amarillo 20–6 y rojo 5–0', () {
-    for (final seconds in [60, 34, 21]) {
-      expect(quizTimerColor(seconds), const Color(0xFF00E8A1));
-    }
-    for (final seconds in [20, 12, 6]) {
-      expect(quizTimerColor(seconds), const Color(0xFFFFD439));
+  test('Anillo magenta; rojo en los últimos cinco segundos', () {
+    for (final seconds in [60, 34, 21, 20, 12, 6]) {
+      expect(quizTimerColor(seconds), const Color(0xFFCC64ED));
     }
     for (final seconds in [5, 1, 0]) {
-      expect(quizTimerColor(seconds), const Color(0xFFFF355C));
+      expect(quizTimerColor(seconds), const Color(0xFFFF5277));
     }
   });
 
-  testWidgets('Cabecera de referencia y tres comodines con PNG originales',
+  testWidgets('Nueva pantalla: corazones, progreso interior y comodines',
       (tester) async {
     await openQuiz(tester);
     expect(find.byKey(const Key('muondia-timer-ring')), findsOneWidget);
     expect(find.text('60s'), findsOneWidget);
     expect(find.byKey(const Key('muondia-hearts-count')), findsOneWidget);
-    expect(find.byKey(const Key('muondia-progress-orbs')), findsOneWidget);
+    expect(find.byKey(const Key('muondia-hearts')), findsOneWidget);
+    for (var i = 0; i < 3; i++) {
+      expect(find.byKey(Key('muondia-heart-$i')), findsOneWidget);
+    }
+    final panel = find.byKey(const Key('muondia-question-card'));
+    expect(
+      find.descendant(
+        of: panel,
+        matching: find.byKey(const Key('muondia-progress-orbs')),
+      ),
+      findsOneWidget,
+    );
     for (var i = 0; i < 10; i++) {
-      expect(orbColor(tester, i), const Color(0xAA340E93));
+      expect(orbColor(tester, i), const Color(0xFF172E51));
     }
     for (var i = 0; i < 4; i++) {
       expect(answer(i), findsOneWidget);
     }
     for (final entry in <String, String>{
-      'fifty': '50%.png',
-      'hint': 'Pista.png',
-      'pause': 'Pausa.png',
+      'fifty': 'modern_50_50.png',
+      'hint': 'modern_bulb.png',
     }.entries) {
       final image = tester.widget<Image>(
           find.byKey(Key('muondia-${entry.key}-image')));
       expect((image.image as AssetImage).assetName,
           'assets/onboarding/test/' + entry.value);
-      final frame = tester.widget<Image>(
-          find.byKey(Key('muondia-${entry.key}-frame')));
-      expect((frame.image as AssetImage).assetName,
-          'assets/onboarding/test/lifeline_frame.png');
-      expect(frame.fit, BoxFit.fill);
-      expect(frame.centerSlice, const Rect.fromLTRB(53, 52, 123, 54));
-      expect(find.byKey(Key('muondia-${entry.key}-count')), findsOneWidget);
     }
-    expect(find.byKey(const Key('muondia-hearts')), findsOneWidget);
+    expect(find.byKey(const Key('muondia-pause-symbol')), findsOneWidget);
+    expect(find.byKey(const Key('muondia-progress-divider')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Marco de comodines: proporción y estado al agotar',
+  testWidgets('Los tres marcos son Flutter y tienen igual tamaño',
       (tester) async {
-    await openQuiz(tester);
-    for (final kind in ['fifty', 'hint', 'pause']) {
-      expect(tester.getSize(find.byKey(Key('muondia-$kind-frame'))).height,
-          70);
-    }
-    await tester.tap(find.byKey(const Key('muondia-aid-fifty')));
-    await tester.pump(const Duration(milliseconds: 220));
-    expect(tester.widget<AnimatedOpacity>(
-        find.byKey(const Key('muondia-fifty-opacity'))).opacity, 0.42);
-    expect(find.byKey(const Key('muondia-fifty-frame')), findsOneWidget);
-    expect(find.byKey(const Key('muondia-fifty-count')), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('Tres marcos iguales e iconos confinados al interior',
-      (tester) async {
-    for (final screenWidth in [320.0, 390.0, 430.0]) {
-      await openQuiz(tester, size: Size(screenWidth, 844));
+    for (final width in [320.0, 390.0, 430.0]) {
+      await openQuiz(tester, size: Size(width, 844));
       final kinds = ['fifty', 'hint', 'pause'];
-      final frameRects = [
+      final frames = [
         for (final kind in kinds)
           tester.getRect(find.byKey(Key('muondia-$kind-frame'))),
       ];
-      final first = frameRects.first;
       for (var i = 0; i < kinds.length; i++) {
         final kind = kinds[i];
-        final frame = frameRects[i];
+        final frame = frames[i];
         final viewport = tester.getRect(
             find.byKey(Key('muondia-$kind-icon-viewport')));
-        expect(frame.size.width, closeTo(first.size.width, 0.01));
-        expect(frame.size.height, closeTo(first.size.height, 0.01));
-        expect(frame.top, closeTo(first.top, 0.01));
+        expect(frame.width, closeTo(frames[0].width, 0.01));
+        expect(frame.height, closeTo(frames[0].height, 0.01));
+        expect(frame.top, closeTo(frames[0].top, 0.01));
         expect(viewport.left, greaterThan(frame.left));
         expect(viewport.right, lessThan(frame.right));
         expect(viewport.top, greaterThan(frame.top));
         expect(viewport.bottom, lessThan(frame.bottom));
-
-        // El PNG puede tener márgenes transparentes grandes, pero solo
-        // puede pintar en este viewport, no encima del contorno.
-        expect(
-          find.ancestor(
-            of: find.byKey(Key('muondia-$kind-image')),
-            matching: find.byKey(Key('muondia-$kind-icon-viewport')),
-          ),
-          findsOneWidget,
+        final surface = tester.widget<Container>(
+          find.byKey(Key('muondia-$kind-frame')),
         );
-      }
-
-      final scale = (screenWidth / 390).clamp(0.82, 1.1);
-      for (final entry in <String, double>{
-        'fifty': 73,
-        'hint': 55,
-        'pause': 58,
-      }.entries) {
-        final imageSize = tester.getSize(
-            find.byKey(Key('muondia-${entry.key}-image')));
-        expect(imageSize.width, closeTo(entry.value * scale, 0.01));
-        expect(imageSize.height, closeTo(entry.value * scale, 0.01));
+        final decoration = surface.decoration! as BoxDecoration;
+        expect(decoration.borderRadius, isNotNull);
+        expect(decoration.border, isNotNull);
+        expect(find.byKey(Key('muondia-$kind-count')), findsOneWidget);
       }
       expect(tester.takeException(), isNull);
     }
+  });
+
+  testWidgets('Agotar comodín no mueve las cajas ni deja contador cero',
+      (tester) async {
+    await openQuiz(tester);
+    final before = [
+      for (final kind in ['fifty', 'hint', 'pause'])
+        tester.getRect(find.byKey(Key('muondia-$kind-frame'))),
+    ];
+    await tester.tap(find.byKey(const Key('muondia-aid-fifty')));
+    await tester.pump(const Duration(milliseconds: 220));
+    expect(tester.widget<AnimatedOpacity>(
+        find.byKey(const Key('muondia-fifty-opacity'))).opacity, 0.42);
+    expect(find.byKey(const Key('muondia-fifty-count')), findsNothing);
+    for (var i = 0; i < 3; i++) {
+      final kind = ['fifty', 'hint', 'pause'][i];
+      expect(tester.getRect(find.byKey(Key('muondia-$kind-frame'))),
+          before[i]);
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('50/50 oculta dos incorrectas y nunca la correcta',
@@ -194,7 +183,7 @@ void main() {
     await advance(tester);
     expect(find.text('Pregunta 1'), findsOneWidget);
     expect(tester.widget<InkWell>(answer(1)).onTap, isNull);
-    expect(orbColor(tester, 0), const Color(0xAA340E93));
+    expect(orbColor(tester, 0), const Color(0xFF172E51));
     await choose(tester, 2);
     await advance(tester);
     expect(find.text('Pregunta 1'), findsOneWidget);
@@ -206,7 +195,7 @@ void main() {
     await choose(tester, 3);
     await advance(tester);
     expect(find.text('Pregunta 2'), findsOneWidget);
-    expect(orbColor(tester, 0), const Color(0xFFFF476C));
+    expect(orbColor(tester, 0), const Color(0xFFFF4B64));
   });
 
   testWidgets('Acertar en reintento conserva vida gastada y esfera verde',
@@ -217,7 +206,7 @@ void main() {
     await choose(tester, 0);
     await advance(tester);
     expect(find.text('Pregunta 2'), findsOneWidget);
-    expect(orbColor(tester, 0), const Color(0xFF2AFF97));
+    expect(orbColor(tester, 0), const Color(0xFF00E77C));
     expect(find.descendant(
       of: find.byKey(const Key('muondia-hearts-count')),
       matching: find.text('1'),
@@ -310,14 +299,14 @@ void main() {
     final orb = tester.widget<DecoratedBox>(
         find.byKey(const Key('muondia-progress-orb-0')));
     final border = (orb.decoration as BoxDecoration).border! as Border;
-    expect(border.top.width, lessThan(1.1));
+    expect(border.top.width, lessThan(1.3));
     expect(border.top.color, isNot(const Color(0xFFA5FFF5)));
     expect(tester.getSize(
-        find.byKey(const Key('muondia-timer-ring'))).width, 58);
+        find.byKey(const Key('muondia-timer-ring'))).width, 64);
     for (final kind in ['fifty', 'hint', 'pause']) {
       final target = find.byKey(Key('muondia-aid-$kind'));
       expect(tester.getSize(target).height, greaterThan(60));
-      expect(tester.getSize(target).height, lessThan(80));
+      expect(tester.getSize(target).height, lessThan(95));
     }
   });
 

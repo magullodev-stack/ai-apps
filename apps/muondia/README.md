@@ -104,39 +104,29 @@ real activa la cuenta atrás de 60 s; esta distinción se configura
 explícitamente mediante `countdownEnabled`, sin deducirla de que existan
 preguntas de prueba.
 `OnboardingQuizPage` conserva el estado y las reglas del cuestionario.
-`interaction/onboarding_quiz_scene.dart` dibuja con Flutter todas las
-superficies del test: panel principal, respuestas A–D, distintivos de letra,
-separadores, comodines, esferas de usos y barra temporal. Su única imagen
-decorativa es `assets/onboarding/test/quiz_background.png`, que se mantiene
-a pantalla completa sin redondear ni añadir capas superpuestas. Los PNG de
-pivotes siguen siendo iconos de las temáticas y no superficies de la interfaz.
+La interfaz del test toma como referencia la composición azul oscuro:
+cabecera con tres corazones (llenos o vacíos), temática centrada y
+cronómetro magenta; tarjeta principal azul marino con progreso integrado
+en su parte superior, separador fino, pregunta blanca y cuatro respuestas
+oscuras con distintivos A–D. Los paneles, separadores, bordes, halos discretos,
+esferas de progreso, corazones, temporizador y contadores se dibujan con
+widgets/CustomPainter de Flutter. No se utilizan imágenes de tarjetas.
 
-Cada respuesta tiene una única caja Flutter con el mismo tamaño para fondo,
-letra, contenido y zona de pulsación. La altura mínima se adapta al espacio
-disponible; el texto de dos o más líneas aumenta la altura natural de la
-opción, sin deformar el distintivo ni el borde. Entre respuestas hay un
-margen real, sin transparencia táctil ni superposiciones. El enunciado
-queda separado de las respuestas mediante un espacio limitado: no hay
-`Spacer()` que cree huecos desproporcionados. Si el contenido excede el
-alto del móvil, se desplaza solo el interior de la tarjeta; cabecera y
-comodines permanecen fijos.
+Los símbolos transparentes independientes del 50/50 y la bombilla
+están en assets/onboarding/test/modern_50_50.png y
+assets/onboarding/test/modern_bulb.png. El cronómetro de pausa y los
+corazones se trazan con CustomPainter para conservar líneas nítidas sin
+fondos. El universo continúa usando quiz_background.png. Los iconos de
+temáticas siguen utilizando assets/Pivotes/; Física presenta el átomo
+lineal de la referencia.
 
-La tarjeta principal tiene una superficie clara única, borde redondeado con
-antialiasing y sombra sutil. Las respuestas son blancas con sombras suaves y
-distintivos neutros. Los comodines usan un marco PNG transparente, extraído del contorno de la
-referencia visual y completado en la esquina tapada por el contador. El marco
-se escala mediante nueve segmentos (`centerSlice`) para mantener las curvas y el
-grosor del trazo; Flutter dibuja únicamente el fondo oscuro, los PNG de
-iconos originales, el estado de disponibilidad y los contadores. Los tres
-marcos comparten exactamente el ancho y alto definidos por el layout. Cada
-icono tiene un tamaño propio (50/50, pista y pausa) dentro de un viewport
-interior recortado, que impide tapar el borde sin recortar el marco ni
-modificar su iluminación. Los
-comodines agotados se atenúan y pierden su esfera amarilla, sin mover el
-resto del diseño. La barra temporal se vuelve a
-componer en Flutter con pista y relleno violeta, y conserva el porcentaje
-controlado por la cuenta atrás de 60 segundos del recorrido real.
-En el explorador de experiencias, los 60 segundos siguen congelados.
+El panel conserva el progreso fijo mientras el área que contiene la pregunta
+y las cuatro respuestas puede desplazarse cuando la pantalla es estrecha o
+el texto es largo. Las respuestas nunca desaparecen ni cambian de posición
+al usar el comodín 50/50. Los comodines agotados pierden su contador y se
+atenúan sin cambiar su geometría. Los estados y el funcionamiento de cada
+comodín permanecen en OnboardingQuizPage. En las previsualizaciones el
+temporizador continúa congelado y no se realizan llamadas de IA.
 
 La composición es particular de Muondia y no modifica el tema global ni
 los componentes compartidos. La imagen conserva su

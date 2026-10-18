@@ -78,8 +78,8 @@ flutter:
     - assets/auth/Logotipo_MuondIA.png
     - assets/onboarding/
     - assets/onboarding/loading/
-    # El test utiliza PNG para fondo, iconos y el marco transparente
-    # de los comodines; las respuestas y las reglas siguen en Flutter.
+    # El test utiliza PNG para el universo y símbolos transparentes;
+    # tarjetas, corazones, temporizador y contadores son Flutter.
     - assets/onboarding/test/
     - assets/Pivotes/
     - assets/fonts/OFL.txt
