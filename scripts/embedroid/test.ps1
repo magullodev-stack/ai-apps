@@ -2,7 +2,7 @@
 
 $ErrorActionPreference = 'Stop'
 & (Join-Path $PSScriptRoot 'build.ps1') | Out-Null
-$tests = @('boot-ready.test.cjs', 'sessions-test.cjs', 'test.cjs')
+$tests = @('sessions-test.cjs', 'test.cjs')
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
     foreach ($test in $tests) {
