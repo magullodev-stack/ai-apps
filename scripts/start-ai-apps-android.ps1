@@ -55,19 +55,60 @@ function Test-EmulatorReady {
     }
 }
 
-# Solo el AVD reservado, verificado por nombre de proceso, nombre del AVD
-# Y puerto, puede cerrarse. Nunca reiniciar globalmente el servidor ADB.
+function Get-EmulatorProcesses {
+    @(
+        Get-CimInstance Win32_Process | Where-Object {
+            $_.Name -in @('emulator.exe', 'qemu-system-x86_64.exe',
+                'qemu-system-x86_64-headless.exe', 'qemu-system-aarch64.exe',
+                'qemu-system-aarch64-headless.exe')
+        }
+    )
+}
+
+# La ausencia en ADB no demuestra que QEMU haya terminado.
 function Get-ManagedAvdProcesses {
     $avdArg = '(?i)(^|\s)-avd(?:\s+|=)"?' + [regex]::Escape($AvdName) + '"?(?=\s|$)'
     $portArg = '(?i)(^|\s)-port(?:\s+|=)"?' + [regex]::Escape([string]$port) + '"?(?=\s|$)'
     @(
-        Get-CimInstance Win32_Process | Where-Object {
-            $_.Name -in @('emulator.exe', 'qemu-system-x86_64.exe',
-                'qemu-system-aarch64.exe') -and
+        Get-EmulatorProcesses | Where-Object {
             $_.CommandLine -match $avdArg -and
             $_.CommandLine -match $portArg
         }
     )
+}
+
+function Get-EmulatorPortProcesses {
+    $portArg = '(?i)(^|\s)-port(?:\s+|=)"?' +
+        [regex]::Escape([string]$port) + '"?(?=\s|$)'
+    @(Get-EmulatorProcesses | Where-Object { $_.CommandLine -match $portArg })
+}
+
+function Test-ManagedQemuPresent {
+    $processes = @(Get-EmulatorProcesses)
+    $owned = @(Get-ManagedAvdProcesses)
+    if (@($owned | Where-Object { $_.Name -ne 'emulator.exe' }).Count -gt 0) {
+        return $true
+    }
+    # Un hijo puede no repetir -avd/-port. Su wrapper no es huerfano.
+    $wrapperPids = @($owned | Where-Object { $_.Name -eq 'emulator.exe' } |
+        ForEach-Object { $_.ProcessId })
+    return @($processes | Where-Object {
+        $_.Name -ne 'emulator.exe' -and $_.ParentProcessId -in $wrapperPids
+    }).Count -gt 0
+}
+
+function Assert-AvdAvailableForStartup([string]$RepoRoot) {
+    $f5Marker = Join-Path $RepoRoot '.ai-apps/muondia-f5-takeover.txt'
+    if (Test-Path -LiteralPath $f5Marker) {
+        throw 'F5 tiene cedido emulator-5554; no se modifica su AVD.'
+    }
+    $control = Join-Path $RepoRoot 'scripts/android/task-control.ps1'
+    if (Test-Path -LiteralPath $control) {
+        $flutterState = (& $control -Action Check -Serial $Serial | Out-String).Trim()
+        if ($flutterState -ne 'free') {
+            throw 'Flutter ocupa emulator-5554; no se modifica el AVD.'
+        }
+    }
 }
 
 function Get-SerialState {
@@ -89,6 +130,8 @@ function Get-SerialState {
     }
 }
 
+function Initialize-ManagedAvd {
+param([Parameter(Mandatory = $true)][string]$RepoRoot)
 if (-not (Test-EmulatorReady)) {
     # Un reinicio de ADB puede provocar una ausencia momentánea. No
     # terminar el AVD de inmediato; observar tres veces antes de intervenir.
@@ -103,62 +146,44 @@ if (-not (Test-EmulatorReady)) {
     if ($state -eq 'unknown') {
         throw 'ADB no responde; se reintentará sin terminar otros dispositivos.'
     }
-    $terminatedReservedAvd = $false
     # Un AVD que ADB todavía ve como online puede seguir arrancando.
     # No hay motivo para matarlo cuando simplemente no terminó boot.
     if ($state -eq 'missing' -or $state -eq 'offline') {
-        # Además del detector de procesos, respetar la cesión explícita F5
-        # del propio proyecto (puede no incluir --device en su Dart).
-        $repo = Split-Path $PSScriptRoot -Parent
-        $f5Marker = Join-Path $repo '.ai-apps/muondia-f5-takeover.txt'
-        if (Test-Path -LiteralPath $f5Marker) {
-            throw 'F5 tiene cedido emulator-5554; no se reinicia su AVD.'
-        }
-        # Comprobación final antes de tocar un emulador: F5 podría haber
-        # iniciado una sesión después de la validación del supervisor.
-        $control = Join-Path $PSScriptRoot 'android/task-control.ps1'
-        if (Test-Path -LiteralPath $control) {
-            $flutterState = (& $control -Action Check -Serial $Serial |
-                Out-String).Trim()
-            if ($flutterState -ne 'free') {
-                throw 'Flutter ocupa emulator-5554; no se cierra el AVD.'
-            }
-        }
+        Assert-AvdAvailableForStartup $RepoRoot
         $owned = @(Get-ManagedAvdProcesses)
-        if ($owned.Count -gt 0) {
-            foreach ($process in $owned) {
+        $ownedPids = @($owned | ForEach-Object { $_.ProcessId })
+        if (@(Get-EmulatorPortProcesses | Where-Object {
+            $_.ProcessId -notin $ownedPids
+        }).Count -gt 0) {
+            throw 'Puerto AVD ocupado por proceso de propiedad no verificada.'
+        }
+        $wrappers = @($owned | Where-Object { $_.Name -eq 'emulator.exe' })
+        if ($wrappers.Count -gt 0 -and -not (Test-ManagedQemuPresent)) {
+            # Un launcher puede sobrevivir a un crash de QEMU. Dar tiempo
+            # al arranque antes de liberar solo ese wrapper, nunca su arbol.
+            for ($attempt = 0; $attempt -lt 10; $attempt++) {
+                Start-Sleep -Seconds 1
+                if ((Test-EmulatorReady) -or (Test-ManagedQemuPresent)) { break }
+            }
+            foreach ($process in $wrappers) {
+                if ((Test-EmulatorReady) -or (Test-ManagedQemuPresent)) { break }
+                # F5 puede haber empezado durante la espera del wrapper.
+                Assert-AvdAvailableForStartup $RepoRoot
                 $current = Get-CimInstance Win32_Process -Filter "ProcessId=$($process.ProcessId)"
                 if ($current -and $current.CreationDate -eq $process.CreationDate -and
                     $current.CommandLine -eq $process.CommandLine -and
+                    $current.Name -eq 'emulator.exe' -and
                     @(Get-ManagedAvdProcesses | Where-Object {
                         $_.ProcessId -eq $current.ProcessId
-                    }).Count -eq 1) {
-                    & taskkill.exe /PID $process.ProcessId /T /F 2>$null | Out-Null
+                    }).Count -eq 1 -and -not (Test-ManagedQemuPresent)) {
+                    & taskkill.exe /PID $process.ProcessId /F 2>$null | Out-Null
                 }
             }
-            # Nunca arrancar un segundo AVD hasta comprobar que el antiguo
-            # ha terminado realmente.
+            # Esperar la salida del wrapper; QEMU vivo siempre se conserva.
             for ($attempt = 0; $attempt -lt 10; $attempt++) {
                 if (@(Get-ManagedAvdProcesses).Count -eq 0) { break }
+                if (Test-ManagedQemuPresent) { break }
                 Start-Sleep -Seconds 1
-            }
-            if (@(Get-ManagedAvdProcesses).Count -gt 0) {
-                throw 'El AVD reservado sigue activo; no se inicia otro emulador.'
-            }
-            $terminatedReservedAvd = $true
-        } else {
-            # Si hay un proceso ocupando el puerto pero NO podemos demostrar
-            # que es AI_APPS_Dev, no crear otro AVD. Si no queda ninguno,
-            # un registro 'offline' de ADB no impide arrancar uno nuevo.
-            $portArg = '(?i)(^|\s)-port(?:\s+|=)"?' +
-                [regex]::Escape([string]$port) + '"?(?=\s|$)'
-            $portOwner = @(Get-CimInstance Win32_Process | Where-Object {
-                $_.Name -in @('emulator.exe', 'qemu-system-x86_64.exe',
-                    'qemu-system-aarch64.exe') -and
-                $_.CommandLine -match $portArg
-            })
-            if ($portOwner.Count -gt 0) {
-                throw 'Puerto AVD ocupado por proceso de propiedad no verificada.'
             }
         }
     }
@@ -178,11 +203,19 @@ if (-not (Test-EmulatorReady)) {
         }
     }
 
-    # 'offline' no significa conectado: tras cerrar nuestro AVD
-    # debe iniciarse otra instancia, aunque ADB aún conserve esa fila.
-    $alreadyConnected = (Get-SerialState) -eq 'device'
-
-    if ($terminatedReservedAvd -or -not $alreadyConnected) {
+    # No duplicar un QEMU vivo aunque ADB no lo vea. Solo arrancar cuando
+    # no quede proceso propio ni otro proceso ocupando el puerto.
+    $currentState = Get-SerialState
+    if ($currentState -eq 'unknown') {
+        throw 'ADB no responde; se reintentará sin terminar otros dispositivos.'
+    }
+    $alreadyConnected = $currentState -eq 'device'
+    $existing = @(Get-ManagedAvdProcesses)
+    if (-not $alreadyConnected -and $existing.Count -eq 0) {
+        Assert-AvdAvailableForStartup $RepoRoot
+        if (@(Get-EmulatorPortProcesses).Count -gt 0) {
+            throw 'Puerto AVD ocupado por proceso de propiedad no verificada.'
+        }
         Write-Host "Arrancando $AvdName..."
         Start-Process -FilePath $emulator -ArgumentList @(
             '-avd', $AvdName,
@@ -204,3 +237,6 @@ if (-not (Test-EmulatorReady)) {
 
 Write-Host "Android preparado: $Serial" -ForegroundColor Green
 Write-Output "AI_APPS_ANDROID_SERIAL=$Serial"
+}
+
+Initialize-ManagedAvd -RepoRoot (Split-Path $PSScriptRoot -Parent)

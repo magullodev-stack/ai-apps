@@ -56,7 +56,8 @@ async function main(){
   assert.equal(realItem.command.command,'aiAppsAndroid.realFlow');
   const groupItem=explorer.provider.getTreeItem(children[1]);
   assert.equal(groupItem.label,'ACCESO', 'Group anchors are uppercase');
-  assert.equal(groupItem.iconPath.id,'folder', 'Group anchors use a distinct icon');
+  assert.equal(groupItem.iconPath.id,'folder-opened',
+    'The active group retains its observed open-folder icon');
   assert.equal(explorer.provider.getChildren(children[1])[0].label,'Auth');
   const groupChildren=explorer.provider.getChildren(children[2]);
   assert.deepEqual(groupChildren.map(x=>x.label),

@@ -540,8 +540,6 @@ try {
 
             Write-Host "Android preparado: $Device"
             $port = ([Uri]$session.endpoint).Port
-            & $adb -s $Device reverse tcp:8787 "tcp:$port"
-            if ($LASTEXITCODE -ne 0) { throw 'No se pudo establecer adb reverse.' }
             $definesFile = Join-Path $runtime 'onboardingQuiz-defines.json'
             @{
                 AI_APPS_AI_URL = 'http://127.0.0.1:8787'
@@ -559,6 +557,10 @@ try {
             # Rebuild (86) relanza Flutter dentro de la sesión.
             # Pérdida ADB (88) devuelve el control a la tarea que recupera Android.
             while ($true) {
+                # Una reconexión ADB puede haber perdido el túnel aunque el
+                # emulador y el backend continúen vivos.
+                & $adb -s $Device reverse tcp:8787 "tcp:$port"
+                if ($LASTEXITCODE -ne 0) { throw 'No se pudo establecer adb reverse.' }
                 # Windows PowerShell convierte stderr nativo redirigido en
                 # ErrorRecord (incluidas advertencias de Java/Gradle). Con Stop
                 # abortaria una sesion oculta valida antes de leer su exit code.

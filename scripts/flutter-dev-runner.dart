@@ -24,6 +24,12 @@ Future<void> main(List<String> args) async {
   var updating = false;
   var relaunching = false;
   Timer? debounce;
+  final contents = FlutterContentTracker();
+  for (final watched in options.watchRoots) {
+    contents.seedDirectory(Directory(watched));
+  }
+  contents.seed(File(root + Platform.pathSeparator +
+      'scripts' + Platform.pathSeparator + 'flutter-dev-runner.dart'));
 
   final flutter = await Process.start(
     options.flutter,
@@ -83,6 +89,13 @@ Future<void> main(List<String> args) async {
   void dispatch() {
     if (relaunching || updating || !controller.isReady ||
         pendingAction == FlutterChangeAction.none) return;
+    if (!contents.beginUpdate()) {
+      // Una edición se restauró antes del debounce: no hay nada que aplicar.
+      pendingAction = FlutterChangeAction.none;
+      pendingPath = '';
+      queuedRevision = null;
+      return;
+    }
     updating = true;
     activeAction = pendingAction;
     activePath = pendingPath;
@@ -102,8 +115,15 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  void queue(FlutterChangeAction action, String path, {String? revision}) {
+  void queue(FlutterChangeAction action, String path, {
+    String? revision, List<String>? changedPaths,
+  }) {
     if (action == FlutterChangeAction.none || relaunching) return;
+    var changed = false;
+    for (final changedPath in changedPaths ?? [path]) {
+      if (contents.queue(changedPath)) changed = true;
+    }
+    if (!changed) return;
     // Una edición más reciente desatasca un commit cuyo Flutter falló.
     if (revision == null || revision != blockedRevision) {
       blockedRevision = null;
@@ -129,6 +149,7 @@ Future<void> main(List<String> args) async {
     if (!updating) return;
     final revision = activeRevision;
     final path = activePath;
+    contents.settle(success);
     updating = false;
     activeRevision = null;
     if (success) {
@@ -198,22 +219,37 @@ Future<void> main(List<String> args) async {
       if (changes == null) return;
       var action = FlutterChangeAction.none;
       String? path;
+      var awaitingUpdate = false;
+      final changedPaths = <String>[];
       for (final change in changes) {
+        final localPath = root + Platform.pathSeparator +
+            change.path.replaceAll('/', Platform.pathSeparator);
+        switch (contents.status(localPath)) {
+          case FlutterContentStatus.applied:
+            continue;
+          case FlutterContentStatus.scheduled:
+            awaitingUpdate = true;
+            continue;
+          case FlutterContentStatus.changed:
+            break;
+        }
         final next = classifyFlutterChange(change.path, status: change.status);
+        if (next != FlutterChangeAction.none) changedPaths.add(localPath);
         if (next.index > action.index) {
           action = next;
           path = change.path;
         }
       }
       if (action == FlutterChangeAction.none) {
-        // Un commit de documentación no necesita actualizar Flutter.
-        appliedRevision = current;
+        // Un commit de cambios ya aplicados no vuelve a recargar la app.
+        // Si aún están en vuelo, esperar su confirmación antes de consumirlo.
+        if (!awaitingUpdate) appliedRevision = current;
       } else {
         stdout.writeln('Revision dev detectada: ' +
             current.substring(0, 7) + '.');
         queue(action, root + Platform.pathSeparator +
             path!.replaceAll('/', Platform.pathSeparator),
-            revision: current);
+            revision: current, changedPaths: changedPaths);
       }
     } catch (_) {
       // Git puede estar trabajando: conservar la revisión para reintentar.
@@ -425,7 +461,7 @@ FlutterChangeAction classifyFlutterChange(
       normalized.contains('/.git/') ||
       normalized.contains('/node_modules/') ||
       normalized.contains('/android/.gradle/') ||
-      normalized.endsWith('/generatedpluginregistrant.java')) {
+      normalized.endsWith('/android/app/src/main/java/io/flutter/plugins/generatedpluginregistrant.java')) {
     return FlutterChangeAction.none;
   }
   if (normalized.endsWith('/scripts/flutter-dev-runner.dart')) {

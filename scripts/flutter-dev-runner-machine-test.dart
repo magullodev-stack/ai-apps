@@ -40,6 +40,27 @@ Future<void> fakeMachine(String tracePath) async {
   }
 }
 
+Future<void> fakeConnectionMachine() async {
+  stdout.writeln(jsonEncode([
+    {'event': 'app.start', 'params': {'appId': 'fake-app', 'deviceId': 'fake'}},
+    {'event': 'app.started'},
+  ]));
+  await for (final command in stdin.transform(utf8.decoder).transform(const LineSplitter())) {
+    if (command == 'app-log') {
+      stdout.writeln(jsonEncode([
+        {'event': 'app.log', 'params': {'log': 'Lost connection to device.'}},
+        {'event': 'app.log', 'params': {'log': 'Example: Lost connection to device.'}},
+      ]));
+    } else if (command == 'daemon-log') {
+      stdout.writeln(jsonEncode([
+        {'event': 'daemon.logMessage', 'params': {'message': 'Lost connection to device.'}},
+      ]));
+    } else if (command == 'plain-loss') {
+      stdout.writeln('Lost connection to device.');
+    }
+  }
+}
+
 Future<List<Map<String, dynamic>>> waitRequests(File trace, int count) async {
   for (var attempt = 0; attempt < 180; attempt++) {
     if (trace.existsSync()) {
@@ -71,6 +92,33 @@ void verifyAdbDeviceRecognition() {
   require(!runner.adbListsOnlineDevice(
     'List of devices attached\n',
     'emulator-5554'), 'Un AVD desaparecido no está conectado');
+}
+
+void verifyDeviceRecoveryPolicy() {
+  final policy = runner.FlutterDeviceRecoveryPolicy();
+  for (var i = 0; i < 10; i++) {
+    require(policy.observe(vmDisconnected: false, androidOnline: false) ==
+        runner.FlutterDeviceRecoveryAction.none,
+      'ADB ausente no debe terminar una VM Flutter conectada');
+  }
+  require(policy.observe(vmDisconnected: true, androidOnline: false) ==
+      runner.FlutterDeviceRecoveryAction.none, 'Primera ausencia es transitoria');
+  require(policy.observe(vmDisconnected: true, androidOnline: false) ==
+      runner.FlutterDeviceRecoveryAction.none, 'Segunda ausencia es transitoria');
+  require(policy.observe(vmDisconnected: true, androidOnline: null) ==
+      runner.FlutterDeviceRecoveryAction.none, 'ADB bloqueado no demuestra fallo Android');
+  require(policy.observe(vmDisconnected: true, androidOnline: false) ==
+      runner.FlutterDeviceRecoveryAction.none, 'La ausencia desconocida rompe la secuencia');
+  require(policy.observe(vmDisconnected: true, androidOnline: true) ==
+      runner.FlutterDeviceRecoveryAction.relaunchFlutter,
+    'VM perdida con Android vivo solo recupera Flutter');
+  require(policy.observe(vmDisconnected: true, androidOnline: false) ==
+      runner.FlutterDeviceRecoveryAction.none, 'Android vivo reinicia la secuencia');
+  require(policy.observe(vmDisconnected: true, androidOnline: false) ==
+      runner.FlutterDeviceRecoveryAction.none, 'Dos ausencias aún no recuperan Android');
+  require(policy.observe(vmDisconnected: true, androidOnline: false) ==
+      runner.FlutterDeviceRecoveryAction.recoverDevice,
+    'Tres ausencias confirmadas tras perder VM permiten recuperar el dispositivo');
 }
 
 void verifyUpdateClassification() {
@@ -136,6 +184,36 @@ void verifyUpdateClassification() {
       expected: runner.FlutterChangeAction.rebuild,
     ),
     (
+      path: r'C:\ai-apps\scripts\flutter-dev-runner.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
+      path: 'apps/muondia/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java',
+      status: 'M',
+      expected: runner.FlutterChangeAction.none,
+    ),
+    (
+      path: r'C:\ai-apps\apps\muondia\android\app\src\main\java\io\flutter\plugins\GeneratedPluginRegistrant.java',
+      status: 'A',
+      expected: runner.FlutterChangeAction.none,
+    ),
+    (
+      path: 'apps/muondia/android/app/src/main/kotlin/com/aiapps/muondia/MainActivity.kt',
+      status: 'M',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
+      path: 'apps/muondia/android/local.properties',
+      status: 'M',
+      expected: runner.FlutterChangeAction.none,
+    ),
+    (
+      path: 'build/generated.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.none,
+    ),
+    (
       path: 'apps/muondia/build/generated/test.dart',
       status: 'M',
       expected: runner.FlutterChangeAction.none,
@@ -160,12 +238,17 @@ void verifyUpdateClassification() {
 }
 
 Future<void> main(List<String> args) async {
+  if (args.length == 1 && args.first == '--connection-machine') {
+    await fakeConnectionMachine();
+    return;
+  }
   if (args.length == 2 && args.first == '--fake-machine') {
     await fakeMachine(args[1]);
     return;
   }
   verifyUpdateClassification();
   verifyAdbDeviceRecognition();
+  verifyDeviceRecoveryPolicy();
   final directory = await Directory.systemTemp.createTemp('ai-apps-flutter-machine-');
   final trace = File('${directory.path}${Platform.pathSeparator}requests.jsonl');
   final process = await Process.start(
@@ -247,6 +330,7 @@ Future<void> main(List<String> args) async {
       await started.future.timeout(const Duration(seconds: 20));
       lostController.requestDeviceRecovery();
       require(lostController.lostConnection &&
+          lostController.deviceRecoveryRequested &&
           !lostController.relaunchRequested &&
           !lostController.stopRequested,
         'Pérdida ADB debe distinguirse de rebuild y parada manual');
@@ -256,7 +340,43 @@ Future<void> main(List<String> args) async {
       lostProcess.kill();
     }
 
-    stdout.writeln('PASS: clasificación, fallback, ADB offline y recuperación de proceso propio.');
+    // Los logs de la app son contenido arbitrario. Solo la señal de Flutter
+    // marca una VM perdida, y esa señal no demuestra que Android haya caído.
+    for (final signal in ['daemon-log', 'plain-loss']) {
+      final connectionProcess = await Process.start(
+        Platform.resolvedExecutable,
+        [Platform.script.toFilePath(), '--connection-machine'],
+      );
+      final connectionController = runner.FlutterMachineController(connectionProcess);
+      try {
+        final connected = Completer<void>();
+        connectionController.onReady = () => connected.complete();
+        await connected.future.timeout(const Duration(seconds: 20));
+        connectionProcess.stdin.writeln('app-log');
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        require(!connectionController.lostConnection,
+          'El texto de app.log no debe solicitar ninguna recuperación');
+        connectionProcess.stdin.writeln(signal);
+        for (var attempt = 0; attempt < 100 && !connectionController.lostConnection; attempt++) {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+        require(connectionController.lostConnection &&
+            !connectionController.deviceRecoveryRequested &&
+            !connectionController.relaunchRequested,
+          'La pérdida VM no debe matar Flutter ni declarar el AVD averiado');
+        // El monitor puede recuperar solo el proceso propio si ADB sigue vivo.
+        connectionController.requestRelaunch();
+        await connectionProcess.exitCode.timeout(const Duration(seconds: 15));
+        require(connectionController.relaunchRequested &&
+            !connectionController.deviceRecoveryRequested,
+          'Recuperar VM no debe convertirse en recuperación Android');
+      } finally {
+        connectionController.dispose();
+        connectionProcess.kill();
+      }
+    }
+
+    stdout.writeln('PASS: clasificación, fallback, VM/ADB tolerante y recuperación de proceso propio.');
   } finally {
     process.kill();
     await directory.delete(recursive: true);
