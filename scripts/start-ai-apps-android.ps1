@@ -129,13 +129,10 @@ if (-not (Test-EmulatorReady)) {
                 throw 'El AVD reservado sigue activo; no se inicia otro emulador.'
             }
             $terminatedReservedAvd = $true
-        } elseif ($state -eq 'offline') {
-            # No hay proceso de propiedad demostrada: evitar un kill global
-            # de ADB o de emuladores ajenos. La tarea reintentará.
-            throw 'emulator-5554 offline sin proceso AVD verificable.'
         } else {
-            # Si hay un proceso de emulador ocupando el puerto pero NO
-            # podemos demostrar que es AI_APPS_Dev, no crear otro AVD.
+            # Si hay un proceso ocupando el puerto pero NO podemos demostrar
+            # que es AI_APPS_Dev, no crear otro AVD. Si no queda ninguno,
+            # un registro 'offline' de ADB no impide arrancar uno nuevo.
             $portArg = '(?i)(^|\s)-port(?:\s+|=)"?' +
                 [regex]::Escape([string]$port) + '"?(?=\s|$)'
             $portOwner = @(Get-CimInstance Win32_Process | Where-Object {
