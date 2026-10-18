@@ -98,38 +98,35 @@ class OnboardingQuizHeader extends StatelessWidget {
                 child: Semantics(
                   label: 'Tiempo restante del test',
                   value: '$secondsRemaining segundos',
-                  child: SizedBox(
+                  child: ClipRRect(
                     key: const Key('muondia-time-track'),
-                    height: 14 * scale,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Opacity(
-                          opacity: 0.48,
-                          child: Image.asset(
-                            'assets/onboarding/test/Barra tiempo.png',
-                            key: const Key('muondia-time-track-image'),
-                            fit: BoxFit.fill,
-                            filterQuality: FilterQuality.high,
-                          ),
-                        ),
-                        Align(
+                    borderRadius: BorderRadius.circular(100),
+                    clipBehavior: Clip.antiAlias,
+                    child: SizedBox(
+                      height: 13 * scale,
+                      child: ColoredBox(
+                        color: const Color(0xFF493A9A),
+                        child: Align(
                           alignment: Alignment.centerLeft,
                           child: FractionallySizedBox(
                             widthFactor: timeFraction.clamp(0.0, 1.0).toDouble(),
                             heightFactor: 1,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(100),
-                              child: Image.asset(
-                                'assets/onboarding/test/Barra tiempo.png',
-                                key: const Key('muondia-time-fill'),
-                                fit: BoxFit.fill,
-                                filterQuality: FilterQuality.high,
+                            child: const DecoratedBox(
+                              key: Key('muondia-time-fill'),
+                              decoration: BoxDecoration(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(100)),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFFAC56FC),
+                                    Color(0xFF8A3FF2),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
