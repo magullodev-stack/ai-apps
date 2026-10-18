@@ -44,7 +44,7 @@ class OnboardingQuizHeader extends StatelessWidget {
         .clamp(0.82, 1.1).toDouble();
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 3 * scale, vertical: 5 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 3 * scale, vertical: 4 * scale),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -59,7 +59,7 @@ class OnboardingQuizHeader extends StatelessWidget {
                   child: Image.asset(imagePath, fit: BoxFit.contain,
                       filterQuality: FilterQuality.high),
                 ),
-                SizedBox(width: 10 * scale),
+                SizedBox(width: 12 * scale),
               ],
               Expanded(
                 child: Text(
@@ -80,7 +80,7 @@ class OnboardingQuizHeader extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 13 * scale),
+          SizedBox(height: 12 * scale),
           Row(
             key: const Key('muondia-quiz-status'),
             children: [
@@ -93,10 +93,10 @@ class OnboardingQuizHeader extends StatelessWidget {
                     children: [
                       for (var i = 0; i < progress.length; i++)
                         Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 1 * scale),
-                            child: AspectRatio(
-                              aspectRatio: 1,
+                          child: Center(
+                            child: SizedBox(
+                              width: 14 * scale,
+                              height: 14 * scale,
                               child: DecoratedBox(
                                 key: Key('muondia-progress-orb-$i'),
                                 decoration: _orbDecoration(progress[i]),
@@ -110,9 +110,9 @@ class OnboardingQuizHeader extends StatelessWidget {
               ),
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 9 * scale),
-                height: 33 * scale,
-                width: 1.3 * scale,
-                color: const Color(0xB5B9A8FF),
+                height: 31 * scale,
+                width: 1 * scale,
+                color: const Color(0x887E61D8),
               ),
               Semantics(
                 label: 'Corazones disponibles',
@@ -145,8 +145,8 @@ class OnboardingQuizHeader extends StatelessWidget {
                 value: '$secondsRemaining segundos',
                 child: SizedBox(
                   key: const Key('muondia-timer-ring'),
-                  width: 65 * scale,
-                  height: 65 * scale,
+                  width: 58 * scale,
+                  height: 58 * scale,
                   child: CustomPaint(
                     painter: _CountdownPainter(timeFraction, secondsRemaining),
                     child: Center(
@@ -155,7 +155,7 @@ class OnboardingQuizHeader extends StatelessWidget {
                         key: const Key('muondia-test-seconds'),
                         style: MuondiaTypography.screenTitle.copyWith(
                           color: Colors.white,
-                          fontSize: 22 * scale,
+                          fontSize: 20 * scale,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -187,9 +187,12 @@ class OnboardingQuizHeader extends StatelessWidget {
         colors: colors,
       ),
       border: Border.all(
-        color: result == QuizOutcome.pending
-            ? const Color(0xFFA75AFF) : const Color(0xFFA5FFF5),
-        width: 1.4,
+        color: switch (result) {
+          QuizOutcome.pending => const Color(0x997E3DD2),
+          QuizOutcome.correct => const Color(0xAA2BEF9D),
+          QuizOutcome.incorrect => const Color(0xAAFF4D80),
+        },
+        width: 0.85,
       ),
       boxShadow: [
         BoxShadow(
@@ -214,17 +217,17 @@ class _CountdownPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bounds = Offset.zero & size;
-    final arc = bounds.deflate(5);
+    final arc = bounds.deflate(3.5);
     final track = Paint()
-      ..color = const Color(0xAA6B4EB2)
+      ..color = const Color(0x775E47B6)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6;
+      ..strokeWidth = 3.8;
     final color = quizTimerColor(seconds);
     final active = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 6;
+      ..strokeWidth = 4.4;
     canvas.drawArc(arc, 0, 2 * math.pi, false, track);
     if (fraction > 0) {
       canvas.drawArc(
