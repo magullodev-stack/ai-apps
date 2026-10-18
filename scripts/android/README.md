@@ -126,6 +126,32 @@ Estas mejoras requieren que la sesión ejecutora y la extensión carguen
 su versión actualizada; los procesos ya abiertos no actualizan su propio
 código de supervisión solo porque Git sincronice los archivos.
 
+## Recuperación del AVD cuando ADB pierde emulator-5554
+
+La tarea persistente de Windows conserva la propiedad de Muondia incluso
+sin VS Code abierto. `flutter-dev-runner.dart` comprueba ADB cada cinco
+segundos; únicamente después de **tres ausencias consecutivas** termina
+el Flutter que él mismo inició y devuelve a `run.ps1` el código 88.
+`run.ps1` no intenta `adb connect emulator-5554` (no es un dispositivo TCP):
+devuelve el control a `start-dev-session.ps1`, que prepara de nuevo Android.
+
+`start-ai-apps-android.ps1` espera primero una ventana breve por cortes
+transitorios. Si detecta el AVD reservado detenido o offline, comprueba que
+el proceso sea un `emulator.exe`/QEMU correspondiente **simultáneamente**
+a `AI_APPS_Dev` y al puerto 5554. Antes de terminarlo verifica de nuevo
+su identidad, PID y fecha de creación; espera su salida antes de arrancar
+otro. Un proceso de propiedad desconocida que ocupe el puerto bloquea el
+arranque: **no** se mata ningún otro AVD, no se reinicia el servidor ADB
+global y no se toca F5. Si el proceso ya no existe, inicia el AVD reservado
+incluso si ADB conserva momentáneamente la fila `offline`.
+
+La extensión AI-APPS Android detecta la desconexión y reconecta el visor
+en su sondeo habitual cuando reaparecen dispositivo y aplicación. La
+recuperación no necesita cerrar/reabrir VS Code ni pulsar «Try again».
+La detección requiere que la tarea de Flutter cargue la versión nueva del
+runner y los scripts actualizados; no puede darse por validada sin probar
+una desconexión real en Windows.
+
 ## Recuperación de actualizaciones Flutter
 
 Las modificaciones sincronizadas por Git se detectan además mediante
