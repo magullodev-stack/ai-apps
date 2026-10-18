@@ -15,6 +15,11 @@ class OnboardingQuizScene extends StatelessWidget {
     required this.questionCount,
     required this.secondsRemaining,
     required this.timeFraction,
+    required this.progress,
+    required this.hearts,
+    required this.pauseRemaining,
+    required this.pauseActive,
+    required this.onUsePause,
     required this.fiftyRemaining,
     required this.hintRemaining,
     required this.hintLoading,
@@ -31,6 +36,11 @@ class OnboardingQuizScene extends StatelessWidget {
   final int questionCount;
   final int secondsRemaining;
   final double timeFraction;
+  final List<QuizOutcome> progress;
+  final int hearts;
+  final int pauseRemaining;
+  final bool pauseActive;
+  final VoidCallback? onUsePause;
   final int fiftyRemaining;
   final int hintRemaining;
   final bool hintLoading;
@@ -83,6 +93,8 @@ class OnboardingQuizScene extends StatelessWidget {
                         questionCount: questionCount,
                         secondsRemaining: secondsRemaining,
                         timeFraction: timeFraction,
+                        progress: progress,
+                        hearts: hearts,
                       ),
                       SizedBox(
                         key: const Key('muondia-header-card-gap'),
@@ -94,9 +106,17 @@ class OnboardingQuizScene extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFFFAFBFF),
                             borderRadius: panelRadius,
+                            border: Border.all(
+                              color: const Color(0xFFEDE9FF), width: 1,
+                            ),
                             boxShadow: const [
                               BoxShadow(
-                                color: Color(0x443A2AD0),
+                                color: Color(0xCC8428FD),
+                                blurRadius: 24,
+                                spreadRadius: 1,
+                              ),
+                              BoxShadow(
+                                color: Color(0x553A2AD0),
                                 blurRadius: 16,
                                 offset: Offset(0, 5),
                               ),
@@ -192,23 +212,35 @@ class OnboardingQuizScene extends StatelessWidget {
                           Expanded(
                             child: _AidButton(
                               key: const Key('muondia-aid-fifty'),
-                              label: '50%',
-                              icon: Icons.visibility_off_outlined,
+                              label: '50/50',
+                              asset: 'assets/onboarding/test/50%.png',
                               remaining: fiftyRemaining,
                               scale: scale,
                               onTap: onUseFifty,
                             ),
                           ),
-                          SizedBox(width: 16 * scale),
+                          SizedBox(width: 9 * scale),
                           Expanded(
                             child: _AidButton(
                               key: const Key('muondia-aid-hint'),
                               label: 'Pista IA',
-                              icon: Icons.lightbulb,
+                              asset: 'assets/onboarding/test/Pista.png',
                               remaining: hintRemaining,
                               scale: scale,
                               loading: hintLoading,
                               onTap: onUseHint,
+                            ),
+                          ),
+                          SizedBox(width: 9 * scale),
+                          Expanded(
+                            child: _AidButton(
+                              key: const Key('muondia-aid-pause'),
+                              label: 'Pausa 10 segundos',
+                              asset: 'assets/onboarding/test/Pausa.png',
+                              remaining: pauseRemaining,
+                              scale: scale,
+                              active: pauseActive,
+                              onTap: onUsePause,
                             ),
                           ),
                         ],
@@ -229,120 +261,119 @@ class _AidButton extends StatelessWidget {
   const _AidButton({
     super.key,
     required this.label,
-    required this.icon,
+    required this.asset,
     required this.remaining,
     required this.scale,
     required this.onTap,
     this.loading = false,
+    this.active = false,
   });
 
   final String label;
-  final IconData icon;
+  final String asset;
   final int remaining;
   final double scale;
   final bool loading;
+  final bool active;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final available = remaining > 0;
-    final enabled = onTap != null;
-    final isFifty = label == '50%';
-    final radius = BorderRadius.circular(36 * scale);
+    final isFifty = label == '50/50';
+    final isHint = label == 'Pista IA';
+    final kind = isFifty ? 'fifty' : isHint ? 'hint' : 'pause';
+    final radius = BorderRadius.circular(42 * scale);
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        AnimatedOpacity(
-          key: Key(isFifty ? 'muondia-fifty-opacity' : 'muondia-hint-opacity'),
-          opacity: available ? 1 : 0.40,
-          duration: const Duration(milliseconds: 220),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: enabled ? onTap : null,
-              borderRadius: radius,
-              child: Container(
-                height: 62 * scale,
-                padding: EdgeInsets.symmetric(horizontal: 10 * scale),
-                decoration: BoxDecoration(
-                  color: const Color(0xB31D154E),
-                  borderRadius: radius,
-                  border: Border.all(
-                    color: const Color(0xFF7937F1),
-                    width: 2 * scale,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (loading)
-                      SizedBox(
-                        width: 22 * scale,
-                        height: 22 * scale,
-                        child: const CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    else
-                      Icon(
-                        icon,
-                        color: isFifty
-                            ? Colors.white
-                            : const Color(0xFFFFC63D),
-                        size: 24 * scale,
+    return Semantics(
+      label: label,
+      button: true,
+      enabled: onTap != null,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedOpacity(
+            key: Key('muondia-$kind-opacity'),
+            opacity: available || active ? 1 : 0.42,
+            duration: const Duration(milliseconds: 200),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: radius,
+                child: Container(
+                  height: 76 * scale,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xC80B0442),
+                    borderRadius: radius,
+                    border: Border.all(
+                      color: active
+                          ? const Color(0xFF2DF7F1)
+                          : const Color(0xFFAD40FA),
+                      width: 3 * scale,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x884D05D8),
+                        blurRadius: 12,
+                        spreadRadius: 1,
                       ),
-                    SizedBox(width: 8 * scale),
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          style: MuondiaTypography.sectionTitle.copyWith(
-                            color: Colors.white,
-                            fontSize: 20 * scale,
+                    ],
+                  ),
+                  child: loading
+                      ? SizedBox(
+                          width: 28 * scale,
+                          height: 28 * scale,
+                          child: const CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 3),
+                        )
+                      : Padding(
+                          padding: EdgeInsets.all(7 * scale),
+                          child: Image.asset(
+                            asset,
+                            key: Key('muondia-$kind-image'),
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.high,
+                            excludeFromSemantics: true,
                           ),
                         ),
-                      ),
-                    ),
+                ),
+              ),
+            ),
+          ),
+          if (available)
+            Positioned(
+              right: 1 * scale,
+              top: -9 * scale,
+              child: Container(
+                key: Key('muondia-$kind-count'),
+                width: 29 * scale,
+                height: 29 * scale,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFFF94), Color(0xFFFFC51A)],
+                  ),
+                  border: Border.all(color: const Color(0xFFFFF7B7), width: 1.5),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x66F8AB1C), blurRadius: 6),
                   ],
                 ),
-              ),
-            ),
-          ),
-        ),
-        if (available)
-          Positioned(
-            right: 0,
-            top: -8 * scale,
-            child: Container(
-              key: Key(isFifty ? 'muondia-fifty-count' : 'muondia-hint-count'),
-              width: 30 * scale,
-              height: 30 * scale,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFFFE58E), Color(0xFFFFB81D)],
-                ),
-                border: Border.all(
-                  color: const Color(0xFFFFF0B0),
-                  width: 1.2,
-                ),
-              ),
-              child: Text(
-                '$remaining',
-                style: MuondiaTypography.screenTitle.copyWith(
-                  color: const Color(0xFF201047),
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
+                child: Text(
+                  '$remaining',
+                  style: MuondiaTypography.screenTitle.copyWith(
+                    color: const Color(0xFF140C36),
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
