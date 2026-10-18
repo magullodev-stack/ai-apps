@@ -284,6 +284,9 @@ class _AidButton extends StatelessWidget {
     final isFifty = label == '50/50';
     final isHint = label == 'Pista IA';
     final kind = isFifty ? 'fifty' : isHint ? 'hint' : 'pause';
+    // Los PNG originales son cuadrados de 1254 px, pero sus dibujos ocupan
+    // áreas diferentes. Ajustamos cada lienzo sin cambiar el marco.
+    final iconExtent = isFifty ? 73.0 : isHint ? 55.0 : 58.0;
     // La referencia utiliza esquinas redondeadas, no extremos semicirculares.
     final radius = BorderRadius.circular(25 * scale);
 
@@ -342,26 +345,42 @@ class _AidButton extends StatelessWidget {
                         filterQuality: FilterQuality.high,
                         excludeFromSemantics: true,
                       ),
-                      Center(
-                        child: loading
-                            ? SizedBox(
-                                width: 28 * scale,
-                                height: 28 * scale,
-                                child: const CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 3,
-                                ),
-                              )
-                            : Padding(
-                                padding: EdgeInsets.all(1 * scale),
-                                child: Image.asset(
-                                  asset,
-                                  key: Key('muondia-$kind-image'),
-                                  fit: BoxFit.contain,
-                                  filterQuality: FilterQuality.high,
-                                  excludeFromSemantics: true,
-                                ),
-                              ),
+                      // El marco y el icono no comparten caja de dibujo:
+                      // el recorte interior evita invadir las líneas de neón.
+                      Positioned.fill(
+                        left: 9 * scale,
+                        right: 9 * scale,
+                        top: 8 * scale,
+                        bottom: 8 * scale,
+                        child: ClipRect(
+                          key: Key('muondia-$kind-icon-viewport'),
+                          child: OverflowBox(
+                            alignment: Alignment.center,
+                            minWidth: 0,
+                            minHeight: 0,
+                            maxWidth: double.infinity,
+                            maxHeight: double.infinity,
+                            child: loading
+                                ? SizedBox(
+                                    width: 28 * scale,
+                                    height: 28 * scale,
+                                    child: const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                : SizedBox.square(
+                                    dimension: iconExtent * scale,
+                                    child: Image.asset(
+                                      asset,
+                                      key: Key('muondia-$kind-image'),
+                                      fit: BoxFit.contain,
+                                      filterQuality: FilterQuality.high,
+                                      excludeFromSemantics: true,
+                                    ),
+                                  ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

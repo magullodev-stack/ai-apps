@@ -123,6 +123,55 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Tres marcos iguales e iconos confinados al interior',
+      (tester) async {
+    for (final screenWidth in [320.0, 390.0, 430.0]) {
+      await openQuiz(tester, size: Size(screenWidth, 844));
+      final kinds = ['fifty', 'hint', 'pause'];
+      final frameRects = [
+        for (final kind in kinds)
+          tester.getRect(find.byKey(Key('muondia-$kind-frame'))),
+      ];
+      final first = frameRects.first;
+      for (var i = 0; i < kinds.length; i++) {
+        final kind = kinds[i];
+        final frame = frameRects[i];
+        final viewport = tester.getRect(
+            find.byKey(Key('muondia-$kind-icon-viewport')));
+        expect(frame.size.width, closeTo(first.size.width, 0.01));
+        expect(frame.size.height, closeTo(first.size.height, 0.01));
+        expect(frame.top, closeTo(first.top, 0.01));
+        expect(viewport.left, greaterThan(frame.left));
+        expect(viewport.right, lessThan(frame.right));
+        expect(viewport.top, greaterThan(frame.top));
+        expect(viewport.bottom, lessThan(frame.bottom));
+
+        // El PNG puede tener márgenes transparentes grandes, pero solo
+        // puede pintar en este viewport, no encima del contorno.
+        expect(
+          find.ancestor(
+            of: find.byKey(Key('muondia-$kind-image')),
+            matching: find.byKey(Key('muondia-$kind-icon-viewport')),
+          ),
+          findsOneWidget,
+        );
+      }
+
+      final scale = (screenWidth / 390).clamp(0.82, 1.1);
+      for (final entry in <String, double>{
+        'fifty': 73,
+        'hint': 55,
+        'pause': 58,
+      }.entries) {
+        final imageSize = tester.getSize(
+            find.byKey(Key('muondia-${entry.key}-image')));
+        expect(imageSize.width, closeTo(entry.value * scale, 0.01));
+        expect(imageSize.height, closeTo(entry.value * scale, 0.01));
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('50/50 oculta dos incorrectas y nunca la correcta',
       (tester) async {
     await openQuiz(tester);

@@ -127,7 +127,11 @@ distintivos neutros. Los comodines usan un marco PNG transparente, extraído del
 referencia visual y completado en la esquina tapada por el contador. El marco
 se escala mediante nueve segmentos (`centerSlice`) para mantener las curvas y el
 grosor del trazo; Flutter dibuja únicamente el fondo oscuro, los PNG de
-iconos originales, el estado de disponibilidad y los contadores. Los
+iconos originales, el estado de disponibilidad y los contadores. Los tres
+marcos comparten exactamente el ancho y alto definidos por el layout. Cada
+icono tiene un tamaño propio (50/50, pista y pausa) dentro de un viewport
+interior recortado, que impide tapar el borde sin recortar el marco ni
+modificar su iluminación. Los
 comodines agotados se atenúan y pierden su esfera amarilla, sin mover el
 resto del diseño. La barra temporal se vuelve a
 componer en Flutter con pista y relleno violeta, y conserva el porcentaje
