@@ -54,7 +54,15 @@ async function run() {
   assert.ok(panels[0].messages.some(item => item.type === 'session' && item.session.appId === 'muondia'));
   await views.openSession(a);
   assert.equal(panels.length, 1, 'Repeated selector only reveals');
+  // Un fallo interno del vídeo puede sobrevivir aunque ADB/PID sigan online.
+  // Exponerlo al sondeo de AI-APPS permite reconectar sin otro Flutter.
+  Base.prototype.fail = function() {};
+  views.fail(a.serial, 'simulated ADB transport failure');
+  assert.equal(views.listSessions()[0].transportFailed, true,
+    'Transport error must be observable without relying on device PID');
   await views.openSession(a, true);
+  assert.equal(views.listSessions()[0].transportFailed, false,
+    'Successful reconnect clears the transport error');
   assert.deepEqual(disposals, ['emulator-5554'], 'Reconnect renews only the current video bridge');
   assert.equal(panels[0].disposed, undefined);
   views.close(a.serial);
