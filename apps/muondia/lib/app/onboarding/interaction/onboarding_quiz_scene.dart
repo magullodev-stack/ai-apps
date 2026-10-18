@@ -383,7 +383,7 @@ class _AnswerCard extends StatelessWidget {
                     child: Image.asset(
                       'assets/onboarding/test/Caja Respuesta.png',
                       key: Key('muondia-answer-image-$index'),
-                      fit: BoxFit.fill,
+                      fit: BoxFit.cover,
                       filterQuality: FilterQuality.high,
                       excludeFromSemantics: true,
                     ),
