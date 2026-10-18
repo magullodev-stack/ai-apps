@@ -65,13 +65,9 @@ try {
         Write-SessionLog 'Sincronizacion no iniciada: script ausente.'
     }
 
-    $stage = 'Android'
-    Write-SessionLog 'Preparando Android.'
-    if (-not $androidPrepared) {
-        & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
-    }
-    Write-SessionLog 'Android preparado: emulator-5554.'
     $stage = 'Muondia'
+    # Comprobar y recuperar Flutter propio ANTES de cerrar/reiniciar el AVD.
+    # Una sesión F5/ajena impide tocar su emulador.
     # El proceso persistente puede sobrevivir a una tarea detenida. Solo
     # recuperamos procesos verificados como propios; F5 queda intacto.
     $control = Join-Path $PSScriptRoot 'android/task-control.ps1'
@@ -94,6 +90,14 @@ try {
         Write-SessionLog 'ERROR: emulator-5554 continua ocupado tras la comprobacion.'
         throw 'Ya existe una sesion Flutter en emulator-5554.'
     }
+
+    $stage = 'Android'
+    Write-SessionLog 'Preparando Android.'
+    if (-not $androidPrepared) {
+        & (Join-Path $PSScriptRoot 'start-ai-apps-android.ps1') *>&1 | Out-Null
+    }
+    Write-SessionLog 'Android preparado: emulator-5554.'
+    $stage = 'Muondia'
     Write-SessionLog 'Iniciando servicio Dart y sesion Flutter.'
     & (Join-Path $repo 'apps\muondia\run.ps1') -Device emulator-5554 *>&1 |
         ForEach-Object {
