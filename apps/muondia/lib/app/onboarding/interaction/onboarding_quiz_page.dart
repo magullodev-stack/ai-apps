@@ -8,6 +8,7 @@ import '../../../app/onboarding/intro_sequence.dart';
 import '../production/onboarding_quiz_pipeline.dart';
 import 'onboarding_loading_scene.dart';
 import 'onboarding_quiz_scene.dart';
+import 'onboarding_quiz_header.dart';
 
 class OnboardingQuizPage extends StatefulWidget {
   const OnboardingQuizPage({
@@ -48,9 +49,16 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   int _remainingMillis = _testDurationMillis;
   int _fiftyRemaining = 1;
   int _hintRemaining = 1;
+  int _pauseRemaining = 1;
+  int _hearts = 2;
+  bool _pauseActive = false;
+  Timer? _pauseTimer;
   bool _hintLoading = false;
   bool _timedOut = false;
+  final List<QuizOutcome> _progress =
+      List<QuizOutcome>.filled(10, QuizOutcome.pending);
   Set<int> _hiddenOptions = <int>{};
+  Set<int> _wrongOptions = <int>{};
 
   bool _loading = false;
   bool _testReady = false;
@@ -76,6 +84,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
     if (load == null || _loading) return;
     _advanceTimer?.cancel();
     _clockTicker?.cancel();
+    _pauseTimer?.cancel();
     _clock.stop();
     _clock.reset();
 
@@ -93,7 +102,12 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       _hintLoading = false;
       _fiftyRemaining = 1;
       _hintRemaining = 1;
+      _pauseRemaining = 1;
+      _pauseActive = false;
+      _hearts = 2;
+      _progress.fillRange(0, _progress.length, QuizOutcome.pending);
       _hiddenOptions = <int>{};
+      _wrongOptions = <int>{};
       _remainingMillis = _testDurationMillis;
     });
 
@@ -134,6 +148,8 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
 
   void _startClock() {
     _clockTicker?.cancel();
+    _pauseTimer?.cancel();
+    _pauseActive = false;
     _clock.stop();
     _clock.reset();
     _remainingMillis = _testDurationMillis;
@@ -161,11 +177,33 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   void _finishQuiz({bool timeExpired = false}) {
     _advanceTimer?.cancel();
     _clockTicker?.cancel();
+    _pauseTimer?.cancel();
+    _pauseActive = false;
     _clock.stop();
     setState(() {
       _finished = true;
       _timedOut = timeExpired;
       _selected = null;
+    });
+  }
+
+  // La pausa dura exactamente diez segundos de tiempo real y NO impide
+  // responder. El Stopwatch acumula solamente el tiempo sin pausa.
+  void _usePause() {
+    if (_questions == null || _finished || _pauseRemaining == 0 ||
+        _pauseActive) return;
+    _syncClock();
+    if (_finished) return;
+    _clock.stop();
+    setState(() {
+      _pauseRemaining = 0;
+      _pauseActive = true;
+    });
+    _pauseTimer?.cancel();
+    _pauseTimer = Timer(const Duration(seconds: 10), () {
+      if (!mounted || _finished) return;
+      if (widget.countdownEnabled) _clock.start();
+      setState(() => _pauseActive = false);
     });
   }
 
@@ -178,7 +216,8 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
     final question = questions[_index];
     final incorrect = <int>[
       for (var i = 0; i < question.options.length; i++)
-        if (question.options[i] != question.correct) i,
+        if (question.options[i] != question.correct &&
+            !_wrongOptions.contains(i)) i,
     ];
     if (incorrect.length < 2) return;
     incorrect.shuffle(Random());
@@ -195,7 +234,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
         _hintLoading || _hintRemaining == 0) return;
     _syncClock();
     if (_finished) return;
-    _clock.stop();
+    // La pista no congela el tiempo: para eso existe Pausa.
     setState(() => _hintLoading = true);
     try {
       final question = questions[_index];
@@ -227,7 +266,6 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
       }
     } finally {
       if (mounted && !_finished) {
-        if (widget.countdownEnabled) _clock.start();
         setState(() => _hintLoading = false);
       }
     }
@@ -236,25 +274,39 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   void _answer(int index) {
     final questions = _questions;
     _syncClock();
-    if (questions == null ||
-        _selected != null ||
-        _hintLoading ||
-        _finished ||
-        index < 0 ||
+    if (questions == null || _selected != null || _hintLoading ||
+        _finished || index < 0 ||
         index >= questions[_index].options.length ||
-        _hiddenOptions.contains(index)) {
+        _hiddenOptions.contains(index) || _wrongOptions.contains(index)) {
       return;
     }
 
+    final correct =
+        questions[_index].options[index] == questions[_index].correct;
+    // Cada corazón concede otro intento de la MISMA pregunta.
+    // Sin corazones, el fallo se vuelve definitivo.
+    final retry = !correct && _hearts > 0;
     setState(() {
       _selected = index;
-      if (questions[_index].options[index] == questions[_index].correct) {
+      if (correct) {
         _score++;
+        _progress[_index] = QuizOutcome.correct;
+      } else if (retry) {
+        _hearts--;
+        _wrongOptions.add(index);
+      } else {
+        _progress[_index] = QuizOutcome.incorrect;
       }
     });
-    // Una pulsación, medio segundo de información visual y avance automático.
     _advanceTimer?.cancel();
-    _advanceTimer = Timer(const Duration(milliseconds: 500), _next);
+    _advanceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted || _finished) return;
+      if (retry) {
+        setState(() => _selected = null);
+      } else {
+        _next();
+      }
+    });
   }
 
   Color _answerFeedbackColor(OnboardingQuizFinalQuestion question, int option) {
@@ -276,6 +328,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
         _index++;
         _selected = null;
         _hiddenOptions = <int>{};
+        _wrongOptions = <int>{};
       }
     });
   }
@@ -284,6 +337,7 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
   void dispose() {
     _advanceTimer?.cancel();
     _clockTicker?.cancel();
+    _pauseTimer?.cancel();
     _clock.stop();
     super.dispose();
   }
@@ -314,10 +368,15 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
         questionCount: questions.length,
         secondsRemaining: (_remainingMillis / 1000).ceil(),
         timeFraction: _remainingMillis / _testDurationMillis,
+        progress: List<QuizOutcome>.unmodifiable(_progress),
+        hearts: _hearts,
+        pauseRemaining: _pauseRemaining,
+        pauseActive: _pauseActive,
+        onUsePause: _pauseRemaining > 0 && !_pauseActive ? _usePause : null,
         fiftyRemaining: _fiftyRemaining,
         hintRemaining: _hintRemaining,
         hintLoading: _hintLoading,
-        hiddenOptions: _hiddenOptions,
+        hiddenOptions: {..._hiddenOptions, ..._wrongOptions},
         onUseFifty: _selected == null && !_hintLoading && _fiftyRemaining > 0
             ? _useFifty
             : null,
@@ -352,7 +411,12 @@ class _OnboardingQuizPageState extends State<OnboardingQuizPage> {
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   if (_timedOut) const Text('Tiempo agotado'),
-                  if (_finished) Text('Resultado: $_score / 10'),
+                  if (_finished) ...[
+                    Text('Aciertos: $_score'),
+                    Text('Fallos definitivos: ${_progress.where((result) => result == QuizOutcome.incorrect).length}'),
+                    Text('Sin responder: ${_progress.where((result) => result == QuizOutcome.pending).length}'),
+                    Text('Resultado: $_score / 10'),
+                  ],
                   if (_error != null) Text(_error!),
                   const SizedBox(height: 20),
                   FilledButton(
