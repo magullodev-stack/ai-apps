@@ -239,7 +239,7 @@ class _AuthEntryPageState extends State<AuthEntryPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Image.asset(
-                              'assets/auth/dev_sync_probe.png',
+                              'assets/auth/Logotipo_MuondIA.png',
                               key: const Key('muondia-auth-logo'),
                               width: logoWidth,
                               height: logoHeight,
