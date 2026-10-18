@@ -9,6 +9,14 @@ import '../pivot_images.dart';
 /// disponible no cambia la esfera hasta acertar o agotar los reintentos.
 enum QuizOutcome { pending, correct, incorrect }
 
+/// Umbrales del anillo: 60–21 verde, 20–6 amarillo y 5–0 rojo.
+Color quizTimerColor(int seconds) =>
+    seconds >= 21
+        ? const Color(0xFF00E8A1)
+        : seconds >= 6
+            ? const Color(0xFFFFD439)
+            : const Color(0xFFFF355C);
+
 class OnboardingQuizHeader extends StatelessWidget {
   const OnboardingQuizHeader({
     super.key,
@@ -211,11 +219,7 @@ class _CountdownPainter extends CustomPainter {
       ..color = const Color(0xAA6B4EB2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6;
-    final color = seconds >= 21
-        ? const Color(0xFF00E8A1)
-        : seconds >= 6
-            ? const Color(0xFFFFD439)
-            : const Color(0xFFFF355C);
+    final color = quizTimerColor(seconds);
     final active = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
