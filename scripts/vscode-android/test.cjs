@@ -8,6 +8,7 @@ fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Test');
 fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
 let treeProvider, treeView, taskRunning = true, onWillRenameFiles;
+let transportBroken = false;
 let deviceLocation = 'preview:auth:inicio';
 let entries = [
   { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100',
@@ -22,7 +23,9 @@ class Sessions {
 }
 const viewer = { async openSession(session, reconnect) {
   calls.push(['open', session.id, !!reconnect]); panels.set(session.id, session);
-}, listSessions: () => [...panels.values()] };
+}, listSessions: () => [...panels.values()].map(item => ({
+  ...item, transportFailed: transportBroken
+})) };
 const disposable = () => ({ dispose() {} });
 const vscode = {
   workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: root } }],
@@ -327,6 +330,20 @@ async function run() {
   await api.refresh();
   assert.deepEqual(calls.at(-1), ['open', 'muondia@emulator-5554', true],
     'ADB disconnect/reconnect recovers the existing Muondia panel');
+  // Scrcpy puede fallar sin cambiar el PID ni el estado de ADB. El
+  // sondeo debe reconectar el vídeo sin relanzar ni duplicar Muondia.
+  transportBroken = true;
+  const opensBeforeFailure = calls.filter(call => call[0] === 'open').length;
+  await api.refresh();
+  assert.deepEqual(calls.at(-1), ['open', 'muondia@emulator-5554', true]);
+  assert.equal(calls.filter(call => call[0] === 'open').length,
+    opensBeforeFailure + 1, 'Transport failure triggers one viewer reconnect');
+  await api.refresh();
+  assert.equal(calls.filter(call => call[0] === 'open').length,
+    opensBeforeFailure + 1, 'Viewer transport retry observes cooldown');
+  transportBroken = false;
+  await api.refresh();
+
   // Una sesión que se cayó tras arrancar debe recuperarse sin reiniciar
   // VS Code, pero nunca lanzar múltiples intentos en el mismo sondeo.
   taskRunning = false;
