@@ -115,12 +115,26 @@ powershell -NoProfile -File scripts/android/flutter-ownership.test.ps1.
 El contrato de arranque también la ejecuta desde
 node scripts/android/startup-contract-test.cjs en Windows.
 
-Esta reparación evita que un proceso huérfano bloquee el SIGUIENTE
-arranque. No permite determinar retrospectivamente por qué terminó la
-tarea anterior y no constituye un supervisor continuo de tareas detenidas;
-ese estado sigue siendo observable mediante Get-ScheduledTaskInfo.
+La tarea vuelve a intentar iniciar Flutter con espera progresiva (15–60 s)
+si se produce un fallo temporal, sin cerrar el emulador ni ocupar un Flutter
+ajeno. AI-APPS Android, mientras VS Code está abierto, recupera una tarea
+que dejó de estar activa mediante su sondeo habitual (30 s como mínimo
+entre intentos), pero respeta una parada explícita y una sesión F5.
+No se necesita abrir PowerShell para cada cambio visual.
+
+Estas mejoras requieren que la sesión ejecutora y la extensión carguen
+su versión actualizada; los procesos ya abiertos no actualizan su propio
+código de supervisión solo porque Git sincronice los archivos.
 
 ## Recuperación de actualizaciones Flutter
+
+Las modificaciones sincronizadas por Git se detectan además mediante
+una revisión periódica del commit HEAD. Si Windows pierde eventos de
+archivos, el supervisor compara los archivos de Flutter afectados por
+ese commit y solicita Hot Restart. Las imágenes nuevas/eliminadas, cambios
+en pubspec y cambios nativos requieren relanzamiento del Flutter propio
+para que el bundle recoja esos recursos. La comprobación ignora commits
+ajenos a la aplicación y no modifica otros procesos.
 
 El propietario de las sesiones Flutter es `scripts/flutter-dev-runner.dart`,
 no VS Code. Agrupa los cambios detectados por los watchers, mantiene **una
