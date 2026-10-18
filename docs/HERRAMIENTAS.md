@@ -14,7 +14,7 @@
 | Explorador de experiencias | Abrir experiencias simuladas declaradas o el recorrido real explícito (puede utilizar Firebase e IA); conservar categorías troncales, búsqueda y última selección sin duplicar sesiones Flutter. | [`scripts/vscode-android/`](../scripts/vscode-android/) y `apps/*/lib/app/development/` | [Explorador](../scripts/vscode-android/README.md#explorador-de-experiencias). |
 | Inspector visual | Espejo vivo de los recursos UI: descubrir altas/renombres, ⏳ para imágenes sin Dart, ojo para colocadas; ocultar/mostrar con un ojo inline, sustituir PNG y eliminar capas con validación conjunta de Dart, pruebas y documentación desde el menú contextual de VS Code. | [`scripts/vscode-android/asset-inspector.cjs`](../scripts/vscode-android/asset-inspector.cjs), [`asset-actions.cjs`](../scripts/vscode-android/asset-actions.cjs), [`visual-source-index.cjs`](../scripts/vscode-android/visual-source-index.cjs), [`visual-renames.cjs`](../scripts/vscode-android/visual-renames.cjs) y [`shared/ui`](../shared/ui/) | [Inspector y operaciones](../scripts/vscode-android/README.md#ojo-rápido-y-menú-contextual-de-recursos). |
 | Eliminar una aplicación retirada | Borrar definitivamente su directorio local y desinstalar únicamente su paquete en los emuladores conectados; retirar su regla de exclusión y reinstalar el visor corregido, sin crear copias de seguridad ni reiniciar Muondia. | [`scripts/remove-retired-app.ps1`](../scripts/remove-retired-app.ps1) | Ejecutar desde la raíz del repositorio con `-App` y `-Package`. Requiere recargar VS Code; si Android está desconectado, su comprobación queda pendiente. |
-| Construir y validar EmbeDroid | Mantener y reinstalar la distribución corregida sin parches locales en la extensión instalada; tras reiniciar Windows espera el arranque Android antes de conectar scrcpy y recupera fallos tempranos del vídeo con reintentos limitados, sin tocar Flutter. | [`scripts/embedroid/`](../scripts/embedroid/) y [`scripts/install-embedroid.ps1`](../scripts/install-embedroid.ps1) | [Procedencia, pruebas y recuperación de arranque](../scripts/embedroid/README.md). |
+| Construir y validar EmbeDroid | Mantener el visor dentro de VS Code: restaurar la pestaña y abrir vídeo únicamente después de que la tarea persistente `AI-APPS Development` haya iniciado Muondia; sin sondeos Android ni reintentos duplicados en el visor. | [`scripts/embedroid/`](../scripts/embedroid/) y [`scripts/install-embedroid.ps1`](../scripts/install-embedroid.ps1) | [Propiedad única del arranque y pruebas](../scripts/embedroid/README.md). |
 
 ---
 
@@ -185,7 +185,7 @@ de pasar temporalmente al Pixel físico.
 El rechazo intermitente de identificadores `scid` de 32 bits en EmbeDroid
 1.0.2 se confirmó de nuevo a las 14:47 del 10 de octubre de 2026 y se corrigió
 en el transporte. `scripts/install-embedroid.ps1` instala la distribución
-`magullodev.ai-apps-embedroid` 1.1.1, mantenida en el repositorio con hashes,
+`magullodev.ai-apps-embedroid` 1.1.2, mantenida en el repositorio con hashes,
 constructor de VSIX y pruebas. Su identidad propia evita que una actualización
 de la extensión original sobrescriba el arreglo. Recarga VS Code después de
 instalarla; Android y Flutter siguen activos.
