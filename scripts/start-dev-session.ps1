@@ -110,7 +110,10 @@ try {
             } elseif ($line -like 'Cambio nativo/dependencias detectado:*' -or
                       $line -like 'Cambio nativo detectado; recompilando*') {
                 Write-SessionLog 'Cambio nativo detectado; reconstruccion solicitada.'
-            } elseif ($line -match '^Revision dev detectada: [a-f0-9]{7}\\.
+            } elseif ($line -like 'Revision dev detectada:*') {
+                Write-SessionLog 'Revision dev recibida por el supervisor Flutter.'
+            } elseif ($line -like 'FIREBASE_CONFIG_OK:*') {
+                Write-SessionLog 'Configuracion Firebase Android verificada.'
             } elseif ($line -like 'Running Gradle task*') {
                 Write-SessionLog 'Compilacion Gradle iniciada.'
             } elseif ($line -match '^Hot (reload|restart) fallo:') {
