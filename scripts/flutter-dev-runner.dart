@@ -144,30 +144,15 @@ Future<void> main(List<String> args) async {
       if (pendingAction != FlutterChangeAction.none) dispatch();
       return;
     }
-    if (pendingAction != FlutterChangeAction.none &&
-        queuedRevision != revision) {
-      // Una versión posterior espera en la cola: intentar esa, no la fallida.
-      failures = 0;
-      dispatch();
-      return;
-    }
-    failures++;
-    // No consumir la revisión fallida, pero evitar intentos infinitos sobre
-    // el mismo código incorrecto. Otro cambio desencadena un nuevo intento.
-    if (failures >= 2) {
-      blockedRevision = revision;
-      stderr.writeln(
-        'ERROR: Flutter no pudo actualizar los cambios tras dos intentos.',
-      );
-      if (pendingAction != FlutterChangeAction.none) dispatch();
-      return;
-    }
-    stderr.writeln('Hot Restart fallo; reintentando en 10 segundos.');
-    if (revision != null) queuedRevision = revision;
-    pendingAction = FlutterChangeAction.restart;
-    pendingPath = path;
-    debounce?.cancel();
-    debounce = Timer(const Duration(seconds: 10), dispatch);
+    // Si Flutter rechaza tanto Hot Reload como Hot Restart, la siguiente
+    // operación necesaria es una recompilación, no más recargas en bucle.
+    // run.ps1 ejecutará una nueva instancia de este mismo runner.
+    blockedRevision = revision;
+    stderr.writeln(
+      'Recuperacion Flutter: Hot Restart rechazado; '
+      'recompilacion completa solicitada.',
+    );
+    rebuild(path, revision: revision);
   };
 
   controller.onReady = () {
