@@ -558,7 +558,6 @@ try {
 
             # Los relanzamientos por cambios nativos no consumen reintentos.
             # El limite aplica solo a perdidas reales de conexion del emulador.
-            $consecutiveConnectionFailures = 0
             while ($true) {
                 # Windows PowerShell convierte stderr nativo redirigido en
                 # ErrorRecord (incluidas advertencias de Java/Gradle). Con Stop
@@ -581,7 +580,6 @@ try {
 
                 if ($runnerExitCode -eq 86) {
                     # Nueva compilacion Gradle para cambios Android/pubspec.
-                    $consecutiveConnectionFailures = 0
                     Write-Host 'Cambio nativo detectado; recompilando Muondia...'
                     continue
                 }
