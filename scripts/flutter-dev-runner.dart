@@ -229,6 +229,30 @@ Future<void> main(List<String> args) async {
       'app' + Platform.pathSeparator + 'google-services.json');
   var firebaseSignature = _configurationSignature(firebase);
   String? proposedSignature;
+  // Flutter puede seguir abierto aunque Android desaparezca de ADB.
+  // Tres comprobaciones seguidas entregan la recuperación a Windows.
+  var adbChecking = false;
+  var missingDeviceChecks = 0;
+  final deviceMonitor = Timer.periodic(const Duration(seconds: 5), (_) async {
+    if (adbChecking || controller.relaunchRequested ||
+        controller.stopRequested || controller.lostConnection) return;
+    adbChecking = true;
+    try {
+      final online = await _isAndroidDeviceOnline(options.device);
+      if (online == true) {
+        missingDeviceChecks = 0;
+      } else if (online == false && ++missingDeviceChecks >= 3) {
+        stderr.writeln('Dispositivo Android perdido: recuperacion del AVD solicitada.');
+        controller.requestDeviceRecovery();
+      }
+      // null: ADB no disponible/bloqueado. No declarar desconexión.
+    } catch (_) {
+      // Una consulta fallida no debe interrumpir una sesión válida.
+    } finally {
+      adbChecking = false;
+    }
+  });
+
   final firebaseMonitor = Timer.periodic(const Duration(seconds: 2), (_) {
     final now = _configurationSignature(firebase);
     if (now == firebaseSignature) {
@@ -246,6 +270,7 @@ Future<void> main(List<String> args) async {
   final code = await flutter.exitCode;
   debounce?.cancel();
   gitMonitor.cancel();
+  deviceMonitor.cancel();
   firebaseMonitor.cancel();
   controller.dispose();
   for (final watcher in watchers) {
@@ -259,6 +284,42 @@ Future<void> main(List<String> args) async {
     exitCode = 88;
   } else {
     exitCode = code;
+  }
+}
+
+/// Solo una ausencia confirmada en ADB cuenta como desconexión.
+bool adbListsOnlineDevice(String output, String serial) {
+  return output.split(RegExp(r'\r?\n')).any((line) {
+    final fields = line.trim().split(RegExp(r'\s+'));
+    return fields.length >= 2 && fields[0] == serial && fields[1] == 'device';
+  });
+}
+
+Future<bool?> _isAndroidDeviceOnline(String serial) async {
+  final sdk = Platform.environment['ANDROID_HOME'] ??
+      Platform.environment['ANDROID_SDK_ROOT'] ??
+      (Platform.isWindows
+          ? (Platform.environment['LOCALAPPDATA'] ?? '') + r'\Android\Sdk'
+          : '');
+  final adb = sdk.isEmpty
+      ? 'adb'
+      : sdk + Platform.pathSeparator + 'platform-tools' +
+          Platform.pathSeparator + (Platform.isWindows ? 'adb.exe' : 'adb');
+  Process? probe;
+  try {
+    probe = await Process.start(adb, ['devices']);
+    final output = probe.stdout.transform(utf8.decoder).join();
+    final errors = probe.stderr.drain<void>();
+    final code = await probe.exitCode.timeout(const Duration(seconds: 5));
+    final text = await output;
+    await errors;
+    if (code != 0) return null;
+    return adbListsOnlineDevice(text, serial);
+  } on TimeoutException {
+    probe?.kill();
+    return null;
+  } on ProcessException {
+    return null;
   }
 }
 
@@ -559,6 +620,13 @@ final class FlutterMachineController {
       if (fullRestart) onUpdateSettled?.call(false, true);
     }
     _dispatchUpdate();
+  }
+
+  void requestDeviceRecovery() {
+    if (_lostConnection || _stopRequested || _relaunchRequested) return;
+    _lostConnection = true;
+    _updateWatchdog?.cancel();
+    unawaited(_terminateProcessTree());
   }
 
   void requestRelaunch() {
