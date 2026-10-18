@@ -131,16 +131,19 @@ class OnboardingQuizScene extends StatelessWidget {
                                 // No ampliar cada respuesta según la altura total del panel:
                                 // la última quedaba cortada. Preguntas largas
                                 // siguen teniendo scroll interior.
-                                final minAnswerHeight = 68 * scale;
+                                final compact = viewport.maxHeight < 460 * scale;
+                                final minAnswerHeight =
+                                    (compact ? 60 : 68) * scale;
+                                final answerGap = (compact ? 8 : 12) * scale;
                                 return SingleChildScrollView(
                                   key: ValueKey('quiz-question-$questionNumber'),
                                   physics: const ClampingScrollPhysics(),
                                   child: Padding(
                                     padding: EdgeInsets.fromLTRB(
                                       20 * scale,
-                                      24 * scale,
+                                      (compact ? 18 : 24) * scale,
                                       20 * scale,
-                                      24 * scale,
+                                      (compact ? 18 : 24) * scale,
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
@@ -161,7 +164,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                             ),
                                           ),
                                         ),
-                                        SizedBox(height: 20 * scale),
+                                        SizedBox(height: (compact ? 14 : 20) * scale),
                                         for (var i = 0;
                                             i < question.options.length;
                                             i++)
@@ -170,7 +173,7 @@ class OnboardingQuizScene extends StatelessWidget {
                                               bottom: i ==
                                                       question.options.length - 1
                                                   ? 0
-                                                  : 12 * scale,
+                                                  : answerGap,
                                             ),
                                             child: _AnswerCard(
                                               key: ValueKey(
