@@ -58,11 +58,93 @@ void require(bool condition, String description) {
   if (!condition) throw StateError('FAIL: $description');
 }
 
+void verifyUpdateClassification() {
+  final cases = <({String path, String status, runner.FlutterChangeAction expected})>[
+    (
+      path: 'apps/muondia/lib/app/onboarding/interaction/onboarding_quiz_scene.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.reload,
+    ),
+    (
+      path: r'C:\ai-apps\apps\muondia\lib\app\onboarding\interaction\onboarding_quiz_scene.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.reload,
+    ),
+    (
+      path: 'apps/muondia/lib/main.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.restart,
+    ),
+    (
+      path: 'apps/muondia/assets/onboarding/test/quiz_background.png',
+      status: 'M',
+      expected: runner.FlutterChangeAction.restart,
+    ),
+    (
+      path: 'apps/muondia/assets/onboarding/test/new_background.png',
+      status: 'A',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
+      path: 'apps/muondia/assets/onboarding/test/Caja Test.png',
+      status: 'D',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
+      path: 'apps/muondia/assets/onboarding/test/renamed.png',
+      status: 'R',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
+      path: 'apps/muondia/pubspec.yaml',
+      status: 'M',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
+      path: 'apps/muondia/android/app/build.gradle.kts',
+      status: 'M',
+      expected: runner.FlutterChangeAction.rebuild,
+    ),
+    (
+      path: 'shared/packages/ai_apps_ui/lib/button.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.reload,
+    ),
+    (
+      path: 'apps/muondia/README.md',
+      status: 'M',
+      expected: runner.FlutterChangeAction.none,
+    ),
+    (
+      path: 'apps/muondia/build/generated/test.dart',
+      status: 'M',
+      expected: runner.FlutterChangeAction.none,
+    ),
+  ];
+  for (final item in cases) {
+    final actual = runner.classifyFlutterChange(
+      item.path, status: item.status,
+    );
+    require(actual == item.expected,
+      'Clasificación incorrecta: ${item.path} (${item.status}) => '
+      '$actual; esperado ${item.expected}');
+  }
+  // Si un commit tiene varios archivos, gana el cambio más fuerte.
+  final mixed = [
+    runner.classifyFlutterChange('apps/muondia/lib/a.dart'),
+    runner.classifyFlutterChange('apps/muondia/assets/new.png', status: 'A'),
+  ];
+  require(mixed.reduce((a, b) => a.index > b.index ? a : b) ==
+      runner.FlutterChangeAction.rebuild,
+    'La reconstrucción tiene prioridad sobre hot reload');
+}
+
 Future<void> main(List<String> args) async {
   if (args.length == 2 && args.first == '--fake-machine') {
     await fakeMachine(args[1]);
     return;
   }
+  verifyUpdateClassification();
   final directory = await Directory.systemTemp.createTemp('ai-apps-flutter-machine-');
   final trace = File('${directory.path}${Platform.pathSeparator}requests.jsonl');
   final process = await Process.start(
@@ -118,7 +200,7 @@ Future<void> main(List<String> args) async {
       'A blocked machine triggers a bounded, owned-process relaunch');
     controller.dispose();
 
-    stdout.writeln('PASS: serialización, fallback, sin bucle y watchdog seguro.');
+    stdout.writeln('PASS: clasificación de cambios, serialización, fallback y watchdog seguro.');
   } finally {
     process.kill();
     await directory.delete(recursive: true);
