@@ -221,7 +221,12 @@ if (-not (Test-EmulatorReady)) {
             '-avd', $AvdName,
             '-port', "$port",
             '-no-window',
-            '-no-boot-anim'
+            '-no-boot-anim',
+            # QEMU 37.2.12 cae con Vulkan/Lavapipe en este host Windows.
+            # El arranque frio por si solo reprodujo el mismo crash.
+            # No cargar ni guardar estado grafico Vulkan entre sesiones.
+            '-no-snapshot',
+            '-feature', '-Vulkan'
         ) -WindowStyle Hidden | Out-Null
     }
 

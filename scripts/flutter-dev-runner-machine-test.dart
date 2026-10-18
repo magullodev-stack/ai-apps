@@ -61,6 +61,102 @@ Future<void> fakeConnectionMachine() async {
   }
 }
 
+Future<void> fakeRunnerMachine(String sourcePath, String tracePath) async {
+  File('$tracePath.starts').writeAsStringSync('$pid\n', mode: FileMode.append);
+  stdout.writeln(jsonEncode([
+    {'event': 'app.start', 'params': {'appId': 'fixture-app', 'deviceId': 'fake'}},
+    {'event': 'app.started'},
+  ]));
+  await for (final line in stdin.transform(utf8.decoder).transform(const LineSplitter())) {
+    for (final request in jsonDecode(line) as List<dynamic>) {
+      final params = request['params'] as Map;
+      File(tracePath).writeAsStringSync(
+        jsonEncode({'fullRestart': params['fullRestart']}) + '\n',
+        mode: FileMode.append,
+      );
+      stdout.writeln(jsonEncode([
+        {'id': request['id'], 'result': {
+          'code': File(sourcePath).readAsStringSync() == 'invalid' ? 1 : 0,
+        }},
+      ]));
+    }
+  }
+}
+
+Future<void> verifyRunnerLifecycle(Directory directory) async {
+  if (!Platform.isWindows) return;
+  final fixture = Directory('${directory.path}/runner-fixture')..createSync();
+  final app = Directory('${fixture.path}/apps/fixture')..createSync(recursive: true);
+  final lib = Directory('${app.path}/lib')..createSync();
+  final source = File('${lib.path}/widget.dart')..writeAsStringSync('initial');
+  final trace = File('${fixture.path}/requests.jsonl');
+  final wrapper = File('${fixture.path}/flutter.cmd')..writeAsStringSync(
+    '@echo off\r\n"${Platform.resolvedExecutable}" '
+    '"${Platform.script.toFilePath()}" --runner-machine '
+    '"${source.path}" "${trace.path}"\r\n',
+  );
+  Future<void> git(List<String> args) async {
+    final result = await Process.run('git', [
+      '-C', fixture.path, '-c', 'user.name=Runner Fixture',
+      '-c', 'user.email=runner-fixture@example.invalid', ...args,
+    ]);
+    require(result.exitCode == 0, 'Git local del fixture debe completar ${args.first}');
+  }
+  Future<void> commit() async {
+    await git(['add', 'apps']);
+    await git(['commit', '-qm', 'fixture']);
+  }
+  await git(['init', '-b', 'dev']);
+  await commit();
+  final runnerScript = File.fromUri(Platform.script.resolve('flutter-dev-runner.dart'));
+  final process = await Process.start(Platform.resolvedExecutable, [
+    runnerScript.path, '--flutter', wrapper.path, '--device', 'fake',
+    '--defines-file', '${fixture.path}/defines.json',
+    '--working-directory', app.path, '--watch', app.path,
+  ]);
+  final output = <String>[];
+  final stdoutSubscription = process.stdout.transform(utf8.decoder)
+      .transform(const LineSplitter()).listen(output.add);
+  final stderrSubscription = process.stderr.transform(utf8.decoder)
+      .transform(const LineSplitter()).listen(output.add);
+  var exited = false;
+  unawaited(process.exitCode.then((_) { exited = true; }));
+  try {
+    for (var i = 0; i < 200 &&
+        !output.any((line) => line.startsWith('Hot reload automatico activo:')); i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    require(!exited && output.any((line) => line.startsWith('Hot reload automatico activo:')),
+      'El runner principal debe iniciar el Flutter simulado');
+    source.writeAsStringSync('invalid');
+    await waitRequests(trace, 2);
+    await Future<void>.delayed(const Duration(milliseconds: 650));
+    require(!exited && File('${trace.path}.starts').readAsLinesSync().length == 1 &&
+        output.any((line) => line.contains('se conserva la app hasta una nueva modificacion')),
+      'Compilación inválida debe conservar el mismo Flutter tras rechazar reload y restart');
+    await commit();
+    await Future<void>.delayed(const Duration(milliseconds: 4500));
+    require((await waitRequests(trace, 2)).length == 2 &&
+        File('${trace.path}.starts').readAsLinesSync().length == 1,
+      'Confirmar código inválido en Git no debe repetir actualizaciones ni recompilar');
+    source.writeAsStringSync('fixed');
+    await waitRequests(trace, 3);
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    require(output.contains('Hot restart completado.'),
+      'Los nuevos bytes válidos permiten volver a actualizar');
+    await commit();
+    await Future<void>.delayed(const Duration(milliseconds: 4500));
+    require((await waitRequests(trace, 3)).length == 3 && !exited &&
+        File('${trace.path}.starts').readAsLinesSync().length == 1,
+      'El commit posterior a la recarga no debe iniciar una segunda operación ni otro Flutter');
+  } finally {
+    await Process.run('taskkill.exe', ['/PID', '${process.pid}', '/T', '/F']);
+    await process.exitCode;
+    await stdoutSubscription.cancel();
+    await stderrSubscription.cancel();
+  }
+}
+
 Future<List<Map<String, dynamic>>> waitRequests(File trace, int count) async {
   for (var attempt = 0; attempt < 180; attempt++) {
     if (trace.existsSync()) {
@@ -154,8 +250,10 @@ void verifyContentDeduplication(Directory directory) {
       tracker.beginUpdate(),
     'Confirmar la versión anterior no consume la modificación posterior');
   tracker.settle(false);
-  require(tracker.status(dart.path) == runner.FlutterContentStatus.changed,
-    'Una recarga fallida no debe acreditar los nuevos bytes');
+  require(tracker.status(dart.path) == runner.FlutterContentStatus.rejected &&
+      !tracker.queue(dart.path),
+    'Una recarga fallida no acredita bytes ni los reintenta al confirmarlos en Git');
+  dart.writeAsStringSync('fourth');
   require(tracker.queue(dart.path) && tracker.beginUpdate(),
     'La versión no aplicada sigue disponible para recuperación');
   tracker.settle(true);
@@ -164,9 +262,48 @@ void verifyContentDeduplication(Directory directory) {
 
   dart.writeAsStringSync('temporary');
   require(tracker.queue(dart.path), 'La edición temporal entra en cola');
-  dart.writeAsStringSync('third');
+  dart.writeAsStringSync('fourth');
   require(!tracker.queue(dart.path) && !tracker.beginUpdate(),
     'Restaurar antes del debounce no debe recargar sin cambios');
+
+  dart.writeAsStringSync('B');
+  require(tracker.queue(dart.path) && tracker.beginUpdate(), 'B pasa a estar en vuelo');
+  dart.writeAsStringSync('C');
+  require(tracker.queue(dart.path), 'C queda pendiente mientras B se aplica');
+  dart.writeAsStringSync('B');
+  require(!tracker.queue(dart.path), 'Restaurar B elimina la versión C pendiente');
+  tracker.settle(true);
+  require(!tracker.beginUpdate() &&
+      tracker.status(dart.path) == runner.FlutterContentStatus.applied,
+    'B→C→B durante recarga no debe aplicar ni acreditar la versión C abandonada');
+
+  asset.writeAsBytesSync([7, 8, 9]);
+  dart.writeAsStringSync('invalid');
+  require(tracker.queue(asset.path) && tracker.queue(dart.path) && tracker.beginUpdate(),
+    'El lote mixto contiene asset y Dart');
+  tracker.settle(false);
+  dart.writeAsStringSync('fixed');
+  require(tracker.queue(dart.path), 'Corregir Dart permite un intento nuevo');
+  tracker.retryRejected();
+  require(tracker.beginUpdate(), 'El lote rechazado vuelve a ponerse en vuelo una sola vez');
+  tracker.settle(true);
+  require(tracker.status(asset.path) == runner.FlutterContentStatus.applied &&
+      tracker.status(dart.path) == runner.FlutterContentStatus.applied &&
+      !tracker.beginUpdate(),
+    'Corregir solo Dart también aplica el asset pendiente sin dejar revisiones rechazadas');
+}
+
+void verifyGitChangeNames() {
+  final changes = runner.parseFlutterGitChanges(
+    'M\u0000apps/muondia/assets/Pivotes/P08 - Física.png\u0000'
+    'R100\u0000apps/muondia/assets/old.png\u0000'
+    'apps/muondia/assets/renamed image.png\u0000',
+  );
+  require(changes.length == 2 &&
+      changes[0].path == 'apps/muondia/assets/Pivotes/P08 - Física.png' &&
+      changes[1].status == 'R' &&
+      changes[1].path == 'apps/muondia/assets/renamed image.png',
+    'Git debe conservar rutas Unicode y destino del renombre para comparar sus bytes');
 }
 
 void verifyUpdateClassification() {
@@ -286,6 +423,10 @@ void verifyUpdateClassification() {
 }
 
 Future<void> main(List<String> args) async {
+  if (args.length == 3 && args.first == '--runner-machine') {
+    await fakeRunnerMachine(args[1], args[2]);
+    return;
+  }
   if (args.length == 1 && args.first == '--connection-machine') {
     await fakeConnectionMachine();
     return;
@@ -297,6 +438,7 @@ Future<void> main(List<String> args) async {
   verifyUpdateClassification();
   verifyAdbDeviceRecognition();
   verifyDeviceRecoveryPolicy();
+  verifyGitChangeNames();
   final directory = await Directory.systemTemp.createTemp('ai-apps-flutter-machine-');
   verifyContentDeduplication(directory);
   final trace = File('${directory.path}${Platform.pathSeparator}requests.jsonl');
@@ -425,6 +567,7 @@ Future<void> main(List<String> args) async {
       }
     }
 
+    await verifyRunnerLifecycle(directory);
     stdout.writeln('PASS: clasificación, fallback, VM/ADB tolerante y recuperación de proceso propio.');
   } finally {
     process.kill();

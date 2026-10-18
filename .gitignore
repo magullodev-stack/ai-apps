@@ -10,6 +10,8 @@ build/
 *.iml
 .DS_Store
 Thumbs.db
+# Electron can emit this diagnostic when a test host cannot start crashpad.
+/debug.log
 # Mantener privados los archivos locales; versionar experimentos de cualquier fecha.
 .ai-apps/*
 !.ai-apps/experimentos-*/

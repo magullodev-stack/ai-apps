@@ -134,6 +134,8 @@ try {
                 Write-SessionLog 'Recuperacion automatica: Hot Restart tras fallo de Hot Reload.'
             } elseif ($line -eq 'Recuperacion Flutter: canal bloqueado; relanzamiento controlado.') {
                 Write-SessionLog 'Recuperacion automatica: canal Flutter bloqueado; relanzamiento del proceso propio.'
+            } elseif ($line -eq 'Recuperacion Flutter: conexion VM perdida; relanzamiento del proceso propio.') {
+                Write-SessionLog 'Recuperacion automatica: conexion VM perdida; solo Flutter.'
             } elseif ($line -match '^MUONDIA_RUNNER_EXIT: (-?[0-9]+)$') {
                 Write-SessionLog ("ERROR Flutter: proceso terminado (codigo_{0})." -f $Matches[1])
             } elseif ($line -match '^Error: Gradle task [a-zA-Z0-9_-]+ failed with exit code (-?[0-9]+)') {
@@ -176,9 +178,9 @@ try {
         Write-SessionLog 'Comprueba Flutter con el lanzador de Muondia en PowerShell.'
     }
     if ($_.Exception.Message -like '*ANDROID_DEVICE_LOST*') {
-        # El runner ya confirmó que el dispositivo desapareció de ADB.
-        # No esperar el backoff de un error de Gradle o credenciales.
-        Write-SessionLog 'ADB perdio emulator-5554; recuperando AVD reservado.'
+        # Revalidar Android sin atribuir a QEMU un fallo del transporte ADB.
+        # El preparador conserva cualquier QEMU vivo.
+        Write-SessionLog 'Conexion Android perdida; comprobando AVD reservado sin cerrar QEMU vivo.'
         $retryDelaySeconds = 3
     } else {
         $retryDelaySeconds = [Math]::Min(60, $retryDelaySeconds * 2)

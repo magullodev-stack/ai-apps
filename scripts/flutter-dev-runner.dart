@@ -19,6 +19,7 @@ Future<void> main(List<String> args) async {
   String? blockedRevision;
   var pendingAction = FlutterChangeAction.none;
   var activeAction = FlutterChangeAction.none;
+  var retryAction = FlutterChangeAction.none;
   var pendingPath = '';
   var activePath = '';
   var updating = false;
@@ -124,6 +125,9 @@ Future<void> main(List<String> args) async {
       if (contents.queue(changedPath)) changed = true;
     }
     if (!changed) return;
+    if (retryAction.index > action.index) action = retryAction;
+    contents.retryRejected();
+    retryAction = FlutterChangeAction.none;
     // Una edición más reciente desatasca un commit cuyo Flutter falló.
     if (revision == null || revision != blockedRevision) {
       blockedRevision = null;
@@ -148,7 +152,6 @@ Future<void> main(List<String> args) async {
   controller.onUpdateSettled = (success, fullRestart) {
     if (!updating) return;
     final revision = activeRevision;
-    final path = activePath;
     contents.settle(success);
     updating = false;
     activeRevision = null;
@@ -162,15 +165,20 @@ Future<void> main(List<String> args) async {
       if (pendingAction != FlutterChangeAction.none) dispatch();
       return;
     }
-    // Si Flutter rechaza tanto Hot Reload como Hot Restart, la siguiente
-    // operación necesaria es una recompilación, no más recargas en bucle.
-    // run.ps1 ejecutará una nueva instancia de este mismo runner.
+    // Una edición incompleta puede fallar en ambas operaciones. Conservar
+    // la app actual y esperar otros bytes, sin convertirlo en otra Gradle.
     blockedRevision = revision;
+    retryAction = FlutterChangeAction.restart;
     stderr.writeln(
       'Recuperacion Flutter: Hot Restart rechazado; '
-      'recompilacion completa solicitada.',
+      'se conserva la app hasta una nueva modificacion.',
     );
-    rebuild(path, revision: revision);
+    if (pendingAction != FlutterChangeAction.none) {
+      contents.retryRejected();
+      if (pendingAction.index < retryAction.index) pendingAction = retryAction;
+      retryAction = FlutterChangeAction.none;
+      dispatch();
+    }
   };
 
   controller.onReady = () {
@@ -228,6 +236,10 @@ Future<void> main(List<String> args) async {
           case FlutterContentStatus.applied:
             continue;
           case FlutterContentStatus.scheduled:
+            awaitingUpdate = true;
+            continue;
+          case FlutterContentStatus.rejected:
+            blockedRevision = current;
             awaitingUpdate = true;
             continue;
           case FlutterContentStatus.changed:
@@ -445,7 +457,7 @@ String _configurationSignature(File file) {
   }
 }
 
-enum FlutterContentStatus { applied, scheduled, changed }
+enum FlutterContentStatus { applied, scheduled, rejected, changed }
 
 /// Distingue versiones de archivo, no eventos de Windows ni commits. Git
 /// puede confirmar después los mismos bytes que el watcher ya ha aplicado.
@@ -453,9 +465,13 @@ final class FlutterContentTracker {
   final _applied = <String, String>{};
   final _pending = <String, String>{};
   final _active = <String, String>{};
+  final _rejected = <String, String>{};
+  final _paths = <String, String>{};
 
   void seed(File file) {
-    _applied[_normalizedPath(file.path)] = _configurationSignature(file);
+    final key = _normalizedPath(file.path);
+    _paths[key] = file.path;
+    _applied[key] = _configurationSignature(file);
   }
 
   void seedDirectory(Directory directory) {
@@ -476,25 +492,36 @@ final class FlutterContentTracker {
   FlutterContentStatus status(String path) {
     final key = _normalizedPath(path);
     final signature = _configurationSignature(File(path));
+    return _status(key, signature);
+  }
+
+  FlutterContentStatus _status(String key, String signature) {
     if (_pending[key] == signature || _active[key] == signature) {
       return FlutterContentStatus.scheduled;
     }
     if (_applied[key] == signature && !_active.containsKey(key)) {
       return FlutterContentStatus.applied;
     }
+    if (_rejected[key] == signature) return FlutterContentStatus.rejected;
     return FlutterContentStatus.changed;
   }
 
   bool queue(String path) {
     final key = _normalizedPath(path);
-    switch (status(path)) {
+    _paths[key] = path;
+    final signature = _configurationSignature(File(path));
+    switch (_status(key, signature)) {
       case FlutterContentStatus.applied:
         _pending.remove(key);
         return false;
       case FlutterContentStatus.scheduled:
+        if (_active[key] == signature) _pending.remove(key);
+        return false;
+      case FlutterContentStatus.rejected:
+        _pending.remove(key);
         return false;
       case FlutterContentStatus.changed:
-        _pending[key] = _configurationSignature(File(path));
+        _pending[key] = signature;
         return true;
     }
   }
@@ -506,8 +533,26 @@ final class FlutterContentTracker {
     return true;
   }
 
+  void retryRejected() {
+    // Una edición nueva permite reintentar todo el lote previo: corregir
+    // Dart también debe recuperar un asset cuyo restart no llegó a aplicarse.
+    for (final entry in _rejected.entries) {
+      if (!_pending.containsKey(entry.key) &&
+          _configurationSignature(File(_paths[entry.key]!)) == entry.value) {
+        _pending[entry.key] = entry.value;
+      }
+    }
+  }
+
   void settle(bool success) {
-    if (success) _applied.addAll(_active);
+    if (success) {
+      _applied.addAll(_active);
+      for (final path in _active.keys) {
+        _rejected.remove(path);
+      }
+    } else {
+      _rejected.addAll(_active);
+    }
     _active.clear();
   }
 }
@@ -1016,19 +1061,29 @@ Future<List<_GitChange>?> _readGitChanges(
   String appPath,
 ) async {
   final result = await Process.run('git', [
-    '-C', root, 'diff', '--name-status', before, after, '--',
+    '-C', root, 'diff', '--name-status', '-z', before, after, '--',
     '${appPath}lib/', '${appPath}assets/', '${appPath}pubspec.yaml',
     '${appPath}pubspec.lock', '${appPath}android/', '${appPath}ios/',
     'shared/', 'ai/flutter_client/', 'scripts/flutter-dev-runner.dart',
-  ]);
+  ], stdoutEncoding: utf8);
   if (result.exitCode != 0) return null;
+  return parseFlutterGitChanges(result.stdout.toString());
+}
+
+/// -z conserva nombres Unicode, espacios y renombres sin las comillas ni
+/// escapes que Git añade al formato orientado a líneas.
+List<_GitChange> parseFlutterGitChanges(String output) {
   final changes = <_GitChange>[];
-  for (final line in result.stdout.toString().split('\n')) {
-    final fields = line.trim().split('\t');
-    if (fields.length < 2) continue;
-    // R/C: el último campo es el destino nuevo.
-    final path = fields.last.replaceAll('\\', '/');
-    changes.add((status: fields.first.substring(0, 1), path: path));
+  final fields = output.split('\u0000');
+  for (var i = 0; i < fields.length && fields[i].isNotEmpty;) {
+    final status = fields[i++];
+    if (i >= fields.length) break;
+    var path = fields[i++];
+    if (status.startsWith('R') || status.startsWith('C')) {
+      if (i >= fields.length) break;
+      path = fields[i++];
+    }
+    changes.add((status: status.substring(0, 1), path: path));
   }
   return changes;
 }

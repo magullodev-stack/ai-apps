@@ -181,6 +181,12 @@ añadidos/eliminados, pubspec o código nativo piden recompilación. Se aplica
 la acción más fuerte del conjunto, sin duplicar los eventos ya procesados
 por el monitor. Los archivos ajenos a la aplicación no la actualizan.
 
+El runner compara el contenido aplicado, pendiente y rechazado de cada archivo.
+El commit de autosync de una edición ya aplicada no provoca una segunda recarga
+o un segundo Restart. Los eventos sin cambio de bytes también se ignoran.
+Si una actualización falla, el mismo contenido no se reintenta hasta recibir
+una edición nueva; entonces se recupera también el lote de assets pendiente.
+
 El propietario de las sesiones Flutter es `scripts/flutter-dev-runner.dart`,
 no VS Code. Agrupa los cambios detectados por los watchers, mantiene **una
 sola petición `app.restart` en vuelo** y utiliza Hot Reload para cambios
