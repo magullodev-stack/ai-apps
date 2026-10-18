@@ -91,6 +91,8 @@ Future<void> main(List<String> args) async {
     pendingAction = FlutterChangeAction.none;
     pendingPath = '';
     queuedRevision = null;
+    stdout.writeln('Cambio detectado: ' +
+        _relativePath(options.workingDirectory, activePath));
     stdout.writeln(activeAction == FlutterChangeAction.reload
         ? 'Actualizando Flutter: Hot Reload.'
         : 'Actualizando Flutter: Hot Restart.');
@@ -169,7 +171,8 @@ Future<void> main(List<String> args) async {
   };
 
   controller.onReady = () {
-    stdout.writeln('Hot reload automatico activo.');
+    stdout.writeln('Hot reload automatico activo: '
+        'los cambios sincronizados se reflejaran en el dispositivo.');
     dispatch();
   };
 
