@@ -14,7 +14,8 @@ function panel(title) {
     postMessage: value => { result.messages.push(value); return Promise.resolve(true); }
   }, messages: [], onDidDispose: callback => events.on('dispose', callback),
     dispose() { result.disposed = true; events.emit('dispose'); }, reveal() { result.revealed = true; },
-    ready() { messages.emit('message', { type: 'ready' }); } };
+    ready() { messages.emit('message', { type: 'ready' }); },
+    notify(message) { messages.emit('message', message); } };
   panels.push(result); return result;
 }
 const vscode = {
@@ -42,6 +43,12 @@ const { createViews } = moduleSandbox.module.exports;
 const context = { subscriptions: [], extensionUri: 'extension', extensionPath: 'extension' };
 const log = { debug() {}, warn() {} };
 const a = { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554' };
+function createTestViews() {
+  const views = createTestViews();
+  views.waitForDeviceBoot = async () => true;
+  return views;
+}
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function run() {
   const views = createViews(Base, context, {}, { find() {} }, log);
   await Promise.all([views.openSession(a), views.openSession(a)]);
@@ -61,7 +68,7 @@ async function run() {
   await serializers[0].deserializeWebviewPanel(duplicate, { session: a });
   assert.equal(duplicate.disposed, true); assert.equal(views.views.size, 1);
   await assert.rejects(views.openSession({ ...a, appId: 'conflict' }), /another application/);
-  const reopened = createViews(Base, context, {}, { find() {} }, log);
+  const reopened = createTestViews();
   const restoredA = panel('QuizAI - emulator-5554');
   await serializers[1].deserializeWebviewPanel(restoredA, { serial: a.serial });
   assert.equal(titlesBeforeStream.at(-1), 'Muondia · emulator-5554',
@@ -72,7 +79,7 @@ async function run() {
   assert.equal(reopened.views.size, 1, 'Current session reconnects its persisted viewer');
   assert.equal(restoredA.title, 'Muondia · emulator-5554', 'Current registry restores the label');
   assert.equal(reopened.listSessions()[0]?.label, a.label);
-  const migrated = createViews(Base, context, {}, { find() {} }, log);
+  const migrated = createTestViews();
   const previousPanel = panel('Old application - emulator-5554');
   await serializers[2].deserializeWebviewPanel(previousPanel, {
     session: { serial: a.serial, appId: 'retired', label: 'Old application' }
@@ -89,11 +96,57 @@ async function run() {
   const restoredDuplicate = panel('Duplicate');
   await serializers[1].deserializeWebviewPanel(restoredDuplicate, { serial: a.serial });
   assert.equal(restoredDuplicate.disposed, true, 'A duplicate of the same serial is discarded');
+  // VS Code restores panels as Windows is still booting the emulator.
+  const delayed = createTestViews();
+  let releaseBoot;
+  delayed.waitForDeviceBoot = () => new Promise(resolve => {
+    releaseBoot = () => resolve(true);
+  });
+  const waitingPanel = panel('Saved from last Windows session');
+  const oldStreamCount = streams.length;
+  const restoration = serializers[3].deserializeWebviewPanel(
+    waitingPanel, { serial: a.serial });
+  await delay(0);
+  assert.equal(streams.length, oldStreamCount,
+    'Restored viewer must not attach scrcpy before Android finishes booting');
+  releaseBoot();
+  await restoration;
+  assert.equal(streams.length, oldStreamCount + 1,
+    'Exactly one stream starts when Android is ready');
+  waitingPanel.ready();
+  delayed.retryDelays = [8, 8, 8];
+  waitingPanel.notify({ type: 'streamError' });
+  waitingPanel.notify({ type: 'streamError' });
+  await delay(35);
+  assert.equal(streams.length, oldStreamCount + 2,
+    'Duplicate stream errors schedule only one bounded recovery');
+  assert.equal(delayed.views.get(a.serial).retryCount, 1);
+  const recoveredView = delayed.views.get(a.serial);
+  waitingPanel.notify({ type: 'frame', frames: 1 });
+  waitingPanel.notify({ type: 'streamError' });
+  await delay(35);
+  assert.equal(streams.length, oldStreamCount + 2,
+    'Once video rendered, startup recovery must not launch another stream');
+  waitingPanel.notify({ type: 'retry' });
+  await delay(5);
+  assert.equal(recoveredView.retryCount, 0,
+    'Explicit Retry clears the automatic retry budget');
+  assert.equal(streams.length, oldStreamCount + 3,
+    'Explicit Retry still replaces only the viewer bridge');
+  delayed.views.get(a.serial).videoFrames = 0;
+  waitingPanel.notify({ type: 'streamError' });
+  waitingPanel.dispose();
+  await delay(35);
+  assert.equal(streams.length, oldStreamCount + 3,
+    'Closing the panel cancels any queued reconnect');
+
   assert.ok(bundle.includes('onWebviewPanel') === false); // Activation belongs in manifest.
   const builtWebview = fs.readFileSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/media/webview.js'), 'utf8');
   assert.ok(builtWebview.includes('x.setState({serial:t.session.serial})'));
   assert.ok(!builtWebview.includes('x.setState({session:t.session})'));
   assert.ok(builtWebview.includes('v.onclose=null;v.close()'));
-  console.log('PASS: Muondia viewer deduplication, independent video reconnection, clean obsolete-state disposal, serial-only restoration.');
+  assert.ok(builtWebview.includes('x.postMessage({type:"streamError"})'));
+  assert.ok(fs.existsSync(path.resolve(__dirname, '../../.ai-apps/embedroid/extension/boot-ready.cjs')));
+  console.log('PASS: Muondia viewer identity, boot-gated restoration, bounded recovery and safe cancellation.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });
