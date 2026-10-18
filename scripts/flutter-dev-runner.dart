@@ -23,7 +23,6 @@ Future<void> main(List<String> args) async {
   var activePath = '';
   var updating = false;
   var relaunching = false;
-  var failures = 0;
   Timer? debounce;
 
   final flutter = await Process.start(
@@ -108,7 +107,6 @@ Future<void> main(List<String> args) async {
     // Una edición más reciente desatasca un commit cuyo Flutter falló.
     if (revision == null || revision != blockedRevision) {
       blockedRevision = null;
-      failures = 0;
     }
     if (action == FlutterChangeAction.rebuild) {
       rebuild(path, revision: revision);
@@ -134,7 +132,6 @@ Future<void> main(List<String> args) async {
     updating = false;
     activeRevision = null;
     if (success) {
-      failures = 0;
       blockedRevision = null;
       if (revision != null) {
         appliedRevision = revision;
