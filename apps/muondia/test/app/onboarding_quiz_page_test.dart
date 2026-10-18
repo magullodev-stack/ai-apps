@@ -133,8 +133,8 @@ void main() {
       expect(card.height, greaterThan(500));
       final stageBounds =
           tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
-      expect(card.left - stageBounds.left, closeTo(4, 0.1));
-      expect(stageBounds.right - card.right, closeTo(4, 0.1));
+      expect(card.left - stageBounds.left, closeTo(10, 0.1));
+      expect(stageBounds.right - card.right, closeTo(10, 0.1));
       final headerBottom = tester.getBottomLeft(
         find.byType(OnboardingQuizHeader),
       ).dy;
@@ -158,8 +158,8 @@ void main() {
             'assets/onboarding/test/Caja Respuesta.png');
         expect(answerImage.centerSlice, isNull,
             reason: 'El recorte 9-slice deformaba el distintivo original');
-        expect(answerImage.fit, BoxFit.cover,
-            reason: 'El PNG conserva las curvas y la escala uniforme');
+        expect(answerImage.fit, BoxFit.fill,
+            reason: 'El recorte visual ocupa el área táctil real');
         expect(find.byKey(Key('muondia-answer-divider-$i')), findsNothing,
             reason: 'El distintivo y el separador ya están en el PNG');
         expect(answer.hitTestable(), findsOneWidget);
@@ -671,7 +671,7 @@ void main() {
     final stageRect =
         tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
     final scale = (320 / 390).clamp(0.82, 1.1);
-    final horizontalInset = 4 * scale;
+    final horizontalInset = 10 * scale;
     expect(cardRect.left - stageRect.left, closeTo(horizontalInset, 0.2));
     expect(stageRect.right - cardRect.right, closeTo(horizontalInset, 0.2));
     expect(cardRect.top - headerRect.bottom, closeTo(10 * scale, 0.2));
@@ -753,9 +753,9 @@ void main() {
           find.byKey(const Key('muondia-answer-0')),
         );
         final scale = (size.width / 390).clamp(0.82, 1.1);
-        expect(title.left - panel.left, greaterThan(30 * scale),
+        expect(title.left - panel.left, greaterThan(20 * scale),
             reason: 'El texto no puede tocar el borde visible del PNG');
-        expect(panel.right - title.right, greaterThan(30 * scale));
+        expect(panel.right - title.right, greaterThan(20 * scale));
         expect(answer.width, lessThan(panel.width));
         expect(answer.height, greaterThan(74 * scale),
             reason: 'La respuesta extensa puede crecer sin deformar su PNG');
@@ -763,14 +763,61 @@ void main() {
           find.byKey(const Key('muondia-answer-image-0')),
         );
         expect(img.centerSlice, isNull);
-        expect(img.fit, BoxFit.cover,
-            reason: 'Una respuesta de altura variable nunca se divide en 9');
+        expect(img.fit, BoxFit.fill,
+            reason: 'La imagen recortada acompaña la altura del texto');
         expect(find.byKey(const Key('muondia-lifelines-row')), findsOneWidget);
         expect(tester.takeException(), isNull,
             reason: 'Los PNG adaptables no deben provocar overflow');
       }
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
+    },
+  );
+
+  testWidgets(
+    'El espacio entre respuestas no puede activar ninguna opción',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(MaterialApp(
+        theme: muondiaTheme,
+        home: OnboardingQuizPage(
+          previewQuestions: previewQuestions,
+          countdownEnabled: false,
+          onCompleted: () async {},
+        ),
+      ));
+      await tester.pump();
+      final first = find.byKey(const Key('muondia-answer-0'));
+      final second = find.byKey(const Key('muondia-answer-1'));
+      final firstBounds = tester.getRect(first);
+      final secondBounds = tester.getRect(second);
+      expect(secondBounds.top - firstBounds.bottom, greaterThan(3),
+          reason: 'Una separación real evita hitboxes solapados');
+      final between = Offset(
+        (firstBounds.center.dx + secondBounds.center.dx) / 2,
+        (firstBounds.bottom + secondBounds.top) / 2,
+      );
+      await tester.tapAt(between);
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(find.text('1/10'), findsOneWidget,
+          reason: 'Pulsar el espacio transparente no responde a una pregunta');
+
+      // La zona táctil corresponde a la parte visible, no a los 123 píxeles
+      // originales del PNG (que contienen margen transparente).
+      final image = tester.getRect(
+        find.byKey(const Key('muondia-answer-image-0')),
+      );
+      expect(image.height, greaterThan(firstBounds.height));
+      expect(
+        tester.getRect(first).width,
+        lessThan(tester.getRect(find.byKey(
+          const Key('muondia-question-card'),
+        )).width),
+      );
+      expect(tester.takeException(), isNull);
     },
   );
 
