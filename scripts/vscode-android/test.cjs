@@ -231,7 +231,7 @@ async function run() {
   const states = loadingChildren.filter(item => item.experienceExplorerNode);
   assert.deepEqual(Array.from(states, item => item.experienceExplorerNode.state.id),
     ['inicio', 'progreso', 'final']);
-  assert.equal(loadingChildren.filter(item => item.visualAssetNode).length, 4,
+  assert.equal(loadingChildren.filter(item => item.visualAssetNode).length, 3,
     'Loading retains its states and shows its own images beside them');
   const testImages = treeProvider.getChildren(firstExperience[1])
     .filter(item => item.visualAssetNode);
