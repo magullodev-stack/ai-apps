@@ -121,6 +121,54 @@ void verifyDeviceRecoveryPolicy() {
     'Tres ausencias confirmadas tras perder VM permiten recuperar el dispositivo');
 }
 
+void verifyContentDeduplication(Directory directory) {
+  final assetDirectory = Directory('${directory.path}/assets')..createSync();
+  final asset = File('${assetDirectory.path}/image.png')..writeAsBytesSync([1, 2, 3]);
+  final dart = File('${directory.path}/widget.dart')..writeAsStringSync('first');
+  final tracker = runner.FlutterContentTracker()..seedDirectory(directory);
+  require(tracker.status(asset.path) == runner.FlutterContentStatus.applied,
+    'El arranque ya compila los archivos presentes');
+  asset.setLastModifiedSync(DateTime.now().add(const Duration(seconds: 1)));
+  require(!tracker.queue(asset.path),
+    'Cambiar metadatos sin cambiar bytes no debe reiniciar Flutter');
+
+  asset.writeAsBytesSync([4, 5, 6]);
+  require(tracker.queue(asset.path) && tracker.beginUpdate(),
+    'Una sustitución local del PNG debe actualizarse');
+  require(tracker.status(asset.path) == runner.FlutterContentStatus.scheduled &&
+      !tracker.queue(asset.path),
+    'El commit durante Hot Restart debe esperar, sin encolar otra operación');
+  tracker.settle(true);
+  require(tracker.status(asset.path) == runner.FlutterContentStatus.applied &&
+      !tracker.queue(asset.path) && !tracker.beginUpdate(),
+    'Confirmar en Git el PNG ya aplicado no debe repetir Hot Restart');
+
+  dart.writeAsStringSync('second');
+  require(tracker.queue(dart.path) && tracker.beginUpdate(),
+    'Una nueva versión Dart requiere actualizarse');
+  dart.writeAsStringSync('third');
+  require(tracker.queue(dart.path),
+    'Cambiar el mismo archivo durante una recarga conserva su nueva versión');
+  tracker.settle(true);
+  require(tracker.status(dart.path) == runner.FlutterContentStatus.scheduled &&
+      tracker.beginUpdate(),
+    'Confirmar la versión anterior no consume la modificación posterior');
+  tracker.settle(false);
+  require(tracker.status(dart.path) == runner.FlutterContentStatus.changed,
+    'Una recarga fallida no debe acreditar los nuevos bytes');
+  require(tracker.queue(dart.path) && tracker.beginUpdate(),
+    'La versión no aplicada sigue disponible para recuperación');
+  tracker.settle(true);
+  require(tracker.status(dart.path) == runner.FlutterContentStatus.applied,
+    'Solo el éxito Flutter acredita el contenido');
+
+  dart.writeAsStringSync('temporary');
+  require(tracker.queue(dart.path), 'La edición temporal entra en cola');
+  dart.writeAsStringSync('third');
+  require(!tracker.queue(dart.path) && !tracker.beginUpdate(),
+    'Restaurar antes del debounce no debe recargar sin cambios');
+}
+
 void verifyUpdateClassification() {
   final cases = <({String path, String status, runner.FlutterChangeAction expected})>[
     (
@@ -250,6 +298,7 @@ Future<void> main(List<String> args) async {
   verifyAdbDeviceRecognition();
   verifyDeviceRecoveryPolicy();
   final directory = await Directory.systemTemp.createTemp('ai-apps-flutter-machine-');
+  verifyContentDeduplication(directory);
   final trace = File('${directory.path}${Platform.pathSeparator}requests.jsonl');
   final process = await Process.start(
     Platform.resolvedExecutable,
