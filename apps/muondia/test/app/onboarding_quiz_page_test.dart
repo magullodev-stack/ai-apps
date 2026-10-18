@@ -43,26 +43,21 @@ void main() {
       expect((backgroundImage.image as AssetImage).assetName,
           'assets/onboarding/test/quiz_background.png');
       expect(backgroundImage.fit, BoxFit.cover);
-      expect(find.byKey(const Key('muondia-question-panel-image')),
-          findsOneWidget);
-      for (final name in ['muondia-fifty-image', 'muondia-hint-image']) {
-        expect(
-          (tester.widget<Image>(find.byKey(Key(name))).image as AssetImage)
-              .assetName,
-          'assets/onboarding/test/Caja comodines.png',
-        );
+      expect(find.byKey(const Key('muondia-question-panel-image')), findsNothing);
+      for (final name in [
+        'muondia-fifty-image',
+        'muondia-hint-image',
+        'muondia-answer-image-0',
+      ]) {
+        expect(find.byKey(Key(name)), findsNothing,
+            reason: 'Las superficies interactivas se dibujan en Flutter');
       }
       for (final name in ['muondia-fifty-count', 'muondia-hint-count']) {
-        final count = find.byKey(Key(name));
-        final text = tester.widget<Text>(
-          find.descendant(of: count, matching: find.text('1')),
-        );
-        expect(text.style?.color, const Color(0xFF201047));
-        final image = tester.widget<Image>(
-          find.descendant(of: count, matching: find.byType(Image)),
-        );
-        expect((image.image as AssetImage).assetName,
-            'assets/onboarding/test/Esfera.png');
+        final counter = tester.widget<Container>(find.byKey(Key(name)));
+        expect((counter.decoration as BoxDecoration).shape, BoxShape.circle);
+        expect(find.descendant(
+          of: find.byKey(Key(name)), matching: find.text('1'),
+        ), findsOneWidget);
       }
 
       final pivotIcon = tester.getSize(
@@ -90,21 +85,16 @@ void main() {
         lessThanOrEqualTo(23),
       );
 
-      final timeTrack = tester.widget<SizedBox>(
+      final timeTrack = tester.widget<ClipRRect>(
         find.byKey(const Key('muondia-time-track')),
       );
-      expect(timeTrack.height, greaterThan(0));
-      final base = tester.widget<Image>(
-        find.byKey(const Key('muondia-time-track-image')),
-      );
-      final fill = tester.widget<Image>(
+      expect(timeTrack.clipBehavior, Clip.antiAlias);
+      final fill = tester.widget<DecoratedBox>(
         find.byKey(const Key('muondia-time-fill')),
       );
-      expect((base.image as AssetImage).assetName,
-          'assets/onboarding/test/Barra tiempo.png');
-      expect((fill.image as AssetImage).assetName,
-          'assets/onboarding/test/Barra tiempo.png',
-          reason: 'El relleno se dimensiona con la fracción temporal');
+      expect((fill.decoration as BoxDecoration).gradient, isNotNull);
+      expect(find.byKey(const Key('muondia-time-track-image')), findsNothing);
+
       expect(find.byKey(const Key('muondia-timer-capsule')), findsNothing);
       final timerInline =
           find.byKey(const Key('muondia-timer-inline'));
@@ -117,24 +107,25 @@ void main() {
         findsOneWidget,
       );
 
-      final cardImage = tester.widget<Image>(
-        find.byKey(const Key('muondia-question-panel-image')),
+      final cardSurface = tester.widget<Container>(
+        find.byKey(const Key('muondia-question-card')),
       );
-      expect((cardImage.image as AssetImage).assetName,
-          'assets/onboarding/test/Caja Test.png');
-      expect(cardImage.fit, BoxFit.fill);
-      expect(cardImage.centerSlice, isNull,
-          reason: 'La sección 9-slice anterior deformaba el panel original');
-      expect(find.byKey(const Key('muondia-question-clip')), findsNothing,
-          reason: 'Las esquinas proceden del PNG, no de ClipRRect');
+      final cardDecoration = cardSurface.decoration as BoxDecoration;
+      expect(cardDecoration.color, const Color(0xFFFAFBFF));
+      expect(cardDecoration.borderRadius, isNotNull);
+      final panelClip = tester.widget<ClipRRect>(
+        find.byKey(const Key('muondia-question-clip')),
+      );
+      expect(panelClip.clipBehavior, Clip.antiAlias);
+
       final card = tester.getRect(
         find.byKey(const Key('muondia-question-card')),
       );
       expect(card.height, greaterThan(500));
       final stageBounds =
           tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
-      expect(card.left - stageBounds.left, closeTo(10, 0.1));
-      expect(stageBounds.right - card.right, closeTo(10, 0.1));
+      expect(card.left - stageBounds.left, closeTo(16, 0.1));
+      expect(stageBounds.right - card.right, closeTo(16, 0.1));
       final headerBottom = tester.getBottomLeft(
         find.byType(OnboardingQuizHeader),
       ).dy;
@@ -143,25 +134,21 @@ void main() {
       );
       final stageRect =
           tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
-      expect(card.top - headerBottom, closeTo(10, 0.1));
-      expect(lifelines.top - card.bottom, closeTo(5, 0.1));
-      expect(stageRect.bottom - lifelines.bottom, closeTo(8, 0.1),
-          reason: 'Márgenes compactos alrededor de los PNG');
+      expect(card.top - headerBottom, closeTo(16, 0.1));
+      expect(lifelines.top - card.bottom, closeTo(16, 0.1));
+      expect(stageRect.bottom - lifelines.bottom, closeTo(16, 0.1));
       for (var i = 0; i < 4; i++) {
         expect(find.text(String.fromCharCode(65 + i)), findsOneWidget);
         final answer = find.byKey(Key('muondia-answer-$i'));
         expect(find.byKey(Key('muondia-answer-letter-$i')), findsOneWidget);
-        final answerImage = tester.widget<Image>(
-          find.byKey(Key('muondia-answer-image-$i')),
+        final badge = tester.widget<Container>(
+          find.byKey(Key('muondia-answer-letter-$i')),
         );
-        expect((answerImage.image as AssetImage).assetName,
-            'assets/onboarding/test/Caja Respuesta.png');
-        expect(answerImage.centerSlice, isNull,
-            reason: 'El recorte 9-slice deformaba el distintivo original');
-        expect(answerImage.fit, BoxFit.fill,
-            reason: 'El recorte visual ocupa el área táctil real');
-        expect(find.byKey(Key('muondia-answer-divider-$i')), findsNothing,
-            reason: 'El distintivo y el separador ya están en el PNG');
+        final badgeDecoration = badge.decoration as BoxDecoration;
+        expect(badgeDecoration.gradient, isNotNull);
+        expect(badgeDecoration.borderRadius, isNotNull);
+        expect(find.byKey(Key('muondia-answer-divider-$i')), findsOneWidget);
+        expect(find.byKey(Key('muondia-answer-image-$i')), findsNothing);
         expect(answer.hitTestable(), findsOneWidget);
         expect(card.contains(tester.getTopLeft(answer)), isTrue);
         expect(card.contains(tester.getBottomRight(answer)), isTrue);
@@ -671,11 +658,11 @@ void main() {
     final stageRect =
         tester.getRect(find.byKey(const Key('muondia-quiz-stage')));
     final scale = (320 / 390).clamp(0.82, 1.1);
-    final horizontalInset = 10 * scale;
+    final horizontalInset = 16 * scale;
     expect(cardRect.left - stageRect.left, closeTo(horizontalInset, 0.2));
     expect(stageRect.right - cardRect.right, closeTo(horizontalInset, 0.2));
-    expect(cardRect.top - headerRect.bottom, closeTo(10 * scale, 0.2));
-    expect(rowRect.top - cardRect.bottom, closeTo(5 * scale, 0.2));
+    expect(cardRect.top - headerRect.bottom, closeTo(16 * scale, 0.2));
+    expect(rowRect.top - cardRect.bottom, closeTo(16 * scale, 0.2));
     final firstAnswer = tester.getRect(
       find.byKey(const Key('muondia-answer-0')),
     );
@@ -706,7 +693,7 @@ void main() {
   });
 
   testWidgets(
-    'PNG adaptables: enunciado con margen y respuestas multilinea',
+    'Flutter adaptable: enunciado y respuestas multilinea',
     (tester) async {
       final initial = [
         for (var i = 0; i < 10; i++)
@@ -754,17 +741,17 @@ void main() {
         );
         final scale = (size.width / 390).clamp(0.82, 1.1);
         expect(title.left - panel.left, greaterThan(20 * scale),
-            reason: 'El texto no puede tocar el borde visible del PNG');
+            reason: 'El enunciado respeta el margen de la tarjeta');
         expect(panel.right - title.right, greaterThan(20 * scale));
         expect(answer.width, lessThan(panel.width));
         expect(answer.height, greaterThan(74 * scale),
-            reason: 'La respuesta extensa puede crecer sin deformar su PNG');
-        final img = tester.widget<Image>(
-          find.byKey(const Key('muondia-answer-image-0')),
+            reason: 'La respuesta extensa crece según el contenido');
+        expect(find.byKey(const Key('muondia-answer-image-0')), findsNothing);
+        final letter = tester.getRect(
+          find.byKey(const Key('muondia-answer-letter-0')),
         );
-        expect(img.centerSlice, isNull);
-        expect(img.fit, BoxFit.fill,
-            reason: 'La imagen recortada acompaña la altura del texto');
+        expect((letter.center.dy - answer.center.dy).abs(), lessThan(1),
+            reason: 'La letra y el texto comparten una única fila centrada');
         expect(find.byKey(const Key('muondia-lifelines-row')), findsOneWidget);
         expect(tester.takeException(), isNull,
             reason: 'Los PNG adaptables no deben provocar overflow');
@@ -805,12 +792,9 @@ void main() {
       expect(find.text('1/10'), findsOneWidget,
           reason: 'Pulsar el espacio transparente no responde a una pregunta');
 
-      // La zona táctil corresponde a la parte visible, no a los 123 píxeles
-      // originales del PNG (que contienen margen transparente).
-      final image = tester.getRect(
-        find.byKey(const Key('muondia-answer-image-0')),
-      );
-      expect(image.height, greaterThan(firstBounds.height));
+      expect(find.byKey(const Key('muondia-answer-image-0')), findsNothing);
+      expect(firstBounds.bottom, lessThan(secondBounds.top),
+          reason: 'Las zonas táctiles no se solapan');
       expect(
         tester.getRect(first).width,
         lessThan(tester.getRect(find.byKey(
