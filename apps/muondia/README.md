@@ -103,44 +103,31 @@ necesario. Solo el recorrido
 real activa la cuenta atrás de 60 s; esta distinción se configura
 explícitamente mediante `countdownEnabled`, sin deducirla de que existan
 preguntas de prueba.
-`OnboardingQuizPage` conserva el estado y las reglas del cuestionario;
-`interaction/onboarding_quiz_scene.dart` compone la escena sobre los
-recursos PNG del propio test. El fondo `quiz_background.png` se coloca con
-`Image.asset` y `BoxFit.cover` a pantalla completa, sin redondeos ni
-gradientes superpuestos. Las superficies de `Caja Test.png`,
-`Caja Respuesta.png` (reutilizada cuatro veces) y `Caja comodines.png`
-se dibujan mediante `Image.asset`, sin `BoxDecoration` que replique sus
-curvas, marcos o sombras. Se ha retirado `centerSlice` porque deformaba
-los distintivos y extremos. Para las dos superficies mayores se usa
-`_CroppedQuizPng`: presenta únicamente el rectángulo útil del PNG
-original, conserva su acabado y recorta el margen transparente fuera
-del tamaño del componente. Esto evita hitboxes invisibles y huecos
-grandes entre respuestas. Los límites de contenido se han medido en
-los archivos originales: la respuesta mide 370×123, pero el recorte útil
-es x=15..355, y=26..95 (340×69); el panel mide 400×580, con recorte
-útil aproximado x=18..383, y=26..560 (365×534). El widget adapta
-estos rectángulos al espacio disponible y el texto determina la altura
-de cada opción. El `InkWell` no añade resaltados por encima de la
-transparencia: el feedback se aplica solo al componente visible y
-el hueco entre opciones no responde a pulsaciones.
+`OnboardingQuizPage` conserva el estado y las reglas del cuestionario.
+`interaction/onboarding_quiz_scene.dart` dibuja con Flutter todas las
+superficies del test: panel principal, respuestas A–D, distintivos de letra,
+separadores, comodines, esferas de usos y barra temporal. Su única imagen
+decorativa es `assets/onboarding/test/quiz_background.png`, que se mantiene
+a pantalla completa sin redondear ni añadir capas superpuestas. Los PNG de
+pivotes siguen siendo iconos de las temáticas y no superficies de la interfaz.
 
-El panel y las respuestas mantienen un espacio interior independiente
-del margen transparente, y solo el interior del panel se desplaza
-cuando hay preguntas u opciones largas. `Caja comodines.png` conserva
-su proporción original con `BoxFit.contain` para no deformar sus extremos.
-Los PNG originales miden 400×580 (panel), 370×123 (respuesta)
-y 190×63 (comodín). `Esfera.png` aparece con el número de usos
-restantes y desaparece al agotarse, sin cambiar las dimensiones del botón.
-`Barra tiempo.png` aporta tanto la pista atenuada como la apariencia
-del relleno visible, cuyo ancho cambia según la fracción temporal que
-calcula el test. El cronómetro permanece como icono y texto sin cápsula.
+Cada respuesta tiene una única caja Flutter con el mismo tamaño para fondo,
+letra, contenido y zona de pulsación. La altura mínima se adapta al espacio
+disponible; el texto de dos o más líneas aumenta la altura natural de la
+opción, sin deformar el distintivo ni el borde. Entre respuestas hay un
+margen real, sin transparencia táctil ni superposiciones. El enunciado
+queda separado de las respuestas mediante un espacio limitado: no hay
+`Spacer()` que cree huecos desproporcionados. Si el contenido excede el
+alto del móvil, se desplaza solo el interior de la tarjeta; cabecera y
+comodines permanecen fijos.
 
-Los PNG de las superficies están en `assets/onboarding/test/`. Flutter
-mantiene el texto, el pivote, los toques, el feedback, las respuestas
-desactivadas al utilizar 50 %, el cronómetro y la pista IA. El feedback
-se muestra solo sobre la opción elegida; las otras opciones permanecen
-en el mismo sitio y las respuestas largas pueden desplazar el interior
-de la caja grande, sin mover la cabecera ni los comodines.
+La tarjeta principal tiene una superficie clara única, borde redondeado con
+antialiasing y sombra sutil. Las respuestas son blancas con sombras suaves y
+distintivos neutros. Los comodines agotados se atenúan y pierden su esfera
+amarilla, sin mover el resto del diseño. La barra temporal se vuelve a
+componer en Flutter con pista y relleno violeta, y conserva el porcentaje
+controlado por la cuenta atrás de 60 segundos del recorrido real.
+En el explorador de experiencias, los 60 segundos siguen congelados.
 
 La composición es particular de Muondia y no modifica el tema global ni
 los componentes compartidos. La imagen conserva su
