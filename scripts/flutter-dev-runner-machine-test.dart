@@ -89,6 +89,8 @@ Future<void> verifyRunnerLifecycle(Directory directory) async {
   final app = Directory('${fixture.path}/apps/fixture')..createSync(recursive: true);
   final lib = Directory('${app.path}/lib')..createSync();
   final source = File('${lib.path}/widget.dart')..writeAsStringSync('initial');
+  final assets = Directory('${app.path}/assets')..createSync();
+  final existingAsset = File('${assets.path}/existing.png')..writeAsBytesSync([1, 2, 3]);
   final trace = File('${fixture.path}/requests.jsonl');
   final wrapper = File('${fixture.path}/flutter.cmd')..writeAsStringSync(
     '@echo off\r\n"${Platform.resolvedExecutable}" '
@@ -109,11 +111,12 @@ Future<void> verifyRunnerLifecycle(Directory directory) async {
   await git(['init', '-b', 'dev']);
   await commit();
   final runnerScript = File.fromUri(Platform.script.resolve('flutter-dev-runner.dart'));
-  final process = await Process.start(Platform.resolvedExecutable, [
+  final runnerArgs = [
     runnerScript.path, '--flutter', wrapper.path, '--device', 'fake',
     '--defines-file', '${fixture.path}/defines.json',
     '--working-directory', app.path, '--watch', app.path,
-  ]);
+  ];
+  final process = await Process.start(Platform.resolvedExecutable, runnerArgs);
   final output = <String>[];
   final stdoutSubscription = process.stdout.transform(utf8.decoder)
       .transform(const LineSplitter()).listen(output.add);
@@ -149,8 +152,91 @@ Future<void> verifyRunnerLifecycle(Directory directory) async {
     require((await waitRequests(trace, 3)).length == 3 && !exited &&
         File('${trace.path}.starts').readAsLinesSync().length == 1,
       'El commit posterior a la recarga no debe iniciar una segunda operación ni otro Flutter');
+
+    // Un checkout Git de Windows puede emitir delete/create para sustituir
+    // el mismo PNG. Solo el estado tras el debounce decide si cambió el bundle.
+    existingAsset.deleteSync();
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    existingAsset.writeAsBytesSync([4, 5, 6]);
+    final replacedRequests = await waitRequests(trace, 4);
+    await Future<void>.delayed(const Duration(milliseconds: 650));
+    require(replacedRequests[3]['fullRestart'] == true && !exited &&
+        File('${trace.path}.starts').readAsLinesSync().length == 1,
+      'Delete/create de un PNG existente solo debe hacer Hot Restart del mismo Flutter');
+    await commit();
+    await Future<void>.delayed(const Duration(milliseconds: 4500));
+    require((await waitRequests(trace, 4)).length == 4 && !exited,
+      'El commit del PNG sustituido no debe repetir el Hot Restart');
+
+    final addedAsset = File('${assets.path}/added.png')..writeAsBytesSync([7, 8, 9]);
+    require(await process.exitCode.timeout(const Duration(seconds: 12)) == 86 &&
+        (await waitRequests(trace, 4)).length == 4,
+      'Un alta real de PNG exige reconstrucción en vez de Hot Restart');
+    await commit();
+
+    final deletionProcess = await Process.start(Platform.resolvedExecutable, runnerArgs);
+    final deletionOutput = <String>[];
+    final deletionStdout = deletionProcess.stdout.transform(utf8.decoder)
+        .transform(const LineSplitter()).listen(deletionOutput.add);
+    final deletionStderr = deletionProcess.stderr.drain<void>();
+    var deletionExited = false;
+    unawaited(deletionProcess.exitCode.then((_) { deletionExited = true; }));
+    try {
+      for (var i = 0; i < 200 &&
+          !deletionOutput.any((line) => line.startsWith('Hot reload automatico activo:')); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+      require(!deletionExited &&
+          deletionOutput.any((line) => line.startsWith('Hot reload automatico activo:')),
+        'La sesión reconstruida debe inventariar el PNG añadido');
+      addedAsset.deleteSync();
+      require(await deletionProcess.exitCode.timeout(const Duration(seconds: 12)) == 86 &&
+          (await waitRequests(trace, 4)).length == 4 &&
+          File('${trace.path}.starts').readAsLinesSync().length == 2,
+        'Una baja real de PNG exige reconstrucción, sin otro app.restart');
+    } finally {
+      if (!deletionExited) {
+        await Process.run('taskkill.exe', ['/PID', '${deletionProcess.pid}', '/T', '/F']);
+      }
+      await deletionProcess.exitCode;
+      await deletionStdout.cancel();
+      await deletionStderr;
+    }
+
+    // Tras compilar una baja local, confirmar después esa misma ausencia
+    // en Git tampoco debe provocar otra reconstrucción.
+    final absentProcess = await Process.start(Platform.resolvedExecutable, runnerArgs);
+    final absentOutput = <String>[];
+    final absentStdout = absentProcess.stdout.transform(utf8.decoder)
+        .transform(const LineSplitter()).listen(absentOutput.add);
+    final absentStderr = absentProcess.stderr.drain<void>();
+    var absentExited = false;
+    unawaited(absentProcess.exitCode.then((_) { absentExited = true; }));
+    try {
+      for (var i = 0; i < 200 &&
+          !absentOutput.any((line) => line.startsWith('Hot reload automatico activo:')); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+      require(!absentExited &&
+          absentOutput.any((line) => line.startsWith('Hot reload automatico activo:')),
+        'La nueva sesión debe arrancar con el PNG ya ausente');
+      await commit();
+      await Future<void>.delayed(const Duration(milliseconds: 4500));
+      require(!absentExited && (await waitRequests(trace, 4)).length == 4 &&
+          File('${trace.path}.starts').readAsLinesSync().length == 3,
+        'Confirmar después la baja ya compilada no debe repetir Gradle ni app.restart');
+    } finally {
+      if (!absentExited) {
+        await Process.run('taskkill.exe', ['/PID', '${absentProcess.pid}', '/T', '/F']);
+      }
+      await absentProcess.exitCode;
+      await absentStdout.cancel();
+      await absentStderr;
+    }
   } finally {
-    await Process.run('taskkill.exe', ['/PID', '${process.pid}', '/T', '/F']);
+    if (!exited) {
+      await Process.run('taskkill.exe', ['/PID', '${process.pid}', '/T', '/F']);
+    }
     await process.exitCode;
     await stdoutSubscription.cancel();
     await stderrSubscription.cancel();

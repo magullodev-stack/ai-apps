@@ -77,8 +77,10 @@ assert.match(runner, /_readGitChanges\(root, old, current, appPath\)/,
   'Evitar actualizaciones por commits no relacionados con la aplicación');
 assert.match(runner, /enum FlutterChangeAction \{ none, reload, restart, rebuild \}/,
   'Clasificación única para el flujo de actualización');
-assert.match(runner, /classifyFlutterChange\(event\.path, status: status\)/,
-  'FileSystemWatcher debe clasificar los cambios locales');
+assert.match(runner, /queue\(classifyFlutterChange\(change\.path, status: change\.status\), change\.path\)/,
+  'Los eventos locales agrupados deben usar el clasificador común');
+assert.match(runner, /fileDebounce = Timer\(const Duration\(milliseconds: 650\), flushFileChanges\)/,
+  'Clasificar sustituciones de Windows después de agrupar delete/create');
 assert.match(runner, /classifyFlutterChange\(\s*change\.path, status: change\.status/,
   'La comprobación Git debe usar la misma clasificación');
 assert.match(runner, /if \(activeAction == FlutterChangeAction\.restart\) \{\s*unawaited\(controller\.restart\(\)\)/,

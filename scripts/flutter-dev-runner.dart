@@ -25,6 +25,7 @@ Future<void> main(List<String> args) async {
   var updating = false;
   var relaunching = false;
   Timer? debounce;
+  Timer? fileDebounce;
   final contents = FlutterContentTracker();
   for (final watched in options.watchRoots) {
     contents.seedDirectory(Directory(watched));
@@ -189,21 +190,50 @@ Future<void> main(List<String> args) async {
 
   // Primer detector: modificaciones locales, incluidas las no confirmadas
   // por Git. Evitar duplicados corresponde a la cola, no a descartar commits.
+  final pendingFiles = <String, String>{};
+  bool recordFileChange(String path) {
+    if (classifyFlutterChange(path) == FlutterChangeAction.none) return false;
+    pendingFiles[_normalizedPath(path)] = path;
+    return true;
+  }
+
+  void flushFileChanges() {
+    final changes = <({String path, String status})>[];
+    for (final entry in pendingFiles.entries) {
+      var status = 'M';
+      if (entry.key.contains('/assets/')) {
+        final existed = existingAssets.contains(entry.key);
+        final exists = File(entry.value).existsSync();
+        if (!existed && !exists) continue;
+        status = existed ? (exists ? 'M' : 'D') : 'A';
+        if (exists) {
+          existingAssets.add(entry.key);
+        } else {
+          existingAssets.remove(entry.key);
+        }
+      }
+      changes.add((path: entry.value, status: status));
+    }
+    pendingFiles.clear();
+    for (final change in changes) {
+      queue(classifyFlutterChange(change.path, status: change.status), change.path);
+    }
+  }
+
   for (final watched in options.watchRoots) {
     final directory = Directory(watched);
     if (!directory.existsSync()) continue;
     watchers.add(directory.watch(recursive: true).listen((event) {
-      final path = _normalizedPath(event.path);
-      var status = 'M';
-      if (event is FileSystemDeleteEvent) {
-        status = 'D';
-        existingAssets.remove(path);
-      } else if (event is FileSystemCreateEvent &&
-          path.contains('/assets/')) {
-        status = existingAssets.add(path) ? 'A' : 'M';
+      if (event.isDirectory) return;
+      var relevant = recordFileChange(event.path);
+      if (event is FileSystemMoveEvent && event.destination != null) {
+        relevant = recordFileChange(event.destination!) || relevant;
       }
-      final action = classifyFlutterChange(event.path, status: status);
-      queue(action, event.path);
+      if (!relevant) return;
+      // Git y los editores pueden sustituir un archivo mediante delete/create.
+      // Clasificar el estado final evita reconstruir por su ausencia intermedia.
+      fileDebounce?.cancel();
+      fileDebounce = Timer(const Duration(milliseconds: 650), flushFileChanges);
     }));
   }
 
@@ -327,6 +357,7 @@ Future<void> main(List<String> args) async {
   final code = await flutter.exitCode;
   deviceMonitoring = false;
   debounce?.cancel();
+  fileDebounce?.cancel();
   gitMonitor.cancel();
   deviceMonitor.cancel();
   firebaseMonitor.cancel();
@@ -499,7 +530,7 @@ final class FlutterContentTracker {
     if (_pending[key] == signature || _active[key] == signature) {
       return FlutterContentStatus.scheduled;
     }
-    if (_applied[key] == signature && !_active.containsKey(key)) {
+    if ((_applied[key] ?? 'absent') == signature && !_active.containsKey(key)) {
       return FlutterContentStatus.applied;
     }
     if (_rejected[key] == signature) return FlutterContentStatus.rejected;

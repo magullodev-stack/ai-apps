@@ -23,6 +23,8 @@ desactivado conserva los datos del AVD y utiliza OpenGL ES/SwiftShader.
 La ausencia temporal de ADB nunca autoriza cerrar QEMU vivo. El visor
 requiere instalar su VSIX: sincronizar el repositorio no actualiza la copia
 de EmbeDroid ya instalada ni el código de las extensiones cargadas.
+La investigación, los límites de atribución y las pruebas se conservan en
+[el diagnóstico del 18 de octubre](../scripts/android/diagnostico-estabilidad.md).
 
 ---
 
