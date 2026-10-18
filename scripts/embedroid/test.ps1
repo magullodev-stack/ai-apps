@@ -22,11 +22,11 @@ else {
         # Code.exe is a GUI executable; piping makes Windows PowerShell wait
         # for completion and collect its exit code, rather than a stale one.
         foreach ($test in $tests) {
-        $arguments = @((Join-Path $PSScriptRoot $test))
-        if ($test -eq 'test.cjs' -and $Device) { $arguments += @('--device', $Device) }
-        & $runtime @arguments | Out-Host
-        if ($LASTEXITCODE -ne 0) { throw "Fallo test EmbeDroid: $test" }
-    }
+            $arguments = @((Join-Path $PSScriptRoot $test))
+            if ($test -eq 'test.cjs' -and $Device) { $arguments += @('--device', $Device) }
+            & $runtime @arguments | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "Fallo test EmbeDroid: $test" }
+        }
     }
     finally { Pop-Location; $env:ELECTRON_RUN_AS_NODE = $previous }
 }
