@@ -80,7 +80,7 @@ class OnboardingQuizScene extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
                     spacing,
-                    17 * scale,
+                    23 * scale,
                     spacing,
                     spacing,
                   ),
@@ -309,7 +309,7 @@ class _AidButton extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: const Color(0xE70D0640),
-                    borderRadius: radius,
+                      borderRadius: radius,
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x883D0ACC),
@@ -317,24 +317,26 @@ class _AidButton extends StatelessWidget {
                           spreadRadius: 0.3,
                         ),
                       ],
-                  ),
-                  child: loading
-                      ? SizedBox(
-                          width: 28 * scale,
-                          height: 28 * scale,
-                          child: const CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 3),
-                        )
-                      : Padding(
-                          padding: EdgeInsets.all(3 * scale),
-                          child: Image.asset(
-                            asset,
-                            key: Key('muondia-$kind-image'),
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
-                            excludeFromSemantics: true,
+                    ),
+                    child: loading
+                        ? SizedBox(
+                            width: 28 * scale,
+                            height: 28 * scale,
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          )
+                        : Padding(
+                            padding: EdgeInsets.all(3 * scale),
+                            child: Image.asset(
+                              asset,
+                              key: Key('muondia-$kind-image'),
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                              excludeFromSemantics: true,
+                            ),
                           ),
-                        ),
                   ),
                 ),
               ),
