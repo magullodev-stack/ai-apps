@@ -153,7 +153,7 @@ try {
     Write-SessionLog ('ERROR en {0}: {1}.' -f $stage, $_.Exception.GetType().Name)
     # Diagnosticar sin guardar mensajes arbitrarios que puedan contener secretos.
     $failureMessage = [string]$_.Exception.Message
-    if ($failureMessage -match 'Flutter terminó con un error \\(código (-?[0-9]+)\\)') {
+    if ($failureMessage -match 'Flutter terminó con un error \(código (-?[0-9]+)\)') {
         Write-SessionLog ("ERROR Flutter: proceso salio con codigo_{0}." -f $Matches[1])
     } elseif ($failureMessage -like '*No se pudo establecer adb reverse*' -or
               $failureMessage -like '*No se pudo conectar Android al servicio Dart*') {
