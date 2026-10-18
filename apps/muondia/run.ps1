@@ -556,8 +556,8 @@ try {
                 throw "No se encuentra el lanzador de desarrollo Flutter: $devRunner"
             }
 
-            # Los relanzamientos por cambios nativos no consumen reintentos.
-            # El limite aplica solo a perdidas reales de conexion del emulador.
+            # Rebuild (86) relanza Flutter dentro de la sesión.
+            # Pérdida ADB (88) devuelve el control a la tarea que recupera Android.
             while ($true) {
                 # Windows PowerShell convierte stderr nativo redirigido en
                 # ErrorRecord (incluidas advertencias de Java/Gradle). Con Stop
