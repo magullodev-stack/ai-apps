@@ -307,7 +307,7 @@ async function activate(context) {
   // Las sesiones de laboratorio inactivas siguen registradas y disponibles
   // por los comandos de administración, pero no ocupan espacio en el árbol.
   const isVisibleSession = session =>
-    session.active;
+    session.appId === 'muondia' || session.active;
   const wrapExperience = entry => ({ experienceExplorerNode: entry });
   const experiencesOf = session => explorer.provider.getChildren({
     kind: 'app',
