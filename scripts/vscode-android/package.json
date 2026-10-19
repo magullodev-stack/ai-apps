@@ -1,7 +1,7 @@
 {
   "name": "ai-apps-android",
   "displayName": "AI-APPS Android",
-  "description": "Gestiona sesiones Android independientes y sus visores EmbeDroid.",
+  "description": "Explorador de experiencias y visor Android; Flutter ejecutado por Dart-Code.",
   "version": "0.2.0",
   "publisher": "magullodev",
   "private": true,
@@ -18,7 +18,8 @@
     "onStartupFinished"
   ],
   "extensionDependencies": [
-    "magullodev.ai-apps-embedroid"
+    "magullodev.ai-apps-embedroid",
+    "Dart-Code.flutter"
   ],
   "main": "./extension.js",
   "capabilities": {

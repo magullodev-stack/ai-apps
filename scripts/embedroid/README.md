@@ -6,19 +6,13 @@ transporte y sus cuatro intentos internos de conexión. Corrige el `scid`
 mediante `scid.cjs` y conserva la identidad y deduplicación de las pestañas
 de diferentes dispositivos en `sessions.cjs`.
 
-**Muondia arranca una sola vez desde la tarea de Windows `AI-APPS Development`,
-al iniciar sesión.** El visor de VS Code no inicia Android ni Flutter:
-al restaurar una pestaña recupera su identidad, pero **no abre el
-transporte de vídeo** hasta que AI-APPS Android informa que la tarea está
-en ejecución y Muondia tiene proceso Android. Después abre un único
-puente de vídeo para la pestaña existente. El visor no incorpora sondeos
-ADB propios ni reintentos superpuestos a los de scrcpy. Comunica los fallos
-de transporte a AI-APPS Android, que reconecta solo el vídeo desde su sondeo
-existente, con una espera mínima de 15 segundos entre intentos. Un problema
-real de scrcpy (por ejemplo, código 134) queda en sus registros para
-identificar la causa. Ese sondeo nunca inicia ni reinicia Flutter, Android
-o la tarea de Windows. Consulta
-[el responsable único del arranque](../android/README.md).
+**Muondia arranca al abrir VS Code con Dart-Code.** La extension
+AI-APPS Android solicita una depuracion Flutter y el visor solo
+abre el transporte de video cuando Muondia aparece activa en Android.
+EmbeDroid no inicia Flutter ni Android, ni conserva una tarea permanente
+tras cerrar el editor. Su reconexion afecta solamente al video, no a
+la sesion Dart-Code. Consulta [arranque](../android/README.md).
+
 ## Procedencia y mantenimiento
 
 `upstream/` conserva los archivos del paquete 1.0.2 instalado el 9 de octubre

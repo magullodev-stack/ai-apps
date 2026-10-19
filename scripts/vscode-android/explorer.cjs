@@ -229,8 +229,7 @@ function createExperienceExplorer(vscode, service, report) {
   }
   async function syncActiveLocations(currentSessions) {
     const changes = await Promise.all(currentSessions.map(async session => {
-      if (!session.deviceReady || !(session.active ||
-          session.kind === 'development-task')) return false;
+      if (!session.deviceReady || !session.active) return false;
       const catalog = readCatalog(session);
       if (!catalog?.activeLocationFile) return false;
       // Dar tiempo a Flutter a atender el intent, para que una respuesta
@@ -280,7 +279,7 @@ function createExperienceExplorer(vscode, service, report) {
     const targets = [];
     for (const session of sessions) {
       if (!session.deviceReady ||
-          !(session.kind === 'development-task' || session.active)) continue;
+          !session.active) continue;
       const catalog = readCatalog(session);
       if (!catalog) continue;
       if (catalog.realFlowAction) {

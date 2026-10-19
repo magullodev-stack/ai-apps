@@ -9,7 +9,7 @@ const { planVisualRenames } = require('./visual-renames.cjs');
 async function activate(context) {
   const folder = (vscode.workspace.workspaceFolders || []).find(item =>
     fs.existsSync(path.join(item.uri.fsPath, 'AGENTS.md')) &&
-    fs.existsSync(path.join(item.uri.fsPath, 'scripts/start-dev-session.ps1')));
+    fs.existsSync(path.join(item.uri.fsPath, 'apps/muondia/pubspec.yaml')));
   if (!folder || !vscode.workspace.isTrusted) return;
   const { Sessions } = require(path.join(folder.uri.fsPath, 'scripts/android/sessions.cjs'));
   const { Windows } = require(path.join(folder.uri.fsPath, 'scripts/android/windows.cjs'));
@@ -24,6 +24,23 @@ async function activate(context) {
   const viewerRetryCooldownMs = 15000;
   let sessions = [], refreshing, disposed = false, firstRefresh = true;
   let lastTreeSnapshot;
+  const debuggerName = session => session.appId === 'muondia' ? 'Muondia' : 'AI-APPS: ' + session.appId;
+  const debugSession = session => (vscode.debug.sessions || []).find(active =>
+    active.type === 'dart' && active.name === debuggerName(session));
+  async function startFlutter(session) {
+    if (debugSession(session)) return;
+    const configuration = session.appId === 'muondia' ? 'Muondia' : {
+      type: 'dart', request: 'launch', name: debuggerName(session),
+      program: path.join(session.projectPath, 'lib/main.dart'),
+      cwd: session.projectPath, deviceId: session.serial
+    };
+    const started = await vscode.debug.startDebugging(folder, configuration);
+    if (!started) output.appendLine('No se pudo iniciar Flutter con Dart-Code.');
+  }
+  async function stopFlutter(session) {
+    const active = debugSession(session);
+    if (active) await vscode.debug.stopDebugging(active);
+  }
   const extension = vscode.extensions.getExtension(EMBEDROID_ID);
   if (!extension) throw new Error('Instala EmbeDroid con scripts/install-embedroid.ps1.');
   const viewer = await extension.activate();
@@ -41,10 +58,7 @@ async function activate(context) {
   const savedInEditor = new Map();
   const rootPath = folder.uri.fsPath;
   const relativeFile = uri => path.relative(rootPath, uri.fsPath).replace(/\\/g, '/');
-  const activeMuondia = () => {
-    const session = vscode.debug.activeDebugSession;
-    return session?.type === 'dart' && session.name === 'Muondia';
-  };
+  const activeMuondia = () => !!debugSession({appId: 'muondia'});
   async function updateFlutter() {
     if (!activeMuondia()) return;
     const rebuild = pendingBundleChange;
@@ -183,7 +197,14 @@ async function activate(context) {
   async function refresh() {
     if (refreshing) return refreshing;
     refreshing = (async () => {
-      sessions = await service.list();
+      sessions = (await service.list()).map(session => {
+      if (session.kind !== 'flutter') return session;
+      const debugging = !!debugSession(session);
+      const active = debugging && session.deviceReady && !!session.appPid;
+      return {...session, active,
+        status: active ? 'running' : debugging ? 'starting' :
+          session.deviceReady ? 'stopped' : 'offline'};
+    });
       if (disposed) return sessions;
       const initial = firstRefresh;
       firstRefresh = false;
@@ -225,7 +246,7 @@ async function activate(context) {
           viewerRetryAt.delete(session.id);
         }
         // Restore Muondia first. Other registered applications can be opened explicitly.
-        if (initial && session.kind !== 'development-task') {
+        if (initial && session.appId !== 'muondia') {
           shown.set(session.id, session.epoch);
           continue;
         }
@@ -253,8 +274,13 @@ async function activate(context) {
       (await pick(sessions.filter(item => item.kind !== 'external'), `${action === 'start' ? 'Iniciar' : 'Detener'} sesión Android`))?.session;
     if (!session) return;
     const id = session.id || `${session.appId}@${session.serial}`;
-    await service[action](id);
-    if (action === 'start') shown.delete(id);
+    if (session.kind === 'external') throw new Error('La sesión externa pertenece a otra aplicación.');
+    if (action === 'start') {
+      shown.delete(id);
+      await startFlutter(session);
+    } else {
+      await stopFlutter(session);
+    }
     await refresh();
   }
   async function register() {
@@ -281,7 +307,7 @@ async function activate(context) {
   // Las sesiones de laboratorio inactivas siguen registradas y disponibles
   // por los comandos de administración, pero no ocupan espacio en el árbol.
   const isVisibleSession = session =>
-    session.kind === 'development-task' || session.active;
+    session.active;
   const wrapExperience = entry => ({ experienceExplorerNode: entry });
   const experiencesOf = session => explorer.provider.getChildren({
     kind: 'app',
@@ -351,10 +377,8 @@ async function activate(context) {
       item.description = session.status;
       item.tooltip = `${session.appId} · ${session.serial}\n${session.projectPath || 'Sesión externa'}`;
       item.contextValue = session.kind === 'external' ? 'androidExternal' :
-        session.status === 'orphaned' ? 'androidStopped' :
-        session.active || ['starting', 'stopping'].includes(session.status) ? 'androidRunning' : 'androidStopped';
+        session.active || session.status === 'starting' ? 'androidRunning' : 'androidStopped';
       item.iconPath = new vscode.ThemeIcon(
-        session.status === 'orphaned' ? 'warning' :
         session.active ? 'device-mobile' : 'circle-outline');
       if (!hasExperiences) {
         item.command = {
@@ -450,7 +474,7 @@ async function activate(context) {
     // Entregar la orden a la Activity de Muondia directamente: el visor
     // EmbeDroid y Android pueden filtrar F7 como evento de teclado.
     const target = (await service.list()).find(session =>
-      session.kind === 'development-task' &&
+      session.kind === 'flutter' &&
       session.appId === 'muondia' &&
       session.serial === 'emulator-5554');
     if (!target?.deviceReady) {
@@ -475,6 +499,10 @@ async function activate(context) {
   });
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   status.text = '$(device-mobile) Android'; status.command = 'aiAppsAndroid.select'; status.show();
+  context.subscriptions.push(
+    vscode.debug.onDidStartDebugSession(() => void refresh().catch(report)),
+    vscode.debug.onDidTerminateDebugSession(() => void refresh().catch(report))
+  );
   const interval = setInterval(() => refresh().catch(error => output.appendLine(error.message)), 5000);
   context.subscriptions.push(output, changed, status,
     { dispose() { disposed = true; clearInterval(interval); } });
@@ -484,6 +512,11 @@ async function activate(context) {
   context.subscriptions.push(experienceView);
   await refresh().catch(report);
   showExplorerLocation();
+  const muondia = sessions.find(session => session.appId === 'muondia');
+  // Una unica sesion Dart de VS Code, iniciada al abrir el repositorio.
+  if (muondia && !debugSession(muondia)) {
+    Promise.resolve().then(() => startFlutter(muondia)).catch(report);
+  }
   return { refresh, list: () => sessions, service };
 }
 function deactivate() {}

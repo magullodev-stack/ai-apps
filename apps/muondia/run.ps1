@@ -549,59 +549,11 @@ try {
                 AI_APPS_ONBOARDING_QUIZ_REVIEW_MODEL = $OnboardingQuizReviewModel
             } | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $definesFile
             Assert-MuondiaFirebaseConfiguration -AppDirectory $appDirectory
-            $devRunner = Join-Path $repo 'scripts\flutter-dev-runner.dart'
-            if (-not (Test-Path -LiteralPath $devRunner)) {
-                throw "No se encuentra el lanzador de desarrollo Flutter: $devRunner"
-            }
-
-            # Rebuild (86) relanza Flutter dentro de la sesión.
-            # Pérdida ADB (88) devuelve el control a la tarea que recupera Android.
-            while ($true) {
-                # Una reconexión ADB puede haber perdido el túnel aunque el
-                # emulador y el backend continúen vivos.
-                & $adb -s $Device reverse tcp:8787 "tcp:$port"
-                if ($LASTEXITCODE -ne 0) { throw 'No se pudo establecer adb reverse.' }
-                # Windows PowerShell convierte stderr nativo redirigido en
-                # ErrorRecord (incluidas advertencias de Java/Gradle). Con Stop
-                # abortaria una sesion oculta valida antes de leer su exit code.
-                $runnerErrorAction = $ErrorActionPreference
-                try {
-                    $ErrorActionPreference = 'Continue'
-                    & $dart $devRunner `
-                        --flutter $flutter `
-                        --device $Device `
-                        --defines-file $definesFile `
-                        --working-directory (Join-Path $repo 'apps\muondia') `
-                        --watch (Join-Path $repo 'apps\muondia') `
-                        --watch (Join-Path $repo 'shared') `
-                        --watch (Join-Path $repo 'ai\flutter_client')
-                    $runnerExitCode = $LASTEXITCODE
-                } finally {
-                    $ErrorActionPreference = $runnerErrorAction
-                }
-
-                if ($runnerExitCode -eq 86) {
-                    # Cambios nativos o recuperación del canal Flutter propio.
-                    Write-Host 'Relanzamiento Flutter solicitado; recompilando Muondia...'
-                    continue
-                }
-
-                if ($runnerExitCode -eq 88) {
-                    # emulator-5554 es un emulador local, NO una dirección TCP.
-                    # adb connect no lo inicia y repetir Flutter deja el visor
-                    # atrapado. La tarea persistente prepara de nuevo Android.
-                    throw "ANDROID_DEVICE_LOST: $Device desconectado; devolver control al supervisor."
-                }
-
-                if ($runnerExitCode -ne 0) {
-                    # Solo el codigo de salida: nunca volcar stderr de la
-                    # aplicacion ni sus argumentos (pueden contener secrets).
-                    Write-Host "MUONDIA_RUNNER_EXIT: $runnerExitCode"
-                    throw "Flutter terminó con un error (código $runnerExitCode)."
-                }
-
-                break
-            }
+            # Ejecucion manual opcional. En VS Code Flutter lo inicia Dart-Code.
+            & $adb -s $Device reverse tcp:8787 "tcp:$port"
+            if ($LASTEXITCODE -ne 0) { throw 'No se pudo establecer adb reverse.' }
+            & $flutter run -d $Device --dart-define-from-file=$definesFile
+            if ($LASTEXITCODE -ne 0) { throw 'Flutter termino con un error.' }
         }
     } finally { Pop-Location }
 } finally {

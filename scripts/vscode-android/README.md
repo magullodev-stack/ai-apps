@@ -25,13 +25,11 @@ identifica el camino `Categoría / Pantalla / Estado`; las carpetas
 inactivas permanecen azules. La lectura se actualiza cada cinco segundos
 y no modifica el árbol si no hay cambios.
 
-Si Android conserva el proceso de Muondia pero AI-APPS Development
-ya no está funcionando, el Explorador indica estado orphaned con icono de
-advertencia y habilita Iniciar sesión. No confunde la APK superviviente con
-una sesión Flutter supervisada: en el siguiente arranque se recupera solo
-un proceso de la propia tarea y se bloquea si pertenece a F5 o es ambiguo. Si la APK aún no admite el
-protocolo, la última selección realizada desde el explorador se conserva
-como indicación provisional, pero no se inventan cambios.
+Muondia se ejecuta mediante la depuracion oficial Dart-Code de VS Code.
+Si la APK sigue abierta pero no hay sesion Dart activa, el Explorador
+la muestra como detenida: no interpreta un proceso Android antiguo como
+una nueva sesion de desarrollo. Iniciar sesion utiliza Dart-Code.
+El visor no inicia una segunda instancia Flutter.
 
 El **modo real** identifica con claridad la entrada «Recorrido real»,
 no cada ruta secundaria de Flutter (Perfil/Estudio). No confundir la
@@ -75,12 +73,11 @@ AI-APPS Android gestiona un visor por aplicación y dispositivo mediante
 EmbeDroid mantenido 1.1.2. Incluye selección múltiple; la vista de Muondia se
 recupera al abrir VS Code. Otras aplicaciones registradas pueden abrirse
 desde el selector. Consulta [sesiones, configuración y pruebas](../android/README.md).
-La tarea **AI-APPS Development** mantiene Android, Dart y Flutter fuera del
-editor. Abrir VS Code o sondear el estado no inicia ni recupera esa tarea,
-incluso si Android conserva una APK antigua abierta. Windows es el único
-supervisor de Flutter y Android. Los comandos explícitos Iniciar/Detener
-sesión permanecen disponibles; el visor recupera únicamente su transporte
-de vídeo cuando falla.
+Al abrir VS Code, la extension inicia una unica depuracion Dart-Code
+`Muondia`. Su preLaunchTask prepara Android y el backend. Iniciar/Detener
+desde el arbol usan el depurador oficial, nunca tareas Windows ni workers.
+Cerrar el editor termina esa depuracion. El visor solo recupera el
+transporte de video cuando falla.
 
 ## F7: volver a Auth en desarrollo
 
@@ -180,8 +177,7 @@ no se ha presentado un PR al autor.
 - Webviews reales en un perfil aislado de VS Code: vídeo H.264, sin excepciones
   ni fallos de arranque. La prueba reproducible `host-test.ps1` abre dos
   procesos independientes sobre el mismo perfil y dos vistas en cada uno.
-- Android conserva su identificador de arranque y Muondia su PID. La tarea
-  persistente y los procesos Dart/Flutter siguen activos, sin nueva compilación.
+- Android conserva su identificador de arranque y Muondia su PID. Las pruebas de transporte no requieren iniciar otro Flutter.
 
 Los informes y registros de estas pruebas están en `.ai-apps/embedroid/`,
 excluidos de Git. Las reaperturas aisladas no equivalen a afirmar que se ha
@@ -195,10 +191,9 @@ debe confirmar `streaming h264` y `streaming established on attempt 1`.
 
 ## Comprobación en el editor principal
 
-1. Recargar o reabrir VS Code, manteniendo **AI-APPS Development** activa.
+1. Abrir VS Code y observar la unica depuracion Dart-Code de Muondia.
 2. Comprobar vídeo e interacción y el canal **Android Emulator**.
-3. Repetir una reapertura y comprobar que Android, Muondia, Dart y Flutter
-   conservan sus procesos y que `dev-session.log` no registra otra compilación.
+3. Cerrar VS Code; volver a abrirlo y verificar un arranque nuevo sin sesion huérfana.
 
 No uses **Stop Device**, **Boot** ni **Cold Boot** para reparar el visor.
 
@@ -264,7 +259,7 @@ Los archivos de código y pruebas que pertenecen explícitamente a la capa se
 editan conjuntamente con un `WorkspaceEdit` de VS Code. Si cambia alguno
 durante la confirmación, se vuelve a calcular el plan y se cancela si difiere.
 El PNG se envía a la papelera. El guardado de Dart activa el Hot Reload
-gestionado por la sesión persistente.
+gestionado por Dart-Code.
 
 Para futuras pantallas, cada **fragmento exclusivo de la capa** (widget,
 propiedad, control auxiliar y prueba que deba desaparecer con ella) se anota

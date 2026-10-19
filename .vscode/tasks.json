@@ -24,22 +24,6 @@
       }
     },
     {
-      "label": "AI-APPS: preparar desarrollo persistente",
-      "type": "shell",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-Command",
-        "Start-ScheduledTask -TaskName 'AI-APPS Development'"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "focus": true
-      }
-    },
-    {
       "label": "Muondia: preparar Flutter",
       "type": "shell",
       "command": "powershell.exe",
@@ -55,13 +39,13 @@
       },
       "problemMatcher": [],
       "presentation": {
-        "reveal": "silent",
+        "reveal": "always",
         "panel": "shared",
         "focus": false
       }
     },
     {
-      "label": "Muondia: restaurar desarrollo persistente",
+      "label": "Muondia: cerrar sesión",
       "type": "shell",
       "command": "powershell.exe",
       "args": [
@@ -69,16 +53,15 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}\\apps\\muondia\\restore-debug.ps1"
+        "${workspaceFolder}\\apps\\muondia\\stop-debug.ps1"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "presentation": {
-        "reveal": "silent",
-        "panel": "shared",
-        "focus": false
+        "reveal": "never",
+        "panel": "shared"
       }
     }
   ]

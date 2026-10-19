@@ -46,13 +46,10 @@ ai-apps/
 │   └── ui/                    # Componentes de interfaz reutilizables.
 │
 ├── scripts/                   # Herramientas operativas compartidas.
-│   ├── install-dev-session.ps1 # Instala la tarea de Windows por usuario.
-│   ├── start-dev-session.ps1   # Entrada mínima de la sesión persistente.
-│   ├── start-ai-apps-android.ps1 # Prepara el AVD de cada sesión; por defecto emulator-5554.
-│   ├── android-session.ps1      # Registro, consulta y control independiente de sesiones.
-│   ├── android/                # Workers, registro y pruebas multiemulador.
-│   ├── flutter-dev-runner.dart # Vigila archivos y aplica Hot Reload.
-│   ├── start-android.ps1
+│   ├── install-git-sync.ps1    # Instala sincronizacion Git de Windows (solo Git).
+│   ├── auto-sync-dev.ps1      # Git continuo; no inicia Android ni Flutter.
+│   ├── android-session.ps1    # Registro y consulta de aplicaciones Android.
+│   ├── android/               # Registro de sesiones y comandos ADB.
 │   ├── sync-dev.ps1
 │   ├── embedroid/               # EmbeDroid mantenido, paquete base y pruebas.
 │   ├── install-embedroid.ps1     # Instala el visor corregido y la integración.
@@ -92,7 +89,16 @@ Contiene componentes compartidos por las aplicaciones cuando existe una necesida
 
 ### scripts/
 
-Contiene procedimientos y herramientas operativas compartidas por el repositorio. La tarea `AI-APPS Development` ejecuta `start-dev-session.ps1` al iniciar sesión; este reutiliza primero el preparador Android y después el lanzador de Muondia. `android/` registra y controla sesiones independientes mediante workers fuera del editor y reutiliza el preparador y el runner existentes. `vscode-android/` selecciona y recupera sus visores; abrir o cerrar pestañas no controla los procesos de las apps. `embedroid/` construye la distribución mantenida con transporte corregido y restauración de sesiones; `install-embedroid.ps1` instala ambos componentes. El registro y los logs quedan en `.ai-apps/android/`, fuera de Git.
+Contiene las herramientas del entorno. `auto-sync-dev.ps1` sincroniza
+Git independientemente de Muondia mediante la tarea Windows
+`AI-APPS Git Sync`. Al abrir VS Code, `vscode-android/` inicia la
+depuracion oficial Dart-Code con el prelanzamiento de
+`apps/muondia/prepare-debug.ps1`, y conecta el Explorador de
+experiencias y el visor. `android/` registra aplicaciones y consulta
+ADB, pero no ejecuta workers ni un runner Flutter propio.
+`embedroid/` mantiene el visor integrado y `install-embedroid.ps1`
+instala las extensiones necesarias. Los registros locales siguen en
+`.ai-apps/`, fuera de Git.
 
 ### docs/
 

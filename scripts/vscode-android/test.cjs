@@ -3,15 +3,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../../.ai-apps/editor-tests');
-fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+fs.mkdirSync(path.join(root, 'apps/muondia'), { recursive: true });
 fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Test');
-fs.writeFileSync(path.join(root, 'scripts/start-dev-session.ps1'), 'Test');
+fs.writeFileSync(path.join(root, 'apps/muondia/pubspec.yaml'), 'name: muondia\n');
 const commands = new Map(), panels = new Map(), calls = [], intervals = [];
-let treeProvider, treeView, taskRunning = true, onWillRenameFiles;
+let treeProvider, treeView, onWillRenameFiles;
 let transportBroken = false;
 let deviceLocation = 'preview:auth:inicio';
 let entries = [
-  { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'development-task', active: true, deviceReady: true, status: 'running', epoch: '1:100',
+  { appId: 'muondia', label: 'Muondia', serial: 'emulator-5554', id: 'muondia@emulator-5554', kind: 'flutter', active: true, appPid: '100', deviceReady: true, status: 'running', epoch: '100',
     projectPath: path.resolve(__dirname, '../../apps/muondia'), packageName: 'com.aiapps.muondia' }
 ];
 class Sessions {
@@ -64,6 +64,20 @@ const vscode = {
     dispose() { this.listeners = []; }
   },
   extensions: { getExtension: () => ({ activate: async () => viewer }) },
+  debug: { sessions: [{type:'dart',name:'Muondia'}],
+    activeDebugSession: {type:'dart',name:'Muondia'},
+    onDidStartDebugSession: () => disposable(),
+    onDidTerminateDebugSession: () => disposable(),
+    async startDebugging(_folder, config) {
+      const name = typeof config === 'string' ? config : config.name;
+      calls.push(['debug-start', name]);
+      this.sessions.push({type:'dart',name}); return true;
+    },
+    async stopDebugging(active) {
+      calls.push(['debug-stop', active.name]);
+      this.sessions = this.sessions.filter(s => s !== active); return true;
+    }
+  },
   commands: { registerCommand: (name, callback) => { commands.set(name, callback); return disposable(); } },
   window: { createOutputChannel: () => ({ ...disposable(), appendLine() {} }),
     showErrorMessage: message => { throw new Error(message); },
@@ -85,7 +99,6 @@ const sandbox = { module: { exports: {} }, setInterval: fn => { intervals.push(f
     if (name.replace(/\\/g, '/').endsWith('android/windows.cjs')) return {
       Windows: class {
         constructor() { this.adb = 'adb.exe'; }
-        async taskRunning() { return taskRunning; }
         async appPid() { return '2345'; }
         async run(file, args) {
           if (args.includes('run-as')) return deviceLocation;
@@ -150,14 +163,11 @@ async function run() {
   assert.equal(panels.has('muondia@emulator-5554'), true);
   assert.equal(treeProvider.getTreeItem({ ...entries[0], active: false, status: 'starting' }).contextValue,
     'androidRunning', 'A starting session exposes Stop instead of a second Start');
-  const orphan = treeProvider.getTreeItem({ ...entries[0], status: 'orphaned' });
-  assert.equal(orphan.description, 'orphaned');
-  assert.equal(orphan.contextValue, 'androidStopped',
-    'An orphaned Flutter exposes the recovery Start action, not Stop');
-  assert.equal(orphan.iconPath.id, 'warning',
-    'The explorer must identify a stale app distinctly from a supervised session');
-  assert.equal(calls.some(call => call[0] !== 'open'), false,
-    'A running development task is never started twice');
+  const stopped = treeProvider.getTreeItem({...entries[0], active: false, status: 'stopped'});
+  assert.equal(stopped.contextValue, 'androidStopped');
+  assert.equal(stopped.iconPath.id, 'circle-outline');
+  assert.equal(calls.some(call => call[0] === 'debug-start'), false,
+    'No se inicia otro Flutter si Dart-Code ya controla Muondia');
   // No duplicar la aplicación ni mostrar laboratorios inactivos en el árbol.
   const authDart = fs.readFileSync(path.resolve(__dirname,
     '../../apps/muondia/lib/app/auth/auth_entry_page.dart'), 'utf8');
@@ -346,39 +356,17 @@ async function run() {
   transportBroken = false;
   await api.refresh();
 
-  // Windows es el único supervisor. Un fallo o una parada de la tarea
-  // nunca convierte el sondeo del visor en otro mecanismo de arranque.
-  taskRunning = false;
-  const startsBeforeStop = calls.filter(call => call[0] === 'start').length;
-  await api.refresh();
-  await api.refresh();
-  assert.equal(calls.filter(call => call[0] === 'start').length,
-    startsBeforeStop, 'El sondeo nunca supervisa ni arranca la tarea de Windows');
-  // Ni un estado Running transitorio habilita reinicios desde el editor.
-  taskRunning = true;
-  await api.refresh();
-  taskRunning = false;
-  await api.refresh();
-  assert.equal(calls.filter(call => call[0] === 'start').length,
-    startsBeforeStop, 'Una caída tras Running sigue perteneciendo a Windows');
-
-  await commands.get('aiAppsAndroid.start')(entries[0]);
-  assert.equal(calls.filter(call => call[0] === 'start' &&
-    call[1] === 'muondia@emulator-5554').length, startsBeforeStop + 1,
-    'El comando explícito de inicio sigue disponible');
+  // El inicio y la parada pertenecen exclusivamente a Dart-Code.
   await commands.get('aiAppsAndroid.stop')(entries[0]);
+  assert.ok(calls.some(call => call[0] === 'debug-stop' && call[1] === 'Muondia'));
   await api.refresh();
-  assert.equal(calls.filter(call => call[0] === 'start').length,
-    startsBeforeStop + 1, 'Parada explícita: nunca reactivar automáticamente');
-
-  assert.ok(calls.some(call => call[0] === 'stop' && call[1] === entries[0].id));
-  // Un paquete Android antiguo puede sobrevivir a la tarea. Reabrir VS Code
-  // conserva el visor sin iniciar Flutter ni una APK antigua.
-  taskRunning = false;
+  assert.equal(api.list()[0].active, false);
+  await commands.get('aiAppsAndroid.start')(entries[0]);
+  assert.equal(calls.filter(call => call[0] === 'debug-start' && call[1] === 'Muondia').length, 1);
   await sandbox.module.exports.activate({ subscriptions: [] });
-  assert.equal(calls.filter(call => call[0] === 'start').length,
-    startsBeforeStop + 1, 'Reabrir el editor no inicia una tarea detenida');
-  assert.equal(panels.size, 1, 'Reactivation reuses the existing Muondia panel');
+  assert.equal(calls.filter(call => call[0] === 'debug-start').length, 1,
+    'La reactivacion del editor no lanza una segunda depuracion Dart');
+  assert.equal(panels.size, 1, 'El visor de Muondia se reutiliza');
   // Stress-test the generic registry without simulating a named second app.
   entries = Array.from({ length: 150 }, (_, i) => ({
     appId: `app-${i}`, label: `App ${i}`, serial: `device-${i}`, id: `app-${i}@device-${i}`,
@@ -388,6 +376,6 @@ async function run() {
   assert.equal(panels.size, 151, 'No fixed maximum of tabs; existing Muondia panel untouched');
   vscode.workspace.isTrusted = false;
   assert.equal(await sandbox.module.exports.activate({ subscriptions: [] }), undefined);
-  console.log('PASS: F7 dev Auth, Windows owns startup, explicit session control, viewer reopening, reconnect/stop, stress registry and workspace trust.');
+  console.log('PASS: F7, Dart-Code ownership, visor, reconexion, catalogo y recursos visuales.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

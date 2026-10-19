@@ -180,40 +180,28 @@ exterior, iconos claros y un solo `SafeArea` común, compatible con las
 zonas seguras interiores de Auth, Loading y Home. Sin una segunda sesión
 Flutter ni cambios de configuración de Android.
 
-## Arranque y sincronización
+## Arranque de desarrollo
 
-La tarea programada de Windows **AI-APPS Development** inicia al entrar en
-Windows la sincronización de `dev`, el AVD `AI_APPS_Dev` (`emulator-5554`),
-el servicio Dart y **Muondia con Flutter**. Mantiene su sesión y Hot Reload
-automático aunque VS Code esté cerrado. Al abrir el repositorio, AI-APPS Android
-solo conecta el visor EmbeDroid al emulador ya activo. **No hay que pulsar F5**
-para trabajar normalmente.
+Git sincroniza `dev` al iniciar Windows mediante la tarea independiente
+`AI-APPS Git Sync`; se instala una vez con
+`powershell -ExecutionPolicy Bypass -File scripts/install-git-sync.ps1`.
+Esa tarea nunca arranca el emulador, Flutter o el servicio Dart.
 
-`scripts/start-dev-session.ps1` es el punto de entrada de la tarea y
-`apps/muondia/run.ps1 -Device emulator-5554` ejecuta el Flutter Dev Runner
-persistente. Los cambios Dart y de recursos recibidos mediante Git también
-activan su recarga automática, sin depender de guardar desde VS Code.
+Al abrir la carpeta AI-APPS en VS Code, la extension AI-APPS Android
+solicita la configuracion `Muondia` de `.vscode/launch.json`.
+El `preLaunchTask` prepara `AI_APPS_Dev` (`emulator-5554`) y llama a
+`apps/muondia/run.ps1 -ServiceOnly`, que inicia/reutiliza el backend de IA,
+establece `adb reverse` y genera los defines privados. **La extension
+oficial Flutter/Dart controla la unica sesion Flutter**, Hot Reload y
+Hot Restart. No hay runner personalizado ni tarea Windows de Flutter. Al detener
+la depuración, el `postDebugTask` cierra el backend Dart y el AVD reservado.
 
-**F5 con depuración:** la configuración `Muondia` de VS Code cede
-temporalmente la sesión Flutter persistente al depurador, sin cerrar el
-emulador ni el servicio de IA. Al terminar la depuración, la tarea
-`postDebugTask` restaura `AI-APPS Development` si F5 había tomado su
-control. Nunca se ejecutan simultáneamente dos sesiones Flutter en
-`emulator-5554`. El sincronizador Git es independiente.
-
-Los cambios nativos Android, plugins o dependencias provocan una nueva
-compilación Gradle desde el runner persistente, no un Hot Reload. No existe
-límite por número de reconstrucciones: solamente se limita la recuperación
-tras pérdidas reales de conexión al emulador. La vigilancia de
-`google-services.json` combina eventos de archivo y comprobación de contenido
-periódica, útil cuando Windows sustituye el fichero sin notificar el cambio.
-El arranque comprueba que Firebase corresponde a `com.aiapps.muondia`
-y verifica los clientes OAuth para Google. Un fallo de inicialización
-muestra un código de diagnóstico en Auth, sin exponer credenciales.
-
-Si VS Code se cierra de forma forzada durante una depuración, el ciclo
-normal vuelve a arrancar al iniciar Windows; en condiciones normales basta
-con detener la sesión de depuración en VS Code.
+El Explorador abre Auth, Loading, Test de bienvenida y Home mediante intents
+ADB hacia esa misma aplicacion. EmbeDroid muestra el mismo emulador.
+Al cerrar VS Code termina la depuracion; un nuevo arranque prepara una
+sesion nueva. La primera compilacion puede durar mas de un minuto.
+Un cambio de plugins, dependencias o recursos añadidos puede requerir
+reiniciar la depuracion o una nueva compilacion, no basta Hot Reload.
 
 ## Atajo de desarrollo F7
 
@@ -236,7 +224,7 @@ actividad Android ignora ese intent cuando la app no es depurable. El
 intent-filter está en el manifiesto debug. Las versiones release de Google
 Play no incluyen este comportamiento.
 Al actualizar la extensión enlazada del repositorio, recarga una vez VS Code
-para que registre la asignación F7. La sesión persistente sigue independiente.
+para que registre la asignación F7. La sesión de depuración pertenece a VS Code.
 
 ## Firebase y autenticación
 
@@ -255,8 +243,7 @@ Para activar los botones reales de Auth:
    clave privada de Sign in with Apple, Team ID y Key ID) y registra la
    configuración requerida en el proveedor Apple de Firebase. Verifica el
    dominio y la URL de retorno indicados por Firebase para el flujo web Android.
-4. Ejecuta `flutter pub get` y recompila Muondia reiniciando de forma controlada
-   la sesión persistente (o mediante F5 tras detenerla). Hot Reload no instala
+4. Ejecuta `flutter pub get` y recompila Muondia reiniciando la depuración de Dart-Code en VS Code. Hot Reload no instala
    plugins nativos. Usa un emulador Android con Google Play Services para probar
    Google y un navegador funcional para Apple.
 

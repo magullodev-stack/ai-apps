@@ -1,53 +1,45 @@
-# F5 toma temporalmente el control de Muondia y lo devuelve al terminar.
+# PreLaunchTask de VS Code. Flutter pertenece exclusivamente a la extension Dart.
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$taskName = 'AI-APPS Development'
-$marker = Join-Path $repo '.ai-apps\muondia-f5-takeover.txt'
-$control = Join-Path $repo 'scripts\android\task-control.ps1'
-$task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-$takenOver = $false
-
-try {
-    # Un marcador antiguo no debe reiniciar una sesion que el usuario ya detuvo.
-    if ($task -and $task.State -eq 'Running') {
-        & $control -Action Stop -Serial emulator-5554 -RepoRoot $repo
-        if ($LASTEXITCODE -ne 0) {
-            throw 'No se pudo liberar la sesion persistente para F5.'
-        }
-        $takenOver = $true
-        New-Item -ItemType Directory -Force -Path (Split-Path $marker -Parent) | Out-Null
-        Set-Content -LiteralPath $marker -Value 'restore' -Encoding ASCII
-    } else {
-        Remove-Item -LiteralPath $marker -Force -ErrorAction SilentlyContinue
-    }
-
-    $free = $false
-    for ($i = 0; $i -lt 30; $i++) {
-        $owner = (& $control -Action Check -Serial emulator-5554 | Out-String).Trim()
-        if ($owner -eq 'free') {
-            $free = $true
-            break
-        }
-        Start-Sleep -Milliseconds 500
-    }
-    if (-not $free) {
-        throw 'No se ha liberado emulator-5554; no se iniciara otro Flutter.'
-    }
-
-    & (Join-Path $repo 'scripts\start-ai-apps-android.ps1') *>&1 | Out-Host
-    & (Join-Path $PSScriptRoot 'run.ps1') -Device emulator-5554 -ServiceOnly *>&1 | Out-Host
-    if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-        throw 'No se pudo preparar Muondia para depurar.'
-    }
-    Write-Host 'F5 preparado: VS Code controla Flutter hasta detener la depuracion.'
-} catch {
-    if ($takenOver) {
-        try {
-            Start-ScheduledTask -TaskName $taskName -ErrorAction Stop
-            Remove-Item -LiteralPath $marker -Force -ErrorAction SilentlyContinue
-        } catch {
-            Write-Warning 'No se pudo restaurar la sesion persistente tras el error de F5.'
-        }
-    }
-    throw
+$sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) {
+    $env:ANDROID_SDK_ROOT
+} else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+$adb = Join-Path $sdk 'platform-tools\adb.exe'
+$emulator = Join-Path $sdk 'emulator\emulator.exe'
+if (-not (Test-Path -LiteralPath $adb) -or -not (Test-Path -LiteralPath $emulator)) {
+    throw 'Android SDK no disponible.'
 }
+$avdName = 'AI_APPS_Dev'
+$serial = 'emulator-5554'
+$online = @(& $adb devices) -match '^emulator-5554\s+device\s*$'
+if (-not $online) {
+    # Si Android ya esta arrancando, esperarlo: nunca lanzar un segundo QEMU.
+    $runningEmulator = @(Get-CimInstance Win32_Process | Where-Object {
+        $_.Name -in @('emulator.exe', 'qemu-system-x86_64.exe', 'qemu-system-x86_64-headless.exe',
+            'qemu-system-aarch64.exe', 'qemu-system-aarch64-headless.exe') -and
+        ($_.CommandLine -match '(?i)(?:^|\s)-port\s+5554(?:\s|$)' -or
+         $_.CommandLine -match '(?i)(?:^|\s)-avd\s+"?AI_APPS_Dev"?(?:\s|$)')
+    })
+    if (-not $runningEmulator) {
+        $available = @(& $emulator -list-avds)
+        if ($avdName -notin $available) { throw 'Falta el AVD AI_APPS_Dev.' }
+        Write-Host 'Arrancando Android para Muondia...'
+        Start-Process -FilePath $emulator -ArgumentList @(
+            '-avd', $avdName, '-port', '5554', '-no-window',
+            '-no-boot-anim', '-no-snapshot', '-feature', '-Vulkan'
+        ) -WindowStyle Hidden | Out-Null
+    } else { Write-Host 'Esperando al Android existente...' }
+}
+$ready = $false
+for ($i = 0; $i -lt 180; $i++) {
+    $state = (& $adb -s $serial get-state 2>$null | Out-String).Trim()
+    if ($state -eq 'device') {
+        $booted = (& $adb -s $serial shell getprop sys.boot_completed 2>$null | Out-String).Trim()
+        if ($booted -eq '1') { $ready = $true; break }
+    }
+    Start-Sleep -Seconds 1
+}
+if (-not $ready) { throw 'Android no ha terminado de arrancar. Revisa la salida del emulador.' }
+& (Join-Path $PSScriptRoot 'run.ps1') -Device $serial -ServiceOnly
+if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw 'No se pudo preparar el servicio de IA.' }
+Write-Host 'Muondia preparada. VS Code iniciara Flutter con Dart-Code.'

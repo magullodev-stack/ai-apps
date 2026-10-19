@@ -12,7 +12,7 @@
         "--dart-define-from-file=${workspaceFolder}/.ai-apps/muondia-flutter-defines.json"
       ],
       "preLaunchTask": "Muondia: preparar Flutter",
-      "postDebugTask": "Muondia: restaurar desarrollo persistente"
+      "postDebugTask": "Muondia: cerrar sesión"
     }
   ]
 }
