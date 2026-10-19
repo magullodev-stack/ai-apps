@@ -28,7 +28,17 @@ class Sessions {
   definitions() {
     const stored = readJson(this.file, {version: 1, sessions: []});
     if (stored.version !== 1 || !Array.isArray(stored.sessions)) throw new Error('Invalid session registry');
-    return [this.defaults(), ...stored.sessions.map(item => this.validate(item))];
+    // Registros de proyectos eliminados o de versiones anteriores no pueden
+    // bloquear Muondia. La lectura es no destructiva: no se reescribe el JSON.
+    const valid = [];
+    for (const item of stored.sessions) {
+      try {
+        valid.push(this.validate(item));
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+      }
+    }
+    return [this.defaults(), ...valid];
   }
   validate(item) {
     const allowed = ['appId','label','serial','avdName','kind','projectPath','packageName'];

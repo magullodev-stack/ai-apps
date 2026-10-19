@@ -23,6 +23,10 @@ sesion en Windows y retira la tarea antigua. Solo ejecuta
 unica desde PowerShell: `powershell -ExecutionPolicy Bypass -File scripts/install-git-sync.ps1`.
 Tras instalar, reinicia Windows para limpiar los procesos antiguos.
 
+Los registros históricos de otras aplicaciones cuyo proyecto ya no existe
+se omiten **solo en memoria**, sin modificar `.ai-apps/android/sessions.json`.
+Nunca deben bloquear el inicio de Muondia.
+
 ## Otras aplicaciones
 
 `scripts/android-session.ps1` conserva List/Register/Unregister para dispositivos

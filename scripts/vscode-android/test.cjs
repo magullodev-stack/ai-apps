@@ -374,6 +374,19 @@ async function run() {
   }));
   await api.refresh();
   assert.equal(panels.size, 151, 'No fixed maximum of tabs; existing Muondia panel untouched');
+  // Reinicio del editor sin depurador previo: debe solicitar una unica
+  // depuracion Muondia, incluso si el emulador aun no esta iniciado.
+  entries = [muondia];
+  vscode.debug.sessions = [];
+  const startsBeforeOpening = calls.filter(call => call[0] === 'debug-start').length;
+  await sandbox.module.exports.activate({ subscriptions: [] });
+  await Promise.resolve();
+  assert.equal(calls.filter(call => call[0] === 'debug-start').length,
+    startsBeforeOpening + 1, 'Abrir VS Code inicia Muondia a traves de Dart-Code');
+  await sandbox.module.exports.activate({ subscriptions: [] });
+  await Promise.resolve();
+  assert.equal(calls.filter(call => call[0] === 'debug-start').length,
+    startsBeforeOpening + 1, 'No lanzar sesiones Flutter duplicadas al reactivar la extension');
   vscode.workspace.isTrusted = false;
   assert.equal(await sandbox.module.exports.activate({ subscriptions: [] }), undefined);
   console.log('PASS: F7, Dart-Code ownership, visor, reconexion, catalogo y recursos visuales.');

@@ -32,10 +32,26 @@ if (-not $online) {
 }
 $ready = $false
 for ($i = 0; $i -lt 180; $i++) {
-    $state = (& $adb -s $serial get-state 2>$null | Out-String).Trim()
-    if ($state -eq 'device') {
-        $booted = (& $adb -s $serial shell getprop sys.boot_completed 2>$null | Out-String).Trim()
-        if ($booted -eq '1') { $ready = $true; break }
+    # Un dispositivo que aun no figura en ADB es normal durante el arranque.
+    # No convertir stderr nativo en un error terminante de PowerShell 5.1.
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $connected = @(& $adb devices 2>$null) -match '^emulator-5554\s+device\s*
+if (-not $ready) { throw 'Android no ha terminado de arrancar. Revisa la salida del emulador.' }
+& (Join-Path $PSScriptRoot 'run.ps1') -Device $serial -ServiceOnly
+if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw 'No se pudo preparar el servicio de IA.' }
+Write-Host 'Muondia preparada. VS Code iniciara Flutter con Dart-Code.'
+
+        if ($connected) {
+            $booted = (& $adb -s $serial shell getprop sys.boot_completed 2>$null | Out-String).Trim()
+            if ($LASTEXITCODE -eq 0 -and $booted -eq '1') {
+                $ready = $true
+                break
+            }
+        }
+    } finally {
+        $ErrorActionPreference = $previousPreference
     }
     Start-Sleep -Seconds 1
 }
